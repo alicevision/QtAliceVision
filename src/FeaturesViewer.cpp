@@ -86,7 +86,7 @@ void FeaturesViewer::reload()
     {
         setLoading(true);
         // load features from file in a seperate thread
-        auto* ioRunnable = new FeatureIORunnable({_folder, _viewId, _describerType});
+        auto* ioRunnable = new FeatureIORunnable(FeatureIORunnable::IOParams(_folder, _viewId, _describerType));
         connect(ioRunnable, &FeatureIORunnable::resultReady, this, &FeaturesViewer::onResultReady);
         QThreadPool::globalInstance()->start(ioRunnable);
     }

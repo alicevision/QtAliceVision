@@ -43,7 +43,6 @@ private:
     aliceVision::feature::SIOPointFeature _feat;
 };
 
-Q_DECLARE_METATYPE(Feature);   // for usage in signals/slots
 
 
 /**
@@ -52,11 +51,11 @@ Q_DECLARE_METATYPE(Feature);   // for usage in signals/slots
 class FeatureIORunnable : public QObject, public QRunnable
 {
     Q_OBJECT
-    
+
+public:    
     /// io parameters: folder, viewId, describerType
     using IOParams = std::tuple<QUrl, aliceVision::IndexT, QString>;
 
-public:
     FeatureIORunnable(const IOParams& params):
     _params(params)
     {}
@@ -154,3 +153,5 @@ private:
 };
 
 } // namespace
+
+Q_DECLARE_METATYPE(qtAliceVision::Feature);   // for usage in signals/slots
