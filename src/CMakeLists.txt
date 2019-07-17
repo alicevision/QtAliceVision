@@ -16,6 +16,14 @@ target_link_libraries(qtAliceVisionPlugin
     Qt5::Quick
 )
 
+set_target_properties(qtAliceVisionPlugin
+        PROPERTIES
+        DEBUG_POSTFIX "d"
+        FOLDER "qtAliceVisionPlugin"
+        SOVERSION ${PROJECT_VERSION_MAJOR}
+        VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}"
+        )
+
 # Install settings
 install(FILES "qmldir"
         DESTINATION ${CMAKE_INSTALL_PREFIX}/qml/AliceVision)
