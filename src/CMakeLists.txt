@@ -1,8 +1,9 @@
 # Target srcs
-file(GLOB_RECURSE TARGET_SRCS *.cpp *.cxx *.cc *.C *.c *.h *.hpp)
+set(PLUGIN_SOURCES FeaturesViewer.cpp)
+set(PLUGIN_HEADERS FeaturesViewer.hpp plugin.hpp)
 
 # Target properties
-add_library(qtAliceVisionPlugin SHARED ${TARGET_SRCS})
+add_library(qtAliceVisionPlugin SHARED ${PLUGIN_SOURCES} ${PLUGIN_HEADERS})
 
 target_link_libraries(qtAliceVisionPlugin
   PUBLIC
