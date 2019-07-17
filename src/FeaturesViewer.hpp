@@ -110,7 +110,7 @@ public:
     ~FeaturesViewer() override;
 
     QQmlListProperty<Feature> features() { 
-        return QQmlListProperty<Feature>(this, _features);
+        return {this, _features};
     }
 
     inline bool loading() const { return _loading; }
