@@ -40,7 +40,7 @@ void FeatureIORunnable::run()
     }
     QList<Feature*> feats;
     feats.reserve(static_cast<int>(features.size()));
-    for(const auto f : features)
+    for(const auto& f : features)
         feats.append(new Feature(f));
     Q_EMIT resultReady(feats);
 }
