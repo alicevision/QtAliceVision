@@ -196,7 +196,7 @@ QSGNode* FeaturesViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePai
     QSGGeometry::ColoredPoint2D* vertices = geometry->vertexDataAsColoredPoint2D();
     auto* indices = geometry->indexDataAsUInt();
 
-    // utility lambda to register a vertice
+    // utility lambda to register a vertex
     const auto setVertice = [&](unsigned int index, const QPointF& point)
     {
         vertices[index].set(
