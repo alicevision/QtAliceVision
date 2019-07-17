@@ -106,8 +106,8 @@ public:
     };
     Q_ENUM(DisplayMode)
 
-    ~FeaturesViewer();
     explicit FeaturesViewer(QQuickItem* parent = nullptr);
+    ~FeaturesViewer() override;
 
     QQmlListProperty<Feature> features() { 
         return QQmlListProperty<Feature>(this, _features);
