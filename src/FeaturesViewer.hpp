@@ -27,7 +27,7 @@ public:
     Feature() = default;
     Feature(const Feature& other) { _feat = other._feat; }
 
-    Feature(const aliceVision::feature::SIOPointFeature& feat, QObject* parent=nullptr):
+    explicit Feature(const aliceVision::feature::SIOPointFeature& feat, QObject* parent=nullptr):
     QObject(parent),
     _feat(feat)
     {}
@@ -56,7 +56,7 @@ public:
     /// io parameters: folder, viewId, describerType
     using IOParams = std::tuple<QUrl, aliceVision::IndexT, QString>;
 
-    FeatureIORunnable(const IOParams& params):
+    explicit FeatureIORunnable(const IOParams& params):
     _params(params)
     {}
 
@@ -106,8 +106,8 @@ public:
     };
     Q_ENUM(DisplayMode)
 
-    FeaturesViewer(QQuickItem* parent = nullptr);
     ~FeaturesViewer();
+    explicit FeaturesViewer(QQuickItem* parent = nullptr);
 
     QQmlListProperty<Feature> features() { 
         return QQmlListProperty<Feature>(this, _features);
