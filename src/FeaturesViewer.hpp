@@ -24,7 +24,7 @@ class Feature : public QObject
     Q_PROPERTY(float orientation READ orientation CONSTANT)
 
 public:
-    Feature() {};
+    Feature() = default;
     Feature(const Feature& other) { _feat = other._feat; }
 
     Feature(const aliceVision::feature::SIOPointFeature& feat, QObject* parent=nullptr):
