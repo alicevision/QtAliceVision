@@ -146,9 +146,9 @@ QSGNode* FeaturesViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePai
     {
         node = new QSGNode;
         // use VertexColorMaterial to later be able to draw selection in another color
-        QSGVertexColorMaterial* material = new QSGVertexColorMaterial; 
+        auto material = new QSGVertexColorMaterial;
 
-        QSGGeometryNode* root = new QSGGeometryNode;
+        auto root = new QSGGeometryNode;
         {
             geometry = new QSGGeometry(
                 QSGGeometry::defaultAttributes_ColoredPoint2D(), 
