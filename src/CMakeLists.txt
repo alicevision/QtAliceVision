@@ -1,8 +1,9 @@
 # Target srcs
-file(GLOB_RECURSE TARGET_SRCS *.cpp *.cxx *.cc *.C *.c *.h *.hpp)
+set(PLUGIN_SOURCES FeaturesViewer.cpp)
+set(PLUGIN_HEADERS FeaturesViewer.hpp plugin.hpp)
 
 # Target properties
-add_library(qtAliceVisionPlugin SHARED ${TARGET_SRCS})
+add_library(qtAliceVisionPlugin SHARED ${PLUGIN_SOURCES} ${PLUGIN_HEADERS})
 
 target_link_libraries(qtAliceVisionPlugin
   PUBLIC
@@ -14,6 +15,14 @@ target_link_libraries(qtAliceVisionPlugin
     Qt5::Qml
     Qt5::Quick
 )
+
+set_target_properties(qtAliceVisionPlugin
+        PROPERTIES
+        DEBUG_POSTFIX "d"
+        FOLDER "qtAliceVisionPlugin"
+        SOVERSION ${PROJECT_VERSION_MAJOR}
+        VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}"
+        )
 
 # Install settings
 install(FILES "qmldir"

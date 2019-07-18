@@ -22,7 +22,7 @@ public:
         aliceVision::system::Logger::get()->setLogLevel("info");
         Q_ASSERT(uri == QLatin1String("AliceVision"));
         qmlRegisterType<FeaturesViewer>(uri, 1, 0, "FeaturesViewer");
-        qmlRegisterUncreatableType<Feature>(uri, 1, 0, "Feature", "Can't create Feature intances from QML.");
+        qmlRegisterUncreatableType<Feature>(uri, 1, 0, "Feature", "Cannot create Feature instances from QML.");
         qRegisterMetaType<QList<Feature*>>( "QList<Feature*>" ); // for usage in signals/slots
     }
 };

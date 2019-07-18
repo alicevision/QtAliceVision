@@ -40,7 +40,7 @@ void FeatureIORunnable::run()
     }
     QList<Feature*> feats;
     feats.reserve(static_cast<int>(features.size()));
-    for(const auto f : features)
+    for(const auto& f : features)
         feats.append(new Feature(f));
     Q_EMIT resultReady(feats);
 }
@@ -146,9 +146,9 @@ QSGNode* FeaturesViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePai
     {
         node = new QSGNode;
         // use VertexColorMaterial to later be able to draw selection in another color
-        QSGVertexColorMaterial* material = new QSGVertexColorMaterial; 
+        auto material = new QSGVertexColorMaterial;
 
-        QSGGeometryNode* root = new QSGGeometryNode;
+        auto root = new QSGGeometryNode;
         {
             geometry = new QSGGeometry(
                 QSGGeometry::defaultAttributes_ColoredPoint2D(), 
@@ -196,7 +196,7 @@ QSGNode* FeaturesViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePai
     QSGGeometry::ColoredPoint2D* vertices = geometry->vertexDataAsColoredPoint2D();
     auto* indices = geometry->indexDataAsUInt();
 
-    // utility lambda to register a vertice
+    // utility lambda to register a vertex
     const auto setVertice = [&](unsigned int index, const QPointF& point)
     {
         vertices[index].set(
