@@ -1,6 +1,6 @@
 # Target srcs
-set(PLUGIN_SOURCES FeaturesViewer.cpp)
-set(PLUGIN_HEADERS FeaturesViewer.hpp plugin.hpp)
+set(PLUGIN_SOURCES FeaturesViewer.cpp FloatImageViewer.cpp FloatTexture.cpp)
+set(PLUGIN_HEADERS FeaturesViewer.hpp FloatImageViewer.hpp FloatTexture.hpp plugin.hpp)
 
 # Target properties
 add_library(qtAliceVisionPlugin SHARED ${PLUGIN_SOURCES} ${PLUGIN_HEADERS})
@@ -11,6 +11,7 @@ target_link_libraries(qtAliceVisionPlugin
     aliceVision_sfmDataIO
     aliceVision_sfm
     aliceVision_system
+    aliceVision_image
     Qt5::Core
     Qt5::Qml
     Qt5::Quick

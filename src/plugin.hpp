@@ -1,10 +1,12 @@
 #pragma once
 
 #include "FeaturesViewer.hpp"
+#include "FloatImageViewer.hpp"
 #include <QtQml>
 #include <QQmlExtensionPlugin>
 
 #include <aliceVision/system/Logger.hpp>
+
 
 namespace qtAliceVision
 {
@@ -13,6 +15,7 @@ class QtAliceVisionPlugin : public QQmlExtensionPlugin
 {
     Q_OBJECT
     Q_PLUGIN_METADATA(IID "qtAliceVision.qmlPlugin")
+
 
 public:
     void initializeEngine(QQmlEngine* engine, const char* uri) override {}
@@ -24,6 +27,10 @@ public:
         qmlRegisterType<FeaturesViewer>(uri, 1, 0, "FeaturesViewer");
         qmlRegisterUncreatableType<Feature>(uri, 1, 0, "Feature", "Cannot create Feature instances from QML.");
         qRegisterMetaType<QList<Feature*>>( "QList<Feature*>" ); // for usage in signals/slots
+
+        qmlRegisterType<FloatImageViewer>(uri, 1, 0, "FloatImageViewer");
+        qRegisterMetaType<FloatImage>();
+        qRegisterMetaType<QSharedPointer<FloatImage>>();
     }
 };
 
