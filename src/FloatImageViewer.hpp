@@ -6,6 +6,7 @@
 #include <QUrl>
 #include <QRunnable>
 #include <QSharedPointer>
+#include <QVariant>
 
 #include <memory>
 
@@ -28,7 +29,7 @@ public:
     Q_SLOT void run() override;
 
     /// Emitted when the image is loaded
-    Q_SIGNAL void resultReady(QSharedPointer<qtAliceVision::FloatImage> image);
+    Q_SIGNAL void resultReady(QSharedPointer<qtAliceVision::FloatImage> image, const QVariantMap & metadata);
     
 private:
     QUrl _path;
@@ -50,7 +51,9 @@ class FloatImageViewer : public QQuickItem
     Q_PROPERTY(bool loading READ loading NOTIFY loadingChanged)
     /// Whether to clear image between two loadings
     Q_PROPERTY(bool clearBeforeLoad MEMBER _clearBeforeLoad NOTIFY clearBeforeLoadChanged)
-   
+    
+    Q_PROPERTY(QVariantMap metadata READ metadata NOTIFY metadataChanged)
+
 public:
     explicit FloatImageViewer(QQuickItem* parent = nullptr);
     ~FloatImageViewer() override;
@@ -62,6 +65,11 @@ public:
 
     void setLoading(bool loading);
 
+    const QVariantMap & metadata() const
+    {
+        return _metadata;
+    }
+
 public:
     Q_SIGNAL void sourceChanged();
     Q_SIGNAL void loadingChanged();
@@ -69,12 +77,13 @@ public:
     Q_SIGNAL void gammaChanged();
     Q_SIGNAL void offsetChanged();
     Q_SIGNAL void imageChanged();
+    Q_SIGNAL void metadataChanged();
 
 private:
     /// Reload image from source
     void reload();
     /// Handle result from asynchronous file loading
-    Q_SLOT void onResultReady(QSharedPointer<qtAliceVision::FloatImage> image);
+    Q_SLOT void onResultReady(QSharedPointer<qtAliceVision::FloatImage> image, const QVariantMap & metadata);
     /// Custom QSGNode update
     QSGNode* updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePaintNodeData* data) override;
 
@@ -91,6 +100,8 @@ private:
     QSharedPointer<FloatImage> _image;
     QRectF _boundingRect;
     QSize _textureSize;
+
+    QVariantMap _metadata;
 };
 
 }  // ns qtAliceVision

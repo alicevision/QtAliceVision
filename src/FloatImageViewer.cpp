@@ -23,12 +23,20 @@ void FloatImageIORunnable::run()
 {
     using namespace aliceVision;
     QSharedPointer<FloatImage> result;
+    QVariantMap qmetadata;
 
     try 
     {
         const auto path = _path.toLocalFile().toUtf8().toStdString();
         FloatImage image;
         image::readImage(path, image, image::EImageColorSpace::SRGB);
+        
+        const auto metadata = image::readImageMetadata(path);
+        for(const auto & item : metadata)
+        {
+            qmetadata[QString::fromStdString(item.name().string())] = QString::fromStdString(item.get_string());
+        }
+
         result = QSharedPointer<FloatImage>(new FloatImage(std::move(image)));
     }
     catch(std::exception& e)
@@ -37,7 +45,7 @@ void FloatImageIORunnable::run()
                  << "\n" << e.what();
     }
 
-    Q_EMIT resultReady(result);
+    Q_EMIT resultReady(result, qmetadata);
 }
 
 namespace
@@ -171,7 +179,7 @@ void FloatImageViewer::reload()
     }
 }
 
-void FloatImageViewer::onResultReady(QSharedPointer<FloatImage> image)
+void FloatImageViewer::onResultReady(QSharedPointer<FloatImage> image, const QVariantMap & metadata)
 {
     setLoading(false);
 
@@ -186,6 +194,9 @@ void FloatImageViewer::onResultReady(QSharedPointer<FloatImage> image)
     _image = image;
     _imageChanged = true;
     Q_EMIT imageChanged();
+
+    _metadata = metadata;
+    Q_EMIT metadataChanged();
 }
 
 QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePaintNodeData* data)
