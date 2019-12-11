@@ -37,6 +37,18 @@ public:
 
     void bind() override;
 
+    /**
+     * @brief Get the maximum dimension of a texture.
+     *
+     * If the provided image is too large, it will be downscaled to fit the max dimension.
+     *
+     * @return -1 if unknown else the max size of a texture
+     */
+    static int maxTextureSize()
+    {
+        return _maxTextureSize;
+    }
+
 private:
     bool isValid() const;
 
@@ -49,6 +61,8 @@ private:
     bool _dirty = false;
     bool _dirtyBindOptions = false;
     bool _mipmapsGenerated = false;
+
+    static int _maxTextureSize;
 };
 
 }  // ns qtAliceVision

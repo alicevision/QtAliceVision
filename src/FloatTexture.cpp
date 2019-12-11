@@ -1,4 +1,5 @@
 #include "FloatTexture.hpp"
+#include <aliceVision/image/resampling.hpp>
 
 #include <QOpenGLContext>
 #include <QOpenGLFunctions>
@@ -6,6 +7,7 @@
 
 namespace qtAliceVision
 {
+int FloatTexture::_maxTextureSize = -1;
 
 FloatTexture::FloatTexture()
 {
@@ -22,7 +24,7 @@ FloatTexture::~FloatTexture()
 void FloatTexture::setImage(const FloatImage &image)
 {
     _srcImage = image;
-    _textureSize = { image.Width(), image.Height() };
+    _textureSize = { _srcImage.Width(), _srcImage.Height() };
     _dirty = true;
     _dirtyBindOptions = true;
     _mipmapsGenerated = false;
@@ -86,6 +88,21 @@ void FloatTexture::bind()
     }
     funcs->glBindTexture(GL_TEXTURE_2D, _textureId);
 
+    // Downscale the texture to fit inside the max texture limit if it is too big.
+    if(_maxTextureSize == -1)
+    {
+        funcs->glGetIntegerv(GL_MAX_TEXTURE_SIZE, &_maxTextureSize);
+    }
+
+    while(_maxTextureSize != -1 &&
+        (_srcImage.Width() > _maxTextureSize || _srcImage.Height() > _maxTextureSize))
+    {
+        FloatImage tmp;
+        aliceVision::image::ImageHalfSample(_srcImage, tmp);
+        _srcImage = std::move(tmp);
+    }
+    _textureSize = { _srcImage.Width(), _srcImage.Height() };
+
     updateBindOptions(_dirtyBindOptions);
 
     funcs->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, _textureSize.width(), _textureSize.height(), 0, GL_RGBA, GL_FLOAT, _srcImage.data());
@@ -99,4 +116,4 @@ void FloatTexture::bind()
     _dirtyBindOptions = false;
 }
 
-}
+}  // ns qtAliceVision

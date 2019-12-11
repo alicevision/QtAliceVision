@@ -9,6 +9,7 @@
 #include <QThreadPool>
 
 #include <aliceVision/image/Image.hpp>
+#include <aliceVision/image/resampling.hpp>
 #include <aliceVision/image/io.hpp>
 
 namespace qtAliceVision 
@@ -30,14 +31,27 @@ void FloatImageIORunnable::run()
         const auto path = _path.toLocalFile().toUtf8().toStdString();
         FloatImage image;
         image::readImage(path, image, image::EImageColorSpace::SRGB);
+
+        // ensure it fits in GPU memory
+        if(FloatTexture::maxTextureSize() != -1)
+        {
+            const auto maxTextureSize = FloatTexture::maxTextureSize();
+            while(maxTextureSize != -1 &&
+                (image.Width() > maxTextureSize || image.Height() > maxTextureSize))
+            {
+                FloatImage tmp;
+                aliceVision::image::ImageHalfSample(image, tmp);
+                image = std::move(tmp);
+            }
+        }
+        result = QSharedPointer<FloatImage>(new FloatImage(std::move(image)));
         
+        // load metadata as well
         const auto metadata = image::readImageMetadata(path);
         for(const auto & item : metadata)
         {
             qmetadata[QString::fromStdString(item.name().string())] = QString::fromStdString(item.get_string());
         }
-
-        result = QSharedPointer<FloatImage>(new FloatImage(std::move(image)));
     }
     catch(std::exception& e)
     {
