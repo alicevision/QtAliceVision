@@ -15,6 +15,72 @@
 namespace qtAliceVision 
 {
 
+namespace
+{
+    enum class RotateAngle
+    {
+        CW_90,
+        CW_180,
+        CW_270,
+    };
+
+    void copyPixelRotate90(FloatImage & dst, const FloatImage & src, int x, int y)
+    {
+        dst(x, src.Height() - y - 1) = src(y, x);
+    }
+
+    void copyPixelRotate270(FloatImage & dst, const FloatImage & src, int x, int y)
+    {
+        dst(src.Width() - x - 1, y) = src(y, x);
+    }
+
+    void copyPixelRotate180(FloatImage & dst, const FloatImage & src, int x, int y)
+    {
+        dst(src.Height() - y - 1, src.Width() - x - 1) = src(y, x);
+    }
+
+    template <class T>
+    void forEach(FloatImage & dstImage, const FloatImage & srcImage, T && f)
+    {
+        for(int y=0; y!=srcImage.Height(); ++y)
+        {
+            for(int x=0; x!=srcImage.Width(); ++x)
+            {
+                f(dstImage, srcImage, x, y);
+            }
+        }
+    }
+
+    void rotate(FloatImage & image, RotateAngle angle)
+    {
+        switch(angle)
+        {
+        case RotateAngle::CW_90:
+        {
+            FloatImage tmp;
+            tmp.resize(image.Height(), image.Width(), false);
+            forEach(tmp, image, &copyPixelRotate90);
+            image = std::move(tmp);
+            break;
+        }
+        case RotateAngle::CW_180:
+        {
+            // in place
+            forEach(image, image, &copyPixelRotate180);
+            break;
+        }
+        case RotateAngle::CW_270:
+        {
+            FloatImage tmp;
+            tmp.resize(image.Height(), image.Width(), false);
+            forEach(tmp, image, &copyPixelRotate270);
+            image = std::move(tmp);
+            break;
+        }
+        }
+    }
+}
+
 FloatImageIORunnable::FloatImageIORunnable(const QUrl & path, QObject * parent)
     : QObject(parent)
     , _path(path)
@@ -44,7 +110,6 @@ void FloatImageIORunnable::run()
                 image = std::move(tmp);
             }
         }
-        result = QSharedPointer<FloatImage>(new FloatImage(std::move(image)));
         
         // load metadata as well
         const auto metadata = image::readImageMetadata(path);
@@ -52,6 +117,28 @@ void FloatImageIORunnable::run()
         {
             qmetadata[QString::fromStdString(item.name().string())] = QString::fromStdString(item.get_string());
         }
+
+        // rotate image
+        const auto orientation = metadata.get_int("orientation", 1);
+        switch(orientation)
+        {
+        case 1:
+            // do nothing
+            break;
+        case 3:
+            rotate(image, RotateAngle::CW_180);
+            break;
+        case 6:
+            rotate(image, RotateAngle::CW_90);
+            break;
+        case 8:
+            rotate(image, RotateAngle::CW_270);
+            break;
+        default:
+            qWarning() << "[QtAliceVision] Unsupported orientation: " << orientation << "\n";
+        }
+
+        result = QSharedPointer<FloatImage>(new FloatImage(std::move(image)));
     }
     catch(std::exception& e)
     {
