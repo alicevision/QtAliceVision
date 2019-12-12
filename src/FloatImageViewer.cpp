@@ -96,7 +96,7 @@ void FloatImageIORunnable::run()
     {
         const auto path = _path.toLocalFile().toUtf8().toStdString();
         FloatImage image;
-        image::readImage(path, image, image::EImageColorSpace::SRGB);
+        image::readImage(path, image, image::EImageColorSpace::LINEAR);  // linear: sRGB conversion is done in display shader
 
         // ensure it fits in GPU memory
         if(FloatTexture::maxTextureSize() != -1)
@@ -185,8 +185,9 @@ public:
         "uniform lowp float offset;                 \n"
         "varying highp vec2 vTexCoord;              \n"
         "void main() {                              \n"
-        "    vec4 color = texture2D(texture, vTexCoord);         \n"
-        "    gl_FragColor = vec4(color.rg * gamma, offset, color.a*qt_Opacity);     \n"
+        "    vec4 color = texture2D(texture, vTexCoord); \n"
+        "    color.rgb = pow((color.rgb + vec3(offset)) * vec3(gamma), vec3(1.0 / 2.2)); \n"
+        "    gl_FragColor = vec4(color.rgb, color.a*qt_Opacity); \n"
         "}";
     }
 

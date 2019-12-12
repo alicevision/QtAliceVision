@@ -90,7 +90,7 @@ private:
 private:
     QUrl _source;
     float _gamma = 1.f;
-    float _offset = 1.f;
+    float _offset = 0.f;
 
     bool _loading = false;
     bool _outdated = false;
