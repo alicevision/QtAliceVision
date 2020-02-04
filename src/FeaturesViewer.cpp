@@ -27,11 +27,11 @@ void FeatureIORunnable::run()
     QString descType;
     std::tie(folder, viewId, descType) = _params;
 
-    std::vector<feature::SIOPointFeature> features;    
-    try 
+    std::unique_ptr<aliceVision::feature::Regions> regions;
+    try
     {
         std::unique_ptr<feature::ImageDescriber> describer = feature::createImageDescriber(feature::EImageDescriberType_stringToEnum(descType.toStdString())); 
-        features = feature::getSIOPointFeatures(*sfm::loadFeatures({folder.toLocalFile().toStdString()}, viewId, *describer));
+        regions = sfm::loadFeatures({folder.toLocalFile().toStdString()}, viewId, *describer);
     }
     catch(std::exception& e)
     {
@@ -39,8 +39,8 @@ void FeatureIORunnable::run()
                  << "\n" << e.what();
     }
     QList<Feature*> feats;
-    feats.reserve(static_cast<int>(features.size()));
-    for(const auto& f : features)
+    feats.reserve(static_cast<int>(regions->RegionCount()));
+    for(const auto& f : regions->Features())
         feats.append(new Feature(f));
     Q_EMIT resultReady(feats);
 }
