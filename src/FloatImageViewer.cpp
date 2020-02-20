@@ -7,10 +7,12 @@
 #include <QSGSimpleMaterialShader>
 #include <QSGTexture>
 #include <QThreadPool>
+#include <QVector4D>
 
 #include <aliceVision/image/Image.hpp>
 #include <aliceVision/image/resampling.hpp>
 #include <aliceVision/image/io.hpp>
+
 
 namespace qtAliceVision 
 {
@@ -90,6 +92,7 @@ void FloatImageIORunnable::run()
 {
     using namespace aliceVision;
     QSharedPointer<FloatImage> result;
+    QSize sourceSize(0,0);
     QVariantMap qmetadata;
 
     try 
@@ -97,6 +100,8 @@ void FloatImageIORunnable::run()
         const auto path = _path.toLocalFile().toUtf8().toStdString();
         FloatImage image;
         image::readImage(path, image, image::EImageColorSpace::LINEAR);  // linear: sRGB conversion is done in display shader
+
+        sourceSize = QSize(image.Width(), image.Height());
 
         // ensure it fits in GPU memory
         if(FloatTexture::maxTextureSize() != -1)
@@ -108,9 +113,10 @@ void FloatImageIORunnable::run()
                 FloatImage tmp;
                 aliceVision::image::ImageHalfSample(image, tmp);
                 image = std::move(tmp);
+
             }
         }
-        
+
         // load metadata as well
         const auto metadata = image::readImageMetadata(path);
         for(const auto & item : metadata)
@@ -142,11 +148,11 @@ void FloatImageIORunnable::run()
     }
     catch(std::exception& e)
     {
-        qDebug() << "[QtAliceVision] Failed to load image: " << _path
+        qWarning() << "[QtAliceVision] Failed to load image: " << _path
                  << "\n" << e.what();
     }
 
-    Q_EMIT resultReady(result, qmetadata);
+    Q_EMIT resultReady(result, sourceSize, qmetadata);
 }
 
 namespace
@@ -154,7 +160,9 @@ namespace
 struct ShaderData
 {
     float gamma = 1.f;
-    float offset = 1.f;
+    float offset = 0.f;
+    QVector4D channelMultiplier = QVector4D(1.f,1.f,1.f,1.f);
+    QVector4D channelOrder = QVector4D(0,1,2,3);
     std::unique_ptr<QSGTexture> texture;
 };
 
@@ -179,15 +187,21 @@ public:
     const char *fragmentShader() const override
     {
         return
-        "uniform lowp float qt_Opacity;             \n"
-        "uniform sampler2D texture;                 \n"
-        "uniform lowp float gamma;                  \n"
-        "uniform lowp float offset;                 \n"
-        "varying highp vec2 vTexCoord;              \n"
-        "void main() {                              \n"
-        "    vec4 color = texture2D(texture, vTexCoord); \n"
+        "uniform lowp float qt_Opacity;                                                  \n"
+        "uniform highp sampler2D texture;                                                \n"
+        "uniform lowp float gamma;                                                       \n"
+        "uniform lowp float offset;                                                      \n"
+        "uniform vec4 channelMultiplier;                                                 \n"
+        "uniform vec4 channelOrder;                                                      \n"
+        "varying highp vec2 vTexCoord;                                                   \n"
+        "void main() {                                                                   \n"
+        "    vec4 color = texture2D(texture, vTexCoord);                                 \n"
         "    color.rgb = pow((color.rgb + vec3(offset)) * vec3(gamma), vec3(1.0 / 2.2)); \n"
-        "    gl_FragColor = vec4(color.rgb, color.a*qt_Opacity); \n"
+        "    color.rgba *= channelMultiplier;                                            \n"
+        "    gl_FragColor.r = color[int(channelOrder[0])];                               \n"
+        "    gl_FragColor.g = color[int(channelOrder[1])];                               \n"
+        "    gl_FragColor.b = color[int(channelOrder[2])];                               \n"
+        "    gl_FragColor.a = color[int(channelOrder[3])] * qt_Opacity;                  \n"
         "}";
     }
 
@@ -200,6 +214,8 @@ public:
     {
         program()->setUniformValue(_gammaId, data->gamma);
         program()->setUniformValue(_offsetId, data->offset);
+        program()->setUniformValue(_channelMultiplier, data->channelMultiplier);
+        program()->setUniformValue(_channelOrder, data->channelOrder);
 
         if(data->texture)
         {
@@ -212,6 +228,8 @@ public:
         _textureId = program()->uniformLocation("texture");
         _gammaId = program()->uniformLocation("gamma");
         _offsetId = program()->uniformLocation("offset");
+        _channelMultiplier = program()->uniformLocation("channelMultiplier");
+        _channelOrder = program()->uniformLocation("channelOrder");
 
         // We will only use texture unit 0, so set it only once.
         program()->setUniformValue(_textureId, 0);
@@ -221,6 +239,8 @@ private:
     int _textureId = -1;
     int _gammaId = -1;
     int _offsetId = -1;
+    int _channelMultiplier = -1;
+    int _channelOrder = -1;
 };
 }
 
@@ -230,6 +250,9 @@ FloatImageViewer::FloatImageViewer(QQuickItem* parent)
     setFlag(QQuickItem::ItemHasContents, true);
     connect(this, &FloatImageViewer::gammaChanged, this, &FloatImageViewer::update);
     connect(this, &FloatImageViewer::offsetChanged, this, &FloatImageViewer::update);
+    connect(this, &FloatImageViewer::textureSizeChanged, this, &FloatImageViewer::update);
+    connect(this, &FloatImageViewer::sourceSizeChanged, this, &FloatImageViewer::update);
+    connect(this, &FloatImageViewer::channelModeChanged, this, &FloatImageViewer::update);
     connect(this, &FloatImageViewer::imageChanged, this, &FloatImageViewer::update);
     connect(this, &FloatImageViewer::sourceChanged, this, &FloatImageViewer::reload);
 }
@@ -281,7 +304,7 @@ void FloatImageViewer::reload()
     }
 }
 
-void FloatImageViewer::onResultReady(QSharedPointer<FloatImage> image, const QVariantMap & metadata)
+void FloatImageViewer::onResultReady(QSharedPointer<FloatImage> image, QSize sourceSize, const QVariantMap & metadata)
 {
     setLoading(false);
 
@@ -297,12 +320,18 @@ void FloatImageViewer::onResultReady(QSharedPointer<FloatImage> image, const QVa
     _imageChanged = true;
     Q_EMIT imageChanged();
 
+    _sourceSize = sourceSize;
+    Q_EMIT sourceSizeChanged();
+
     _metadata = metadata;
     Q_EMIT metadataChanged();
 }
 
 QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePaintNodeData* data)
 {
+    QVector4D channelMultiplier(1.f,1.f,1.f,1.f);
+    QVector4D channelOrder(0.f,1.f,2.f,3.f);
+
     QSGGeometryNode* root = static_cast<QSGGeometryNode*>(oldNode);
     QSGSimpleMaterial<ShaderData>* material = nullptr;
     if(!root)
@@ -324,9 +353,27 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
         material = static_cast<QSGSimpleMaterial<ShaderData>*>(root->material());
     }
 
+    // enable Blending flag for transparency for RGBA
+    material->setFlag(QSGMaterial::Blending, _channelMode == EChannelMode::RGBA); 
+
+    // change channelMultiplier and channelOrder according to channelMode
+    switch(_channelMode)
+    {
+        case EChannelMode::R : channelMultiplier = QVector4D(1.f,0.f,0.f,1.f); break;
+        case EChannelMode::G : channelMultiplier = QVector4D(0.f,1.f,0.f,1.f); break;
+        case EChannelMode::B : channelMultiplier = QVector4D(0.f,0.f,1.f,1.f); break;
+        case EChannelMode::A :
+            channelMultiplier = QVector4D(0.f,0.f,0.f,1.f);
+            channelOrder = QVector4D(3.f,1.f,2.f,0.f);
+        break;
+    }
+
     bool updateGeometry = false;
     material->state()->gamma = _gamma;
     material->state()->offset = _offset;
+    material->state()->channelMultiplier = channelMultiplier;
+    material->state()->channelOrder = channelOrder;
+
     if(_imageChanged)
     {
         QSize newTextureSize;
@@ -348,9 +395,10 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
         {
             _textureSize = newTextureSize;
             updateGeometry = true;
+            Q_EMIT textureSizeChanged();
         }
     }
-
+    
     const auto newBoundingRect = boundingRect();
     if(updateGeometry || _boundingRect != newBoundingRect)
     {
@@ -375,6 +423,7 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
         QSGGeometry::updateTexturedRectGeometry(root->geometry(), geometryRect, QRectF(0, 0, 1, 1));
         root->markDirty(QSGNode::DirtyGeometry);
     }
+    
     return root;
 }
 
