@@ -161,7 +161,6 @@ struct ShaderData
 {
     float gamma = 1.f;
     float offset = 0.f;
-    QVector4D channelMultiplier = QVector4D(1.f,1.f,1.f,1.f);
     QVector4D channelOrder = QVector4D(0,1,2,3);
     std::unique_ptr<QSGTexture> texture;
 };
@@ -191,17 +190,16 @@ public:
         "uniform highp sampler2D texture;                                                \n"
         "uniform lowp float gamma;                                                       \n"
         "uniform lowp float offset;                                                      \n"
-        "uniform vec4 channelMultiplier;                                                 \n"
         "uniform vec4 channelOrder;                                                      \n"
         "varying highp vec2 vTexCoord;                                                   \n"
         "void main() {                                                                   \n"
         "    vec4 color = texture2D(texture, vTexCoord);                                 \n"
         "    color.rgb = pow((color.rgb + vec3(offset)) * vec3(gamma), vec3(1.0 / 2.2)); \n"
-        "    color.rgba *= channelMultiplier;                                            \n"
         "    gl_FragColor.r = color[int(channelOrder[0])];                               \n"
         "    gl_FragColor.g = color[int(channelOrder[1])];                               \n"
         "    gl_FragColor.b = color[int(channelOrder[2])];                               \n"
-        "    gl_FragColor.a = color[int(channelOrder[3])] * qt_Opacity;                  \n"
+        "    gl_FragColor.a = int(channelOrder[3]) == -1 ? 1.0 : color[int(channelOrder[3])]; \n"
+        "    gl_FragColor.a *= qt_Opacity; \n"
         "}";
     }
 
@@ -214,7 +212,6 @@ public:
     {
         program()->setUniformValue(_gammaId, data->gamma);
         program()->setUniformValue(_offsetId, data->offset);
-        program()->setUniformValue(_channelMultiplier, data->channelMultiplier);
         program()->setUniformValue(_channelOrder, data->channelOrder);
 
         if(data->texture)
@@ -228,7 +225,6 @@ public:
         _textureId = program()->uniformLocation("texture");
         _gammaId = program()->uniformLocation("gamma");
         _offsetId = program()->uniformLocation("offset");
-        _channelMultiplier = program()->uniformLocation("channelMultiplier");
         _channelOrder = program()->uniformLocation("channelOrder");
 
         // We will only use texture unit 0, so set it only once.
@@ -239,7 +235,6 @@ private:
     int _textureId = -1;
     int _gammaId = -1;
     int _offsetId = -1;
-    int _channelMultiplier = -1;
     int _channelOrder = -1;
 };
 }
@@ -329,7 +324,6 @@ void FloatImageViewer::onResultReady(QSharedPointer<FloatImage> image, QSize sou
 
 QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePaintNodeData* data)
 {
-    QVector4D channelMultiplier(1.f,1.f,1.f,1.f);
     QVector4D channelOrder(0.f,1.f,2.f,3.f);
 
     QSGGeometryNode* root = static_cast<QSGGeometryNode*>(oldNode);
@@ -356,22 +350,26 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
     // enable Blending flag for transparency for RGBA
     material->setFlag(QSGMaterial::Blending, _channelMode == EChannelMode::RGBA); 
 
-    // change channelMultiplier and channelOrder according to channelMode
+    // change channelOrder according to channelMode
     switch(_channelMode)
     {
-        case EChannelMode::R : channelMultiplier = QVector4D(1.f,0.f,0.f,1.f); break;
-        case EChannelMode::G : channelMultiplier = QVector4D(0.f,1.f,0.f,1.f); break;
-        case EChannelMode::B : channelMultiplier = QVector4D(0.f,0.f,1.f,1.f); break;
+        case EChannelMode::R :
+            channelOrder = QVector4D(0.f,0.f,0.f,-1.f);
+            break;
+        case EChannelMode::G :
+            channelOrder = QVector4D(1.f,1.f,1.f,-1.f);
+            break;
+        case EChannelMode::B :
+            channelOrder = QVector4D(2.f,2.f,2.f,-1.f);
+            break;
         case EChannelMode::A :
-            channelMultiplier = QVector4D(0.f,0.f,0.f,1.f);
-            channelOrder = QVector4D(3.f,1.f,2.f,0.f);
-        break;
+            channelOrder = QVector4D(3.f,3.f,3.f,-1.f);
+            break;
     }
 
     bool updateGeometry = false;
     material->state()->gamma = _gamma;
     material->state()->offset = _offset;
-    material->state()->channelMultiplier = channelMultiplier;
     material->state()->channelOrder = channelOrder;
 
     if(_imageChanged)
