@@ -6,6 +6,8 @@
 
 #include <QSGTexture>
 
+#include <QSharedPointer>
+
 
 namespace qtAliceVision
 {
@@ -32,8 +34,8 @@ public:
 
     bool hasMipmaps() const override { return mipmapFiltering() != QSGTexture::None; }
 
-    void setImage(const FloatImage &image);
-    const FloatImage &image() { return _srcImage; }
+    void setImage(QSharedPointer<FloatImage>& image);
+    const FloatImage &image() { return *_srcImage; }
 
     void bind() override;
 
@@ -53,7 +55,7 @@ private:
     bool isValid() const;
 
 private:
-    FloatImage _srcImage;
+    QSharedPointer<FloatImage> _srcImage;
 
     uint _textureId = 0;
     QSize _textureSize;

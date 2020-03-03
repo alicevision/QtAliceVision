@@ -378,7 +378,7 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
         auto texture = std::make_unique<FloatTexture>();
         if(_image)
         {
-            texture->setImage(std::move(*_image));
+            texture->setImage(_image);
             texture->setFiltering(QSGTexture::Nearest);
             texture->setHorizontalWrapMode(QSGTexture::Repeat);
             texture->setVerticalWrapMode(QSGTexture::Repeat);
@@ -386,7 +386,6 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
         }
         material->state()->texture = std::move(texture);
 
-        _image.reset();
         _imageChanged = false;
 
         if(_textureSize != newTextureSize)

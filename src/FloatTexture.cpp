@@ -21,10 +21,10 @@ FloatTexture::~FloatTexture()
     }
 }
 
-void FloatTexture::setImage(const FloatImage &image)
+void FloatTexture::setImage(QSharedPointer<FloatImage>& image)
 {
     _srcImage = image;
-    _textureSize = { _srcImage.Width(), _srcImage.Height() };
+    _textureSize = { _srcImage->Width(), _srcImage->Height() };
     _dirty = true;
     _dirtyBindOptions = true;
     _mipmapsGenerated = false;
@@ -32,7 +32,7 @@ void FloatTexture::setImage(const FloatImage &image)
 
 bool FloatTexture::isValid() const
 {
-    return _srcImage.Width() != 0 && _srcImage.Height() != 0;
+    return _srcImage->Width() != 0 && _srcImage->Height() != 0;
 }
 
 int FloatTexture::textureId() const
@@ -88,24 +88,25 @@ void FloatTexture::bind()
     }
     funcs->glBindTexture(GL_TEXTURE_2D, _textureId);
 
-    // Downscale the texture to fit inside the max texture limit if it is too big.
+    // Init max texture size
     if(_maxTextureSize == -1)
     {
         funcs->glGetIntegerv(GL_MAX_TEXTURE_SIZE, &_maxTextureSize);
     }
 
+    // Downscale the texture to fit inside the max texture limit if it is too big.
     while(_maxTextureSize != -1 &&
-        (_srcImage.Width() > _maxTextureSize || _srcImage.Height() > _maxTextureSize))
+        (_srcImage->Width() > _maxTextureSize || _srcImage->Height() > _maxTextureSize))
     {
         FloatImage tmp;
-        aliceVision::image::ImageHalfSample(_srcImage, tmp);
-        _srcImage = std::move(tmp);
+        aliceVision::image::ImageHalfSample(*_srcImage, tmp);
+        *_srcImage = std::move(tmp);
     }
-    _textureSize = { _srcImage.Width(), _srcImage.Height() };
+    _textureSize = { _srcImage->Width(), _srcImage->Height() };
 
     updateBindOptions(_dirtyBindOptions);
 
-    funcs->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, _textureSize.width(), _textureSize.height(), 0, GL_RGBA, GL_FLOAT, _srcImage.data());
+    funcs->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, _textureSize.width(), _textureSize.height(), 0, GL_RGBA, GL_FLOAT, _srcImage->data());
 
     if(mipmapFiltering() != QSGTexture::None)
     {
