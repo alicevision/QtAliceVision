@@ -7,6 +7,7 @@
 #include <QRunnable>
 #include <QSharedPointer>
 #include <QVariant>
+#include <QVector4D>
 
 #include <memory>
 
@@ -95,6 +96,8 @@ public:
     Q_SIGNAL void channelModeChanged();
     Q_SIGNAL void imageChanged();
     Q_SIGNAL void metadataChanged();
+
+    Q_INVOKABLE QVector4D pixelValueAt(int x, int y);
 
 private:
     /// Reload image from source
