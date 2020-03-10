@@ -6,74 +6,13 @@
 
 
 #include <aliceVision/sfm/pipeline/regionsIO.hpp>
-
+#include <aliceVision/sfmData/SfMData.hpp>
+#include <MFeature.hpp>
+#include <MSfMData.hpp>
 
 namespace qtAliceVision
 {
 
-/**
- * @brief QObject wrapper around a PointFeature.
- */
-class Feature : public QObject
-{
-    Q_OBJECT
-
-    Q_PROPERTY(float x READ x CONSTANT)
-    Q_PROPERTY(float y READ y CONSTANT)
-    Q_PROPERTY(float scale READ scale CONSTANT)
-    Q_PROPERTY(float orientation READ orientation CONSTANT)
-
-public:
-    Feature() = default;
-    Feature(const Feature& other) { _feat = other._feat; }
-
-    explicit Feature(const aliceVision::feature::PointFeature& feat, QObject* parent=nullptr):
-    QObject(parent),
-    _feat(feat)
-    {}
-
-    inline float x() const { return _feat.x(); }
-    inline float y() const { return _feat.y(); }
-    inline float scale() const { return _feat.scale(); }
-    inline float orientation() const { return _feat.orientation(); }
-
-    const aliceVision::feature::PointFeature& pointFeature() const { return _feat; }
-
-private:
-    aliceVision::feature::PointFeature _feat;
-};
-
-
-
-/**
- * @brief QRunnable object dedicated to load features using AliceVision.
- */
-class FeatureIORunnable : public QObject, public QRunnable
-{
-    Q_OBJECT
-
-public:    
-    /// io parameters: folder, viewId, describerType
-    using IOParams = std::tuple<QUrl, aliceVision::IndexT, QString>;
-
-    explicit FeatureIORunnable(const IOParams& params):
-    _params(params)
-    {}
-
-    /// Load features based on input parameters
-    Q_SLOT void run() override;
-
-    /**
-     * @brief  Emitted when features have been loaded and Features objects created.
-     * @warning Features objects are not parented - their deletion must be handled manually.
-     * 
-     * @param features the loaded Features list
-     */    
-    Q_SIGNAL void resultReady(QList<Feature*> features);
-    
-private:
-    IOParams _params;
-};
 
 /**
  * @brief Load and display extracted features of a View.
@@ -87,17 +26,19 @@ class FeaturesViewer : public QQuickItem
     Q_PROPERTY(quint32 viewId MEMBER _viewId NOTIFY viewIdChanged)
     /// Describer type to load
     Q_PROPERTY(QString describerType MEMBER _describerType NOTIFY describerTypeChanged)
+    /// Pointer to sfmData
+    Q_PROPERTY(qtAliceVision::MSfMData* msfmData READ getMSfmData WRITE setMSfmData NOTIFY sfmDataChanged)
     /// Display mode (see DisplayMode enum)
     Q_PROPERTY(DisplayMode displayMode MEMBER _displayMode NOTIFY displayModeChanged)
     /// Features main color
     Q_PROPERTY(QColor color MEMBER _color NOTIFY colorChanged)
-    /// Whether features are currently being laoded from file
-    Q_PROPERTY(bool loading READ loading NOTIFY loadingChanged)
+    /// Whether features are currently being loaded from file
+    Q_PROPERTY(bool loadingFeatures READ loadingFeatures NOTIFY loadingFeaturesChanged)
     /// Whether to clear features between two loadings
-    Q_PROPERTY(bool clearBeforeLoad MEMBER _clearBeforeLoad NOTIFY clearBeforeLoadChanged)
+    Q_PROPERTY(bool clearFeaturesBeforeLoad MEMBER _clearFeaturesBeforeLoad NOTIFY clearFeaturesBeforeLoadChanged)
     /// The list of features
-    Q_PROPERTY(QQmlListProperty<qtAliceVision::Feature> features READ features NOTIFY featuresChanged)
-   
+    Q_PROPERTY(QQmlListProperty<qtAliceVision::MFeature> features READ features NOTIFY featuresChanged)
+
 public:
     enum DisplayMode {
         Points = 0,         // Simple points (GL_POINTS)
@@ -109,49 +50,63 @@ public:
     explicit FeaturesViewer(QQuickItem* parent = nullptr);
     ~FeaturesViewer() override;
 
-    QQmlListProperty<Feature> features() { 
+    QQmlListProperty<MFeature> features() {
         return {this, _features};
     }
 
-    inline bool loading() const { return _loading; }
-    inline void setLoading(bool loading) { 
-        if(_loading == loading) 
+    inline bool loadingFeatures() const { return _loadingFeatures; }
+    inline void setLoadingFeatures(bool loadingFeatures) { 
+        if(_loadingFeatures == loadingFeatures) 
             return;
-        _loading = loading;
-        Q_EMIT loadingChanged();
+        _loadingFeatures = loadingFeatures;
+        Q_EMIT loadingFeaturesChanged();
     }
 
+    MSfMData* getMSfmData() { return _msfmData; }
+    void setMSfmData(MSfMData* sfmData);
+
 public:
+    Q_SIGNAL void sfmDataChanged();
     Q_SIGNAL void folderChanged();
     Q_SIGNAL void viewIdChanged();
     Q_SIGNAL void describerTypeChanged();
     Q_SIGNAL void featuresChanged();
-    Q_SIGNAL void loadingChanged();
-    Q_SIGNAL void clearBeforeLoadChanged();
+    Q_SIGNAL void loadingFeaturesChanged();
+    Q_SIGNAL void clearFeaturesBeforeLoadChanged();
     Q_SIGNAL void displayModeChanged();
     Q_SIGNAL void colorChanged();
 
 protected:
     /// Reload features from source
-    void reload();
+    void reloadFeatures();
     /// Handle result from asynchronous file loading
-    Q_SLOT void onResultReady(QList<Feature*> features);
+    Q_SLOT void onFeaturesResultReady(QList<MFeature*> features);
+
     /// Custom QSGNode update
     QSGNode* updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePaintNodeData* data) override;
 
 private:
+    void clearSfMFromFeatures();
+    void updateFeatureFromSfM();
+
+    void updatePaintFeatures(QSGNode* oldNode, QSGNode* node);
+    void updatePaintObservations(QSGNode* oldNode, QSGNode* node);
+
     QUrl _folder;
     aliceVision::IndexT _viewId = aliceVision::UndefinedIndexT;
     QString _describerType = "sift";
-    QList<Feature*> _features;
+    QList<MFeature*> _features;
+    MSfMData* _msfmData = nullptr;
+    int _nbObservations = 0; //< number of features associated to a 3D landmark
     DisplayMode _displayMode = FeaturesViewer::Points;
     QColor _color = QColor(20, 220, 80);
+    QColor _colorReproj = QColor(255, 0, 0);
 
-    bool _loading = false;
-    bool _outdated = false;
-    bool _clearBeforeLoad = true;
+    bool _loadingFeatures = false;
+    bool _outdatedFeatures = false;
+    bool _clearFeaturesBeforeLoad = true;
 };
 
 } // namespace
 
-Q_DECLARE_METATYPE(qtAliceVision::Feature);   // for usage in signals/slots
+Q_DECLARE_METATYPE(qtAliceVision::MFeature);   // for usage in signals/slots

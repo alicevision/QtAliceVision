@@ -2,6 +2,7 @@
 
 #include "FeaturesViewer.hpp"
 #include "FloatImageViewer.hpp"
+#include "MViewStats.hpp"
 #include <QtQml>
 #include <QQmlExtensionPlugin>
 
@@ -24,9 +25,15 @@ public:
         qInfo() << "[QtAliceVision] Plugin Initialized";
         aliceVision::system::Logger::get()->setLogLevel("info");
         Q_ASSERT(uri == QLatin1String("AliceVision"));
+
         qmlRegisterType<FeaturesViewer>(uri, 1, 0, "FeaturesViewer");
-        qmlRegisterUncreatableType<Feature>(uri, 1, 0, "Feature", "Cannot create Feature instances from QML.");
-        qRegisterMetaType<QList<Feature*>>( "QList<Feature*>" ); // for usage in signals/slots
+        qmlRegisterType<MSfMData>(uri, 1, 0, "MSfMData");
+        qmlRegisterType<MViewStats>(uri, 1, 0, "MViewStats");
+        qmlRegisterUncreatableType<MFeature>(uri, 1, 0, "MFeature", "Cannot create Feature instances from QML.");
+        qRegisterMetaType<QList<MFeature*>>( "QList<MFeature*>" ); // for usage in signals/slots
+        qRegisterMetaType<QList<QPointF*>>("QList<QPointF*>");
+        qRegisterMetaType<QQmlListProperty<QPointF>>("QQmlListProperty<QPointF>");
+        qRegisterMetaType<aliceVision::sfmData::SfMData>( "QSharedPtr<aliceVision::sfmData::SfMData>" ); // for usage in signals/slots
 
         qmlRegisterType<FloatImageViewer>(uri, 1, 0, "FloatImageViewer");
         qRegisterMetaType<FloatImage>();
