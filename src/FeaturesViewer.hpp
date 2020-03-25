@@ -12,7 +12,7 @@ namespace qtAliceVision
 {
 
 /**
- * @brief QObject wrapper around a SIOPointFeature.
+ * @brief QObject wrapper around a PointFeature.
  */
 class Feature : public QObject
 {
@@ -27,7 +27,7 @@ public:
     Feature() = default;
     Feature(const Feature& other) { _feat = other._feat; }
 
-    explicit Feature(const aliceVision::feature::SIOPointFeature& feat, QObject* parent=nullptr):
+    explicit Feature(const aliceVision::feature::PointFeature& feat, QObject* parent=nullptr):
     QObject(parent),
     _feat(feat)
     {}
@@ -37,10 +37,10 @@ public:
     inline float scale() const { return _feat.scale(); }
     inline float orientation() const { return _feat.orientation(); }
 
-    const aliceVision::feature::SIOPointFeature& pointFeature() const { return _feat; }
+    const aliceVision::feature::PointFeature& pointFeature() const { return _feat; }
 
 private:
-    aliceVision::feature::SIOPointFeature _feat;
+    aliceVision::feature::PointFeature _feat;
 };
 
 
