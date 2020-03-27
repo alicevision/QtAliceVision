@@ -198,6 +198,7 @@ public:
         "    gl_FragColor.b = color[int(channelOrder[2])];                               \n"
         "    gl_FragColor.a = int(channelOrder[3]) == -1 ? 1.0 : color[int(channelOrder[3])]; \n"
         "    gl_FragColor.a *= qt_Opacity; \n"
+        "    gl_FragColor.rgb *= gl_FragColor.a; \n"
         "}";
     }
 
