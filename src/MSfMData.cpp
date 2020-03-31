@@ -70,7 +70,9 @@ void MSfMData::load()
         setStatus(Error);
         return;
     }
+
     setStatus(Loading);    
+
     // load features from file in a seperate thread
     _ioRunnable = new SfmDataIORunnable(_sfmDataPath);    
     _ioRunnable->setAutoDelete(false);

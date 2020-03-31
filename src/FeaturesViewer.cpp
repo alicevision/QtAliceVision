@@ -62,6 +62,7 @@ void FeaturesViewer::reloadFeatures()
     {
         qWarning() << "[QtAliceVision] FeaturesViewer::reloadFeatures: Start loading features.";
         setLoadingFeatures(true);
+
         // load features from file in a seperate thread
         auto* ioRunnable = new FeatureIORunnable(FeatureIORunnable::IOParams(_folder, _viewId, _describerType));
         connect(ioRunnable, &FeatureIORunnable::resultReady, this, &FeaturesViewer::onFeaturesResultReady);
@@ -77,15 +78,17 @@ void FeaturesViewer::reloadFeatures()
 
 void FeaturesViewer::setMSfmData(MSfMData* sfmData)
 {
+    qWarning() << "[QtAliceVision] FeaturesViewer::setMSfmData: sfmData: " << long(sfmData);
     if(_msfmData != nullptr)
     {
         disconnect(_msfmData, SIGNAL(sfmDataChanged()), this, SIGNAL(sfmDataChanged()));
     }
     _msfmData = sfmData;
-    if(_msfmData != nullptr)
+    if(_msfmData != nullptr && !_features.isEmpty())
     {
         connect(_msfmData, SIGNAL(sfmDataChanged()), this, SIGNAL(sfmDataChanged()));
     }
+    qWarning() << "[QtAliceVision] FeaturesViewer::setMSfmData: _msfmData: " << long(_msfmData);
     Q_EMIT sfmDataChanged();
 }
 
@@ -110,14 +113,18 @@ void FeaturesViewer::onFeaturesResultReady(QList<MFeature*> features)
 
 void FeaturesViewer::clearSfMFromFeatures()
 {
+    qWarning() << "[QtAliceVision] clearSfMFromFeatures: start";
     for(const auto feature: _features)
     {
         feature->clearReconstructionInfo();
     }
+    qWarning() << "[QtAliceVision] clearSfMFromFeatures: end";
 }
 
 void FeaturesViewer::updateFeatureFromSfM()
 {
+    qWarning() << "[QtAliceVision] updateFeatureFromSfM _msfmData: " << long(_msfmData);
+
     if(_msfmData == nullptr)
     {
         qWarning() << "[QtAliceVision] updateFeatureFromSfM: no SfMData";
@@ -152,18 +159,45 @@ void FeaturesViewer::updateFeatureFromSfM()
     const aliceVision::geometry::Pose3 camTransform = pose.getTransform();
     const aliceVision::camera::IntrinsicBase* intrinsic = _msfmData->rawData().getIntrinsicPtr(view.getIntrinsicId());
 
+    qWarning() << "[QtAliceVision] updateFeatureFromSfM SfMData ready to compute: ";
+
+    int numLandmark = 0;
     for(const auto& landmark: _msfmData->rawData().getLandmarks())
     {
+        //qWarning() << "[QtAliceVision] updateFeatureFromSfM SfMData numLandmark: " << numLandmark;
+
         if(landmark.second.descType != descType)
             continue;
+
         auto itObs = landmark.second.observations.find(_viewId);
         if(itObs != landmark.second.observations.end())
         {          
             // setup landmark id and landmark 2d reprojection in the current view
             aliceVision::Vec2 r = intrinsic->project(camTransform, landmark.second.X);
-            _features.at(itObs->second.id_feat)->setReconstructionInfo(landmark.first, r.cast<float>());
+            
+            qWarning() << "[QtAliceVision] updateFeatureFromSfM SfMData _features.size(): " << _features.size();
+            qWarning() << "[QtAliceVision] updateFeatureFromSfM SfMData  r.x: " << r(0) << " r.y: " << r(1);
+            // qWarning() << "[QtAliceVision] updateFeatureFromSfM SfMData _feat.x: " << _features[_nbObservations]->x() << " _feat.y: " << _features[_nbObservations]->y();
+            // qWarning() << "[QtAliceVision] updateFeatureFromSfM SfMData _features[_nbObservations]: " << _features[_nbObservations];
+            qWarning() << "[QtAliceVision] updateFeatureFromSfM itObs->second.id_feat: " << itObs->second.id_feat;
+            qWarning() << "[QtAliceVision] updateFeatureFromSfM itObs->second.x: " << itObs->second.x(0) << ", " << itObs->second.x(1);
+            qWarning() << "[QtAliceVision] updateFeatureFromSfM itObs->second.scale: " << itObs->second.scale;
+
+            if (itObs->second.id_feat >= 0 && itObs->second.id_feat < _features.size())
+            {
+                _features.at(itObs->second.id_feat)->setReconstructionInfo(landmark.first, r.cast<float>());
+                // _features.at(_nbObservations)->setReconstructionInfo(landmark.first, r.cast<float>());
+            }
+            else
+            {
+                qWarning() << "[QtAliceVision] ---------- ERROR id_feat: " << itObs->second.id_feat << ", size: " << _features.size();
+            }
+
             ++_nbObservations;
+            qWarning() << "[QtAliceVision] updateFeatureFromSfM SfMData nbObservation: " << _nbObservations;
+
         }
+      numLandmark++;
     }
 
     Q_EMIT featuresChanged();
@@ -411,7 +445,7 @@ QSGNode* FeaturesViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePai
         node = oldNode;
     }
     updatePaintFeatures(oldNode, node);
-    // updatePaintObservations(oldNode, node);
+    updatePaintObservations(oldNode, node);
 
     return node;
 }

@@ -3,6 +3,7 @@
 #include "FeaturesViewer.hpp"
 #include "FloatImageViewer.hpp"
 #include "MViewStats.hpp"
+//#include "MSfMDataStats.hpp"
 #include <QtQml>
 #include <QQmlExtensionPlugin>
 
@@ -29,6 +30,7 @@ public:
         qmlRegisterType<FeaturesViewer>(uri, 1, 0, "FeaturesViewer");
         qmlRegisterType<MSfMData>(uri, 1, 0, "MSfMData");
         qmlRegisterType<MViewStats>(uri, 1, 0, "MViewStats");
+        //qmlRegisterType<MSfMDataStats>(uri, 1, 0, "MSfMDataStats");
         qmlRegisterUncreatableType<MFeature>(uri, 1, 0, "MFeature", "Cannot create Feature instances from QML.");
         qRegisterMetaType<QList<MFeature*>>( "QList<MFeature*>" ); // for usage in signals/slots
         qRegisterMetaType<QList<QPointF*>>("QList<QPointF*>");
@@ -36,6 +38,7 @@ public:
         qRegisterMetaType<aliceVision::sfmData::SfMData>( "QSharedPtr<aliceVision::sfmData::SfMData>" ); // for usage in signals/slots
 
         qmlRegisterType<FloatImageViewer>(uri, 1, 0, "FloatImageViewer");
+        qRegisterMetaType<QPointF>("QPointF");
         qRegisterMetaType<FloatImage>();
         qRegisterMetaType<QSharedPointer<FloatImage>>();
     }
