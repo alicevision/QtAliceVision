@@ -30,12 +30,18 @@ class FeaturesViewer : public QQuickItem
     Q_PROPERTY(qtAliceVision::MSfMData* msfmData READ getMSfmData WRITE setMSfmData NOTIFY sfmDataChanged)
     /// Display mode (see DisplayMode enum)
     Q_PROPERTY(DisplayMode displayMode MEMBER _displayMode NOTIFY displayModeChanged)
-    /// Features main color
+    /// Features color
     Q_PROPERTY(QColor color MEMBER _color NOTIFY colorChanged)
+    /// Landmarks color
+    Q_PROPERTY(QColor landmarkColor MEMBER _landmarkColor NOTIFY landmarkColorChanged)
     /// Whether features are currently being loaded from file
     Q_PROPERTY(bool loadingFeatures READ loadingFeatures NOTIFY loadingFeaturesChanged)
     /// Whether to clear features between two loadings
     Q_PROPERTY(bool clearFeaturesBeforeLoad MEMBER _clearFeaturesBeforeLoad NOTIFY clearFeaturesBeforeLoadChanged)
+    /// Display all the 2D features extracted from the image
+    Q_PROPERTY(bool displayfeatures MEMBER _displayFeatures NOTIFY displayFeaturesChanged)
+    /// Display the 3D reprojection of the features associated to a landmark
+    Q_PROPERTY(bool displayLandmarks MEMBER _displayLandmarks NOTIFY displayLandmarksChanged)
     /// The list of features
     Q_PROPERTY(QQmlListProperty<qtAliceVision::MFeature> features READ features NOTIFY featuresChanged)
 
@@ -73,8 +79,13 @@ public:
     Q_SIGNAL void featuresChanged();
     Q_SIGNAL void loadingFeaturesChanged();
     Q_SIGNAL void clearFeaturesBeforeLoadChanged();
+
+    Q_SIGNAL void displayFeaturesChanged();
+    Q_SIGNAL void displayLandmarksChanged();
+
     Q_SIGNAL void displayModeChanged();
     Q_SIGNAL void colorChanged();
+    Q_SIGNAL void landmarkColorChanged();
 
 protected:
     /// Reload features from source
@@ -90,21 +101,24 @@ private:
     void updateFeatureFromSfM();
 
     void updatePaintFeatures(QSGNode* oldNode, QSGNode* node);
-    void updatePaintObservations(QSGNode* oldNode, QSGNode* node);
+    void updatePaintLandmarks(QSGNode* oldNode, QSGNode* node);
 
     QUrl _folder;
     aliceVision::IndexT _viewId = aliceVision::UndefinedIndexT;
     QString _describerType = "sift";
     QList<MFeature*> _features;
     MSfMData* _msfmData = nullptr;
-    int _nbObservations = 0; //< number of features associated to a 3D landmark
+    int _nbLandmarks = 0; //< number of features associated to a 3D landmark
     DisplayMode _displayMode = FeaturesViewer::Points;
     QColor _color = QColor(20, 220, 80);
-    QColor _colorReproj = QColor(255, 0, 0);
+    QColor _landmarkColor = QColor(255, 0, 0);
 
     bool _loadingFeatures = false;
     bool _outdatedFeatures = false;
     bool _clearFeaturesBeforeLoad = true;
+
+    bool _displayFeatures = true;
+    bool _displayLandmarks = true;
 };
 
 } // namespace

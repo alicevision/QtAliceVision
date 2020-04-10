@@ -27,7 +27,10 @@ FeaturesViewer::FeaturesViewer(QQuickItem* parent)
     // trigger repaint events
     connect(this, &FeaturesViewer::displayModeChanged, this, &FeaturesViewer::update);
     connect(this, &FeaturesViewer::colorChanged, this, &FeaturesViewer::update);
+    connect(this, &FeaturesViewer::landmarkColorChanged, this, &FeaturesViewer::update);
     connect(this, &FeaturesViewer::featuresChanged, this, &FeaturesViewer::update);
+    connect(this, &FeaturesViewer::displayFeaturesChanged, this, &FeaturesViewer::update);
+    connect(this, &FeaturesViewer::displayLandmarksChanged, this, &FeaturesViewer::update);
 
     // trigger features reload events
     connect(this, &FeaturesViewer::folderChanged, this, &FeaturesViewer::reloadFeatures);
@@ -78,17 +81,17 @@ void FeaturesViewer::reloadFeatures()
 
 void FeaturesViewer::setMSfmData(MSfMData* sfmData)
 {
-    qWarning() << "[QtAliceVision] FeaturesViewer::setMSfmData: sfmData: " << long(sfmData);
+    // qWarning() << "[QtAliceVision] FeaturesViewer::setMSfmData: sfmData: " << long(sfmData);
     if(_msfmData != nullptr)
     {
         disconnect(_msfmData, SIGNAL(sfmDataChanged()), this, SIGNAL(sfmDataChanged()));
     }
     _msfmData = sfmData;
-    if(_msfmData != nullptr && !_features.isEmpty())
+    if(_msfmData != nullptr)
     {
         connect(_msfmData, SIGNAL(sfmDataChanged()), this, SIGNAL(sfmDataChanged()));
     }
-    qWarning() << "[QtAliceVision] FeaturesViewer::setMSfmData: _msfmData: " << long(_msfmData);
+    // qWarning() << "[QtAliceVision] FeaturesViewer::setMSfmData: _msfmData: " << long(_msfmData);
     Q_EMIT sfmDataChanged();
 }
 
@@ -113,17 +116,17 @@ void FeaturesViewer::onFeaturesResultReady(QList<MFeature*> features)
 
 void FeaturesViewer::clearSfMFromFeatures()
 {
-    qWarning() << "[QtAliceVision] clearSfMFromFeatures: start";
+    // qWarning() << "[QtAliceVision] clearSfMFromFeatures: start";
     for(const auto feature: _features)
     {
         feature->clearReconstructionInfo();
     }
-    qWarning() << "[QtAliceVision] clearSfMFromFeatures: end";
+    // qWarning() << "[QtAliceVision] clearSfMFromFeatures: end";
 }
 
 void FeaturesViewer::updateFeatureFromSfM()
 {
-    qWarning() << "[QtAliceVision] updateFeatureFromSfM _msfmData: " << long(_msfmData);
+    // qWarning() << "[QtAliceVision] updateFeatureFromSfM _msfmData: " << long(_msfmData);
 
     if(_msfmData == nullptr)
     {
@@ -133,7 +136,7 @@ void FeaturesViewer::updateFeatureFromSfM()
     }
     if(_msfmData->status() != MSfMData::Ready)
     {
-        qWarning() << "[QtAliceVision] updateFeatureFromSfM: SfMData is not ready";
+        qWarning() << "[QtAliceVision] updateFeatureFromSfM: SfMData is not ready: " << _msfmData->status();
         clearSfMFromFeatures();
         return;
     }
@@ -150,7 +153,7 @@ void FeaturesViewer::updateFeatureFromSfM()
         return;
     }
 
-    _nbObservations = 0;
+    _nbLandmarks = 0;
     // Update newly loaded features with information from the sfmData
     aliceVision::feature::EImageDescriberType descType = aliceVision::feature::EImageDescriberType_stringToEnum(_describerType.toStdString());
 
@@ -159,7 +162,7 @@ void FeaturesViewer::updateFeatureFromSfM()
     const aliceVision::geometry::Pose3 camTransform = pose.getTransform();
     const aliceVision::camera::IntrinsicBase* intrinsic = _msfmData->rawData().getIntrinsicPtr(view.getIntrinsicId());
 
-    qWarning() << "[QtAliceVision] updateFeatureFromSfM SfMData ready to compute: ";
+   // qWarning() << "[QtAliceVision] updateFeatureFromSfM SfMData ready to compute: ";
 
     int numLandmark = 0;
     for(const auto& landmark: _msfmData->rawData().getLandmarks())
@@ -174,30 +177,20 @@ void FeaturesViewer::updateFeatureFromSfM()
         {          
             // setup landmark id and landmark 2d reprojection in the current view
             aliceVision::Vec2 r = intrinsic->project(camTransform, landmark.second.X);
-            
-            qWarning() << "[QtAliceVision] updateFeatureFromSfM SfMData _features.size(): " << _features.size();
-            qWarning() << "[QtAliceVision] updateFeatureFromSfM SfMData  r.x: " << r(0) << " r.y: " << r(1);
-            // qWarning() << "[QtAliceVision] updateFeatureFromSfM SfMData _feat.x: " << _features[_nbObservations]->x() << " _feat.y: " << _features[_nbObservations]->y();
-            // qWarning() << "[QtAliceVision] updateFeatureFromSfM SfMData _features[_nbObservations]: " << _features[_nbObservations];
-            qWarning() << "[QtAliceVision] updateFeatureFromSfM itObs->second.id_feat: " << itObs->second.id_feat;
-            qWarning() << "[QtAliceVision] updateFeatureFromSfM itObs->second.x: " << itObs->second.x(0) << ", " << itObs->second.x(1);
-            qWarning() << "[QtAliceVision] updateFeatureFromSfM itObs->second.scale: " << itObs->second.scale;
 
             if (itObs->second.id_feat >= 0 && itObs->second.id_feat < _features.size())
             {
                 _features.at(itObs->second.id_feat)->setReconstructionInfo(landmark.first, r.cast<float>());
-                // _features.at(_nbObservations)->setReconstructionInfo(landmark.first, r.cast<float>());
             }
-            else
+            else if(!_features.empty())
             {
                 qWarning() << "[QtAliceVision] ---------- ERROR id_feat: " << itObs->second.id_feat << ", size: " << _features.size();
             }
 
-            ++_nbObservations;
-            qWarning() << "[QtAliceVision] updateFeatureFromSfM SfMData nbObservation: " << _nbObservations;
-
+            ++_nbLandmarks;
+            //  qWarning() << "[QtAliceVision] updateFeatureFromSfM SfMData nbObservation: " << _nbObservations;
         }
-      numLandmark++;
+        ++numLandmark;
     }
 
     Q_EMIT featuresChanged();
@@ -205,45 +198,48 @@ void FeaturesViewer::updateFeatureFromSfM()
 
 void FeaturesViewer::updatePaintFeatures(QSGNode* oldNode, QSGNode* node)
 {
-    unsigned int featVertices = 0;
-    unsigned int featIndices = 0;
+    unsigned int kFeatVertices = 0;
+    unsigned int kFeatIndices = 0;
 
     switch(_displayMode)
     {
     case FeaturesViewer::Points:
-        featVertices = 1;
+        kFeatVertices = 1;
         break;
     case FeaturesViewer::Squares:
-        featVertices = 4;
-        featIndices = 6;
+        kFeatVertices = 4;
+        kFeatIndices = 6;
         break;
     case FeaturesViewer::OrientedSquares:
-        featVertices = (4 * 2) + 2;  // doubled rectangle points + orientation line
+        kFeatVertices = (4 * 2) + 2;  // doubled rectangle points + orientation line
         break;
     }
-
+    std::size_t displayNbFeatures = _displayFeatures ? _features.size() : 0;
     QSGGeometry* geometry = nullptr;
     if(!oldNode)
     {
-        auto root = new QSGGeometryNode;
+        if(_displayFeatures)
         {
-            // use VertexColorMaterial to later be able to draw selection in another color
-            auto material = new QSGVertexColorMaterial;
-            geometry = new QSGGeometry(
-                QSGGeometry::defaultAttributes_ColoredPoint2D(),
-                static_cast<int>(_features.size() * featVertices),
-                static_cast<int>(_features.size() * featIndices),
-                QSGGeometry::UnsignedIntType);
+            auto root = new QSGGeometryNode;
+            {
+                // use VertexColorMaterial to later be able to draw selection in another color
+                auto material = new QSGVertexColorMaterial;
+                geometry = new QSGGeometry(
+                    QSGGeometry::defaultAttributes_ColoredPoint2D(),
+                    static_cast<int>(displayNbFeatures * kFeatVertices),
+                    static_cast<int>(displayNbFeatures* kFeatIndices),
+                    QSGGeometry::UnsignedIntType);
 
-            geometry->setIndexDataPattern(QSGGeometry::StaticPattern);
-            geometry->setVertexDataPattern(QSGGeometry::StaticPattern);
+                geometry->setIndexDataPattern(QSGGeometry::StaticPattern);
+                geometry->setVertexDataPattern(QSGGeometry::StaticPattern);
 
-            root->setGeometry(geometry);
-            root->setFlags(QSGNode::OwnsGeometry);
-            root->setFlags(QSGNode::OwnsMaterial);
-            root->setMaterial(material);
+                root->setGeometry(geometry);
+                root->setFlags(QSGNode::OwnsGeometry);
+                root->setFlags(QSGNode::OwnsMaterial);
+                root->setMaterial(material);
+            }
+            node->appendChildNode(root);
         }
-        node->appendChildNode(root);
     }
     else
     {
@@ -251,16 +247,22 @@ void FeaturesViewer::updatePaintFeatures(QSGNode* oldNode, QSGNode* node)
         root->markDirty(QSGNode::DirtyGeometry);
         geometry = root->geometry();
         geometry->allocate(
-            static_cast<int>(_features.size() * featVertices),
-            static_cast<int>(_features.size() * featIndices)
+            static_cast<int>(displayNbFeatures * kFeatVertices),
+            static_cast<int>(displayNbFeatures * kFeatIndices)
         );
+    }
+
+    if(!_displayFeatures)
+    {
+        // qWarning() << "[QtAliceVision] updatePaintLandmarks display features disabled";
+        return;
     }
 
     switch(_displayMode)
     {
     case FeaturesViewer::Points:
         geometry->setDrawingMode(QSGGeometry::DrawPoints);
-        geometry->setLineWidth(3.0f);
+        geometry->setLineWidth(6.0f);
         break;
     case FeaturesViewer::Squares:
         geometry->setDrawingMode(QSGGeometry::DrawTriangles);
@@ -277,7 +279,7 @@ void FeaturesViewer::updatePaintFeatures(QSGNode* oldNode, QSGNode* node)
     // utility lambda to register a vertex
     const auto setVertice = [&](unsigned int index, const QPointF& point, bool isReconstructed)
     {
-        QColor c = (isReconstructed ? _colorReproj : _color);
+        QColor c = _color; // (isReconstructed ? _colorReproj : _color);
         vertices[index].set(
             point.x(), point.y(),
             c.red(), c.green(), c.blue(), c.alpha()
@@ -289,10 +291,10 @@ void FeaturesViewer::updatePaintFeatures(QSGNode* oldNode, QSGNode* node)
         const auto& f = _features.at(i);
         bool isReconstructed = f->landmarkId() > 0;
         auto& feat = f->pointFeature();
-        const auto radius = feat.scale(); // TODO: size
+        const auto radius = feat.scale();
         const auto diag = 2.0 * feat.scale();
-        unsigned int vidx = i*featVertices;
-        unsigned int iidx = i*featIndices;
+        unsigned int vidx = i*kFeatVertices;
+        unsigned int iidx = i*kFeatIndices;
 
         if(_displayMode == FeaturesViewer::Points)
         {
@@ -347,63 +349,115 @@ void FeaturesViewer::updatePaintFeatures(QSGNode* oldNode, QSGNode* node)
 
 }
 
-void FeaturesViewer::updatePaintObservations(QSGNode* oldNode, QSGNode* node)
+void FeaturesViewer::updatePaintLandmarks(QSGNode* oldNode, QSGNode* node)
 {
-    unsigned int reprojectionVertices = 2;
+    const unsigned int kReprojectionVertices = 2;
     //
+    int displayNbLandmarks = _displayLandmarks ? _nbLandmarks : 0;
 
-    QSGGeometry* geometry = nullptr;
+    QSGGeometry* geometryLine = nullptr;
+    QSGGeometry* geometryPoint = nullptr;
     if(!oldNode)
     {
-        auto root = new QSGGeometryNode;
-        // use VertexColorMaterial to later be able to draw selection in another color
-        auto material = new QSGVertexColorMaterial;
+        if(_displayLandmarks)
         {
-            geometry = new QSGGeometry(
-                QSGGeometry::defaultAttributes_ColoredPoint2D(),
-                static_cast<int>(_nbObservations * reprojectionVertices),
-                static_cast<int>(0),
-                QSGGeometry::UnsignedIntType);
+            {
+                auto root = new QSGGeometryNode;
+                // use VertexColorMaterial to later be able to draw selection in another color
+                auto material = new QSGVertexColorMaterial;
+                {
+                    geometryLine = new QSGGeometry(
+                        QSGGeometry::defaultAttributes_ColoredPoint2D(),
+                        static_cast<int>(displayNbLandmarks * kReprojectionVertices),
+                        static_cast<int>(0),
+                        QSGGeometry::UnsignedIntType);
 
-            geometry->setIndexDataPattern(QSGGeometry::StaticPattern);
-            geometry->setVertexDataPattern(QSGGeometry::StaticPattern);
+                    geometryLine->setIndexDataPattern(QSGGeometry::StaticPattern);
+                    geometryLine->setVertexDataPattern(QSGGeometry::StaticPattern);
 
-            root->setGeometry(geometry);
-            root->setFlags(QSGNode::OwnsGeometry);
-            root->setFlags(QSGNode::OwnsMaterial);
-            root->setMaterial(material);
+                    root->setGeometry(geometryLine);
+                    root->setFlags(QSGNode::OwnsGeometry);
+                    root->setFlags(QSGNode::OwnsMaterial);
+                    root->setMaterial(material);
+                }
+                node->appendChildNode(root);
+            }
+            {
+                auto root = new QSGGeometryNode;
+                // use VertexColorMaterial to later be able to draw selection in another color
+                auto material = new QSGVertexColorMaterial;
+                {
+                    geometryPoint = new QSGGeometry(
+                        QSGGeometry::defaultAttributes_ColoredPoint2D(),
+                        static_cast<int>(displayNbLandmarks),
+                        static_cast<int>(0),
+                        QSGGeometry::UnsignedIntType);
+
+                    geometryPoint->setIndexDataPattern(QSGGeometry::StaticPattern);
+                    geometryPoint->setVertexDataPattern(QSGGeometry::StaticPattern);
+
+                    root->setGeometry(geometryPoint);
+                    root->setFlags(QSGNode::OwnsGeometry);
+                    root->setFlags(QSGNode::OwnsMaterial);
+                    root->setMaterial(material);
+                }
+                node->appendChildNode(root);
+            }
         }
-        node->appendChildNode(root);
     }
     else
     {
-        auto* root = static_cast<QSGGeometryNode*>(oldNode->lastChild());
-        root->markDirty(QSGNode::DirtyGeometry);
-        geometry = root->geometry();
-        geometry->allocate(
-            static_cast<int>(_nbObservations * reprojectionVertices),
+        auto* rootLine = static_cast<QSGGeometryNode*>(oldNode->childAtIndex(1));
+        auto* rootPoint = static_cast<QSGGeometryNode*>(oldNode->childAtIndex(2));
+
+        rootLine->markDirty(QSGNode::DirtyGeometry);
+        rootPoint->markDirty(QSGNode::DirtyGeometry);
+
+        geometryLine = rootLine->geometry();
+        geometryLine->allocate(
+            static_cast<int>(displayNbLandmarks * kReprojectionVertices),
+            static_cast<int>(0)
+        );
+        geometryPoint = rootPoint->geometry();
+        geometryPoint->allocate(
+            static_cast<int>(displayNbLandmarks),
             static_cast<int>(0)
         );
     }
 
-    geometry->setDrawingMode(QSGGeometry::DrawLines);
-    geometry->setLineWidth(1.0f);
+    if(!_displayLandmarks)
+    {
+        // qWarning() << "[QtAliceVision] updatePaintLandmarks display landmarks disabled";
+        return;
+    }
 
-    QSGGeometry::ColoredPoint2D* vertices = geometry->vertexDataAsColoredPoint2D();
+    geometryLine->setDrawingMode(QSGGeometry::DrawLines);
+    geometryLine->setLineWidth(2.0f);
+
+    geometryPoint->setDrawingMode(QSGGeometry::DrawPoints);
+    geometryPoint->setLineWidth(6.0f);
+
+    QSGGeometry::ColoredPoint2D* verticesLines = geometryLine->vertexDataAsColoredPoint2D();
+    QSGGeometry::ColoredPoint2D* verticesPoints = geometryPoint->vertexDataAsColoredPoint2D();
 
     // utility lambda to register a vertex
-    const auto setVertice = [&](unsigned int index, const QPointF& point, bool isReconstructed)
+    const auto setVerticeLine = [&](unsigned int index, const QPointF& point)
     {
-        vertices[index].set(
+        verticesLines[index].set(
             point.x(), point.y(),
-            _colorReproj.red(), _colorReproj.green(), _colorReproj.blue(), _colorReproj.alpha()
+            _landmarkColor.red(), _landmarkColor.green(), _landmarkColor.blue(), _landmarkColor.alpha()
+        );
+    };
+    const auto setVerticePoint = [&](unsigned int index, const QPointF& point)
+    {
+        verticesPoints[index].set(
+            point.x(), point.y(),
+            _landmarkColor.red(), _landmarkColor.green(), _landmarkColor.blue(), _landmarkColor.alpha()
         );
     };
 
-    geometry->setDrawingMode(QSGGeometry::DrawLines);
-    geometry->setLineWidth(1.0f);
-    int obsI = 0;
     // Draw lines between reprojected points and features extracted
+    int obsI = 0;
     for(int i = 0; i < _features.size(); ++i)
     {
         const auto& f = _features.at(i);
@@ -412,19 +466,23 @@ void FeaturesViewer::updatePaintObservations(QSGNode* oldNode, QSGNode* node)
         float rx = f->rx();
         float ry = f->ry();
 
-        bool isReconstructed = f->landmarkId() > 0;
+        bool isReconstructed = f->landmarkId() >= 0;
         if(isReconstructed)
         {
             auto& feat = f->pointFeature();
 
-            unsigned int vidx = obsI * reprojectionVertices;
+            unsigned int vidx = obsI * kReprojectionVertices;
 
-            setVertice(vidx, QPointF(x, y), isReconstructed);
-            setVertice(vidx+1, QPointF(rx, ry), isReconstructed);
+            setVerticeLine(vidx, QPointF(x, y));
+            setVerticeLine(vidx+1, QPointF(rx, ry));
+
+            setVerticePoint(obsI, QPointF(rx, ry));
+
             ++obsI;
         }
-   }
-   qWarning() << "[QtAliceVision] updatePaintObservations _nbObservations: " << _nbObservations << ", obsI: " << obsI;
+    }
+
+    qWarning() << "[QtAliceVision] updatePaintLandmarks _nbLandmarks: " << displayNbLandmarks << ", obsI: " << obsI;
 }
 
 QSGNode* FeaturesViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePaintNodeData* data)
@@ -444,8 +502,10 @@ QSGNode* FeaturesViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePai
     {
         node = oldNode;
     }
+
     updatePaintFeatures(oldNode, node);
-    updatePaintObservations(oldNode, node);
+
+    updatePaintLandmarks(oldNode, node);
 
     return node;
 }
