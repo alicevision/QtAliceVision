@@ -228,70 +228,93 @@ void MViewStats::computeViewStats()
     using namespace aliceVision;
     // residual histogram
     {
-        // residual histogram of all views
-        MinMaxMeanMedian<double> residualFullStats;
-        sfm::computeResidualsHistogram(_msfmData->rawData(), residualFullStats, &_residualHistogramFull);
-
-        double nbCameras = double(_msfmData->nbCameras());
-
-        // normalize the histogram to get the average number of observations
-        std::vector<size_t>& residualFullHistY = _residualHistogramFull.GetHist();
-        for(std::size_t i = 0; i < residualFullHistY.size(); ++i)
-        {
-            residualFullHistY[i] = std::round(residualFullHistY[i] / nbCameras);
-        }
-        std::vector<double> residualHistX = _residualHistogramFull.GetXbinsValue();
-        assert(residualHistX.size() == residualFullHistY.size());
-
-        // residual histogram of current view
-        MinMaxMeanMedian<double> residualViewStats;
-        sfm::computeResidualsHistogram(_msfmData->rawData(), residualViewStats, &_residualHistogramView, {_viewId});
-        std::vector<size_t>& residualViewHistY = _residualHistogramView.GetHist();
-        assert(residualHistX.size() == residualViewHistY.size());
-
-        // compute max values per axis
+        // Init max values per axis
         _residualMaxAxisX = 0.0;
         _residualMaxAxisY = 0.0;
-        for(std::size_t i = 0; i < residualHistX.size(); ++i)
+
         {
-            _residualMaxAxisX = round(std::max(_residualMaxAxisX, residualHistX[i]));
-            _residualMaxAxisY = round(std::max(_residualMaxAxisY , double(residualFullHistY[i])));
-            _residualMaxAxisY = round(std::max(_residualMaxAxisY , double(residualViewHistY[i])));
+            // residual histogram of all views
+            BoxStats<double> residualFullStats;
+            sfm::computeResidualsHistogram(_msfmData->rawData(), residualFullStats, &_residualHistogramFull);
+
+            double nbCameras = double(_msfmData->nbCameras());
+
+            // normalize the histogram to get the average number of observations
+            std::vector<size_t>& residualFullHistY = _residualHistogramFull.GetHist();
+            for(std::size_t i = 0; i < residualFullHistY.size(); ++i)
+            {
+                residualFullHistY[i] = std::round(residualFullHistY[i] / nbCameras);
+            }
+            std::vector<double> residualHistX = _residualHistogramFull.GetXbinsValue();
+            assert(residualHistX.size() == residualFullHistY.size());
+            for(std::size_t i = 0; i < residualFullHistY.size(); ++i)
+            {
+                _residualMaxAxisX = round(std::max(_residualMaxAxisX, residualHistX[i]));
+                _residualMaxAxisY = round(std::max(_residualMaxAxisY , double(residualFullHistY[i])));
+            }
+        }
+        {
+            // residual histogram of current view
+            BoxStats<double> residualViewStats;
+            sfm::computeResidualsHistogram(_msfmData->rawData(), residualViewStats, &_residualHistogramView, {_viewId});
+            std::vector<size_t>& residualViewHistY = _residualHistogramView.GetHist();
+            std::vector<double> residualHistX = _residualHistogramView.GetXbinsValue();
+            assert(residualHistX.size() == residualViewHistY.size());
+
+            for(std::size_t i = 0; i < residualViewHistY.size(); ++i)
+            {
+                _residualMaxAxisX = round(std::max(_residualMaxAxisX, residualHistX[i]));
+                _residualMaxAxisY = round(std::max(_residualMaxAxisY , double(residualViewHistY[i])));
+            }
         }
     }
 
-
-    _nbObservations = 0;
-    // observationsLengths histogram
+    _nbObservations = 0; 
     {
-        // observationsLengths histogram of all views
-        MinMaxMeanMedian<double> observationsLengthsFullStats;
-        sfm::computeObservationsLengthsHistogram(_msfmData->rawData(), observationsLengthsFullStats, _nbObservations, &_observationsLengthsHistogramFull);
-
-        std::vector<double> observationsLengthsHistX = _observationsLengthsHistogramFull.GetXbinsValue();
-        std::vector<size_t> observationsLengthsFullHistY = _observationsLengthsHistogramFull.GetHist();
-        assert(observationsLengthsHistX.size() == observationsLengthsFullHistY.size());
-
-        // observationsLengths histogram of current view
-        MinMaxMeanMedian<double> observationsLengthsViewStats;
-        sfm::computeObservationsLengthsHistogram(_msfmData->rawData(), observationsLengthsViewStats, _nbObservations, &_observationsLengthsHistogramView, {_viewId});
-        std::vector<size_t> observationsLengthsViewHistY = _observationsLengthsHistogramView.GetHist();
-        assert(observationsLengthsHistX.size() == observationsLengthsViewHistY.size());
-
         _observationsLengthsMaxAxisX = 0.0;
         _observationsLengthsMaxAxisY = 0.0;
-        for(std::size_t i = 0; i < observationsLengthsHistX.size(); ++i)
+        // observationsLengths histogram
         {
-            _observationsLengthsMaxAxisX = round(std::max(_observationsLengthsMaxAxisX, observationsLengthsHistX[i]));
-            _observationsLengthsMaxAxisY = round(std::max(_observationsLengthsMaxAxisY, double(observationsLengthsFullHistY[i])));
-            _observationsLengthsMaxAxisY = round(std::max(_observationsLengthsMaxAxisY, double(observationsLengthsViewHistY[i])));
+            // observationsLengths histogram of all views
+            BoxStats<double> observationsLengthsFullStats;
+            sfm::computeObservationsLengthsHistogram(_msfmData->rawData(), observationsLengthsFullStats, _nbObservations, &_observationsLengthsHistogramFull);
+
+            double nbCameras = double(_msfmData->nbCameras());
+            std::vector<size_t> observationsLengthsFullHistY = _observationsLengthsHistogramFull.GetHist();
+
+            // normalize the histogram to get the average number of observations
+            for(std::size_t i = 0; i < observationsLengthsFullHistY.size(); ++i)
+            {
+                observationsLengthsFullHistY[i] = round(observationsLengthsFullHistY[i] / nbCameras);
+            }
+            std::vector<double> observationsLengthsHistX = _observationsLengthsHistogramFull.GetXbinsValue();
+            assert(observationsLengthsHistX.size() == observationsLengthsFullHistY.size());
+            for(std::size_t i =0; i < observationsLengthsFullHistY.size(); ++i)
+            {
+                _observationsLengthsMaxAxisX = round(std::max(_observationsLengthsMaxAxisX, observationsLengthsHistX[i]));
+                _observationsLengthsMaxAxisY = round(std::max(_observationsLengthsMaxAxisY, double(observationsLengthsFullHistY[i])));
+            }
+        }
+        {
+            // observationsLengths histogram of current view
+            BoxStats<double> observationsLengthsViewStats;
+            sfm::computeObservationsLengthsHistogram(_msfmData->rawData(), observationsLengthsViewStats, _nbObservations, &_observationsLengthsHistogramView, {_viewId});
+            std::vector<size_t> observationsLengthsViewHistY = _observationsLengthsHistogramView.GetHist();
+            std::vector<double> observationsLengthsHistX = _observationsLengthsHistogramView.GetXbinsValue();
+            assert(observationsLengthsHistX.size() == observationsLengthsViewHistY.size());
+
+            for(std::size_t i = 0; i < observationsLengthsViewHistY.size(); ++i)
+            {
+                _observationsLengthsMaxAxisX = round(std::max(_observationsLengthsMaxAxisX, observationsLengthsHistX[i]));
+                _observationsLengthsMaxAxisY = round(std::max(_observationsLengthsMaxAxisY, double(observationsLengthsViewHistY[i])));
+            }
         }
     }
 
     // scale histogram
     {
         // histogram of observations Scale of all views
-        MinMaxMeanMedian<double> observationsScaleFullStats;
+        BoxStats<double> observationsScaleFullStats;
         sfm::computeScaleHistogram(_msfmData->rawData(), observationsScaleFullStats, &_observationsScaleHistogramFull);
 
         double nbCameras = double(_msfmData->nbCameras());
@@ -306,7 +329,7 @@ void MViewStats::computeViewStats()
         assert(observationsScaleHistX.size() == observationsScaleFullHistY.size());
 
         // histrogram of observations Scale of current view
-        MinMaxMeanMedian<double> observationsScaleViewStats;
+        BoxStats<double> observationsScaleViewStats;
         sfm::computeScaleHistogram(_msfmData->rawData(), observationsScaleViewStats, &_observationsScaleHistogramView, {_viewId});
         std::vector<size_t> observationsScaleViewHistY = _observationsScaleHistogramView.GetHist();
         assert(observationsScaleHistX.size() == observationsScaleViewHistY.size());

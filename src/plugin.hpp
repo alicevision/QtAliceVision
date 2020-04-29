@@ -3,7 +3,7 @@
 #include "FeaturesViewer.hpp"
 #include "FloatImageViewer.hpp"
 #include "MViewStats.hpp"
-//#include "MSfMDataStats.hpp"
+#include "MSfMDataStats.hpp"
 #include <QtQml>
 #include <QQmlExtensionPlugin>
 
@@ -30,7 +30,7 @@ public:
         qmlRegisterType<FeaturesViewer>(uri, 1, 0, "FeaturesViewer");
         qmlRegisterType<MSfMData>(uri, 1, 0, "MSfMData");
         qmlRegisterType<MViewStats>(uri, 1, 0, "MViewStats");
-        //qmlRegisterType<MSfMDataStats>(uri, 1, 0, "MSfMDataStats");
+        qmlRegisterType<MSfMDataStats>(uri, 1, 0, "MSfMDataStats");
         qmlRegisterUncreatableType<MFeature>(uri, 1, 0, "MFeature", "Cannot create Feature instances from QML.");
         qRegisterMetaType<QList<MFeature*>>( "QList<MFeature*>" ); // for usage in signals/slots
         qRegisterMetaType<QList<QPointF*>>("QList<QPointF*>");

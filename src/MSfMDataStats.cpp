@@ -20,16 +20,62 @@ void MSfMDataStats::fillLandmarksPerViewSerie(QXYSeries* landmarksPerView)
         return;
     }
 
-    std::vector<double> landmarksPerViewHistX = _landmarksPerViewHistogram.GetXbinsValue();
-    std::vector<size_t> landmarksPerViewHistY = _landmarksPerViewHistogram.GetHist();
-    assert(landmarksPerViewHistX.size() == landmarksPerViewHistY.size());
-    for(std::size_t i = 0; i < landmarksPerViewHistX.size(); ++i)
+    qWarning() << "[QtAliceVision]  MSfMDataStats::fillLandmarksPerViewSerie: _nbLandmarksPerView: " << _nbLandmarksPerView.size();
+
+    for(std::size_t i = 0; i < _landmarksPerViewMaxAxisX; ++i)
     {
-        landmarksPerView->append(double(landmarksPerViewHistX[i]), double(landmarksPerViewHistY[i]));
+        landmarksPerView->append(double(i), double(_nbLandmarksPerView[i]));
     }
 
     qWarning() << "[QtAliceVision] MSfMDataStats::fillLandmarksPerViewSerie: landmarksPerView size (" << landmarksPerView->count() << ")";
+}
 
+void MSfMDataStats::fillFeaturesPerViewSerie(QXYSeries* featuresPerView)
+{
+    if(featuresPerView == nullptr)
+    {
+        qWarning() << "[QtAliceVision] MSfMDataStats::fillFeaturesPerViewSerie: no featuresPerView";
+        return;
+    }
+    featuresPerView->clear();
+
+    if(_msfmData == nullptr)
+    {
+        qWarning() << "[QtAliceVision] MSfMDataStats::fillFeaturesPerViewSerie: no SfMData loaded";
+        return;
+    }
+
+    qWarning() << "[QtAliceVision]  MSfMDataStats::fillFeaturesPerViewSerie: _nbLandmarksPerView: " << _nbFeaturesPerView.size();
+
+    for(std::size_t i = 0; i < _landmarksPerViewMaxAxisX; ++i)
+    {
+        featuresPerView->append(double(i), double(_nbFeaturesPerView[i]));
+    }
+
+    qWarning() << "[QtAliceVision] MSfMDataStats::fillFeaturesPerViewSerie: featuresPerView size (" << featuresPerView->count() << ")";
+}
+
+void MSfMDataStats::fillTracksPerViewSerie(QXYSeries* tracksPerView)
+{
+    if(tracksPerView == nullptr)
+    {
+        qWarning() << "[QtAliceVision] MSfMDataStats::fillTracksPerViewSerie: no tracksPerView";
+        return;
+    }
+    tracksPerView->clear();
+
+    if(_msfmData == nullptr)
+    {
+        qWarning() << "[QtAliceVision] MSfMDataStats::fillTracksPerViewSerie: no SfMData loaded";
+        return;
+    }
+
+    for(std::size_t i = 0; i < _landmarksPerViewMaxAxisX; ++i)
+    {
+        tracksPerView->append(double(i), double(_nbTracksPerView[i]));
+    }
+
+    qWarning() << "[QtAliceVision] MSfMDataStats::fillTracksPerViewSerie: tracksPerView size (" << tracksPerView->count() << ")";
 }
 
 void MSfMDataStats::fillResidualsMinPerViewSerie(QXYSeries* residualsPerView)
@@ -124,35 +170,232 @@ void MSfMDataStats::fillResidualsMedianPerViewSerie(QXYSeries* residualsPerView)
     qWarning() << "[QtAliceVision] MSfMDataStats::fillResidualsPerViewSerie: residualsPerView size (" << residualsPerView->count() << ")";
 }
 
-void MSfMDataStats::fillPointsValidatedPerViewSerie(QXYSeries* pointsValidatedPerView)
+void MSfMDataStats::fillResidualsFirstQuartilePerViewSerie(QXYSeries* residualsPerView)
 {
-    if(pointsValidatedPerView == nullptr)
+    if(residualsPerView == nullptr)
     {
-        qWarning() << "[QtAliceVision] MSfMDataStats::fillPointsValidatedPerViewSerie: no pointsValidatedPerView";
+        qWarning() << "[QtAliceVision] MSfMDataStats::fillResidualsFirstQuartilePerViewSerie: no residualsPerView";
         return;
     }
-    pointsValidatedPerView->clear();
+    residualsPerView->clear();
 
     if(_msfmData == nullptr)
     {
-        qWarning() << "[QtAliceVision]  MSfMDataStats::fillPointsValidatedPerViewSerie: no SfMData loaded";
+        qWarning() << "[QtAliceVision] MSfMDataStats::fillResidualsFirstQuartilePerViewSerie: no SfMData loaded";
         return;
     }
 
-    for(int i = 0; i < _pointsValidatedPerViewMaxAxisX; ++i)
+    for(int i = 0; i < _residualsPerViewMaxAxisX; ++i)
     {
-        //pointsValidatedPerView->append(i, double(_nbResidualsPerViewMedian[i]));
+        residualsPerView->append(i, double(_nbResidualsPerViewFirstQuartile[i]));
     }
 
-    qWarning() << "[QtAliceVision]  MSfMDataStats::fillPointsValidatedPerViewSerie: pointsValidatedPerView size (" << pointsValidatedPerView->count() << ")";
-
+    qWarning() << "[QtAliceVision] MSfMDataStats::fillResidualsFirstQuartilePerViewSerie: residualsPerView size (" << residualsPerView->count() << ")";
 }
+
+void MSfMDataStats::fillResidualsThirdQuartilePerViewSerie(QXYSeries* residualsPerView)
+{
+    if(residualsPerView == nullptr)
+    {
+        qWarning() << "[QtAliceVision] MSfMDataStats::fillResidualsThirdQuartilePerViewSerie: no residualsPerView";
+        return;
+    }
+    residualsPerView->clear();
+
+    if(_msfmData == nullptr)
+    {
+        qWarning() << "[QtAliceVision] MSfMDataStats::fillResidualsThirdQuartilePerViewSerie: no SfMData loaded";
+        return;
+    }
+
+    for(int i = 0; i < _residualsPerViewMaxAxisX; ++i)
+    {
+        residualsPerView->append(i, double(_nbResidualsPerViewThirdQuartile[i]));
+    }
+
+    qWarning() << "[QtAliceVision] MSfMDataStats::fillResidualsThirdQuartilePerViewSerie: residualsPerView size (" << residualsPerView->count() << ")";
+}
+
+void MSfMDataStats::fillObservationsLengthsMinPerViewSerie(QXYSeries* observationsLengthsPerView)
+{
+    if(observationsLengthsPerView == nullptr)
+    {
+        qWarning() << "[QtAliceVision] MSfMDataStats::fillObservationsLengthsMinPerViewSerie: no observationsLengthsPerView";
+        return;
+    }
+    observationsLengthsPerView->clear();
+
+    if(_msfmData == nullptr)
+    {
+        qWarning() << "[QtAliceVision] MSfMDataStats::fillObservationsLengthsMinPerViewSerie: no SfMData loaded";
+        return;
+    }
+
+    for(int i = 0; i < _observationsLengthsPerViewMaxAxisX; ++i)
+    {
+        observationsLengthsPerView->append(i, double(_nbObservationsLengthsPerViewMin[i]));
+    }
+
+    qWarning() << "[QtAliceVision] MSfMDataStats::fillObservationsLengthsMinPerViewSerie: observationsLengthsPerView size (" << observationsLengthsPerView->count() << ")";
+}
+
+void MSfMDataStats::fillObservationsLengthsMaxPerViewSerie(QXYSeries* observationsLengthsPerView)
+{
+    if(observationsLengthsPerView == nullptr)
+    {
+        qWarning() << "[QtAliceVision] MSfMDataStats::fillObservationsLengthsMaxPerViewSerie: no observationsLengthsPerView";
+        return;
+    }
+    observationsLengthsPerView->clear();
+
+    if(_msfmData == nullptr)
+    {
+        qWarning() << "[QtAliceVision] MSfMDataStats::fillObservationsLengthsMaxPerViewSerie: no SfMData loaded";
+        return;
+    }
+
+    for(int i = 0; i < _observationsLengthsPerViewMaxAxisX; ++i)
+    {
+        observationsLengthsPerView->append(i, double(_nbObservationsLengthsPerViewMax[i]));
+    }
+
+    qWarning() << "[QtAliceVision] MSfMDataStats::fillObservationsLengthsMaxPerViewSerie: observationsLengthsPerView size (" << observationsLengthsPerView->count() << ")";
+}
+
+void MSfMDataStats::fillObservationsLengthsMeanPerViewSerie(QXYSeries* observationsLengthsPerView)
+{
+    if(observationsLengthsPerView == nullptr)
+    {
+        qWarning() << "[QtAliceVision] MSfMDataStats::fillObservationsLengthsMeanPerViewSerie: no observationsLengthsPerView";
+        return;
+    }
+    observationsLengthsPerView->clear();
+
+    if(_msfmData == nullptr)
+    {
+        qWarning() << "[QtAliceVision] MSfMDataStats::fillObservationsLengthsMeanPerViewSerie: no SfMData loaded";
+        return;
+    }
+
+    for(int i = 0; i < _observationsLengthsPerViewMaxAxisX; ++i)
+    {
+        observationsLengthsPerView->append(i, double(_nbObservationsLengthsPerViewMean[i]));
+    }
+
+    qWarning() << "[QtAliceVision] MSfMDataStats::fillObservationsLengthsMeanPerViewSerie: observationsLengthsPerView size (" << observationsLengthsPerView->count() << ")";
+}
+
+void MSfMDataStats::fillObservationsLengthsMedianPerViewSerie(QXYSeries* observationsLengthsPerView)
+{
+    if(observationsLengthsPerView == nullptr)
+    {
+        qWarning() << "[QtAliceVision] MSfMDataStats::fillObservationsLengthsMedianPerViewSerie: no observationsLengthsPerView";
+        return;
+    }
+    observationsLengthsPerView->clear();
+
+    if(_msfmData == nullptr)
+    {
+        qWarning() << "[QtAliceVision] MSfMDataStats::fillObservationsLengthsMedianPerViewSerie: no SfMData loaded";
+        return;
+    }
+
+    for(int i = 0; i < _observationsLengthsPerViewMaxAxisX; ++i)
+    {
+        observationsLengthsPerView->append(i, double(_nbObservationsLengthsPerViewMedian[i]));
+    }
+
+    qWarning() << "[QtAliceVision] MSfMDataStats::fillObservationsLengthsMedianPerViewSerie: observationsLengthsPerView size (" << observationsLengthsPerView->count() << ")";
+}
+
+void MSfMDataStats::fillObservationsLengthsFirstQuartilePerViewSerie(QXYSeries* observationsLengthsPerView)
+{
+    if(observationsLengthsPerView == nullptr)
+    {
+        qWarning() << "[QtAliceVision] MSfMDataStats::fillObservationsLengthsFirstQuartilePerViewSerie: no observationsLengthsPerView";
+        return;
+    }
+    observationsLengthsPerView->clear();
+
+    if(_msfmData == nullptr)
+    {
+        qWarning() << "[QtAliceVision] MSfMDataStats::fillObservationsLengthsFirstQuartilePerViewSerie: no SfMData loaded";
+        return;
+    }
+
+    for(int i = 0; i < _observationsLengthsPerViewMaxAxisX; ++i)
+    {
+        observationsLengthsPerView->append(i, double(_nbObservationsLengthsPerViewFirstQuartile[i]));
+    }
+
+    qWarning() << "[QtAliceVision] MSfMDataStats::fillObservationsLengthsFirstQuartilePerViewSerie: observationsLengthsPerView size (" << observationsLengthsPerView->count() << ")";
+}
+
+void MSfMDataStats::fillObservationsLengthsThirdQuartilePerViewSerie(QXYSeries* observationsLengthsPerView)
+{
+    if(observationsLengthsPerView == nullptr)
+    {
+        qWarning() << "[QtAliceVision] MSfMDataStats::fillObservationsLengthsThirdQuartilePerViewSerie: no observationsLengthsPerView";
+        return;
+    }
+    observationsLengthsPerView->clear();
+
+    if(_msfmData == nullptr)
+    {
+        qWarning() << "[QtAliceVision] MSfMDataStats::fillObservationsLengthsThirdQuartilePerViewSerie: no SfMData loaded";
+        return;
+    }
+
+    for(int i = 0; i < _observationsLengthsPerViewMaxAxisX; ++i)
+    {
+        observationsLengthsPerView->append(i, double(_nbObservationsLengthsPerViewThirdQuartile[i]));
+    }
+
+    qWarning() << "[QtAliceVision] MSfMDataStats::fillObservationsLengthsThirdQuartilePerViewSerie: observationsLengthsPerView size (" << observationsLengthsPerView->count() << ")";
+}
+
+/*void MSfMDataStats::fillObservationsLengthsBoxSetPerView(QBoxSet* observationsLengthsPerView)
+{
+    if(observationsLengthsPerView == nullptr)
+    {
+        qWarning() << "[QtAliceVision] MSfMDataStats::fillObservationsLengthsThirdQuartilePerViewSerie: no observationsLengthsPerView";
+        return;
+    }
+    observationsLengthsPerView->clear();
+
+    if(_msfmData == nullptr)
+    {
+        qWarning() << "[QtAliceVision] MSfMDataStats::fillObservationsLengthsThirdQuartilePerViewSerie: no SfMData loaded";
+        return;
+    }
+
+    for(int i = 0; i < _observationsLengthsPerViewMaxAxisX; ++i)
+    {
+        observationsLengthsPerView->append();
+    }
+
+    qWarning() << "[QtAliceVision] MSfMDataStats::fillObservationsLengthsThirdQuartilePerViewSerie: observationsLengthsPerView size (" << observationsLengthsPerView->count() << ")";
+}*/
 
 void MSfMDataStats::computeGlobalStats()
 {
 
      using namespace aliceVision;
-    _landmarksPerViewHistogram = aliceVision::Histogram<double>();
+    _nbResidualsPerViewMin.clear();
+    _nbResidualsPerViewMax.clear();
+    _nbResidualsPerViewMean.clear();
+    _nbResidualsPerViewMedian.clear();
+    _nbResidualsPerViewFirstQuartile.clear();
+    _nbResidualsPerViewThirdQuartile.clear();
+    _nbObservationsLengthsPerViewMin.clear();
+    _nbObservationsLengthsPerViewMax.clear();
+    _nbObservationsLengthsPerViewMean.clear();
+    _nbObservationsLengthsPerViewMedian.clear();
+    _nbObservationsLengthsPerViewFirstQuartile.clear();
+    _nbObservationsLengthsPerViewThirdQuartile.clear();
+    _nbLandmarksPerView.clear();
+    _nbFeaturesPerView.clear();
+    _nbTracksPerView.clear();
 
     if(_msfmData == nullptr)
     {
@@ -160,51 +403,45 @@ void MSfMDataStats::computeGlobalStats()
         return;
     }
 
-    // Init tracksPerView to have an entry in the map for each view (even if there is no track at all)
-    for(const auto& viewIt: _msfmData->rawData().getViewsKeys())
+    //Landmarks per View
     {
-        qWarning() << "[QtAliceVision]  MSfMDataStats::computeGlobalStats: viewIt: " << viewIt;
+        std::vector<int> nbLandmarksPerView;
+        sfm::computeLandmarksPerView(_msfmData->rawData(), nbLandmarksPerView);
 
-        // create an entry in the map
-        _tracksPerView[viewIt];
-        qWarning() << "[QtAliceVision]  MSfMDataStats::computeGlobalStats: _tracksPerView[viewIt]: " << _tracksPerView[viewIt];
-    }
+        _nbLandmarksPerView.resize(nbLandmarksPerView.size());
+        std::copy(nbLandmarksPerView.begin(), nbLandmarksPerView.end(), _nbLandmarksPerView.begin());
 
-    //Pb: access to index value of tracksPerView in the compute function
-
-    //Landmarks per View histogram
-    {
-        MinMaxMeanMedian<double> landmarksPerViewStats;
-        sfm::computeLandmarksPerViewHistogram(_msfmData->rawData(), landmarksPerViewStats, _tracksPerView, &_landmarksPerViewHistogram);
-        _landmarksPerViewMaxAxisX = 0.0;
+        _landmarksPerViewMaxAxisX = round(_msfmData->rawData().getViews().size());
         _landmarksPerViewMaxAxisY = 0.0;
 
-        std::vector<double> landmarksPerViewHistX = _landmarksPerViewHistogram.GetXbinsValue();
-        std::vector<size_t> landmarksPerViewHistY = _landmarksPerViewHistogram.GetHist();
-        assert(landmarksPerViewHistX.size() == landmarksPerViewHistY.size());
-        for(std::size_t i = 0; i < landmarksPerViewHistX.size(); ++i)
+        for(int v: nbLandmarksPerView)
         {
-            _landmarksPerViewMaxAxisX = round(std::max(_landmarksPerViewMaxAxisX, landmarksPerViewHistX[i]));
-            _landmarksPerViewMaxAxisY = round(std::max(_landmarksPerViewMaxAxisY, double(landmarksPerViewHistY[i])));
+            _landmarksPerViewMaxAxisY = std::max(_landmarksPerViewMaxAxisY, double(v));
         }
     }
 
+    //Features and Tracks per View
+    {
+        std::vector<size_t> nbFeaturesPerView;
+        std::vector<size_t> nbTracksPerView;
 
-   /*   _nbPointsValidatedPerView.reserve(_msfmData->rawData().getViews().size());
+        sfm::computeFeatMatchPerView(_msfmData->rawData(), nbFeaturesPerView, nbTracksPerView);
 
-      //points validated per View histogram
-      {
-          _pointsValidatedPerViewMaxAxisX = 0.0;
-          sfm::computePointsValidatedPerView(_msfmData->rawData(), _pointsValidatedPerViewMaxAxisX, _nbPointsValidatedPerView);
-          _pointsValidatedPerViewMaxAxisY = 0.0;
+        _nbFeaturesPerView.resize(nbFeaturesPerView.size());
+        std::copy(nbFeaturesPerView.begin(), nbFeaturesPerView.end(), _nbFeaturesPerView.begin());
+        _nbTracksPerView.resize(nbTracksPerView.size());
+        std::copy(nbTracksPerView.begin(), nbTracksPerView.end(), _nbTracksPerView.begin());
 
+        for(int v: nbFeaturesPerView)
+        {
+            _landmarksPerViewMaxAxisY = std::max(_landmarksPerViewMaxAxisY, double(v));
+        }
 
-          for(int i = 0; i < _pointsValidatedPerViewMaxAxisX; ++i)
-          {
-              _pointsValidatedPerViewMaxAxisY = round(std::max(_pointsValidatedPerViewMaxAxisY, double(_nbPointsValidatedPerView[i])));
-          }
-      }*/
-
+        for(int v: nbTracksPerView)
+        {
+            _landmarksPerViewMaxAxisY = std::max(_landmarksPerViewMaxAxisY, double(v));
+        }
+    }
 
     // Collect residuals histogram for each view
 
@@ -212,11 +449,13 @@ void MSfMDataStats::computeGlobalStats()
     _nbResidualsPerViewMax.reserve(_msfmData->rawData().getViews().size());
     _nbResidualsPerViewMean.reserve(_msfmData->rawData().getViews().size());
     _nbResidualsPerViewMedian.reserve(_msfmData->rawData().getViews().size());
+    _nbResidualsPerViewFirstQuartile.reserve(_msfmData->rawData().getViews().size());
+    _nbResidualsPerViewThirdQuartile.reserve(_msfmData->rawData().getViews().size());
 
     //Residuals Per View graph
     {
        _residualsPerViewMaxAxisX = 0;
-       sfm::computeResidualsPerView(_msfmData->rawData(), _residualsPerViewMaxAxisX, _nbResidualsPerViewMin, _nbResidualsPerViewMax, _nbResidualsPerViewMean, _nbResidualsPerViewMedian);
+       sfm::computeResidualsPerView(_msfmData->rawData(), _residualsPerViewMaxAxisX, _nbResidualsPerViewMin, _nbResidualsPerViewMax, _nbResidualsPerViewMean, _nbResidualsPerViewMedian, _nbResidualsPerViewFirstQuartile, _nbResidualsPerViewThirdQuartile);
        _residualsPerViewMaxAxisY = 0.0;
 
        for(int i = 0; i < _residualsPerViewMaxAxisX; ++i)
@@ -225,6 +464,36 @@ void MSfMDataStats::computeGlobalStats()
            _residualsPerViewMaxAxisY = round(std::max(_residualsPerViewMaxAxisY, double(_nbResidualsPerViewMax[i])));
            _residualsPerViewMaxAxisY = round(std::max(_residualsPerViewMaxAxisY, double(_nbResidualsPerViewMean[i])));
            _residualsPerViewMaxAxisY = round(std::max(_residualsPerViewMaxAxisY, double(_nbResidualsPerViewMedian[i])));
+           _residualsPerViewMaxAxisY = round(std::max(_residualsPerViewMaxAxisY, double(_nbResidualsPerViewFirstQuartile[i])));
+           _residualsPerViewMaxAxisY = round(std::max(_residualsPerViewMaxAxisY, double(_nbResidualsPerViewThirdQuartile[i])));
+       }
+    }
+
+
+    // Collect observations lengths histogram for each view
+
+    _nbObservationsLengthsPerViewMin.reserve(_msfmData->rawData().getViews().size());
+    _nbObservationsLengthsPerViewMax.reserve(_msfmData->rawData().getViews().size());
+    _nbObservationsLengthsPerViewMean.reserve(_msfmData->rawData().getViews().size());
+    _nbObservationsLengthsPerViewMedian.reserve(_msfmData->rawData().getViews().size());
+    _nbObservationsLengthsPerViewFirstQuartile.reserve(_msfmData->rawData().getViews().size());
+    _nbObservationsLengthsPerViewThirdQuartile.reserve(_msfmData->rawData().getViews().size());
+
+    //Observations Lengths Per View graph
+    {
+       _observationsLengthsPerViewMaxAxisX = 0;
+       sfm::computeObservationsLengthsPerView(_msfmData->rawData(), _observationsLengthsPerViewMaxAxisX, _nbObservationsLengthsPerViewMin, _nbObservationsLengthsPerViewMax, _nbObservationsLengthsPerViewMean, _nbObservationsLengthsPerViewMedian, _nbObservationsLengthsPerViewFirstQuartile, _nbObservationsLengthsPerViewThirdQuartile);
+       _observationsLengthsPerViewMaxAxisY = 0.0;
+
+       for(int i = 0; i < _observationsLengthsPerViewMaxAxisX; ++i)
+       {
+           _observationsLengthsPerViewMaxAxisY = round(std::max(_observationsLengthsPerViewMaxAxisY, double(_nbObservationsLengthsPerViewMin[i])));
+           _observationsLengthsPerViewMaxAxisY = round(std::max(_observationsLengthsPerViewMaxAxisY, double(_nbObservationsLengthsPerViewMax[i])));
+           _observationsLengthsPerViewMaxAxisY = round(std::max(_observationsLengthsPerViewMaxAxisY, double(_nbObservationsLengthsPerViewMean[i])));
+           _observationsLengthsPerViewMaxAxisY = round(std::max(_observationsLengthsPerViewMaxAxisY, double(_nbObservationsLengthsPerViewMedian[i])));
+           _observationsLengthsPerViewMaxAxisY = round(std::max(_observationsLengthsPerViewMaxAxisY, double(_nbObservationsLengthsPerViewFirstQuartile[i])));
+           _observationsLengthsPerViewMaxAxisY = round(std::max(_observationsLengthsPerViewMaxAxisY, double(_nbObservationsLengthsPerViewThirdQuartile[i])));
+
        }
     }
 
@@ -239,14 +508,12 @@ void MSfMDataStats::setMSfmData(qtAliceVision::MSfMData* sfmData)
 {
     if(_msfmData != nullptr)
     {
-        qWarning() << "[QtAliceVision] MSfMDataStats::setMSfmData disconnect: ";
         disconnect(_msfmData, SIGNAL(sfmDataChanged()), this, SIGNAL(sfmDataChanged()));
     }
     _msfmData = sfmData;
     if(_msfmData != nullptr)
     {
         connect(_msfmData, SIGNAL(sfmDataChanged()), this, SIGNAL(sfmDataChanged()));
-        qWarning() << "[QtAliceVision] MSfMDataStats::setMSfmData connect: ";
     }
     Q_EMIT sfmDataChanged();
 }

@@ -79,7 +79,6 @@ private:
     double _observationsLengthsMaxAxisY = 0.0;
     double _observationsScaleMaxAxisX = 0.0;
     double _observationsScaleMaxAxisY = 0.0;
-    double _percentagePointsValidated = 0.0;
     int _nbObservations = 0;
     MSfMData* _msfmData = nullptr;
     aliceVision::IndexT _viewId = aliceVision::UndefinedIndexT;
