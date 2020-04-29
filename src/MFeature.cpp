@@ -30,6 +30,7 @@ void FeatureIORunnable::run()
     std::tie(folder, viewId, descType) = _params;
 
     std::unique_ptr<aliceVision::feature::Regions> regions;
+    QList<MFeature*> feats;
     try
     {
         std::unique_ptr<feature::ImageDescriber> describer = feature::createImageDescriber(feature::EImageDescriberType_stringToEnum(descType.toStdString()));
@@ -39,8 +40,11 @@ void FeatureIORunnable::run()
     {
         qDebug() << "[QtAliceVision] Failed to load features (" << descType << ") for view: " << viewId << " from folder: " << folder
                  << "\n" << e.what();
+
+        Q_EMIT resultReady(feats);
+        return;
     }
-    QList<MFeature*> feats;
+
     feats.reserve(static_cast<int>(regions->RegionCount()));
     for(const auto& f : regions->Features())
     {

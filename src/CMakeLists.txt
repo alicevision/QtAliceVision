@@ -2,16 +2,22 @@
 set(PLUGIN_SOURCES
     FeaturesViewer.cpp MFeature.cpp
     MSfMData.cpp MViewStats.cpp
-    FloatImageViewer.cpp FloatTexture.cpp)
+    MTracks.cpp
+    FloatImageViewer.cpp FloatTexture.cpp
+    MSfMDataStats.cpp)
 set(PLUGIN_HEADERS
     FeaturesViewer.hpp
     plugin.hpp
     MFeature.hpp MSfMData.hpp
+    MTracks.hpp
     MViewStats.hpp
-    FloatImageViewer.hpp FloatTexture.hpp)
+    FloatImageViewer.hpp FloatTexture.hpp
+    MSfMDataStats.hpp)
 set(PLUGIN_MOCS
     FeaturesViewer.hpp MFeature.hpp
-    MSfMData.hpp MViewStats.hpp)
+    MSfMData.hpp MViewStats.hpp
+    MTracks.hpp
+    MSfMDataStats.hpp)
 
 # Target properties
 add_library(qtAliceVisionPlugin SHARED

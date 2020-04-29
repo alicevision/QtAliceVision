@@ -4,6 +4,7 @@
 #include "FloatImageViewer.hpp"
 #include "MViewStats.hpp"
 #include "MSfMDataStats.hpp"
+#include "MTracks.hpp"
 #include <QtQml>
 #include <QQmlExtensionPlugin>
 
@@ -29,6 +30,7 @@ public:
 
         qmlRegisterType<FeaturesViewer>(uri, 1, 0, "FeaturesViewer");
         qmlRegisterType<MSfMData>(uri, 1, 0, "MSfMData");
+        qmlRegisterType<MTracks>(uri, 1, 0, "MTracks");
         qmlRegisterType<MViewStats>(uri, 1, 0, "MViewStats");
         qmlRegisterType<MSfMDataStats>(uri, 1, 0, "MSfMDataStats");
         qmlRegisterUncreatableType<MFeature>(uri, 1, 0, "MFeature", "Cannot create Feature instances from QML.");

@@ -7,8 +7,7 @@
 #include <aliceVision/sfm/pipeline/regionsIO.hpp>
 #include <aliceVision/sfmData/SfMData.hpp>
 
-namespace qtAliceVision
-{
+namespace qtAliceVision {
 
 /**
  * @brief QObject wrapper around a PointFeature.
@@ -22,6 +21,7 @@ class MFeature : public QObject
     Q_PROPERTY(float scale READ scale CONSTANT)
     Q_PROPERTY(float orientation READ orientation CONSTANT)
     Q_PROPERTY(int landmarkId READ landmarkId CONSTANT)
+    Q_PROPERTY(int trackId READ trackId CONSTANT)
     Q_PROPERTY(float rx READ rx CONSTANT)
     Q_PROPERTY(float ry READ ry CONSTANT)
 
@@ -34,22 +34,31 @@ public:
     , _feat(feat)
     {}
 
-    void clearReconstructionInfo()
+    void clearLandmarkInfo()
     {
-        setReconstructionInfo(-1, aliceVision::Vec2f(.0f, .0f));
+        setLandmarkInfo(-1, aliceVision::Vec2f(.0f, .0f));
     }
-    void setReconstructionInfo(int landmarkId, const aliceVision::Vec2f& reprojection)
+    void setLandmarkInfo(int landmarkId, const aliceVision::Vec2f& reprojection)
     {
         _landmarkId = landmarkId;
         _reprojection = reprojection;
     }
 
+    void clearTrack()
+    {
+        setTrackId(-1);
+    }
+    void setTrackId(int trackId)
+    {
+        _trackId = trackId;
+    }
     inline float x() const { return _feat.x(); }
     inline float y() const { return _feat.y(); }
     inline float scale() const { return _feat.scale(); }
     inline float orientation() const { return _feat.orientation(); }
 
     inline int landmarkId() const { return _landmarkId; }
+    inline int trackId() const { return _trackId; }
     inline float rx() const { return _reprojection(0); }
     inline float ry() const { return _reprojection(1); }
 
@@ -57,6 +66,7 @@ public:
 
 private:
     int _landmarkId = -1;
+    int _trackId = -1;
     aliceVision::Vec2f _reprojection{0.0f, 0.0f};
     aliceVision::feature::PointFeature _feat;
 };
