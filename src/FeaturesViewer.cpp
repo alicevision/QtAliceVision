@@ -171,7 +171,13 @@ void FeaturesViewer::updateFeatureFromTracks()
     // Update newly loaded features with information from the sfmData
     aliceVision::feature::EImageDescriberType descType = aliceVision::feature::EImageDescriberType_stringToEnum(_describerType.toStdString());
 
-    const auto& tracksInCurrentView = _mtracks->tracksPerView().at(_viewId);
+    auto tracksPerViewIt = _mtracks->tracksPerView().find(_viewId);
+    if(tracksPerViewIt == _mtracks->tracksPerView().end())
+    {
+        qWarning() << "[QtAliceVision] view does not exist in tracks.";
+        return;
+    }
+    const auto& tracksInCurrentView = tracksPerViewIt->second;
     const auto& tracks = _mtracks->tracks();
     for(const auto& trackId: tracksInCurrentView)
     {
