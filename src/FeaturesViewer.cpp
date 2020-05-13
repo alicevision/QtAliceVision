@@ -225,6 +225,7 @@ void FeaturesViewer::updateNbTracks()
 
 void FeaturesViewer::clearSfMFromFeatures()
 {
+    _nbLandmarks = 0;
     for(const auto feature: _features)
     {
         feature->clearLandmarkInfo();
@@ -233,41 +234,43 @@ void FeaturesViewer::clearSfMFromFeatures()
 
 void FeaturesViewer::updateFeatureFromSfM()
 {
-    if(_features.empty())
-        return;
-
     clearSfMFromFeatures();
 
+    if(_features.empty())
+    {
+        return;
+    }
     if(_msfmData == nullptr)
     {
         qWarning() << "[QtAliceVision] updateFeatureFromSfM: no SfMData";
-        clearSfMFromFeatures();
         return;
     }
     if(_msfmData->status() != MSfMData::Ready)
     {
         qWarning() << "[QtAliceVision] updateFeatureFromSfM: SfMData is not ready: " << _msfmData->status();
-        clearSfMFromFeatures();
         return;
     }
     if(_msfmData->rawData().getViews().empty())
     {
         qWarning() << "[QtAliceVision] updateFeatureFromSfM: SfMData is empty";
-        clearSfMFromFeatures();
         return;
     }
-    if(!_msfmData->rawData().isPoseAndIntrinsicDefined(_viewId))
+    const auto viewIt = _msfmData->rawData().getViews().find(_viewId);
+    if(viewIt == _msfmData->rawData().getViews().end())
+    {
+        qWarning() << "[QtAliceVision] updateFeatureFromSfM: View " << _viewId << " is not is the SfMData";
+        return;
+    }
+    const aliceVision::sfmData::View& view = *viewIt->second;
+    if(!_msfmData->rawData().isPoseAndIntrinsicDefined(&view))
     {
         qWarning() << "[QtAliceVision] updateFeatureFromSfM: SfMData has no valid pose and intrinsic for view " << _viewId;
-        clearSfMFromFeatures();
         return;
     }
 
-    _nbLandmarks = 0;
     // Update newly loaded features with information from the sfmData
     aliceVision::feature::EImageDescriberType descType = aliceVision::feature::EImageDescriberType_stringToEnum(_describerType.toStdString());
 
-    const auto& view = _msfmData->rawData().getView(_viewId);
     const aliceVision::sfmData::CameraPose pose = _msfmData->rawData().getPose(view);
     const aliceVision::geometry::Pose3 camTransform = pose.getTransform();
     const aliceVision::camera::IntrinsicBase* intrinsic = _msfmData->rawData().getIntrinsicPtr(view.getIntrinsicId());
@@ -549,6 +552,7 @@ void FeaturesViewer::updatePaintTracks(QSGNode* oldNode, QSGNode* node)
 
 void FeaturesViewer::updatePaintLandmarks(QSGNode* oldNode, QSGNode* node)
 {
+
     const unsigned int kReprojectionVertices = 2;
     //
     int displayNbLandmarks = _displayLandmarks ? _nbLandmarks : 0;
@@ -625,7 +629,6 @@ void FeaturesViewer::updatePaintLandmarks(QSGNode* oldNode, QSGNode* node)
 
     if(!_displayLandmarks)
     {
-        // qWarning() << "[QtAliceVision] updatePaintLandmarks display landmarks disabled";
         return;
     }
 
