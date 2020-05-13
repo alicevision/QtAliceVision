@@ -66,7 +66,9 @@ public:
 
     QUrl getSfmDataPath() const { return _sfmDataPath; }
     void setSfmDataPath(const QUrl& sfmDataPath) {
-       _sfmDataPath = sfmDataPath;       
+        if(sfmDataPath == _sfmDataPath)
+            return;
+       _sfmDataPath = sfmDataPath;
        load();
        Q_EMIT sfmDataPathChanged();
     }
