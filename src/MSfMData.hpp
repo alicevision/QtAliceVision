@@ -39,7 +39,7 @@ private:
 
 public:
     Q_SLOT void load();
-    Q_SLOT void onSfmDataReady();
+    Q_SLOT void onSfmDataReady(aliceVision::sfmData::SfMData* newSfmData);
 
 public:
     Q_SIGNAL void sfmDataPathChanged();
@@ -75,15 +75,15 @@ public:
 
     Status status() const { return _status; }
     void setStatus(Status status) {
-           if(status == _status)
-               return;
-           _status = status;
-           Q_EMIT statusChanged(_status);
-           if(status == Ready)
-           {
-               Q_EMIT sfmDataChanged();
-           }
+       if(status == _status)
+           return;
+       _status = status;
+       Q_EMIT statusChanged(_status);
+       if(status == Ready)
+       {
+           Q_EMIT sfmDataChanged();
        }
+   }
 
     inline int nbCameras() const {
         if(!_sfmData)
@@ -95,8 +95,6 @@ private:
     QUrl _sfmDataPath;
     std::unique_ptr<aliceVision::sfmData::SfMData> _sfmData;
     Status _status = MSfMData::None;
-
-    SfmDataIORunnable* _ioRunnable = nullptr;
 };
 
 }

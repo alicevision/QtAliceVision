@@ -40,7 +40,7 @@ private:
 
 public:
     Q_SLOT void load();
-    Q_SLOT void onReady();
+    Q_SLOT void onReady(aliceVision::track::TracksMap* tracks, aliceVision::track::TracksPerView* tracksPerView);
 
 public:
     Q_SIGNAL void matchingFolderChanged();
@@ -50,8 +50,10 @@ public:
 private:
     void clear()
     {
-        _tracks.clear();
-        _tracksPerView.clear();
+        if(_tracks)
+            _tracks->clear();
+        if(_tracksPerView)
+            _tracksPerView->clear();
         qWarning() << "[QtAliceVision] MTracks clear";
         Q_EMIT tracksChanged();
     }
@@ -59,11 +61,11 @@ private:
 public:
     const aliceVision::track::TracksMap& tracks() const
     {
-        return _tracks;
+        return *_tracks;
     }
     const aliceVision::track::TracksPerView& tracksPerView() const
     {
-        return _tracksPerView;
+        return *_tracksPerView;
     }
 
     QUrl getMatchingFolder() const { return _matchingFolder; }
@@ -88,16 +90,15 @@ public:
     inline int nbTracks() const {
         if(_status != MTracks::Ready)
             return 0;
-        return _tracks.size();
+        return _tracks->size();
     }
 
 private:
     QUrl _matchingFolder;
-    aliceVision::track::TracksMap _tracks;
-    aliceVision::track::TracksPerView _tracksPerView;
+    std::unique_ptr<aliceVision::track::TracksMap> _tracks;
+    std::unique_ptr<aliceVision::track::TracksPerView> _tracksPerView;
     Status _status = MTracks::None;
 
-    TracksIORunnable* _ioRunnable = nullptr;
 };
 
 }

@@ -26,20 +26,18 @@ public:
 
     Q_SLOT void run() override;
 
-    Q_SIGNAL void resultReady();
+    Q_SIGNAL void resultReady(aliceVision::track::TracksMap* _tracks, aliceVision::track::TracksPerView* _tracksPerView);
 
 private:
     const QUrl _matchingFolder;
-
-public:
-    aliceVision::track::TracksMap _tracks;
-    aliceVision::track::TracksPerView _tracksPerView;
 };
 
 void TracksIORunnable::run()
 {
     using namespace aliceVision;
 
+    std::unique_ptr<track::TracksMap> tracks(new track::TracksMap());
+    std::unique_ptr<track::TracksPerView> tracksPerView(new track::TracksPerView());
     try
     {
         matching::PairwiseMatches pairwiseMatches;
@@ -54,8 +52,8 @@ void TracksIORunnable::run()
         }
         track::TracksBuilder tracksBuilder;
         tracksBuilder.build(pairwiseMatches);
-        tracksBuilder.exportToSTL(_tracks);
-        track::computeTracksPerView(_tracks, _tracksPerView);
+        tracksBuilder.exportToSTL(*tracks);
+        track::computeTracksPerView(*tracks, *tracksPerView);
     }
     catch(std::exception& e)
     {
@@ -63,7 +61,7 @@ void TracksIORunnable::run()
                  << "\n" << e.what();
     }
 
-    Q_EMIT resultReady();
+    Q_EMIT resultReady(tracks.release(), tracksPerView.release());
 }
 
 void MTracks::load()
@@ -82,17 +80,15 @@ void MTracks::load()
     setStatus(Loading);    
 
     // load features from file in a seperate thread
-    _ioRunnable = new TracksIORunnable(_matchingFolder);
-    _ioRunnable->setAutoDelete(false);
-    connect(_ioRunnable, &TracksIORunnable::resultReady, this, &MTracks::onReady);
-    QThreadPool::globalInstance()->start(_ioRunnable);
+    TracksIORunnable* ioRunnable = new TracksIORunnable(_matchingFolder);
+    connect(ioRunnable, &TracksIORunnable::resultReady, this, &MTracks::onReady);
+    QThreadPool::globalInstance()->start(ioRunnable);
 }
 
-void MTracks::onReady()
+void MTracks::onReady(aliceVision::track::TracksMap* tracks, aliceVision::track::TracksPerView* tracksPerView)
 {
-    _tracks = _ioRunnable->_tracks;
-    _tracksPerView = _ioRunnable->_tracksPerView;
-    _ioRunnable = nullptr;
+    _tracks.reset(tracks);
+    _tracksPerView.reset(tracksPerView);
     setStatus(Ready);
 }
 

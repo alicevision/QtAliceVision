@@ -6,7 +6,6 @@
 
 #include <aliceVision/sfmDataIO/sfmDataIO.hpp>
 
-
 namespace qtAliceVision {
 
 /**
@@ -28,7 +27,7 @@ public:
     /**
      * @brief  Emitted when sfmData have been loaded and sfmData objects created.
      */
-    Q_SIGNAL void resultReady();
+    Q_SIGNAL void resultReady(aliceVision::sfmData::SfMData*);
 
     aliceVision::sfmData::SfMData* getSfmData() { return _sfmData; }
 
@@ -55,7 +54,7 @@ void SfmDataIORunnable::run()
                  << "\n" << e.what();
     }
 
-    Q_EMIT resultReady();
+    Q_EMIT resultReady(_sfmData);
 }
 
 void MSfMData::load()
@@ -74,16 +73,14 @@ void MSfMData::load()
     setStatus(Loading);    
 
     // load features from file in a seperate thread
-    _ioRunnable = new SfmDataIORunnable(_sfmDataPath);    
-    _ioRunnable->setAutoDelete(false);
-    connect(_ioRunnable, &SfmDataIORunnable::resultReady, this, &MSfMData::onSfmDataReady); 
-    QThreadPool::globalInstance()->start(_ioRunnable);
+    SfmDataIORunnable* ioRunnable = new SfmDataIORunnable(_sfmDataPath);
+    connect(ioRunnable, &SfmDataIORunnable::resultReady, this, &MSfMData::onSfmDataReady);
+    QThreadPool::globalInstance()->start(ioRunnable);
 }
 
-void MSfMData::onSfmDataReady()
+void MSfMData::onSfmDataReady(aliceVision::sfmData::SfMData* newSfmData)
 {
-    _sfmData.reset(_ioRunnable->getSfmData());
-    _ioRunnable = nullptr;
+    _sfmData.reset(newSfmData);
     setStatus(Ready);
 }
 
