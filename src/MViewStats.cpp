@@ -280,7 +280,7 @@ void MViewStats::computeViewStats()
             sfm::computeObservationsLengthsHistogram(_msfmData->rawData(), observationsLengthsFullStats, _nbObservations, &_observationsLengthsHistogramFull);
 
             double nbCameras = double(_msfmData->nbCameras());
-            std::vector<size_t> observationsLengthsFullHistY = _observationsLengthsHistogramFull.GetHist();
+            std::vector<size_t>& observationsLengthsFullHistY = _observationsLengthsHistogramFull.GetHist();
 
             // normalize the histogram to get the average number of observations
             for(std::size_t i = 0; i < observationsLengthsFullHistY.size(); ++i)
