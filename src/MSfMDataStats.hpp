@@ -8,6 +8,7 @@
 
 #include <aliceVision/sfmData/SfMData.hpp>
 #include <MSfMData.hpp>
+#include <MTracks.hpp>
 #include <MFeature.hpp>
 #include <aliceVision/sfm/sfmStatistics.hpp>
 #include <aliceVision/utils/Histogram.hpp>
@@ -23,31 +24,41 @@ class MSfMDataStats: public QObject
 
     /// Pointer to sfmData
     Q_PROPERTY(qtAliceVision::MSfMData* msfmData READ getMSfmData WRITE setMSfmData NOTIFY sfmDataChanged)
+    /// Pointer to tracks
+    Q_PROPERTY(qtAliceVision::MTracks* mTracks READ getMTracks WRITE setMTracks NOTIFY tracksChanged)
     /// max AxisX value for landmarks per view histogram
-    Q_PROPERTY(int landmarksPerViewMaxAxisX MEMBER _landmarksPerViewMaxAxisX NOTIFY statsChanged)
+    Q_PROPERTY(int landmarksPerViewMaxAxisX MEMBER _landmarksPerViewMaxAxisX NOTIFY axisChanged)
     /// max AxisY value for landmarks per view histogram
-    Q_PROPERTY(double landmarksPerViewMaxAxisY MEMBER _landmarksPerViewMaxAxisY NOTIFY statsChanged)
+    Q_PROPERTY(double landmarksPerViewMaxAxisY MEMBER _landmarksPerViewMaxAxisY NOTIFY axisChanged)
     /// max AxisX value for residuals per view histogram
-    Q_PROPERTY(int residualsPerViewMaxAxisX MEMBER _residualsPerViewMaxAxisX NOTIFY statsChanged)
+    Q_PROPERTY(int residualsPerViewMaxAxisX MEMBER _residualsPerViewMaxAxisX NOTIFY axisChanged)
     /// max AxisY value for residuals per view histogram
-    Q_PROPERTY(double residualsPerViewMaxAxisY MEMBER _residualsPerViewMaxAxisY NOTIFY statsChanged)
+    Q_PROPERTY(double residualsPerViewMaxAxisY MEMBER _residualsPerViewMaxAxisY NOTIFY axisChanged)
     /// max AxisX value for residuals per view histogram
-    Q_PROPERTY(int observationsLengthsPerViewMaxAxisX MEMBER _observationsLengthsPerViewMaxAxisX NOTIFY statsChanged)
+    Q_PROPERTY(int observationsLengthsPerViewMaxAxisX MEMBER _observationsLengthsPerViewMaxAxisX NOTIFY axisChanged)
     /// max AxisY value for residuals per view histogram
-    Q_PROPERTY(double observationsLengthsPerViewMaxAxisY MEMBER _observationsLengthsPerViewMaxAxisY NOTIFY statsChanged)
+    Q_PROPERTY(double observationsLengthsPerViewMaxAxisY MEMBER _observationsLengthsPerViewMaxAxisY NOTIFY axisChanged)
 
 public:
     MSfMDataStats()
     {
-         connect(this, &MSfMDataStats::sfmDataChanged, this, &MSfMDataStats::computeGlobalStats);
+         connect(this, &MSfMDataStats::sfmDataChanged, this, &MSfMDataStats::computeGlobalSfMStats);
+         connect(this, &MSfMDataStats::tracksChanged, this, &MSfMDataStats::computeGlobalTracksStats);
+         connect(this, &MSfMDataStats::sfmDataChanged, this, &MSfMDataStats::computeGlobalTracksStats);
+         connect(this, &MSfMDataStats::sfmStatsChanged, this, &MSfMDataStats::axisChanged);
+         connect(this, &MSfMDataStats::tracksStatsChanged, this, &MSfMDataStats::axisChanged);
     }
     MSfMDataStats& operator=(const MSfMDataStats& other) = default;
     ~MSfMDataStats() override;
 
     Q_SIGNAL void sfmDataChanged();
-    Q_SIGNAL void statsChanged();
+    Q_SIGNAL void tracksChanged();
+    Q_SIGNAL void sfmStatsChanged();
+    Q_SIGNAL void tracksStatsChanged();
+    Q_SIGNAL void axisChanged();
 
-    Q_SLOT void computeGlobalStats();
+    Q_SLOT void computeGlobalSfMStats();
+    Q_SLOT void computeGlobalTracksStats();
 
     Q_INVOKABLE void fillLandmarksPerViewSerie(QXYSeries* serie);
     Q_INVOKABLE void fillFeaturesPerViewSerie(QXYSeries* serie);
@@ -69,12 +80,16 @@ public:
     MSfMData* getMSfmData() { return _msfmData; }
     void setMSfmData(qtAliceVision::MSfMData* sfmData);
 
+    MTracks* getMTracks() { return _mTracks; }
+    void setMTracks(qtAliceVision::MTracks* tracks);
+
 private:
     MSfMData* _msfmData = nullptr;
+    MTracks* _mTracks = nullptr;
 
+    int _residualsPerViewMaxAxisX = 0;
     int _landmarksPerViewMaxAxisX = 0;
     double _landmarksPerViewMaxAxisY = 0.0;
-    int _residualsPerViewMaxAxisX = 0;
     double _residualsPerViewMaxAxisY = 0.0;
     int _observationsLengthsPerViewMaxAxisX = 0;
     double _observationsLengthsPerViewMaxAxisY = 0.0;
@@ -93,7 +108,6 @@ private:
     std::vector<double> _nbLandmarksPerView;
     std::vector<double> _nbFeaturesPerView;
     std::vector<double> _nbTracksPerView;
-    aliceVision::track::TracksPerView _tracksPerView;
 };
 
 }
