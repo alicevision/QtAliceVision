@@ -50,7 +50,6 @@ private:
     void clear()
     {
         _sfmData.reset(new aliceVision::sfmData::SfMData());
-        qWarning() << "[QtAliceVision] MSfMData.hpp clear : ";
         Q_EMIT sfmDataChanged();
     }
 
@@ -79,14 +78,14 @@ public:
            return;
        _status = status;
        Q_EMIT statusChanged(_status);
-       if(status == Ready)
+       if(status == Ready || status == Error)
        {
            Q_EMIT sfmDataChanged();
        }
    }
 
     inline int nbCameras() const {
-        if(!_sfmData)
+        if(!_sfmData || _status != Ready)
             return 0;
         return _sfmData->getValidViews().size();
     }

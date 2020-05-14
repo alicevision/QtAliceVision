@@ -39,6 +39,10 @@ class FeaturesViewer : public QQuickItem
     Q_PROPERTY(QColor color MEMBER _color NOTIFY colorChanged)
     /// Landmarks color
     Q_PROPERTY(QColor landmarkColor MEMBER _landmarkColor NOTIFY landmarkColorChanged)
+    /// Whether landmarks are reconstructed
+    Q_PROPERTY(bool haveValidLandmarks READ haveValidLandmarks NOTIFY sfmDataChanged)
+    /// Whether tracks are reconstructed
+    Q_PROPERTY(bool haveValidTracks READ haveValidTracks NOTIFY tracksChanged)
     /// Whether features are currently being loaded from file
     Q_PROPERTY(bool loadingFeatures READ loadingFeatures NOTIFY loadingFeaturesChanged)
     /// Display all the 2D features extracted from the image
@@ -81,9 +85,15 @@ public:
 
     MSfMData* getMSfmData() { return _msfmData; }
     void setMSfmData(MSfMData* sfmData);
+    bool haveValidLandmarks() const {
+        return _msfmData != nullptr && _msfmData->status() == MSfMData::Ready;
+    }
 
     MTracks* getMTracks() { return _mtracks; }
     void setMTracks(MTracks* tracks);
+    bool haveValidTracks() const {
+        return _mtracks != nullptr && _mtracks->status() == MTracks::Ready;
+    }
 
 public:
     Q_SIGNAL void sfmDataChanged();

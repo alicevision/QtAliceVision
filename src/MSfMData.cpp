@@ -61,11 +61,13 @@ void MSfMData::load()
 {
     if(_sfmDataPath.isEmpty())
     {
+        clear();
         setStatus(None);
         return;
     }
     if(!QFileInfo::exists(_sfmDataPath.toLocalFile()))
     {
+        clear();
         setStatus(Error);
         return;
     }

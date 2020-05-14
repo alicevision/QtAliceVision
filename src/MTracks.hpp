@@ -31,7 +31,10 @@ public:
     };
     Q_ENUM(Status)
 
-    MTracks() = default;
+    MTracks()
+    {
+        connect(this, SIGNAL(matchingFolderChanged()), this, SLOT(load()));
+    }
     MTracks& operator=(const MTracks& other) = default;
     ~MTracks() = default;
 
@@ -70,8 +73,10 @@ public:
 
     QUrl getMatchingFolder() const { return _matchingFolder; }
     void setMatchingFolder(const QUrl& matchingFolder) {
+
+        if(matchingFolder == _matchingFolder)
+            return;
        _matchingFolder = matchingFolder;
-       load();
        Q_EMIT matchingFolderChanged();
     }
 
@@ -81,14 +86,14 @@ public:
            return;
        _status = status;
        Q_EMIT statusChanged(_status);
-       if(status == Ready)
+       if(status == Ready || status == Error)
        {
            Q_EMIT tracksChanged();
        }
    }
 
     inline int nbTracks() const {
-        if(_status != MTracks::Ready)
+        if(!_tracks || _status != MTracks::Ready)
             return 0;
         return _tracks->size();
     }

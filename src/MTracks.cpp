@@ -68,11 +68,13 @@ void MTracks::load()
 {
     if(_matchingFolder.isEmpty())
     {
+        clear();
         setStatus(None);
         return;
     }
     if(!QFileInfo::exists(_matchingFolder.toLocalFile()))
     {
+        clear();
         setStatus(Error);
         return;
     }

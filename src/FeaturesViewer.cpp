@@ -82,6 +82,8 @@ void FeaturesViewer::reloadFeatures()
 
 void FeaturesViewer::setMTracks(MTracks* tracks)
 {
+    if(_mtracks == tracks)
+        return;
     if(_mtracks != nullptr)
     {
         disconnect(_mtracks, SIGNAL(tracksChanged()), this, SIGNAL(tracksChanged()));
@@ -96,6 +98,8 @@ void FeaturesViewer::setMTracks(MTracks* tracks)
 
 void FeaturesViewer::setMSfmData(MSfMData* sfmData)
 {
+    if(_msfmData == sfmData)
+        return;
     if(_msfmData != nullptr)
     {
         disconnect(_msfmData, SIGNAL(sfmDataChanged()), this, SIGNAL(sfmDataChanged()));
@@ -146,19 +150,16 @@ void FeaturesViewer::updateFeatureFromTracks()
     if(_mtracks == nullptr)
     {
         qWarning() << "[QtAliceVision] updateFeatureFromTracks: no Track";
-        clearTracksFromFeatures();
         return;
     }
     if(_mtracks->status() != MTracks::Ready)
     {
         qWarning() << "[QtAliceVision] updateFeatureFromTracks: Tracks is not ready: " << _mtracks->status();
-        clearTracksFromFeatures();
         return;
     }
     if(_mtracks->tracks().empty())
     {
         qWarning() << "[QtAliceVision] updateFeatureFromTracks: Tracks is empty";
-        clearTracksFromFeatures();
         return;
     }
 
