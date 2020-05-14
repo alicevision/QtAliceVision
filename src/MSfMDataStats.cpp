@@ -27,28 +27,6 @@ void MSfMDataStats::fillLandmarksPerViewSerie(QXYSeries* landmarksPerView)
     }
 }
 
-void MSfMDataStats::fillFeaturesPerViewSerie(QXYSeries* featuresPerView)
-{
-    if(featuresPerView == nullptr)
-    {
-        qWarning() << "[QtAliceVision] MSfMDataStats::fillFeaturesPerViewSerie: no featuresPerView";
-        return;
-    }
-    featuresPerView->clear();
-
-    if(_msfmData == nullptr)
-    {
-        qWarning() << "[QtAliceVision] MSfMDataStats::fillFeaturesPerViewSerie: no SfMData loaded";
-        return;
-    }
-
-    for(std::size_t i = 0; i < _nbFeaturesPerView.size(); ++i)
-    {
-        featuresPerView->append(double(i), double(_nbFeaturesPerView[i]));
-    }
-
-}
-
 void MSfMDataStats::fillTracksPerViewSerie(QXYSeries* tracksPerView)
 {
     if(tracksPerView == nullptr)
@@ -328,29 +306,6 @@ void MSfMDataStats::fillObservationsLengthsThirdQuartilePerViewSerie(QXYSeries* 
     }
 }
 
-/*void MSfMDataStats::fillObservationsLengthsBoxSetPerView(QBoxSet* observationsLengthsPerView)
-{
-    if(observationsLengthsPerView == nullptr)
-    {
-        qWarning() << "[QtAliceVision] MSfMDataStats::fillObservationsLengthsThirdQuartilePerViewSerie: no observationsLengthsPerView";
-        return;
-    }
-    observationsLengthsPerView->clear();
-
-    if(_msfmData == nullptr)
-    {
-        qWarning() << "[QtAliceVision] MSfMDataStats::fillObservationsLengthsThirdQuartilePerViewSerie: no SfMData loaded";
-        return;
-    }
-
-    for(int i = 0; i < _observationsLengthsPerViewMaxAxisX; ++i)
-    {
-        observationsLengthsPerView->append();
-    }
-
-    qWarning() << "[QtAliceVision] MSfMDataStats::fillObservationsLengthsThirdQuartilePerViewSerie: observationsLengthsPerView size (" << observationsLengthsPerView->count() << ")";
-}*/
-
 void MSfMDataStats::computeGlobalSfMStats()
 {
      using namespace aliceVision;
@@ -446,10 +401,9 @@ void MSfMDataStats::computeGlobalSfMStats()
 
 void MSfMDataStats::computeGlobalTracksStats()
 {
-    _nbFeaturesPerView.clear();
     _nbTracksPerView.clear();
 
-    //Features and Tracks per View
+    //Tracks per View
 
         if(_mTracks == nullptr)
         {
@@ -477,16 +431,11 @@ void MSfMDataStats::computeGlobalTracksStats()
             return;
         }
 
-        _nbFeaturesPerView.reserve(_msfmData->rawData().getViews().size());
         _nbTracksPerView.reserve(_msfmData->rawData().getViews().size());
         for(const auto& viewIt: _msfmData->rawData().getViews())
         {
             const auto viewId = viewIt.first;
 
-           /* if(_mTracks->featuresPerView().count(viewId))
-                _nbFeaturesPerView.push_back(_mTracks->featuresPerView().at(viewId).size());
-            else
-                _nbFeaturesPerView.push_back(0);*/
             if(_mTracks->tracksPerView().count(viewId))
                 _nbTracksPerView.push_back(_mTracks->tracksPerView().at(viewId).size());
             else
@@ -497,30 +446,6 @@ void MSfMDataStats::computeGlobalTracksStats()
         {
             _landmarksPerViewMaxAxisY = std::max(_landmarksPerViewMaxAxisY, double(v));
         }
-        for(int v: _nbFeaturesPerView)
-        {
-            _landmarksPerViewMaxAxisY = std::max(_landmarksPerViewMaxAxisY, double(v));
-        }
-        /*
-        // std::vector<size_t> nbFeaturesPerView;
-        std::vector<size_t> nbTracksPerView;
-
-        sfm::computeFeatMatchPerView(_msfmData->rawData(), nbFeaturesPerView, nbTracksPerView);
-
-        //_nbFeaturesPerView.resize(nbFeaturesPerView.size());
-        //std::copy(nbFeaturesPerView.begin(), nbFeaturesPerView.end(), _nbFeaturesPerView.begin());
-        _nbTracksPerView.resize(nbTracksPerView.size());
-        std::copy(nbTracksPerView.begin(), nbTracksPerView.end(), _nbTracksPerView.begin());
-
-//        for(int v: nbFeaturesPerView)
-//        {
-//            _landmarksPerViewMaxAxisY = std::max(_landmarksPerViewMaxAxisY, double(v));
-//        }
-
-        for(int v: nbTracksPerView)
-        {
-            _landmarksPerViewMaxAxisY = std::max(_landmarksPerViewMaxAxisY, double(v));
-        }*/
 
     Q_EMIT tracksStatsChanged();
 }

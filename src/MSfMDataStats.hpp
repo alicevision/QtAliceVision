@@ -61,7 +61,6 @@ public:
     Q_SLOT void computeGlobalTracksStats();
 
     Q_INVOKABLE void fillLandmarksPerViewSerie(QXYSeries* serie);
-    Q_INVOKABLE void fillFeaturesPerViewSerie(QXYSeries* serie);
     Q_INVOKABLE void fillTracksPerViewSerie(QXYSeries* serie);
     Q_INVOKABLE void fillResidualsMinPerViewSerie(QXYSeries* serie);
     Q_INVOKABLE void fillResidualsMaxPerViewSerie(QXYSeries* serie);
@@ -75,7 +74,6 @@ public:
     Q_INVOKABLE void fillObservationsLengthsMedianPerViewSerie(QXYSeries* serie);
     Q_INVOKABLE void fillObservationsLengthsFirstQuartilePerViewSerie(QXYSeries* serie);
     Q_INVOKABLE void fillObservationsLengthsThirdQuartilePerViewSerie(QXYSeries* serie);
-    //Q_INVOKABLE void fillObservationsLengthsBoxSetPerView(QBoxSet* serie);
 
     MSfMData* getMSfmData() { return _msfmData; }
     void setMSfmData(qtAliceVision::MSfMData* sfmData);
@@ -106,7 +104,6 @@ private:
     std::vector<double> _nbObservationsLengthsPerViewFirstQuartile;
     std::vector<double> _nbObservationsLengthsPerViewThirdQuartile;
     std::vector<double> _nbLandmarksPerView;
-    std::vector<double> _nbFeaturesPerView;
     std::vector<double> _nbTracksPerView;
 };
 

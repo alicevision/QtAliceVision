@@ -79,7 +79,7 @@ void MTracks::load()
 
     setStatus(Loading);    
 
-    // load features from file in a seperate thread
+    // load matches from file in a seperate thread
     TracksIORunnable* ioRunnable = new TracksIORunnable(_matchingFolder);
     connect(ioRunnable, &TracksIORunnable::resultReady, this, &MTracks::onReady);
     QThreadPool::globalInstance()->start(ioRunnable);

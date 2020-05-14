@@ -161,12 +161,6 @@ void FeaturesViewer::updateFeatureFromTracks()
         clearTracksFromFeatures();
         return;
     }
-    if(_mtracks->tracksPerView().count(_viewId) == 0)
-    {
-        qWarning() << "[QtAliceVision] updateFeatureFromTracks: No tracks for view " << _viewId;
-        clearTracksFromFeatures();
-        return;
-    }
 
     // Update newly loaded features with information from the sfmData
     aliceVision::feature::EImageDescriberType descType = aliceVision::feature::EImageDescriberType_stringToEnum(_describerType.toStdString());
