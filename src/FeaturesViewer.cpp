@@ -218,8 +218,6 @@ void FeaturesViewer::updateNbTracks()
     {
         if(feature->trackId() < 0)
             continue;
-        if(_nbLandmarks > 0 && feature->landmarkId() >= 0)
-            continue;
         ++_nbTracks;
     }
 }
@@ -467,7 +465,7 @@ void FeaturesViewer::updatePaintTracks(QSGNode* oldNode, QSGNode* node)
 
     unsigned int kTracksVertices = 1;
 
-    std::size_t displayNbTracks = _displayTracks ? _nbTracks: 0;
+    std::size_t displayNbTracks = _displayTracks ? _nbTracks : 0;
 
     QSGGeometry* geometryPoint = nullptr;
     if(!oldNode)
