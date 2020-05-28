@@ -5,6 +5,7 @@
 #include <QUrl>
 
 #include <aliceVision/sfmData/SfMData.hpp>
+#include <memory>
 
 namespace qtAliceVision {
 
@@ -49,7 +50,7 @@ public:
 private:
     void clear()
     {
-        _sfmData.reset(new aliceVision::sfmData::SfMData());
+        _sfmData = std::make_unique<aliceVision::sfmData::SfMData>();
         Q_EMIT sfmDataChanged();
     }
 
