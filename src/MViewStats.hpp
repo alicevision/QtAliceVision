@@ -45,7 +45,7 @@ public:
          connect(this, &MViewStats::viewIdChanged, this, &MViewStats::computeViewStats);
     }
     MViewStats& operator=(const MViewStats& other) = default;
-    ~MViewStats() override;
+    ~MViewStats() override = default;
 
     Q_SIGNAL void sfmDataChanged();
     Q_SIGNAL void viewIdChanged();

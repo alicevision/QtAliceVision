@@ -32,7 +32,7 @@ public:
 
     MSfMData() = default;
     MSfMData& operator=(const MSfMData& other) = default;
-    ~MSfMData() = default;
+    ~MSfMData() override = default;
 
 private:
     MSfMData(const MSfMData& other);

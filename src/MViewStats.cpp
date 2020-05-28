@@ -351,10 +351,6 @@ void MViewStats::computeViewStats()
     Q_EMIT viewStatsChanged();
 }
 
-MViewStats::~MViewStats()
-{
-}
-
 void MViewStats::setMSfmData(qtAliceVision::MSfMData* sfmData)
 {
     if(_msfmData != nullptr)

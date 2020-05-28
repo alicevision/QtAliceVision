@@ -36,7 +36,7 @@ public:
         connect(this, SIGNAL(matchingFolderChanged()), this, SLOT(load()));
     }
     MTracks& operator=(const MTracks& other) = default;
-    ~MTracks() = default;
+    ~MTracks() override = default;
 
 private:
     MTracks(const MTracks& other);
