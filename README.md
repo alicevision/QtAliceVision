@@ -4,7 +4,12 @@ QtAliceVision is a C++ QML plugin providing classes to load and visualize AliceV
 
 Currently available Viewers:
   - [X] Features 
-  - [] Matches
+    - Position, scale and orientation 
+    - Status: extracted, matched or reconstructed 
+  - [ ] Matches 
+  - [X] Statistics 
+    - Per view statistics with reprojection error, observations histograms 
+    - Global SfM statistics with number of landmarks/matches, reprojection errors, observations per view 
 
 
 ## License
