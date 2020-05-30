@@ -1,9 +1,27 @@
 # Target srcs
-set(PLUGIN_SOURCES FeaturesViewer.cpp FloatImageViewer.cpp FloatTexture.cpp)
-set(PLUGIN_HEADERS FeaturesViewer.hpp FloatImageViewer.hpp FloatTexture.hpp plugin.hpp)
+set(PLUGIN_SOURCES
+    FeaturesViewer.cpp MFeature.cpp
+    MSfMData.cpp MViewStats.cpp
+    MTracks.cpp
+    FloatImageViewer.cpp FloatTexture.cpp
+    MSfMDataStats.cpp)
+set(PLUGIN_HEADERS
+    FeaturesViewer.hpp
+    plugin.hpp
+    MFeature.hpp MSfMData.hpp
+    MTracks.hpp
+    MViewStats.hpp
+    FloatImageViewer.hpp FloatTexture.hpp
+    MSfMDataStats.hpp)
+set(PLUGIN_MOCS
+    FeaturesViewer.hpp MFeature.hpp
+    MSfMData.hpp MViewStats.hpp
+    MTracks.hpp
+    MSfMDataStats.hpp)
 
 # Target properties
-add_library(qtAliceVisionPlugin SHARED ${PLUGIN_SOURCES} ${PLUGIN_HEADERS})
+add_library(qtAliceVisionPlugin SHARED
+    ${PLUGIN_SOURCES} ${PLUGIN_HEADERS} ${PLUGIN_MOCS})
 
 target_link_libraries(qtAliceVisionPlugin
   PUBLIC
@@ -15,6 +33,7 @@ target_link_libraries(qtAliceVisionPlugin
     Qt5::Core
     Qt5::Qml
     Qt5::Quick
+    Qt5::Charts
 )
 
 set_target_properties(qtAliceVisionPlugin
