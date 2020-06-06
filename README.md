@@ -10,6 +10,9 @@ Currently available Viewers:
   - [X] Statistics 
     - Per view statistics with reprojection error, observations histograms 
     - Global SfM statistics with number of landmarks/matches, reprojection errors, observations per view 
+  - [X] Images 
+    - Visualize images with floating point precision 
+    - Dynamically adjust gain and gamma
 
 
 ## License
