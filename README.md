@@ -31,14 +31,75 @@ See [**INSTALL.md**](INSTALL.md) to build and install the project.
 
 Once built and with the plugin installation folder in `QML2_IMPORT_PATH`:
 
+ - Create an `MSfMData` object to get access to the SfM information:
+
 ```js
 import AliceVision 1.0
 
-FeaturesViewer {
-    describerType: "sift"
-    color: "red"
-    displayMode: FeaturesViewer.Points
-    folder: "/path/to/features/folder"
-    viewId: 101245654
+MSfMData {
+  id: sfmData
+  sfmDataPath: "/path/to/SfM/sfmData.abc”
 }
 ```
+
+ - Create an `MTracks` to load all matches and get access to tracks information:
+
+```js
+import AliceVision 1.0
+
+MTracks {
+  id: tracks
+  matchingFolder: "/path/to/FeatureMatching/UID/”
+}
+```
+
+ - Create a `FeaturesViewer` to visualize features position, scale, orientation and optionally information about the feature status regarding tracks and SfmData.
+
+```js
+FeaturesViewer {
+    colorOffset: 0
+    describerType: "sift"
+    featureFolder: "/path/to/features/folder"
+    mTracks: tracks
+    viewId: 101245654
+    color: “blue”
+    landmarkColor: “red”
+    displayMode: FeaturesViewer.Points
+    mSfmData: sfmData
+}
+```
+
+ - Create an `MSfMDataStats` to display global statistics about your SfMData:
+
+```js
+
+MSfMDataStats {
+  msfmData: msfmData
+  mTracks: mTracks
+}
+```
+
+ - Create an `MViewStats` to display statistics about a specific View of your SfMData:
+
+```js
+MViewStats {
+  msfmData: msfmData
+  viewId: 451244710
+}
+```
+
+ - Create a `FloatImageViewer` to display an image with floating point precision, allowing to dynamically adjust the gain and gamma:
+
+```js
+FloatImageViewer {
+  source: "/path/to/image”
+  gamma: 1.0f 
+  offset: 0.0f
+  width: 500
+  height: 540
+  paintedWidth: 500
+  paintedHeight: 540
+  channelMode: “rgb” 
+}
+```
+
