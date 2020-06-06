@@ -79,7 +79,7 @@ MSfMDataStats {
 }
 ```
 
- - Create an `MSfMDataStats` to display statistics about a specific View of your SfMData:
+ - Create an `MViewStats` to display statistics about a specific View of your SfMData:
 
 ```js
 MViewStats {
