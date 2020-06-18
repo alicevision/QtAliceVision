@@ -228,6 +228,7 @@ void FeaturesViewer::updateNbTracks()
 
 void FeaturesViewer::clearSfMFromFeatures()
 {
+    _nbLandmarks = 0;
     for(const auto feature: _features)
     {
         feature->clearLandmarkInfo();
