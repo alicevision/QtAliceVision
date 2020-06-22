@@ -150,16 +150,19 @@ void FeaturesViewer::updateFeatureFromTracks()
     if(_mtracks == nullptr)
     {
         qWarning() << "[QtAliceVision] updateFeatureFromTracks: no Track";
+        _displayTracks = false;
         return;
     }
     if(_mtracks->status() != MTracks::Ready)
     {
         qWarning() << "[QtAliceVision] updateFeatureFromTracks: Tracks is not ready: " << _mtracks->status();
+        _displayTracks = false;
         return;
     }
     if(_mtracks->tracks().empty())
     {
         qWarning() << "[QtAliceVision] updateFeatureFromTracks: Tracks is empty";
+        _displayTracks = false;
         return;
     }
 
@@ -201,7 +204,8 @@ void FeaturesViewer::updateFeatureFromTracks()
         }
         MFeature* feature = _features.at(featId);
         feature->setTrackId(trackId);
-    }
+    }    
+    _displayTracks = true;
 }
 
 void FeaturesViewer::updateFeatureFromTracksEmit()
@@ -462,10 +466,9 @@ void FeaturesViewer::updatePaintFeatures(QSGNode* oldNode, QSGNode* node)
 
 void FeaturesViewer::updatePaintTracks(QSGNode* oldNode, QSGNode* node)
 {
-
     unsigned int kTracksVertices = 1;
 
-    std::size_t displayNbTracks = _displayTracks ? _nbTracks : 0;
+    const std::size_t displayNbTracks = _displayTracks ? _nbTracks - _nbLandmarks: 0;
 
     QSGGeometry* geometryPoint = nullptr;
     if(!oldNode)
@@ -554,7 +557,7 @@ void FeaturesViewer::updatePaintLandmarks(QSGNode* oldNode, QSGNode* node)
 
     const unsigned int kReprojectionVertices = 2;
     //
-    int displayNbLandmarks = _displayLandmarks ? _nbLandmarks : 0;
+    const int displayNbLandmarks = _displayLandmarks ? _nbLandmarks : 0;
 
     QSGGeometry* geometryLine = nullptr;
     QSGGeometry* geometryPoint = nullptr;
