@@ -56,19 +56,28 @@ MTracks {
 }
 ```
 
+ - Create a `MFeatures` object to get access to all features data:
+
+```js
+MFeatures {
+  viewId: 101245654
+  describerTypes: ["sift", "akaze"]
+  featureFolder: "/path/to/features/folder"
+  mTracks: tracks
+  mSfmData: sfmData
+}
+```
+
  - Create a `FeaturesViewer` to visualize features position, scale, orientation and optionally information about the feature status regarding tracks and SfmData.
 
 ```js
 FeaturesViewer {
     colorOffset: 0
     describerType: "sift"
-    featureFolder: "/path/to/features/folder"
-    mTracks: tracks
-    viewId: 101245654
     color: “blue”
     landmarkColor: “red”
     displayMode: FeaturesViewer.Points
-    mSfmData: sfmData
+    mdescFeatures: mfeatures.allFeatures(describerType)
 }
 ```
 
@@ -95,14 +104,14 @@ MViewStats {
 
 ```js
 FloatImageViewer {
-  source: "/path/to/image”
-  gamma: 1.0f 
+  source: "/path/to/image"
+  gamma: 1.0f
   offset: 0.0f
   width: 500
   height: 540
   paintedWidth: 500
   paintedHeight: 540
-  channelMode: “rgb” 
+  channelMode: “rgb”
 }
 ```
 
