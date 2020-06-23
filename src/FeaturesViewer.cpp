@@ -9,12 +9,6 @@
 #include <QThreadPool>
 #include <QTransform>
 
-#include <aliceVision/feature/PointFeature.hpp>
-#include <aliceVision/feature/ImageDescriber.hpp>
-#include <aliceVision/sfm/pipeline/regionsIO.hpp>
-
-#include <aliceVision/sfmDataIO/sfmDataIO.hpp>
-
 
 namespace qtAliceVision 
 {
@@ -28,284 +22,28 @@ FeaturesViewer::FeaturesViewer(QQuickItem* parent)
     connect(this, &FeaturesViewer::displayModeChanged, this, &FeaturesViewer::update);
     connect(this, &FeaturesViewer::colorChanged, this, &FeaturesViewer::update);
     connect(this, &FeaturesViewer::landmarkColorChanged, this, &FeaturesViewer::update);
-    connect(this, &FeaturesViewer::featuresChanged, this, &FeaturesViewer::update);
+    connect(this, &FeaturesViewer::descFeaturesChanged, this, &FeaturesViewer::update);
     connect(this, &FeaturesViewer::displayFeaturesChanged, this, &FeaturesViewer::update);
     connect(this, &FeaturesViewer::displayLandmarksChanged, this, &FeaturesViewer::update);
     connect(this, &FeaturesViewer::displayTracksChanged, this, &FeaturesViewer::update);
-
-    // trigger features reload events
-    connect(this, &FeaturesViewer::featureFolderChanged, this, &FeaturesViewer::reloadFeatures);
-    connect(this, &FeaturesViewer::viewIdChanged, this, &FeaturesViewer::reloadFeatures);
-    connect(this, &FeaturesViewer::describerTypeChanged, this, &FeaturesViewer::reloadFeatures);
-
-    connect(this, &FeaturesViewer::tracksChanged, this, &FeaturesViewer::updateFeatureFromTracksEmit);
-    connect(this, &FeaturesViewer::sfmDataChanged, this, &FeaturesViewer::updateFeatureFromSfMEmit);
-
 }
 
-FeaturesViewer::~FeaturesViewer()
+void FeaturesViewer::setMDescFeatures(MDescFeatures* descFeatures)
 {
-    qDeleteAll(_features);
-}
-
-void FeaturesViewer::reloadFeatures()
-{
-    _nbLandmarks = 0;
-    qDeleteAll(_features);
-    _features.clear();
-    Q_EMIT featuresChanged();
-
-    _outdatedFeatures = false;
-
-    if(!_featureFolder.isValid() || _viewId == aliceVision::UndefinedIndexT)
-    {
-        qWarning() << "[QtAliceVision] FeaturesViewer::reloadFeatures: No valid folder of view.";
-        Q_EMIT featuresChanged();
+    if (_mdescFeatures == descFeatures)
         return;
-    }
-
-    if(!_loadingFeatures)
+    if (_mdescFeatures != nullptr)
     {
-        setLoadingFeatures(true);
-
-        // load features from file in a seperate thread
-        auto* ioRunnable = new FeatureIORunnable(FeatureIORunnable::IOParams(_featureFolder, _viewId, _describerType));
-        connect(ioRunnable, &FeatureIORunnable::resultReady, this, &FeaturesViewer::onFeaturesResultReady);
-        QThreadPool::globalInstance()->start(ioRunnable);
+        disconnect(_mdescFeatures, &MDescFeatures::featuresReadyToDisplayChanged, this, &FeaturesViewer::descFeaturesChanged);
+        disconnect(_mdescFeatures, &MDescFeatures::updateDisplayTracks, this, &FeaturesViewer::setDisplayTracks);
     }
-    else
+    _mdescFeatures = descFeatures;
+    if (_mdescFeatures != nullptr)
     {
-        // mark current request as outdated
-        _outdatedFeatures = true;
+        connect(_mdescFeatures, &MDescFeatures::featuresReadyToDisplayChanged, this, &FeaturesViewer::descFeaturesChanged);
+        connect(_mdescFeatures, &MDescFeatures::updateDisplayTracks, this, &FeaturesViewer::setDisplayTracks);
     }
-}
-
-void FeaturesViewer::setMTracks(MTracks* tracks)
-{
-    if(_mtracks == tracks)
-        return;
-    if(_mtracks != nullptr)
-    {
-        disconnect(_mtracks, SIGNAL(tracksChanged()), this, SIGNAL(tracksChanged()));
-    }
-    _mtracks = tracks;
-    if(_mtracks != nullptr)
-    {
-        connect(_mtracks, SIGNAL(tracksChanged()), this, SIGNAL(tracksChanged()));
-    }
-    Q_EMIT tracksChanged();
-}
-
-void FeaturesViewer::setMSfmData(MSfMData* sfmData)
-{
-    if(_msfmData == sfmData)
-        return;
-    if(_msfmData != nullptr)
-    {
-        disconnect(_msfmData, SIGNAL(sfmDataChanged()), this, SIGNAL(sfmDataChanged()));
-    }
-    _msfmData = sfmData;
-    if(_msfmData != nullptr)
-    {
-        connect(_msfmData, SIGNAL(sfmDataChanged()), this, SIGNAL(sfmDataChanged()));
-    }
-    Q_EMIT sfmDataChanged();
-}
-
-void FeaturesViewer::onFeaturesResultReady(QList<MFeature*> features)
-{
-    // another request has been made while io thread was working
-    if(_outdatedFeatures)
-    {
-        // clear result and reload features from file with current parameters
-        qDeleteAll(features);
-        setLoadingFeatures(false);
-        reloadFeatures();
-        return;
-    }
-
-    // update features
-    _features = features;
-    setLoadingFeatures(false);
-    updateFeatureFromSfM();
-    updateFeatureFromTracks();
-    updateNbTracks();
-    Q_EMIT featuresChanged();
-}
-
-void FeaturesViewer::clearTracksFromFeatures()
-{
-    for(const auto feature: _features)
-    {
-        feature->clearTrack();
-    }
-}
-
-void FeaturesViewer::updateFeatureFromTracks()
-{
-    if(_features.empty())
-        return;
-    clearTracksFromFeatures();
-
-    if(_mtracks == nullptr)
-    {
-        qWarning() << "[QtAliceVision] updateFeatureFromTracks: no Track";
-        return;
-    }
-    if(_mtracks->status() != MTracks::Ready)
-    {
-        qWarning() << "[QtAliceVision] updateFeatureFromTracks: Tracks is not ready: " << _mtracks->status();
-        return;
-    }
-    if(_mtracks->tracks().empty())
-    {
-        qWarning() << "[QtAliceVision] updateFeatureFromTracks: Tracks is empty";
-        return;
-    }
-
-    // Update newly loaded features with information from the sfmData
-    aliceVision::feature::EImageDescriberType descType = aliceVision::feature::EImageDescriberType_stringToEnum(_describerType.toStdString());
-
-    auto tracksPerViewIt = _mtracks->tracksPerView().find(_viewId);
-    if(tracksPerViewIt == _mtracks->tracksPerView().end())
-    {
-        qWarning() << "[QtAliceVision] view does not exist in tracks.";
-        return;
-    }
-    const auto& tracksInCurrentView = tracksPerViewIt->second;
-    const auto& tracks = _mtracks->tracks();
-    for(const auto& trackId: tracksInCurrentView)
-    {
-        const auto& trackIterator = tracks.find(trackId);
-        if(trackIterator == tracks.end())
-        {
-            qWarning() << "[QtAliceVision] Track id: "<< trackId <<" in current view does not exist in Tracks.";
-            continue;
-        }
-        const aliceVision::track::Track& currentTrack = trackIterator->second;
-
-        if(currentTrack.descType != descType)
-            continue;
-
-        const auto& featIdPerViewIt = currentTrack.featPerView.find(_viewId);
-        if(featIdPerViewIt == currentTrack.featPerView.end())
-        {
-            qWarning() << "[QtAliceVision] featIdPerViewIt invalid.";
-            continue;
-        }
-        const std::size_t featId = featIdPerViewIt->second;
-        if(featId >= _features.size())
-        {
-            qWarning() << "[QtAliceVision] featId invalid regarding loaded features.";
-            continue;
-        }
-        MFeature* feature = _features.at(featId);
-        feature->setTrackId(trackId);
-    }
-}
-
-void FeaturesViewer::updateFeatureFromTracksEmit()
-{
-    updateFeatureFromTracks();
-    updateNbTracks();
-    Q_EMIT featuresChanged();
-}
-
-void FeaturesViewer::updateNbTracks()
-{
-    _nbTracks = 0;
-    for(MFeature* feature: _features)
-    {
-        if(feature->trackId() < 0)
-            continue;
-        ++_nbTracks;
-    }
-}
-
-void FeaturesViewer::clearSfMFromFeatures()
-{
-    _nbLandmarks = 0;
-    for(const auto feature: _features)
-    {
-        feature->clearLandmarkInfo();
-    }
-}
-
-void FeaturesViewer::updateFeatureFromSfM()
-{
-    clearSfMFromFeatures();
-
-    if(_features.empty())
-    {
-        return;
-    }
-    if(_msfmData == nullptr)
-    {
-        qWarning() << "[QtAliceVision] updateFeatureFromSfM: no SfMData";
-        return;
-    }
-    if(_msfmData->status() != MSfMData::Ready)
-    {
-        qWarning() << "[QtAliceVision] updateFeatureFromSfM: SfMData is not ready: " << _msfmData->status();
-        return;
-    }
-    if(_msfmData->rawData().getViews().empty())
-    {
-        qWarning() << "[QtAliceVision] updateFeatureFromSfM: SfMData is empty";
-        return;
-    }
-    const auto viewIt = _msfmData->rawData().getViews().find(_viewId);
-    if(viewIt == _msfmData->rawData().getViews().end())
-    {
-        qWarning() << "[QtAliceVision] updateFeatureFromSfM: View " << _viewId << " is not is the SfMData";
-        return;
-    }
-    const aliceVision::sfmData::View& view = *viewIt->second;
-    if(!_msfmData->rawData().isPoseAndIntrinsicDefined(&view))
-    {
-        qWarning() << "[QtAliceVision] updateFeatureFromSfM: SfMData has no valid pose and intrinsic for view " << _viewId;
-        return;
-    }
-
-    // Update newly loaded features with information from the sfmData
-    aliceVision::feature::EImageDescriberType descType = aliceVision::feature::EImageDescriberType_stringToEnum(_describerType.toStdString());
-
-    const aliceVision::sfmData::CameraPose pose = _msfmData->rawData().getPose(view);
-    const aliceVision::geometry::Pose3 camTransform = pose.getTransform();
-    const aliceVision::camera::IntrinsicBase* intrinsic = _msfmData->rawData().getIntrinsicPtr(view.getIntrinsicId());
-
-    int numLandmark = 0;
-    for(const auto& landmark: _msfmData->rawData().getLandmarks())
-    {
-        if(landmark.second.descType != descType)
-            continue;
-
-        auto itObs = landmark.second.observations.find(_viewId);
-        if(itObs != landmark.second.observations.end())
-        {
-            // setup landmark id and landmark 2d reprojection in the current view
-            aliceVision::Vec2 r = intrinsic->project(camTransform, landmark.second.X);
-
-            if (itObs->second.id_feat >= 0 && itObs->second.id_feat < _features.size())
-            {
-                _features.at(itObs->second.id_feat)->setLandmarkInfo(landmark.first, r.cast<float>());
-            }
-            else if(!_features.empty())
-            {
-                qWarning() << "[QtAliceVision] ---------- ERROR id_feat: " << itObs->second.id_feat << ", size: " << _features.size();
-            }
-
-            ++_nbLandmarks;
-        }
-        ++numLandmark;
-    }
-}
-
-void FeaturesViewer::updateFeatureFromSfMEmit()
-{
-    updateFeatureFromSfM();
-    updateNbTracks();
-    Q_EMIT featuresChanged();
+    Q_EMIT descFeaturesChanged();
 }
 
 void FeaturesViewer::updatePaintFeatures(QSGNode* oldNode, QSGNode* node)
@@ -313,7 +51,7 @@ void FeaturesViewer::updatePaintFeatures(QSGNode* oldNode, QSGNode* node)
     unsigned int kFeatVertices = 0;
     unsigned int kFeatIndices = 0;
 
-    switch(_displayMode)
+    switch (_displayMode)
     {
     case FeaturesViewer::Points:
         kFeatVertices = 1;
@@ -326,11 +64,11 @@ void FeaturesViewer::updatePaintFeatures(QSGNode* oldNode, QSGNode* node)
         kFeatVertices = (4 * 2) + 2;  // doubled rectangle points + orientation line
         break;
     }
-    std::size_t displayNbFeatures = _displayFeatures ? _features.size() : 0;
+    std::size_t displayNbFeatures = _displayFeatures ? _mdescFeatures->getFeaturesData().size() : 0;
     QSGGeometry* geometry = nullptr;
-    if(!oldNode)
+    if (!oldNode)
     {
-        if(_displayFeatures)
+        if (_displayFeatures)
         {
             auto root = new QSGGeometryNode;
             {
@@ -339,7 +77,7 @@ void FeaturesViewer::updatePaintFeatures(QSGNode* oldNode, QSGNode* node)
                 geometry = new QSGGeometry(
                     QSGGeometry::defaultAttributes_ColoredPoint2D(),
                     static_cast<int>(displayNbFeatures * kFeatVertices),
-                    static_cast<int>(displayNbFeatures* kFeatIndices),
+                    static_cast<int>(displayNbFeatures * kFeatIndices),
                     QSGGeometry::UnsignedIntType);
 
                 geometry->setIndexDataPattern(QSGGeometry::StaticPattern);
@@ -364,12 +102,12 @@ void FeaturesViewer::updatePaintFeatures(QSGNode* oldNode, QSGNode* node)
         );
     }
 
-    if(!_displayFeatures)
+    if (!_displayFeatures)
     {
         return;
     }
 
-    switch(_displayMode)
+    switch (_displayMode)
     {
     case FeaturesViewer::Points:
         geometry->setDrawingMode(QSGGeometry::DrawPoints);
@@ -397,17 +135,17 @@ void FeaturesViewer::updatePaintFeatures(QSGNode* oldNode, QSGNode* node)
         );
     };
 
-    for(int i = 0; i < _features.size(); ++i)
+    for (int i = 0; i < _mdescFeatures->getFeaturesData().size(); ++i)
     {
-        const auto& f = _features.at(i);
+        const auto& f = _mdescFeatures->getFeaturesData().at(i);
         bool isReconstructed = f->landmarkId() > 0;
         auto& feat = f->pointFeature();
         const auto radius = feat.scale();
         const auto diag = 2.0 * feat.scale();
-        unsigned int vidx = i*kFeatVertices;
-        unsigned int iidx = i*kFeatIndices;
+        unsigned int vidx = i * kFeatVertices;
+        unsigned int iidx = i * kFeatIndices;
 
-        if(_displayMode == FeaturesViewer::Points)
+        if (_displayMode == FeaturesViewer::Points)
         {
             setVertice(vidx, QPointF(feat.x(), feat.y()), isReconstructed);
         }
@@ -420,40 +158,40 @@ void FeaturesViewer::updatePaintFeatures(QSGNode* oldNode, QSGNode* node)
             QPointF br = rect.bottomRight();
             QPointF bl = rect.bottomLeft();
 
-            if(_displayMode == FeaturesViewer::Squares)
+            if (_displayMode == FeaturesViewer::Squares)
             {
                 // create 2 triangles
                 setVertice(vidx, tl, isReconstructed);
-                setVertice(vidx+1, tr, isReconstructed);
-                setVertice(vidx+2, br, isReconstructed);
-                setVertice(vidx+3, bl, isReconstructed);
+                setVertice(vidx + 1, tr, isReconstructed);
+                setVertice(vidx + 2, br, isReconstructed);
+                setVertice(vidx + 3, bl, isReconstructed);
                 indices[iidx] = vidx;
-                indices[iidx+1] = vidx+1;
-                indices[iidx+2] = vidx+2;
-                indices[iidx+3] = vidx+2;
-                indices[iidx+4] = vidx+3;
-                indices[iidx+5] = vidx;
+                indices[iidx + 1] = vidx + 1;
+                indices[iidx + 2] = vidx + 2;
+                indices[iidx + 3] = vidx + 2;
+                indices[iidx + 4] = vidx + 3;
+                indices[iidx + 5] = vidx;
             }
-            else if(_displayMode == FeaturesViewer::OrientedSquares)
+            else if (_displayMode == FeaturesViewer::OrientedSquares)
             {
                 // compute angle: use feature angle and remove self rotation
-                const auto radAngle = -feat.orientation()-qDegreesToRadians(rotation());
+                const auto radAngle = -feat.orientation() - qDegreesToRadians(rotation());
                 // generate a QTransform that represent this rotation
                 const auto t = QTransform().translate(feat.x(), feat.y()).rotateRadians(radAngle).translate(-feat.x(), -feat.y());
 
                 // create lines, each vertice has to be duplicated (A->B, B->C, C->D, D->A) since we use GL_LINES
-                std::vector<QPointF> points = {t.map(tl), t.map(tr), t.map(br), t.map(bl), t.map(tl)};
-                for(unsigned int k = 0; k < points.size(); ++k)
+                std::vector<QPointF> points = { t.map(tl), t.map(tr), t.map(br), t.map(bl), t.map(tl) };
+                for (unsigned int k = 0; k < points.size(); ++k)
                 {
-                    auto lidx = k*2; // local index
-                    setVertice(vidx+lidx, points[k], isReconstructed);
-                    setVertice(vidx+lidx+1, points[k+1], isReconstructed);
+                    auto lidx = k * 2; // local index
+                    setVertice(vidx + lidx, points[k], isReconstructed);
+                    setVertice(vidx + lidx + 1, points[k + 1], isReconstructed);
                 }
                 // orientation line: up vector (0, 1)
                 const auto nbPoints = static_cast<unsigned int>(points.size());
-                setVertice(vidx+nbPoints*2-2, rect.center(), isReconstructed);
+                setVertice(vidx + nbPoints * 2 - 2, rect.center(), isReconstructed);
                 auto o2 = t.map(rect.center() - QPointF(0.0f, radius)); // rotate end point
-                setVertice(vidx+nbPoints*2-1, o2, isReconstructed);
+                setVertice(vidx + nbPoints * 2 - 1, o2, isReconstructed);
             }
         }
     }
@@ -462,15 +200,14 @@ void FeaturesViewer::updatePaintFeatures(QSGNode* oldNode, QSGNode* node)
 
 void FeaturesViewer::updatePaintTracks(QSGNode* oldNode, QSGNode* node)
 {
-
     unsigned int kTracksVertices = 1;
 
-    std::size_t displayNbTracks = _displayTracks ? _nbTracks : 0;
+    const std::size_t displayNbTracks = _displayTracks ? getNbTracks() - getNbLandmarks() : 0;
 
     QSGGeometry* geometryPoint = nullptr;
-    if(!oldNode)
+    if (!oldNode)
     {
-        if(_displayTracks)
+        if (_displayTracks)
         {
             auto root = new QSGGeometryNode;
             {
@@ -505,7 +242,7 @@ void FeaturesViewer::updatePaintTracks(QSGNode* oldNode, QSGNode* node)
         );
     }
 
-    if(!_displayTracks)
+    if (!_displayTracks)
     {
         return;
     }
@@ -517,25 +254,25 @@ void FeaturesViewer::updatePaintTracks(QSGNode* oldNode, QSGNode* node)
 
     const auto setVerticePoint = [&](unsigned int index, const QPointF& point)
     {
-         QColor c = QColor(255,127,0);
-         verticesPoints[index].set(
-         point.x(), point.y(),
-         c.red(), c.green(), c.blue(), c.alpha()
-         );
+        QColor c = QColor(255, 127, 0);
+        verticesPoints[index].set(
+            point.x(), point.y(),
+            c.red(), c.green(), c.blue(), c.alpha()
+        );
     };
 
     // Draw points in the center of non validated tracks
     int obsI = 0;
-    for(int i = 0; i < _features.size(); ++i)
+    for (int i = 0; i < _mdescFeatures->getFeaturesData().size(); ++i)
     {
-        const auto& f = _features.at(i);
+        const auto& f = _mdescFeatures->getFeaturesData().at(i);
 
-        if(f->trackId() < 0)
+        if (f->trackId() < 0)
             continue;
-        if(_nbLandmarks > 0 && f->landmarkId() >= 0)
+        if (getNbLandmarks() > 0 && f->landmarkId() >= 0)
             continue;
 
-        if(obsI >= displayNbTracks)
+        if (obsI >= displayNbTracks)
         {
             qWarning() << "[QtAliceVision] updatePaintTracks ERROR on number of tracks";
             break;
@@ -551,16 +288,15 @@ void FeaturesViewer::updatePaintTracks(QSGNode* oldNode, QSGNode* node)
 
 void FeaturesViewer::updatePaintLandmarks(QSGNode* oldNode, QSGNode* node)
 {
-
     const unsigned int kReprojectionVertices = 2;
     //
-    int displayNbLandmarks = _displayLandmarks ? _nbLandmarks : 0;
+    const int displayNbLandmarks = _displayLandmarks ? getNbLandmarks() : 0;
 
     QSGGeometry* geometryLine = nullptr;
     QSGGeometry* geometryPoint = nullptr;
-    if(!oldNode)
+    if (!oldNode)
     {
-        if(_displayLandmarks)
+        if (_displayLandmarks)
         {
             {
                 auto root = new QSGGeometryNode;
@@ -626,7 +362,7 @@ void FeaturesViewer::updatePaintLandmarks(QSGNode* oldNode, QSGNode* node)
         );
     }
 
-    if(!_displayLandmarks)
+    if (!_displayLandmarks)
     {
         return;
     }
@@ -658,9 +394,9 @@ void FeaturesViewer::updatePaintLandmarks(QSGNode* oldNode, QSGNode* node)
 
     // Draw lines between reprojected points and features extracted
     int obsI = 0;
-    for(int i = 0; i < _features.size(); ++i)
+    for (int i = 0; i < _mdescFeatures->getFeaturesData().size(); ++i)
     {
-        const auto& f = _features.at(i);
+        const auto& f = _mdescFeatures->getFeaturesData().at(i);
         float x = f->x();
         float y = f->y();
         float rx = f->rx();
@@ -699,6 +435,9 @@ QSGNode* FeaturesViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePai
         node = oldNode;
     }
 
+    if (!_mdescFeatures)
+        return node;
+
     updatePaintFeatures(oldNode, node);
     updatePaintTracks(oldNode, node);
     updatePaintLandmarks(oldNode, node);
@@ -706,4 +445,4 @@ QSGNode* FeaturesViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePai
     return node;
 }
 
-}
+} // namespace

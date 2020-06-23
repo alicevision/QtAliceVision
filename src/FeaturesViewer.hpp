@@ -1,62 +1,41 @@
 #pragma once
 
-#include <MFeature.hpp>
-#include <MSfMData.hpp>
-#include <MTracks.hpp>
-
-#include <aliceVision/sfm/pipeline/regionsIO.hpp>
-#include <aliceVision/sfmData/SfMData.hpp>
-#include <aliceVision/track/Track.hpp>
-#include <aliceVision/sfm/sfmStatistics.hpp>
+#include "MDescFeatures.hpp"
 
 #include <QQuickItem>
-#include <QRunnable>
-#include <QUrl>
+#include <QSharedPointer>
 
-
-namespace qtAliceVision {
-
+namespace qtAliceVision
+{
 
 /**
  * @brief Load and display extracted features of a View.
+ * @warning FeaturesViewer contains a pointer to an instance of MDescFeatures: it refers only to one type of decribers.
  */
 class FeaturesViewer : public QQuickItem
 {
     Q_OBJECT
-    /// Path to folder containing the features
-    Q_PROPERTY(QUrl featureFolder MEMBER _featureFolder NOTIFY featureFolderChanged)
-    /// ViewID to consider
-    Q_PROPERTY(quint32 viewId MEMBER _viewId NOTIFY viewIdChanged)
-    /// Describer type to load
-    Q_PROPERTY(QString describerType MEMBER _describerType NOTIFY describerTypeChanged)
-    /// Pointer to SfmData
-    Q_PROPERTY(qtAliceVision::MSfMData* msfmData READ getMSfmData WRITE setMSfmData NOTIFY sfmDataChanged)
-    /// Pointer to Tracks
-    Q_PROPERTY(qtAliceVision::MTracks* mtracks READ getMTracks WRITE setMTracks NOTIFY tracksChanged)
     /// Display mode (see DisplayMode enum)
     Q_PROPERTY(DisplayMode displayMode MEMBER _displayMode NOTIFY displayModeChanged)
+    /// Describer type represented by this viewer
+    Q_PROPERTY(QString describerType MEMBER _describerType NOTIFY describerTypeChanged)
     /// Features color
     Q_PROPERTY(QColor color MEMBER _color NOTIFY colorChanged)
     /// Landmarks color
     Q_PROPERTY(QColor landmarkColor MEMBER _landmarkColor NOTIFY landmarkColorChanged)
-    /// Whether landmarks are reconstructed
-    Q_PROPERTY(bool haveValidLandmarks READ haveValidLandmarks NOTIFY sfmDataChanged)
-    /// Whether tracks are reconstructed
-    Q_PROPERTY(bool haveValidTracks READ haveValidTracks NOTIFY tracksChanged)
-    /// Whether features are currently being loaded from file
-    Q_PROPERTY(bool loadingFeatures READ loadingFeatures NOTIFY loadingFeaturesChanged)
     /// Display all the 2D features extracted from the image
     Q_PROPERTY(bool displayfeatures MEMBER _displayFeatures NOTIFY displayFeaturesChanged)
     /// Display the 3D reprojection of the features associated to a landmark
     Q_PROPERTY(bool displayLandmarks MEMBER _displayLandmarks NOTIFY displayLandmarksChanged)
     /// Display the center of the tracks unvalidated after resection
-    Q_PROPERTY(bool displayTracks MEMBER _displayTracks NOTIFY displayFeaturesChanged)
+    Q_PROPERTY(bool displayTracks MEMBER _displayTracks NOTIFY displayTracksChanged)
     /// Number of features reconstructed
-    Q_PROPERTY(int nbLandmarks MEMBER _nbLandmarks NOTIFY displayLandmarksChanged)
+    Q_PROPERTY(int nbLandmarks READ getNbLandmarks NOTIFY displayLandmarksChanged)
     /// Number of tracks
-    Q_PROPERTY(int nbTracks MEMBER _nbTracks NOTIFY displayTracksChanged)
-    /// The list of features
-    Q_PROPERTY(QQmlListProperty<qtAliceVision::MFeature> features READ features NOTIFY featuresChanged)
+    Q_PROPERTY(int nbTracks READ getNbTracks NOTIFY displayTracksChanged)
+    /// MDescFeatures pointer
+    Q_PROPERTY(qtAliceVision::MDescFeatures* mdescFeatures READ getMDescFeatures WRITE setMDescFeatures NOTIFY descFeaturesChanged)
+
 
 public:
     enum DisplayMode {
@@ -67,47 +46,32 @@ public:
     Q_ENUM(DisplayMode)
 
     explicit FeaturesViewer(QQuickItem* parent = nullptr);
-    ~FeaturesViewer() override;
+    ~FeaturesViewer() override = default;
 
-    QQmlListProperty<MFeature> features()
-    {
-        return {this, _features};
-    }
+    /// Get the number of tracks corresponding to the describer type.
+    inline int getNbTracks() const { return _mdescFeatures->getNbTracks(); }
+    /// Get the number of landmarks corresponding to the describer type.
+    inline int getNbLandmarks() const { return _mdescFeatures->getNbLandmarks(); }
 
-    inline bool loadingFeatures() const { return _loadingFeatures; }
-    inline void setLoadingFeatures(bool loadingFeatures)
-    {
-        if(_loadingFeatures == loadingFeatures)
+    /// Return a pointer to the MDescFeatures instance.
+    MDescFeatures* getMDescFeatures() const { return _mdescFeatures; }
+    /// Set a MDescFeatures instance to the class member '_mdescFeatures'.
+    void setMDescFeatures(MDescFeatures* descFeatures);
+
+    /// Set the class member '_displayTracks' with a boolean.
+    void setDisplayTracks(bool displayTracks) {
+        if (_displayTracks == displayTracks)
             return;
-        _loadingFeatures = loadingFeatures;
-        Q_EMIT loadingFeaturesChanged();
-    }
-
-    MSfMData* getMSfmData() { return _msfmData; }
-    void setMSfmData(MSfMData* sfmData);
-    bool haveValidLandmarks() const {
-        return _msfmData != nullptr && _msfmData->status() == MSfMData::Ready;
-    }
-
-    MTracks* getMTracks() { return _mtracks; }
-    void setMTracks(MTracks* tracks);
-    bool haveValidTracks() const {
-        return _mtracks != nullptr && _mtracks->status() == MTracks::Ready;
+        _displayTracks = displayTracks;
+        Q_EMIT displayTracksChanged();
     }
 
 public:
-    Q_SIGNAL void sfmDataChanged();
-    Q_SIGNAL void featureFolderChanged();
-    Q_SIGNAL void viewIdChanged();
-    Q_SIGNAL void describerTypeChanged();
-    Q_SIGNAL void featuresChanged();
-    Q_SIGNAL void loadingFeaturesChanged();
-    Q_SIGNAL void tracksChanged();
-
     Q_SIGNAL void displayFeaturesChanged();
+    Q_SIGNAL void describerTypeChanged();
     Q_SIGNAL void displayLandmarksChanged();
     Q_SIGNAL void displayTracksChanged();
-
+    Q_SIGNAL void descFeaturesChanged();
     Q_SIGNAL void displayModeChanged();
     Q_SIGNAL void colorChanged();
     Q_SIGNAL void landmarkColorChanged();
@@ -115,40 +79,13 @@ public:
 private:
     /// Custom QSGNode update
     QSGNode* updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePaintNodeData* data) override;
-
-private:
-    /// Reload features from source
-    void reloadFeatures();
-    /// Handle result from asynchronous file loading
-    Q_SLOT void onFeaturesResultReady(QList<MFeature*> features);
-
-    void reloadTracks();
-    void clearTracksFromFeatures();
-    void updateFeatureFromTracks();
-    void updateFeatureFromTracksEmit();
-    /**
-     * @brief Update the number of tracks not associated to a landmark.
-     * @warning depends on features, landmarks (sfmData), and tracks.
-     */
-    void updateNbTracks();
-
-    void clearSfMFromFeatures();
-    void updateFeatureFromSfM();
-    void updateFeatureFromSfMEmit();
-
+    /// Update Features display using QSGNode.
     void updatePaintFeatures(QSGNode* oldNode, QSGNode* node);
+    /// Update Tracks display using QSGNode.
     void updatePaintTracks(QSGNode* oldNode, QSGNode* node);
+    /// Update Landmarks display using QSGNode.
     void updatePaintLandmarks(QSGNode* oldNode, QSGNode* node);
 
-    QUrl _featureFolder;
-    aliceVision::IndexT _viewId = aliceVision::UndefinedIndexT;
-    QString _describerType = "sift";
-    QList<MFeature*> _features;
-    MSfMData* _msfmData = nullptr;
-    MTracks* _mtracks = nullptr;
-
-    int _nbLandmarks = 0; //< number of features associated to a 3D landmark
-    int _nbTracks = 0; // number of tracks unvalidated after resection
     DisplayMode _displayMode = FeaturesViewer::Points;
     QColor _color = QColor(20, 220, 80);
     QColor _landmarkColor = QColor(255, 0, 0);
@@ -159,8 +96,9 @@ private:
     bool _displayFeatures = true;
     bool _displayLandmarks = true;
     bool _displayTracks = true;
+
+    MDescFeatures* _mdescFeatures = nullptr;
+    QString _describerType = "sift";
 };
 
 } // namespace
-
-Q_DECLARE_METATYPE(qtAliceVision::MFeature);   // for usage in signals/slots

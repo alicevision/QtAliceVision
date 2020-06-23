@@ -6,6 +6,7 @@
 
 #include <aliceVision/sfm/pipeline/regionsIO.hpp>
 #include <aliceVision/sfmData/SfMData.hpp>
+#include <aliceVision/feature/PointFeature.hpp>
 
 namespace qtAliceVision {
 

@@ -31,8 +31,10 @@ public:
         qmlRegisterType<FeaturesViewer>(uri, 1, 0, "FeaturesViewer");
         qmlRegisterType<MSfMData>(uri, 1, 0, "MSfMData");
         qmlRegisterType<MTracks>(uri, 1, 0, "MTracks");
+        qmlRegisterType<MFeatures>(uri, 1, 0, "MFeatures");
         qmlRegisterType<MViewStats>(uri, 1, 0, "MViewStats");
         qmlRegisterType<MSfMDataStats>(uri, 1, 0, "MSfMDataStats");
+        qmlRegisterUncreatableType<MDescFeatures>(uri, 1, 0, "MDescFeatures", "Cannot create MDescFeatures instances from QML.");
         qmlRegisterUncreatableType<MFeature>(uri, 1, 0, "MFeature", "Cannot create Feature instances from QML.");
         qRegisterMetaType<QList<MFeature*>>( "QList<MFeature*>" ); // for usage in signals/slots
         qRegisterMetaType<QList<QPointF*>>("QList<QPointF*>");
