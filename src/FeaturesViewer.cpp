@@ -59,7 +59,7 @@ void FeaturesViewer::reloadFeatures()
 
     if(!_featureFolder.isValid() || _viewId == aliceVision::UndefinedIndexT)
     {
-        qWarning() << "[QtAliceVision] FeaturesViewer::reloadFeatures: No valid folder of view.";
+        qInfo() << "[QtAliceVision] FeaturesViewer::reloadFeatures: No valid folder of view.";
         Q_EMIT featuresChanged();
         return;
     }
@@ -149,19 +149,19 @@ void FeaturesViewer::updateFeatureFromTracks()
 
     if(_mtracks == nullptr)
     {
-        qWarning() << "[QtAliceVision] updateFeatureFromTracks: no Track";
+        qInfo() << "[QtAliceVision] updateFeatureFromTracks: no Track";
         _displayTracks = false;
         return;
     }
     if(_mtracks->status() != MTracks::Ready)
     {
-        qWarning() << "[QtAliceVision] updateFeatureFromTracks: Tracks is not ready: " << _mtracks->status();
+        qInfo() << "[QtAliceVision] updateFeatureFromTracks: Tracks is not ready: " << _mtracks->status();
         _displayTracks = false;
         return;
     }
     if(_mtracks->tracks().empty())
     {
-        qWarning() << "[QtAliceVision] updateFeatureFromTracks: Tracks is empty";
+        qInfo() << "[QtAliceVision] updateFeatureFromTracks: Tracks is empty";
         _displayTracks = false;
         return;
     }
@@ -172,7 +172,7 @@ void FeaturesViewer::updateFeatureFromTracks()
     auto tracksPerViewIt = _mtracks->tracksPerView().find(_viewId);
     if(tracksPerViewIt == _mtracks->tracksPerView().end())
     {
-        qWarning() << "[QtAliceVision] view does not exist in tracks.";
+        qInfo() << "[QtAliceVision] view does not exist in tracks.";
         return;
     }
     const auto& tracksInCurrentView = tracksPerViewIt->second;
@@ -182,7 +182,7 @@ void FeaturesViewer::updateFeatureFromTracks()
         const auto& trackIterator = tracks.find(trackId);
         if(trackIterator == tracks.end())
         {
-            qWarning() << "[QtAliceVision] Track id: "<< trackId <<" in current view does not exist in Tracks.";
+            qInfo() << "[QtAliceVision] Track id: "<< trackId <<" in current view does not exist in Tracks.";
             continue;
         }
         const aliceVision::track::Track& currentTrack = trackIterator->second;
@@ -193,13 +193,13 @@ void FeaturesViewer::updateFeatureFromTracks()
         const auto& featIdPerViewIt = currentTrack.featPerView.find(_viewId);
         if(featIdPerViewIt == currentTrack.featPerView.end())
         {
-            qWarning() << "[QtAliceVision] featIdPerViewIt invalid.";
+            qInfo() << "[QtAliceVision] featIdPerViewIt invalid.";
             continue;
         }
         const std::size_t featId = featIdPerViewIt->second;
         if(featId >= _features.size())
         {
-            qWarning() << "[QtAliceVision] featId invalid regarding loaded features.";
+            qInfo() << "[QtAliceVision] featId invalid regarding loaded features.";
             continue;
         }
         MFeature* feature = _features.at(featId);
@@ -245,29 +245,29 @@ void FeaturesViewer::updateFeatureFromSfM()
     }
     if(_msfmData == nullptr)
     {
-        qWarning() << "[QtAliceVision] updateFeatureFromSfM: no SfMData";
+        qInfo() << "[QtAliceVision] updateFeatureFromSfM: no SfMData";
         return;
     }
     if(_msfmData->status() != MSfMData::Ready)
     {
-        qWarning() << "[QtAliceVision] updateFeatureFromSfM: SfMData is not ready: " << _msfmData->status();
+        qInfo() << "[QtAliceVision] updateFeatureFromSfM: SfMData is not ready: " << _msfmData->status();
         return;
     }
     if(_msfmData->rawData().getViews().empty())
     {
-        qWarning() << "[QtAliceVision] updateFeatureFromSfM: SfMData is empty";
+        qInfo() << "[QtAliceVision] updateFeatureFromSfM: SfMData is empty";
         return;
     }
     const auto viewIt = _msfmData->rawData().getViews().find(_viewId);
     if(viewIt == _msfmData->rawData().getViews().end())
     {
-        qWarning() << "[QtAliceVision] updateFeatureFromSfM: View " << _viewId << " is not is the SfMData";
+        qInfo() << "[QtAliceVision] updateFeatureFromSfM: View " << _viewId << " is not is the SfMData";
         return;
     }
     const aliceVision::sfmData::View& view = *viewIt->second;
     if(!_msfmData->rawData().isPoseAndIntrinsicDefined(&view))
     {
-        qWarning() << "[QtAliceVision] updateFeatureFromSfM: SfMData has no valid pose and intrinsic for view " << _viewId;
+        qInfo() << "[QtAliceVision] updateFeatureFromSfM: SfMData has no valid pose and intrinsic for view " << _viewId;
         return;
     }
 

@@ -13,19 +13,19 @@ void MViewStats::fillResidualFullSerie(QXYSeries* residuals)
 {
     if(residuals == nullptr)
     {
-        qWarning() << "[QtAliceVision] MViewStats::fillResidualFullSerie: no residuals";
+        qInfo() << "[QtAliceVision] MViewStats::fillResidualFullSerie: no residuals";
         return;
     }
     residuals->clear();
 
     if(_msfmData == nullptr)
     {
-        qWarning() << "[QtAliceVision] MViewStats::fillResidualFullSerie: no SfMData loaded";
+        qInfo() << "[QtAliceVision] MViewStats::fillResidualFullSerie: no SfMData loaded";
         return;
     }
     if(_viewId == aliceVision::UndefinedIndexT)
     {
-        qWarning() << "[QtAliceVision] MViewStats::fillResidualFullSerie: no valid view: ";
+        qInfo() << "[QtAliceVision] MViewStats::fillResidualFullSerie: no valid view: ";
         return;
     }
 
@@ -45,19 +45,19 @@ void MViewStats::fillResidualViewSerie(QXYSeries* residuals)
 {
     if(residuals == nullptr)
     {
-        qWarning() << "[QtAliceVision] MViewStats::fillResidualViewSerie: no residuals";
+        qInfo() << "[QtAliceVision] MViewStats::fillResidualViewSerie: no residuals";
         return;
     }
     residuals->clear();
 
     if(_msfmData == nullptr)
     {
-        qWarning() << "[QtAliceVision] MViewStats::fillResidualViewSerie: no SfMData loaded";
+        qInfo() << "[QtAliceVision] MViewStats::fillResidualViewSerie: no SfMData loaded";
         return;
     }
     if(_viewId == aliceVision::UndefinedIndexT)
     {
-        qWarning() << "[QtAliceVision] MViewStats::fillResidualViewSerie: no valid view: ";
+        qInfo() << "[QtAliceVision] MViewStats::fillResidualViewSerie: no valid view: ";
         return;
     }
 
@@ -77,19 +77,19 @@ void MViewStats::fillObservationsLengthsFullSerie(QXYSeries* observationsLengths
 {
     if(observationsLengths == nullptr)
     {
-        qWarning() << "[QtAliceVision] MViewStats::fillObservationsLengthsFullSerie: no observationsLengths";
+        qInfo() << "[QtAliceVision] MViewStats::fillObservationsLengthsFullSerie: no observationsLengths";
         return;
     }
     observationsLengths->clear();
 
     if(_msfmData == nullptr)
     {
-        qWarning() << "[QtAliceVision] MViewStats::fillObservationsLengthsFullSerie: no SfMData loaded";
+        qInfo() << "[QtAliceVision] MViewStats::fillObservationsLengthsFullSerie: no SfMData loaded";
         return;
     }
     if(_viewId == aliceVision::UndefinedIndexT)
     {
-        qWarning() << "[QtAliceVision] MViewStats::fillObservationsLengthsFullSerie: no valid view: ";
+        qInfo() << "[QtAliceVision] MViewStats::fillObservationsLengthsFullSerie: no valid view: ";
         return;
     }
 
@@ -109,19 +109,19 @@ void MViewStats::fillObservationsLengthsViewSerie(QXYSeries* observationsLengths
 {
     if(observationsLengths == nullptr)
     {
-        qWarning() << "[QtAliceVision] MViewStats::fillObservationsLengthsViewSerie: no observationsLengths";
+        qInfo() << "[QtAliceVision] MViewStats::fillObservationsLengthsViewSerie: no observationsLengths";
         return;
     }
     observationsLengths->clear();
 
     if(_msfmData == nullptr)
     {
-        qWarning() << "[QtAliceVision] MViewStats::fillObservationsLengthsViewSerie: no SfMData loaded";
+        qInfo() << "[QtAliceVision] MViewStats::fillObservationsLengthsViewSerie: no SfMData loaded";
         return;
     }
     if(_viewId == aliceVision::UndefinedIndexT)
     {
-        qWarning() << "[QtAliceVision] MViewStats::fillObservationsLengthsViewSerie: no valid view: ";
+        qInfo() << "[QtAliceVision] MViewStats::fillObservationsLengthsViewSerie: no valid view: ";
         return;
     }
 
@@ -141,19 +141,19 @@ void MViewStats::fillObservationsScaleFullSerie(QXYSeries* observationsScale)
 {
     if(observationsScale == nullptr)
     {
-        qWarning() << "[QtAliceVision] MViewStats::fillObservationsScaleFullSerie: no observationsScale";
+        qInfo() << "[QtAliceVision] MViewStats::fillObservationsScaleFullSerie: no observationsScale";
         return;
     }
     observationsScale->clear();
 
     if(_msfmData == nullptr)
     {
-        qWarning() << "[QtAliceVision] MViewStats::fillObservationsScaleFullSerie: no SfMData loaded";
+        qInfo() << "[QtAliceVision] MViewStats::fillObservationsScaleFullSerie: no SfMData loaded";
         return;
     }
     if(_viewId == aliceVision::UndefinedIndexT)
     {
-        qWarning() << "[QtAliceVision] MViewStats::fillObservationsScaleFullSerie: no valid view: ";
+        qInfo() << "[QtAliceVision] MViewStats::fillObservationsScaleFullSerie: no valid view: ";
         return;
     }
 
@@ -174,19 +174,19 @@ void MViewStats::fillObservationsScaleViewSerie(QXYSeries* observationsScale)
 {
     if(observationsScale == nullptr)
     {
-        qWarning() << "[QtAliceVision] MViewStats::fillObservationsScaleViewSerie: no observationsScale";
+        qInfo() << "[QtAliceVision] MViewStats::fillObservationsScaleViewSerie: no observationsScale";
         return;
     }
     observationsScale->clear();
 
     if(_msfmData == nullptr)
     {
-        qWarning() << "[QtAliceVision] MViewStats::fillObservationsScaleViewSerie: no SfMData loaded";
+        qInfo() << "[QtAliceVision] MViewStats::fillObservationsScaleViewSerie: no SfMData loaded";
         return;
     }
     if(_viewId == aliceVision::UndefinedIndexT)
     {
-        qWarning() << "[QtAliceVision] MViewStats::fillObservationsScaleViewSerie: no valid view: ";
+        qInfo() << "[QtAliceVision] MViewStats::fillObservationsScaleViewSerie: no valid view: ";
         return;
     }
 
@@ -217,12 +217,12 @@ void MViewStats::computeViewStats()
 
     if(_msfmData == nullptr)
     {
-        qWarning() << "[QtAliceVision]  MViewStats::computeViewStats: no SfMData loaded";
+        qInfo() << "[QtAliceVision]  MViewStats::computeViewStats: no SfMData loaded";
         return;
     }
     if(_viewId == aliceVision::UndefinedIndexT)
     {
-        qWarning() << "[QtAliceVision]  MViewStats::computeViewStats: no valid view: "<< _viewId;
+        qInfo() << "[QtAliceVision]  MViewStats::computeViewStats: no valid view: "<< _viewId;
         return;
     }
     using namespace aliceVision;

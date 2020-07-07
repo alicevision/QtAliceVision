@@ -57,7 +57,7 @@ private:
             _tracks->clear();
         if(_tracksPerView)
             _tracksPerView->clear();
-        qWarning() << "[QtAliceVision] MTracks clear";
+        qInfo() << "[QtAliceVision] MTracks clear";
         Q_EMIT tracksChanged();
     }
 

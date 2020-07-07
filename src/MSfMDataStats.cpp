@@ -10,14 +10,14 @@ void MSfMDataStats::fillLandmarksPerViewSerie(QXYSeries* landmarksPerView)
 {
     if(landmarksPerView == nullptr)
     {
-        qWarning() << "[QtAliceVision] MSfMDataStats::fillLandmarksPerViewSerie: no landmarksPerView";
+        qInfo() << "[QtAliceVision] MSfMDataStats::fillLandmarksPerViewSerie: no landmarksPerView";
         return;
     }
     landmarksPerView->clear();
 
     if(_msfmData == nullptr)
     {
-        qWarning() << "[QtAliceVision] MSfMDataStats::fillLandmarksPerViewSerie: no SfMData loaded";
+        qInfo() << "[QtAliceVision] MSfMDataStats::fillLandmarksPerViewSerie: no SfMData loaded";
         return;
     }
 
@@ -31,20 +31,20 @@ void MSfMDataStats::fillTracksPerViewSerie(QXYSeries* tracksPerView)
 {
     if(tracksPerView == nullptr)
     {
-        qWarning() << "[QtAliceVision] MSfMDataStats::fillTracksPerViewSerie: no tracksPerView";
+        qInfo() << "[QtAliceVision] MSfMDataStats::fillTracksPerViewSerie: no tracksPerView";
         return;
     }
     tracksPerView->clear();
 
     if(_msfmData == nullptr)
     {
-        qWarning() << "[QtAliceVision] MSfMDataStats::fillTracksPerViewSerie: no SfMData loaded";
+        qInfo() << "[QtAliceVision] MSfMDataStats::fillTracksPerViewSerie: no SfMData loaded";
         return;
     }
 
     if(_mTracks == nullptr)
     {
-        qWarning() << "[QtAliceVision] MSfMDataStats::fillTracksPerViewSerie: no Tracks loaded";
+        qInfo() << "[QtAliceVision] MSfMDataStats::fillTracksPerViewSerie: no Tracks loaded";
         return;
     }
 
@@ -58,14 +58,14 @@ void MSfMDataStats::fillResidualsMinPerViewSerie(QXYSeries* residualsPerView)
 {
     if(residualsPerView == nullptr)
     {
-        qWarning() << "[QtAliceVision] MSfMDataStats::fillResidualsPerViewSerie: no residualsPerView";
+        qInfo() << "[QtAliceVision] MSfMDataStats::fillResidualsPerViewSerie: no residualsPerView";
         return;
     }
     residualsPerView->clear();
 
     if(_msfmData == nullptr)
     {
-        qWarning() << "[QtAliceVision] MSfMDataStats::fillResidualsPerViewSerie: no SfMData loaded";
+        qInfo() << "[QtAliceVision] MSfMDataStats::fillResidualsPerViewSerie: no SfMData loaded";
         return;
     }
 
@@ -79,14 +79,14 @@ void MSfMDataStats::fillResidualsMaxPerViewSerie(QXYSeries* residualsPerView)
 {
     if(residualsPerView == nullptr)
     {
-        qWarning() << "[QtAliceVision] MSfMDataStats::fillResidualsPerViewSerie: no residualsPerView";
+        qInfo() << "[QtAliceVision] MSfMDataStats::fillResidualsPerViewSerie: no residualsPerView";
         return;
     }
     residualsPerView->clear();
 
     if(_msfmData == nullptr)
     {
-        qWarning() << "[QtAliceVision] MSfMDataStats::fillResidualsPerViewSerie: no SfMData loaded";
+        qInfo() << "[QtAliceVision] MSfMDataStats::fillResidualsPerViewSerie: no SfMData loaded";
         return;
     }
 
@@ -100,14 +100,14 @@ void MSfMDataStats::fillResidualsMeanPerViewSerie(QXYSeries* residualsPerView)
 {
     if(residualsPerView == nullptr)
     {
-        qWarning() << "[QtAliceVision] MSfMDataStats::fillResidualsPerViewSerie: no residualsPerView";
+        qInfo() << "[QtAliceVision] MSfMDataStats::fillResidualsPerViewSerie: no residualsPerView";
         return;
     }
     residualsPerView->clear();
 
     if(_msfmData == nullptr)
     {
-        qWarning() << "[QtAliceVision] MSfMDataStats::fillResidualsPerViewSerie: no SfMData loaded";
+        qInfo() << "[QtAliceVision] MSfMDataStats::fillResidualsPerViewSerie: no SfMData loaded";
         return;
     }
 
@@ -121,14 +121,14 @@ void MSfMDataStats::fillResidualsMedianPerViewSerie(QXYSeries* residualsPerView)
 {
     if(residualsPerView == nullptr)
     {
-        qWarning() << "[QtAliceVision] MSfMDataStats::fillResidualsPerViewSerie: no residualsPerView";
+        qInfo() << "[QtAliceVision] MSfMDataStats::fillResidualsPerViewSerie: no residualsPerView";
         return;
     }
     residualsPerView->clear();
 
     if(_msfmData == nullptr)
     {
-        qWarning() << "[QtAliceVision] MSfMDataStats::fillResidualsPerViewSerie: no SfMData loaded";
+        qInfo() << "[QtAliceVision] MSfMDataStats::fillResidualsPerViewSerie: no SfMData loaded";
         return;
     }
 
@@ -142,14 +142,14 @@ void MSfMDataStats::fillResidualsFirstQuartilePerViewSerie(QXYSeries* residualsP
 {
     if(residualsPerView == nullptr)
     {
-        qWarning() << "[QtAliceVision] MSfMDataStats::fillResidualsFirstQuartilePerViewSerie: no residualsPerView";
+        qInfo() << "[QtAliceVision] MSfMDataStats::fillResidualsFirstQuartilePerViewSerie: no residualsPerView";
         return;
     }
     residualsPerView->clear();
 
     if(_msfmData == nullptr)
     {
-        qWarning() << "[QtAliceVision] MSfMDataStats::fillResidualsFirstQuartilePerViewSerie: no SfMData loaded";
+        qInfo() << "[QtAliceVision] MSfMDataStats::fillResidualsFirstQuartilePerViewSerie: no SfMData loaded";
         return;
     }
 
@@ -163,14 +163,14 @@ void MSfMDataStats::fillResidualsThirdQuartilePerViewSerie(QXYSeries* residualsP
 {
     if(residualsPerView == nullptr)
     {
-        qWarning() << "[QtAliceVision] MSfMDataStats::fillResidualsThirdQuartilePerViewSerie: no residualsPerView";
+        qInfo() << "[QtAliceVision] MSfMDataStats::fillResidualsThirdQuartilePerViewSerie: no residualsPerView";
         return;
     }
     residualsPerView->clear();
 
     if(_msfmData == nullptr)
     {
-        qWarning() << "[QtAliceVision] MSfMDataStats::fillResidualsThirdQuartilePerViewSerie: no SfMData loaded";
+        qInfo() << "[QtAliceVision] MSfMDataStats::fillResidualsThirdQuartilePerViewSerie: no SfMData loaded";
         return;
     }
 
@@ -184,14 +184,14 @@ void MSfMDataStats::fillObservationsLengthsMinPerViewSerie(QXYSeries* observatio
 {
     if(observationsLengthsPerView == nullptr)
     {
-        qWarning() << "[QtAliceVision] MSfMDataStats::fillObservationsLengthsMinPerViewSerie: no observationsLengthsPerView";
+        qInfo() << "[QtAliceVision] MSfMDataStats::fillObservationsLengthsMinPerViewSerie: no observationsLengthsPerView";
         return;
     }
     observationsLengthsPerView->clear();
 
     if(_msfmData == nullptr)
     {
-        qWarning() << "[QtAliceVision] MSfMDataStats::fillObservationsLengthsMinPerViewSerie: no SfMData loaded";
+        qInfo() << "[QtAliceVision] MSfMDataStats::fillObservationsLengthsMinPerViewSerie: no SfMData loaded";
         return;
     }
 
@@ -205,14 +205,14 @@ void MSfMDataStats::fillObservationsLengthsMaxPerViewSerie(QXYSeries* observatio
 {
     if(observationsLengthsPerView == nullptr)
     {
-        qWarning() << "[QtAliceVision] MSfMDataStats::fillObservationsLengthsMaxPerViewSerie: no observationsLengthsPerView";
+        qInfo() << "[QtAliceVision] MSfMDataStats::fillObservationsLengthsMaxPerViewSerie: no observationsLengthsPerView";
         return;
     }
     observationsLengthsPerView->clear();
 
     if(_msfmData == nullptr)
     {
-        qWarning() << "[QtAliceVision] MSfMDataStats::fillObservationsLengthsMaxPerViewSerie: no SfMData loaded";
+        qInfo() << "[QtAliceVision] MSfMDataStats::fillObservationsLengthsMaxPerViewSerie: no SfMData loaded";
         return;
     }
 
@@ -226,14 +226,14 @@ void MSfMDataStats::fillObservationsLengthsMeanPerViewSerie(QXYSeries* observati
 {
     if(observationsLengthsPerView == nullptr)
     {
-        qWarning() << "[QtAliceVision] MSfMDataStats::fillObservationsLengthsMeanPerViewSerie: no observationsLengthsPerView";
+        qInfo() << "[QtAliceVision] MSfMDataStats::fillObservationsLengthsMeanPerViewSerie: no observationsLengthsPerView";
         return;
     }
     observationsLengthsPerView->clear();
 
     if(_msfmData == nullptr)
     {
-        qWarning() << "[QtAliceVision] MSfMDataStats::fillObservationsLengthsMeanPerViewSerie: no SfMData loaded";
+        qInfo() << "[QtAliceVision] MSfMDataStats::fillObservationsLengthsMeanPerViewSerie: no SfMData loaded";
         return;
     }
 
@@ -247,14 +247,14 @@ void MSfMDataStats::fillObservationsLengthsMedianPerViewSerie(QXYSeries* observa
 {
     if(observationsLengthsPerView == nullptr)
     {
-        qWarning() << "[QtAliceVision] MSfMDataStats::fillObservationsLengthsMedianPerViewSerie: no observationsLengthsPerView";
+        qInfo() << "[QtAliceVision] MSfMDataStats::fillObservationsLengthsMedianPerViewSerie: no observationsLengthsPerView";
         return;
     }
     observationsLengthsPerView->clear();
 
     if(_msfmData == nullptr)
     {
-        qWarning() << "[QtAliceVision] MSfMDataStats::fillObservationsLengthsMedianPerViewSerie: no SfMData loaded";
+        qInfo() << "[QtAliceVision] MSfMDataStats::fillObservationsLengthsMedianPerViewSerie: no SfMData loaded";
         return;
     }
 
@@ -268,14 +268,14 @@ void MSfMDataStats::fillObservationsLengthsFirstQuartilePerViewSerie(QXYSeries* 
 {
     if(observationsLengthsPerView == nullptr)
     {
-        qWarning() << "[QtAliceVision] MSfMDataStats::fillObservationsLengthsFirstQuartilePerViewSerie: no observationsLengthsPerView";
+        qInfo() << "[QtAliceVision] MSfMDataStats::fillObservationsLengthsFirstQuartilePerViewSerie: no observationsLengthsPerView";
         return;
     }
     observationsLengthsPerView->clear();
 
     if(_msfmData == nullptr)
     {
-        qWarning() << "[QtAliceVision] MSfMDataStats::fillObservationsLengthsFirstQuartilePerViewSerie: no SfMData loaded";
+        qInfo() << "[QtAliceVision] MSfMDataStats::fillObservationsLengthsFirstQuartilePerViewSerie: no SfMData loaded";
         return;
     }
 
@@ -289,14 +289,14 @@ void MSfMDataStats::fillObservationsLengthsThirdQuartilePerViewSerie(QXYSeries* 
 {
     if(observationsLengthsPerView == nullptr)
     {
-        qWarning() << "[QtAliceVision] MSfMDataStats::fillObservationsLengthsThirdQuartilePerViewSerie: no observationsLengthsPerView";
+        qInfo() << "[QtAliceVision] MSfMDataStats::fillObservationsLengthsThirdQuartilePerViewSerie: no observationsLengthsPerView";
         return;
     }
     observationsLengthsPerView->clear();
 
     if(_msfmData == nullptr)
     {
-        qWarning() << "[QtAliceVision] MSfMDataStats::fillObservationsLengthsThirdQuartilePerViewSerie: no SfMData loaded";
+        qInfo() << "[QtAliceVision] MSfMDataStats::fillObservationsLengthsThirdQuartilePerViewSerie: no SfMData loaded";
         return;
     }
 
@@ -325,17 +325,17 @@ void MSfMDataStats::computeGlobalSfMStats()
 
     if(_msfmData == nullptr)
     {
-        qWarning() << "[QtAliceVision] MSfMDataStats::computeGlobalStats: no SfMData";
+        qInfo() << "[QtAliceVision] MSfMDataStats::computeGlobalStats: no SfMData";
         return;
     }
     if(_msfmData->status() != MSfMData::Ready)
     {
-        qWarning() << "[QtAliceVision] MSfMDataStats::computeGlobalStats: SfMData is not ready: " << _msfmData->status();
+        qInfo() << "[QtAliceVision] MSfMDataStats::computeGlobalStats: SfMData is not ready: " << _msfmData->status();
         return;
     }
     if(_msfmData->rawData().getViews().empty())
     {
-        qWarning() << "[QtAliceVision] MSfMDataStats::computeGlobalStats: SfMData is empty";
+        qInfo() << "[QtAliceVision] MSfMDataStats::computeGlobalStats: SfMData is empty";
         return;
     }
 
@@ -407,27 +407,27 @@ void MSfMDataStats::computeGlobalTracksStats()
 
         if(_mTracks == nullptr)
         {
-            qWarning() << "[QtAliceVision] MSfMDataStats::computeGlobalTracksStats: no Tracks loaded";
+            qInfo() << "[QtAliceVision] MSfMDataStats::computeGlobalTracksStats: no Tracks loaded";
             return;
         }
         if(_mTracks->status() != MTracks::Ready)
         {
-            qWarning() << "[QtAliceVision] MSfMDataStats::computeGlobalTracksStats: Tracks is not ready: " << _mTracks->status();
+            qInfo() << "[QtAliceVision] MSfMDataStats::computeGlobalTracksStats: Tracks is not ready: " << _mTracks->status();
             return;
         }
         if(_mTracks->tracks().empty())
         {
-            qWarning() << "[QtAliceVision] MSfMDataStats::computeGlobalTracksStats: Tracks is empty";
+            qInfo() << "[QtAliceVision] MSfMDataStats::computeGlobalTracksStats: Tracks is empty";
             return;
         }
         if(_msfmData == nullptr)
         {
-            qWarning() << "[QtAliceVision] MSfMDataStats::computeGlobalTracksStats: no SfMData";
+            qInfo() << "[QtAliceVision] MSfMDataStats::computeGlobalTracksStats: no SfMData";
             return;
         }
         if(_msfmData->status() != MSfMData::Ready)
         {
-            qWarning() << "[QtAliceVision] MSfMDataStats::computeGlobalTracksStats: SfMData is not ready: " << _msfmData->status();
+            qInfo() << "[QtAliceVision] MSfMDataStats::computeGlobalTracksStats: SfMData is not ready: " << _msfmData->status();
             return;
         }
 
@@ -460,7 +460,7 @@ void MSfMDataStats::setMSfmData(qtAliceVision::MSfMData* sfmData)
 {
     if(_msfmData == sfmData)
     {
-        qWarning() << "[QtAliceVision]  MSfMDataStats::setMSfMData: Reset the same pointer";
+        qInfo() << "[QtAliceVision]  MSfMDataStats::setMSfMData: Reset the same pointer";
         return;
     }
     if(_msfmData != nullptr)
@@ -486,7 +486,7 @@ void MSfMDataStats::setMTracks(qtAliceVision::MTracks* tracks)
 {
     if(_mTracks == tracks)
     {
-        qWarning() << "[QtAliceVision]  MSfMDataStats::setMTracks: Reset the same pointer";
+        qInfo() << "[QtAliceVision]  MSfMDataStats::setMTracks: Reset the same pointer";
         return;
     }
     if(_mTracks != nullptr)

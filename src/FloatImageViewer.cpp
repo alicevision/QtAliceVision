@@ -139,14 +139,14 @@ void FloatImageIORunnable::run()
             rotate(image, RotateAngle::CW_270);
             break;
         default:
-            qWarning() << "[QtAliceVision] Unsupported orientation: " << orientation << "\n";
+            qInfo() << "[QtAliceVision] Unsupported orientation: " << orientation << "\n";
         }
 
         result = QSharedPointer<FloatImage>(new FloatImage(std::move(image)));
     }
     catch(std::exception& e)
     {
-        qWarning() << "[QtAliceVision] Failed to load image: " << _path
+        qInfo() << "[QtAliceVision] Failed to load image: " << _path
                  << "\n" << e.what();
     }
 
@@ -270,17 +270,17 @@ QVector4D FloatImageViewer::pixelValueAt(int x, int y)
 {
     if(!_image)
     {
-        // qWarning() << "[QtAliceVision] FloatImageViewer::pixelValueAt(" << x << ", " << y << ") => no valid image";
+        // qInfo() << "[QtAliceVision] FloatImageViewer::pixelValueAt(" << x << ", " << y << ") => no valid image";
         return QVector4D(0.0, 0.0, 0.0, 0.0);
     }
     else if(x < 0 || x >= _image->Width() ||
             y < 0 || y >= _image->Height())
     {
-        // qWarning() << "[QtAliceVision] FloatImageViewer::pixelValueAt(" << x << ", " << y << ") => out of range";
+        // qInfo() << "[QtAliceVision] FloatImageViewer::pixelValueAt(" << x << ", " << y << ") => out of range";
         return QVector4D(0.0, 0.0, 0.0, 0.0);
     }
     aliceVision::image::RGBAfColor color = (*_image)(y, x);
-    // qWarning() << "[QtAliceVision] FloatImageViewer::pixelValueAt(" << x << ", " << y << ") => valid pixel: " << color(0) << ", " << color(1) << ", " << color(2) << ", " << color(3);
+    // qInfo() << "[QtAliceVision] FloatImageViewer::pixelValueAt(" << x << ", " << y << ") => valid pixel: " << color(0) << ", " << color(1) << ", " << color(2) << ", " << color(3);
     return QVector4D(color(0), color(1), color(2), color(3));
 }
 
