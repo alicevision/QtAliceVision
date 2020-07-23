@@ -67,12 +67,12 @@ public:
 
 
 private:
-    aliceVision::Histogram<double> _residualHistogramFull;
-    aliceVision::Histogram<double> _residualHistogramView;
-    aliceVision::Histogram<double> _observationsLengthsHistogramFull;
-    aliceVision::Histogram<double> _observationsLengthsHistogramView;
-    aliceVision::Histogram<double> _observationsScaleHistogramFull;
-    aliceVision::Histogram<double> _observationsScaleHistogramView;
+    aliceVision::utils::Histogram<double> _residualHistogramFull;
+    aliceVision::utils::Histogram<double> _residualHistogramView;
+    aliceVision::utils::Histogram<double> _observationsLengthsHistogramFull;
+    aliceVision::utils::Histogram<double> _observationsLengthsHistogramView;
+    aliceVision::utils::Histogram<double> _observationsScaleHistogramFull;
+    aliceVision::utils::Histogram<double> _observationsScaleHistogramView;
     double _residualMaxAxisX = 0.0;
     double _residualMaxAxisY = 0.0;
     double _observationsLengthsMaxAxisX = 0.0;
