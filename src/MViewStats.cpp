@@ -206,14 +206,14 @@ void MViewStats::fillObservationsScaleViewSerie(QXYSeries* observationsScale)
 
 void MViewStats::computeViewStats()
 {
-    _residualHistogramFull = aliceVision::Histogram<double>();
-    _residualHistogramView = aliceVision::Histogram<double>();
+    _residualHistogramFull = aliceVision::utils::Histogram<double>();
+    _residualHistogramView = aliceVision::utils::Histogram<double>();
 
-    _observationsLengthsHistogramFull = aliceVision::Histogram<double>();
-    _observationsLengthsHistogramView = aliceVision::Histogram<double>();
+    _observationsLengthsHistogramFull = aliceVision::utils::Histogram<double>();
+    _observationsLengthsHistogramView = aliceVision::utils::Histogram<double>();
 
-    _observationsScaleHistogramFull = aliceVision::Histogram<double>();
-    _observationsScaleHistogramView = aliceVision::Histogram<double>();
+    _observationsScaleHistogramFull = aliceVision::utils::Histogram<double>();
+    _observationsScaleHistogramView = aliceVision::utils::Histogram<double>();
 
     if(_msfmData == nullptr)
     {
