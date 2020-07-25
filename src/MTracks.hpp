@@ -31,12 +31,9 @@ public:
     };
     Q_ENUM(Status)
 
-    MTracks()
-    {
-        connect(this, SIGNAL(matchingFolderChanged()), this, SLOT(load()));
-    }
+    MTracks();
     MTracks& operator=(const MTracks& other) = default;
-    ~MTracks() override = default;
+    ~MTracks() override;
 
 private:
     MTracks(const MTracks& other);
@@ -62,6 +59,10 @@ private:
     }
 
 public:
+    const aliceVision::track::TracksMap* tracksPtr() const
+    {
+        return _tracks.get();
+    }
     const aliceVision::track::TracksMap& tracks() const
     {
         return *_tracks;
@@ -90,7 +91,7 @@ public:
        {
            Q_EMIT tracksChanged();
        }
-   }
+    }
 
     inline int nbTracks() const {
         if(!_tracks || _status != MTracks::Ready)

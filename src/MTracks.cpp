@@ -64,22 +64,35 @@ void TracksIORunnable::run()
     Q_EMIT resultReady(tracks.release(), tracksPerView.release());
 }
 
+MTracks::MTracks()
+{
+    connect(this, &MTracks::matchingFolderChanged, this, &MTracks::load);
+}
+
+MTracks::~MTracks()
+{
+    setStatus(None);
+    clear();
+}
+
 void MTracks::load()
 {
+    qDebug() << "MTracks::load _matchingFolder: " << _matchingFolder;
     if(_matchingFolder.isEmpty())
     {
-        clear();
         setStatus(None);
+        clear();
         return;
     }
     if(!QFileInfo::exists(_matchingFolder.toLocalFile()))
     {
-        clear();
         setStatus(Error);
+        clear();
         return;
     }
 
-    setStatus(Loading);    
+    setStatus(Loading);
+    qDebug() << "MTracks::load Start loading _matchingFolder: " << _matchingFolder;
 
     // load matches from file in a seperate thread
     TracksIORunnable* ioRunnable = new TracksIORunnable(_matchingFolder);
@@ -89,6 +102,7 @@ void MTracks::load()
 
 void MTracks::onReady(aliceVision::track::TracksMap* tracks, aliceVision::track::TracksPerView* tracksPerView)
 {
+    setStatus(Loading);
     _tracks.reset(tracks);
     _tracksPerView.reset(tracksPerView);
     setStatus(Ready);

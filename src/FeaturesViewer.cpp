@@ -51,6 +51,7 @@ FeaturesViewer::~FeaturesViewer()
 void FeaturesViewer::reloadFeatures()
 {
     _nbLandmarks = 0;
+    _nbTracks = 0;
     qDeleteAll(_features);
     _features.clear();
     Q_EMIT featuresChanged();
@@ -330,36 +331,39 @@ void FeaturesViewer::updatePaintFeatures(QSGNode* oldNode, QSGNode* node)
         kFeatVertices = (4 * 2) + 2;  // doubled rectangle points + orientation line
         break;
     }
-    std::size_t displayNbFeatures = _displayFeatures ? _features.size() : 0;
+    const bool displayFeatures = _displayFeatures && !_loadingFeatures;
+    const std::size_t displayNbFeatures = displayFeatures ? _features.size() : 0;
     QSGGeometry* geometry = nullptr;
-    if(!oldNode)
+
+    if (!oldNode || oldNode->childCount() == 0)
     {
-        if(_displayFeatures)
+        auto root = new QSGGeometryNode;
         {
-            auto root = new QSGGeometryNode;
-            {
-                // use VertexColorMaterial to later be able to draw selection in another color
-                auto material = new QSGVertexColorMaterial;
-                geometry = new QSGGeometry(
-                    QSGGeometry::defaultAttributes_ColoredPoint2D(),
-                    static_cast<int>(displayNbFeatures * kFeatVertices),
-                    static_cast<int>(displayNbFeatures* kFeatIndices),
-                    QSGGeometry::UnsignedIntType);
+            // use VertexColorMaterial to later be able to draw selection in another color
+            auto material = new QSGVertexColorMaterial;
+            geometry = new QSGGeometry(
+                QSGGeometry::defaultAttributes_ColoredPoint2D(),
+                static_cast<int>(displayNbFeatures * kFeatVertices),
+                static_cast<int>(displayNbFeatures* kFeatIndices),
+                QSGGeometry::UnsignedIntType);
 
-                geometry->setIndexDataPattern(QSGGeometry::StaticPattern);
-                geometry->setVertexDataPattern(QSGGeometry::StaticPattern);
+            geometry->setIndexDataPattern(QSGGeometry::StaticPattern);
+            geometry->setVertexDataPattern(QSGGeometry::StaticPattern);
 
-                root->setGeometry(geometry);
-                root->setFlags(QSGNode::OwnsGeometry);
-                root->setFlags(QSGNode::OwnsMaterial);
-                root->setMaterial(material);
-            }
-            node->appendChildNode(root);
+            root->setGeometry(geometry);
+            root->setFlags(QSGNode::OwnsGeometry);
+            root->setFlags(QSGNode::OwnsMaterial);
+            root->setMaterial(material);
         }
+        node->appendChildNode(root);
     }
     else
     {
+        if (oldNode->childCount() < 1)
+            return;
         auto* root = static_cast<QSGGeometryNode*>(oldNode->firstChild());
+        if (!oldNode)
+            return;
         root->markDirty(QSGNode::DirtyGeometry);
         geometry = root->geometry();
         geometry->allocate(
@@ -368,7 +372,7 @@ void FeaturesViewer::updatePaintFeatures(QSGNode* oldNode, QSGNode* node)
         );
     }
 
-    if(!_displayFeatures)
+    if(!displayFeatures)
     {
         return;
     }
@@ -468,38 +472,39 @@ void FeaturesViewer::updatePaintTracks(QSGNode* oldNode, QSGNode* node)
 {
     unsigned int kTracksVertices = 1;
 
-    const std::size_t displayNbTracks = _displayTracks ? _nbTracks - _nbLandmarks: 0;
+    const bool displayTracks = _displayTracks && haveValidTracks();
+    const std::size_t displayNbTracks = displayTracks ? _nbTracks - _nbLandmarks: 0;
 
     QSGGeometry* geometryPoint = nullptr;
-    if(!oldNode)
+    if(!oldNode || oldNode->childCount() < 2)
     {
-        if(_displayTracks)
+        auto root = new QSGGeometryNode;
         {
-            auto root = new QSGGeometryNode;
-            {
-                // use VertexColorMaterial to later be able to draw selection in another color
-                auto material = new QSGVertexColorMaterial;
-                geometryPoint = new QSGGeometry(
-                    QSGGeometry::defaultAttributes_ColoredPoint2D(),
-                    static_cast<int>(displayNbTracks * kTracksVertices),
-                    static_cast<int>(0),
-                    QSGGeometry::UnsignedIntType);
+            // use VertexColorMaterial to later be able to draw selection in another color
+            auto material = new QSGVertexColorMaterial;
+            geometryPoint = new QSGGeometry(
+                QSGGeometry::defaultAttributes_ColoredPoint2D(),
+                static_cast<int>(displayNbTracks * kTracksVertices),
+                static_cast<int>(0),
+                QSGGeometry::UnsignedIntType);
 
-                geometryPoint->setIndexDataPattern(QSGGeometry::StaticPattern);
-                geometryPoint->setVertexDataPattern(QSGGeometry::StaticPattern);
+            geometryPoint->setIndexDataPattern(QSGGeometry::StaticPattern);
+            geometryPoint->setVertexDataPattern(QSGGeometry::StaticPattern);
 
-                root->setGeometry(geometryPoint);
-                root->setFlags(QSGNode::OwnsGeometry);
-                root->setFlags(QSGNode::OwnsMaterial);
-                root->setMaterial(material);
-            }
-            node->appendChildNode(root);
+            root->setGeometry(geometryPoint);
+            root->setFlags(QSGNode::OwnsGeometry);
+            root->setFlags(QSGNode::OwnsMaterial);
+            root->setMaterial(material);
         }
-
+        node->appendChildNode(root);
     }
     else
     {
+        if (oldNode->childCount() < 2)
+            return;
         auto* rootPoint = static_cast<QSGGeometryNode*>(oldNode->childAtIndex(1));
+        if (!rootPoint)
+            return;
         rootPoint->markDirty(QSGNode::DirtyGeometry);
         geometryPoint = rootPoint->geometry();
         geometryPoint->allocate(
@@ -508,7 +513,7 @@ void FeaturesViewer::updatePaintTracks(QSGNode* oldNode, QSGNode* node)
         );
     }
 
-    if(!_displayTracks)
+    if(!displayTracks)
     {
         return;
     }
@@ -554,65 +559,67 @@ void FeaturesViewer::updatePaintTracks(QSGNode* oldNode, QSGNode* node)
 
 void FeaturesViewer::updatePaintLandmarks(QSGNode* oldNode, QSGNode* node)
 {
-
     const unsigned int kReprojectionVertices = 2;
-    //
-    const int displayNbLandmarks = _displayLandmarks ? _nbLandmarks : 0;
+    
+    const bool displayLandmarks = _displayLandmarks && haveValidLandmarks();
+    const int displayNbLandmarks = displayLandmarks ? _nbLandmarks : 0;
 
     QSGGeometry* geometryLine = nullptr;
     QSGGeometry* geometryPoint = nullptr;
-    if(!oldNode)
+
+    if (!oldNode || oldNode->childCount() < 4)
     {
-        if(_displayLandmarks)
+        auto root = new QSGGeometryNode;
         {
+            // use VertexColorMaterial to later be able to draw selection in another color
+            auto material = new QSGVertexColorMaterial;
             {
-                auto root = new QSGGeometryNode;
-                // use VertexColorMaterial to later be able to draw selection in another color
-                auto material = new QSGVertexColorMaterial;
-                {
-                    geometryLine = new QSGGeometry(
-                        QSGGeometry::defaultAttributes_ColoredPoint2D(),
-                        static_cast<int>(displayNbLandmarks * kReprojectionVertices),
-                        static_cast<int>(0),
-                        QSGGeometry::UnsignedIntType);
+                geometryLine = new QSGGeometry(
+                    QSGGeometry::defaultAttributes_ColoredPoint2D(),
+                    static_cast<int>(displayNbLandmarks * kReprojectionVertices),
+                    static_cast<int>(0),
+                    QSGGeometry::UnsignedIntType);
 
-                    geometryLine->setIndexDataPattern(QSGGeometry::StaticPattern);
-                    geometryLine->setVertexDataPattern(QSGGeometry::StaticPattern);
+                geometryLine->setIndexDataPattern(QSGGeometry::StaticPattern);
+                geometryLine->setVertexDataPattern(QSGGeometry::StaticPattern);
 
-                    root->setGeometry(geometryLine);
-                    root->setFlags(QSGNode::OwnsGeometry);
-                    root->setFlags(QSGNode::OwnsMaterial);
-                    root->setMaterial(material);
-                }
-                node->appendChildNode(root);
+                root->setGeometry(geometryLine);
+                root->setFlags(QSGNode::OwnsGeometry);
+                root->setFlags(QSGNode::OwnsMaterial);
+                root->setMaterial(material);
             }
+            node->appendChildNode(root);
+        }
+        {
+            auto root = new QSGGeometryNode;
+            // use VertexColorMaterial to later be able to draw selection in another color
+            auto material = new QSGVertexColorMaterial;
             {
-                auto root = new QSGGeometryNode;
-                // use VertexColorMaterial to later be able to draw selection in another color
-                auto material = new QSGVertexColorMaterial;
-                {
-                    geometryPoint = new QSGGeometry(
-                        QSGGeometry::defaultAttributes_ColoredPoint2D(),
-                        static_cast<int>(displayNbLandmarks),
-                        static_cast<int>(0),
-                        QSGGeometry::UnsignedIntType);
+                geometryPoint = new QSGGeometry(
+                    QSGGeometry::defaultAttributes_ColoredPoint2D(),
+                    static_cast<int>(displayNbLandmarks),
+                    static_cast<int>(0),
+                    QSGGeometry::UnsignedIntType);
 
-                    geometryPoint->setIndexDataPattern(QSGGeometry::StaticPattern);
-                    geometryPoint->setVertexDataPattern(QSGGeometry::StaticPattern);
+                geometryPoint->setIndexDataPattern(QSGGeometry::StaticPattern);
+                geometryPoint->setVertexDataPattern(QSGGeometry::StaticPattern);
 
-                    root->setGeometry(geometryPoint);
-                    root->setFlags(QSGNode::OwnsGeometry);
-                    root->setFlags(QSGNode::OwnsMaterial);
-                    root->setMaterial(material);
-                }
-                node->appendChildNode(root);
+                root->setGeometry(geometryPoint);
+                root->setFlags(QSGNode::OwnsGeometry);
+                root->setFlags(QSGNode::OwnsMaterial);
+                root->setMaterial(material);
             }
+            node->appendChildNode(root);
         }
     }
     else
     {
+        if(oldNode->childCount() < 4)
+            return; 
         auto* rootLine = static_cast<QSGGeometryNode*>(oldNode->childAtIndex(2));
         auto* rootPoint = static_cast<QSGGeometryNode*>(oldNode->childAtIndex(3));
+        if(!rootLine || !rootPoint)
+            return;
 
         rootLine->markDirty(QSGNode::DirtyGeometry);
         rootPoint->markDirty(QSGNode::DirtyGeometry);
@@ -629,7 +636,7 @@ void FeaturesViewer::updatePaintLandmarks(QSGNode* oldNode, QSGNode* node)
         );
     }
 
-    if(!_displayLandmarks)
+    if(!displayLandmarks)
     {
         return;
     }
