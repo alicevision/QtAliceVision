@@ -205,8 +205,7 @@ void FeaturesViewer::updateFeatureFromTracks()
         }
         MFeature* feature = _features.at(featId);
         feature->setTrackId(trackId);
-    }    
-    _displayTracks = true;
+    }
 }
 
 void FeaturesViewer::updateFeatureFromTracksEmit()
