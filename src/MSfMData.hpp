@@ -31,16 +31,16 @@ public:
     };
     Q_ENUM(Status)
 
-    MSfMData() = default;
+    MSfMData();
     MSfMData& operator=(const MSfMData& other) = default;
-    ~MSfMData() override = default;
+    ~MSfMData() override;
 
 private:
     MSfMData(const MSfMData& other);
 
 public:
     Q_SLOT void load();
-    Q_SLOT void onSfmDataReady(aliceVision::sfmData::SfMData* newSfmData);
+    Q_SLOT void onSfmDataReady();
 
 public:
     Q_SIGNAL void sfmDataPathChanged();
@@ -48,11 +48,7 @@ public:
     Q_SIGNAL void statusChanged(Status status);
 
 private:
-    void clear()
-    {
-        _sfmData = std::make_unique<aliceVision::sfmData::SfMData>();
-        Q_EMIT sfmDataChanged();
-    }
+    void clear();
 
 public:
     const aliceVision::sfmData::SfMData& rawData() const
@@ -62,6 +58,10 @@ public:
     aliceVision::sfmData::SfMData& rawData()
     {
         return *_sfmData;
+    }
+    const aliceVision::sfmData::SfMData* rawDataPtr() const
+    {
+        return _sfmData.get();
     }
 
     QUrl getSfmDataPath() const { return _sfmDataPath; }
@@ -83,7 +83,7 @@ public:
        {
            Q_EMIT sfmDataChanged();
        }
-   }
+    }
 
     inline int nbCameras() const {
         if(!_sfmData || _status != Ready)
@@ -93,6 +93,7 @@ public:
 
 private:
     QUrl _sfmDataPath;
+    std::unique_ptr<aliceVision::sfmData::SfMData> _loadingSfmData;
     std::unique_ptr<aliceVision::sfmData::SfMData> _sfmData;
     Status _status = MSfMData::None;
 };

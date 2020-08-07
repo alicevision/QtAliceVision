@@ -86,13 +86,13 @@ public:
     MSfMData* getMSfmData() { return _msfmData; }
     void setMSfmData(MSfMData* sfmData);
     bool haveValidLandmarks() const {
-        return _msfmData != nullptr && _msfmData->status() == MSfMData::Ready;
+        return (!_loadingFeatures) && (_msfmData != nullptr) && (_msfmData->status() == MSfMData::Ready) && (_msfmData->rawDataPtr() != nullptr);
     }
 
     MTracks* getMTracks() { return _mtracks; }
     void setMTracks(MTracks* tracks);
     bool haveValidTracks() const {
-        return _mtracks != nullptr && _mtracks->status() == MTracks::Ready;
+        return (!_loadingFeatures) && (_mtracks != nullptr) && (_mtracks->status() == MTracks::Ready) && (_mtracks->tracksPtr() != nullptr);
     }
 
 public:
@@ -122,7 +122,6 @@ private:
     /// Handle result from asynchronous file loading
     Q_SLOT void onFeaturesResultReady(QList<MFeature*> features);
 
-    void reloadTracks();
     void clearTracksFromFeatures();
     void updateFeatureFromTracks();
     void updateFeatureFromTracksEmit();
