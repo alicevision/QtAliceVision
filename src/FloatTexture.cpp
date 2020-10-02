@@ -4,6 +4,8 @@
 #include <QOpenGLContext>
 #include <QOpenGLFunctions>
 
+#include <QtDebug>
+
 
 namespace qtAliceVision
 {
@@ -82,39 +84,48 @@ void FloatTexture::bind()
         return;
     }
 
-    if(_textureId == 0)
+    try 
     {
-        funcs->glGenTextures(1, &_textureId);
-    }
-    funcs->glBindTexture(GL_TEXTURE_2D, _textureId);
+        if(_textureId == 0)
+        {
+            funcs->glGenTextures(1, &_textureId);
+        }
+        funcs->glBindTexture(GL_TEXTURE_2D, _textureId);
 
-    // Init max texture size
-    if(_maxTextureSize == -1)
+        // Init max texture size
+        if(_maxTextureSize == -1)
+        {
+            funcs->glGetIntegerv(GL_MAX_TEXTURE_SIZE, &_maxTextureSize);
+        }
+
+        // Downscale the texture to fit inside the max texture limit if it is too big.
+        while(_maxTextureSize != -1 &&
+            (_srcImage->Width() > _maxTextureSize || _srcImage->Height() > _maxTextureSize))
+        {
+            FloatImage tmp;
+            aliceVision::image::ImageHalfSample(*_srcImage, tmp);
+            *_srcImage = std::move(tmp);
+        }
+        _textureSize = { _srcImage->Width(), _srcImage->Height() };
+
+        updateBindOptions(_dirtyBindOptions);
+
+        funcs->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, _textureSize.width(), _textureSize.height(), 0, GL_RGBA, GL_FLOAT, _srcImage->data());
+
+        if(mipmapFiltering() != QSGTexture::None)
+        {
+            funcs->glGenerateMipmap(GL_TEXTURE_2D);
+            _mipmapsGenerated = true;
+        }
+
+        _dirtyBindOptions = false;
+    }
+    catch(std::exception& e)
     {
-        funcs->glGetIntegerv(GL_MAX_TEXTURE_SIZE, &_maxTextureSize);
+        qInfo() << "[QtAliceVision] Failed to bind image texture: "
+                 << "\n" << e.what();
+        _dirty = true;
     }
-
-    // Downscale the texture to fit inside the max texture limit if it is too big.
-    while(_maxTextureSize != -1 &&
-        (_srcImage->Width() > _maxTextureSize || _srcImage->Height() > _maxTextureSize))
-    {
-        FloatImage tmp;
-        aliceVision::image::ImageHalfSample(*_srcImage, tmp);
-        *_srcImage = std::move(tmp);
-    }
-    _textureSize = { _srcImage->Width(), _srcImage->Height() };
-
-    updateBindOptions(_dirtyBindOptions);
-
-    funcs->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, _textureSize.width(), _textureSize.height(), 0, GL_RGBA, GL_FLOAT, _srcImage->data());
-
-    if(mipmapFiltering() != QSGTexture::None)
-    {
-        funcs->glGenerateMipmap(GL_TEXTURE_2D);
-        _mipmapsGenerated = true;
-    }
-
-    _dirtyBindOptions = false;
 }
 
 }  // ns qtAliceVision
