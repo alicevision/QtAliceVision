@@ -47,7 +47,7 @@ class FloatImageViewer : public QQuickItem
     /// 
     Q_PROPERTY(float gamma MEMBER _gamma NOTIFY gammaChanged)
     /// 
-    Q_PROPERTY(float offset MEMBER _offset NOTIFY offsetChanged)
+    Q_PROPERTY(float gain MEMBER _gain NOTIFY gainChanged)
     ///
     Q_PROPERTY(QSize textureSize MEMBER _textureSize NOTIFY textureSizeChanged)
     ///
@@ -90,7 +90,7 @@ public:
     Q_SIGNAL void loadingChanged();
     Q_SIGNAL void clearBeforeLoadChanged();
     Q_SIGNAL void gammaChanged();
-    Q_SIGNAL void offsetChanged();
+    Q_SIGNAL void gainChanged();
     Q_SIGNAL void textureSizeChanged();
     Q_SIGNAL void sourceSizeChanged();
     Q_SIGNAL void channelModeChanged();
@@ -110,7 +110,7 @@ private:
 private:
     QUrl _source;
     float _gamma = 1.f;
-    float _offset = 0.f;
+    float _gain = 1.f;
 
     bool _loading = false;
     bool _outdated = false;

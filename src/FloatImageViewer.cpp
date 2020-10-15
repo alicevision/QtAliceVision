@@ -158,7 +158,7 @@ namespace
 struct ShaderData
 {
     float gamma = 1.f;
-    float offset = 0.f;
+    float gain = 0.f;
     QVector4D channelOrder = QVector4D(0,1,2,3);
     std::unique_ptr<QSGTexture> texture;
 };
@@ -187,12 +187,12 @@ public:
         "uniform lowp float qt_Opacity;                                                  \n"
         "uniform highp sampler2D texture;                                                \n"
         "uniform lowp float gamma;                                                       \n"
-        "uniform lowp float offset;                                                      \n"
+        "uniform lowp float gain;                                                        \n"
         "uniform vec4 channelOrder;                                                      \n"
         "varying highp vec2 vTexCoord;                                                   \n"
         "void main() {                                                                   \n"
         "    vec4 color = texture2D(texture, vTexCoord);                                 \n"
-        "    color.rgb = pow((color.rgb + vec3(offset)) * vec3(gamma), vec3(1.0 / 2.2)); \n"
+        "    color.rgb = pow(pow((color.rgb * vec3(gain)), vec3(1.0/gamma)), vec3(1.0 / 2.2)); \n"
         "    gl_FragColor.r = color[int(channelOrder[0])];                               \n"
         "    gl_FragColor.g = color[int(channelOrder[1])];                               \n"
         "    gl_FragColor.b = color[int(channelOrder[2])];                               \n"
@@ -210,7 +210,7 @@ public:
     void updateState(const ShaderData *data, const ShaderData *) override
     {
         program()->setUniformValue(_gammaId, data->gamma);
-        program()->setUniformValue(_offsetId, data->offset);
+        program()->setUniformValue(_gainId, data->gain);
         program()->setUniformValue(_channelOrder, data->channelOrder);
 
         if(data->texture)
@@ -223,7 +223,7 @@ public:
     {
         _textureId = program()->uniformLocation("texture");
         _gammaId = program()->uniformLocation("gamma");
-        _offsetId = program()->uniformLocation("offset");
+        _gainId = program()->uniformLocation("gain");
         _channelOrder = program()->uniformLocation("channelOrder");
 
         // We will only use texture unit 0, so set it only once.
@@ -233,7 +233,7 @@ public:
 private:
     int _textureId = -1;
     int _gammaId = -1;
-    int _offsetId = -1;
+    int _gainId = -1;
     int _channelOrder = -1;
 };
 }
@@ -243,7 +243,7 @@ FloatImageViewer::FloatImageViewer(QQuickItem* parent)
 {
     setFlag(QQuickItem::ItemHasContents, true);
     connect(this, &FloatImageViewer::gammaChanged, this, &FloatImageViewer::update);
-    connect(this, &FloatImageViewer::offsetChanged, this, &FloatImageViewer::update);
+    connect(this, &FloatImageViewer::gainChanged, this, &FloatImageViewer::update);
     connect(this, &FloatImageViewer::textureSizeChanged, this, &FloatImageViewer::update);
     connect(this, &FloatImageViewer::sourceSizeChanged, this, &FloatImageViewer::update);
     connect(this, &FloatImageViewer::channelModeChanged, this, &FloatImageViewer::update);
@@ -387,7 +387,7 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
 
     bool updateGeometry = false;
     material->state()->gamma = _gamma;
-    material->state()->offset = _offset;
+    material->state()->gain = _gain;
     material->state()->channelOrder = channelOrder;
 
     if(_imageChanged)
