@@ -95,14 +95,12 @@ MViewStats {
 
 ```js
 FloatImageViewer {
-  source: "/path/to/image”
-  gamma: 1.0f 
-  offset: 0.0f
-  width: 500
-  height: 540
-  paintedWidth: 500
-  paintedHeight: 540
-  channelMode: “rgb” 
+  source: "/path/to/image"
+  gamma: 1.0
+  gain: 1.0
+  width: textureSize.width || 500
+  height: textureSize.height || 500
+  channelMode: "RGB" 
 }
 ```
 
