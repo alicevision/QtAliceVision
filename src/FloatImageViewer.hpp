@@ -15,116 +15,116 @@
 namespace qtAliceVision
 {
 
-/**
- * @brief QRunnable object dedicated to load image using AliceVision.
- */
-class FloatImageIORunnable : public QObject, public QRunnable
-{
-    Q_OBJECT
-
-public:
-
-    explicit FloatImageIORunnable(const QUrl & path, QObject * parent = nullptr);
-
-    /// Load image at path
-    Q_SLOT void run() override;
-
-    /// Emitted when the image is loaded
-    Q_SIGNAL void resultReady(QSharedPointer<qtAliceVision::FloatImage> image, QSize sourceSize, const QVariantMap & metadata);
-    
-private:
-    QUrl _path;
-};
-
-/**
- * @brief Load and display image.
- */
-class FloatImageViewer : public QQuickItem
-{
-    Q_OBJECT
-    /// Path to image
-    Q_PROPERTY(QUrl source MEMBER _source NOTIFY sourceChanged)
-    /// 
-    Q_PROPERTY(float gamma MEMBER _gamma NOTIFY gammaChanged)
-    /// 
-    Q_PROPERTY(float gain MEMBER _gain NOTIFY gainChanged)
-    ///
-    Q_PROPERTY(QSize textureSize MEMBER _textureSize NOTIFY textureSizeChanged)
-    ///
-    Q_PROPERTY(QSize sourceSize READ sourceSize NOTIFY sourceSizeChanged)
-    /// Whether the image is currently being loaded from file
-    Q_PROPERTY(bool loading READ loading NOTIFY loadingChanged)
-    /// Whether to clear image between two loadings
-    Q_PROPERTY(bool clearBeforeLoad MEMBER _clearBeforeLoad NOTIFY clearBeforeLoadChanged)
-
-    Q_PROPERTY(EChannelMode channelMode MEMBER _channelMode NOTIFY channelModeChanged)
-    
-    Q_PROPERTY(QVariantMap metadata READ metadata NOTIFY metadataChanged)
-
-public:
-    explicit FloatImageViewer(QQuickItem* parent = nullptr);
-    ~FloatImageViewer() override;
-
-    bool loading() const
+    /**
+     * @brief QRunnable object dedicated to load image using AliceVision.
+     */
+    class FloatImageIORunnable : public QObject, public QRunnable
     {
-        return _loading;
-    }
+        Q_OBJECT
 
-    void setLoading(bool loading);
+    public:
 
-    QSize sourceSize() const
+        explicit FloatImageIORunnable(const QUrl& path, QObject* parent = nullptr);
+
+        /// Load image at path
+        Q_SLOT void run() override;
+
+        /// Emitted when the image is loaded
+        Q_SIGNAL void resultReady(QSharedPointer<qtAliceVision::FloatImage> image, QSize sourceSize, const QVariantMap& metadata);
+
+    private:
+        QUrl _path;
+    };
+
+    /**
+     * @brief Load and display image.
+     */
+    class FloatImageViewer : public QQuickItem
     {
-        return _sourceSize;
-    }
+        Q_OBJECT
+            /// Path to image
+            Q_PROPERTY(QUrl source MEMBER _source NOTIFY sourceChanged)
+            /// 
+            Q_PROPERTY(float gamma MEMBER _gamma NOTIFY gammaChanged)
+            /// 
+            Q_PROPERTY(float gain MEMBER _gain NOTIFY gainChanged)
+            ///
+            Q_PROPERTY(QSize textureSize MEMBER _textureSize NOTIFY textureSizeChanged)
+            ///
+            Q_PROPERTY(QSize sourceSize READ sourceSize NOTIFY sourceSizeChanged)
+            /// Whether the image is currently being loaded from file
+            Q_PROPERTY(bool loading READ loading NOTIFY loadingChanged)
+            /// Whether to clear image between two loadings
+            Q_PROPERTY(bool clearBeforeLoad MEMBER _clearBeforeLoad NOTIFY clearBeforeLoadChanged)
 
-    const QVariantMap & metadata() const
-    {
-        return _metadata;
-    }
+            Q_PROPERTY(EChannelMode channelMode MEMBER _channelMode NOTIFY channelModeChanged)
 
-    enum class EChannelMode : quint8 { RGBA, RGB, R, G, B, A };
-    Q_ENUM(EChannelMode)
+            Q_PROPERTY(QVariantMap metadata READ metadata NOTIFY metadataChanged)
 
-public:
-    Q_SIGNAL void sourceChanged();
-    Q_SIGNAL void loadingChanged();
-    Q_SIGNAL void clearBeforeLoadChanged();
-    Q_SIGNAL void gammaChanged();
-    Q_SIGNAL void gainChanged();
-    Q_SIGNAL void textureSizeChanged();
-    Q_SIGNAL void sourceSizeChanged();
-    Q_SIGNAL void channelModeChanged();
-    Q_SIGNAL void imageChanged();
-    Q_SIGNAL void metadataChanged();
+    public:
+        explicit FloatImageViewer(QQuickItem* parent = nullptr);
+        ~FloatImageViewer() override;
 
-    Q_INVOKABLE QVector4D pixelValueAt(int x, int y);
+        bool loading() const
+        {
+            return _loading;
+        }
 
-private:
-    /// Reload image from source
-    void reload();
-    /// Handle result from asynchronous file loading
-    Q_SLOT void onResultReady(QSharedPointer<qtAliceVision::FloatImage> image, QSize sourceSize, const QVariantMap & metadata);
-    /// Custom QSGNode update
-    QSGNode* updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePaintNodeData* data) override;
+        void setLoading(bool loading);
 
-private:
-    QUrl _source;
-    float _gamma = 1.f;
-    float _gain = 1.f;
+        QSize sourceSize() const
+        {
+            return _sourceSize;
+        }
 
-    bool _loading = false;
-    bool _outdated = false;
-    bool _clearBeforeLoad = true;
+        const QVariantMap& metadata() const
+        {
+            return _metadata;
+        }
 
-    bool _imageChanged = false;
-    EChannelMode _channelMode;
-    QSharedPointer<FloatImage> _image;
-    QRectF _boundingRect;
-    QSize _textureSize;
-    QSize _sourceSize = QSize(0,0);
+        enum class EChannelMode : quint8 { RGBA, RGB, R, G, B, A };
+        Q_ENUM(EChannelMode)
 
-    QVariantMap _metadata;
-};
+    public:
+        Q_SIGNAL void sourceChanged();
+        Q_SIGNAL void loadingChanged();
+        Q_SIGNAL void clearBeforeLoadChanged();
+        Q_SIGNAL void gammaChanged();
+        Q_SIGNAL void gainChanged();
+        Q_SIGNAL void textureSizeChanged();
+        Q_SIGNAL void sourceSizeChanged();
+        Q_SIGNAL void channelModeChanged();
+        Q_SIGNAL void imageChanged();
+        Q_SIGNAL void metadataChanged();
+
+        Q_INVOKABLE QVector4D pixelValueAt(int x, int y);
+
+    private:
+        /// Reload image from source
+        void reload();
+        /// Handle result from asynchronous file loading
+        Q_SLOT void onResultReady(QSharedPointer<qtAliceVision::FloatImage> image, QSize sourceSize, const QVariantMap& metadata);
+        /// Custom QSGNode update
+        QSGNode* updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePaintNodeData* data) override;
+
+    private:
+        QUrl _source;
+        float _gamma = 1.f;
+        float _gain = 1.f;
+
+        bool _loading = false;
+        bool _outdated = false;
+        bool _clearBeforeLoad = true;
+
+        bool _imageChanged = false;
+        EChannelMode _channelMode;
+        QSharedPointer<FloatImage> _image;
+        QRectF _boundingRect;
+        QSize _textureSize;
+        QSize _sourceSize = QSize(0, 0);
+
+        QVariantMap _metadata;
+    };
 
 }  // ns qtAliceVision
 
