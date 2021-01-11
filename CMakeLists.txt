@@ -17,6 +17,7 @@ find_package(Qt5Charts REQUIRED)
 set(CMAKE_AUTOMOC ON)
 
 # AliceVision dependency
+find_package(IlmBase REQUIRED)
 find_package(AliceVision REQUIRED)
 
 add_subdirectory(src)
