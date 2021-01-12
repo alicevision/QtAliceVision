@@ -131,6 +131,7 @@ public:
         _vertices.clear();
         _reinit = true;
         _verticesChanged = true;
+
     }
     Q_INVOKABLE void resized()
     {
@@ -169,7 +170,7 @@ private:
     QVariantMap _metadata;
 
     QList<QPoint> _vertices;
-    bool _isGridDisplayed = true;
+    bool _isGridDisplayed = false;
     QColor _gridColor = QColor(255, 0, 0, 255);
     bool _randomCP = false;
     bool _verticesChanged = true;

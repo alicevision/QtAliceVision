@@ -14,6 +14,7 @@
 #include <aliceVision/image/Image.hpp>
 #include <aliceVision/image/resampling.hpp>
 #include <aliceVision/image/io.hpp>
+#include <aliceVision/camera/cameraUndistortImage.hpp>
 
 
 namespace qtAliceVision
@@ -258,6 +259,14 @@ namespace qtAliceVision
             root->markDirty(QSGNode::DirtyGeometry);
         }
 
+        /* Retrieve Sfm Data */
+
+
+        /* Distortion */
+        //bool distortionEnable = true;
+        //if (distortionEnable)
+        //    camera::UndistortImage();
+
         /* Process all the data to calculate the grid */
         if (_verticesChanged)
         {
@@ -344,10 +353,16 @@ namespace qtAliceVision
 
         }
 
+        qWarning() << _isGridDisplayed << "\n";
 
         /* Draw the grid */
         if (_isGridDisplayed)
         {
+            for (size_t i = 0; i < geometryLine->vertexCount(); i++)
+            {
+                geometryLine->vertexDataAsPoint2D()[i].set(0, 0);
+            }
+            
             int countPoint = 0;
             int index = 0;
             for (size_t i = 0; i <= subdivision; i++)
@@ -388,10 +403,8 @@ namespace qtAliceVision
                 geometryLine->vertexDataAsPoint2D()[i].set(0, 0);
             }
             Q_EMIT verticesChanged(false);
-
         }
         root->childAtIndex(0)->markDirty(QSGNode::DirtyGeometry | QSGNode::DirtyMaterial);
-
 
         return root;
     }
