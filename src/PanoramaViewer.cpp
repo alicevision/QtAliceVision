@@ -179,8 +179,8 @@ namespace qtAliceVision
         {
             material = static_cast<QSGSimpleMaterial<ShaderData>*>(root->material());
 
-            auto* rootGrid = static_cast<QSGGeometryNode*>(oldNode->childAtIndex(0));
-            auto* mat = static_cast<QSGFlatColorMaterial*>(rootGrid->activeMaterial());
+            QSGGeometryNode* rootGrid = static_cast<QSGGeometryNode*>(oldNode->childAtIndex(0));
+            auto mat = static_cast<QSGFlatColorMaterial*>(rootGrid->activeMaterial());
             mat->setColor(_gridColor);
             geometryLine = rootGrid->geometry();
         }
@@ -353,57 +353,52 @@ namespace qtAliceVision
 
         }
 
-        qWarning() << _isGridDisplayed << "\n";
-
         /* Draw the grid */
-        if (_isGridDisplayed)
+        if (_gridChanged)
         {
             for (size_t i = 0; i < geometryLine->vertexCount(); i++)
             {
                 geometryLine->vertexDataAsPoint2D()[i].set(0, 0);
             }
             
-            int countPoint = 0;
-            int index = 0;
-            for (size_t i = 0; i <= subdivision; i++)
+            if (_isGridDisplayed)
             {
-                for (size_t j = 0; j <= subdivision; j++)
+                int countPoint = 0;
+                int index = 0;
+                for (size_t i = 0; i <= subdivision; i++)
                 {
-                    if (i == subdivision && j == subdivision)
-                        continue;
-
-                    // Horizontal Line
-                    if (i != subdivision)
+                    for (size_t j = 0; j <= subdivision; j++)
                     {
-                        geometryLine->vertexDataAsPoint2D()[countPoint++].set(_vertices[index].x(), _vertices[index].y());
-                        index += subdivision + 1;
-                        geometryLine->vertexDataAsPoint2D()[countPoint++].set(_vertices[index].x(), _vertices[index].y());
-                        index -= subdivision + 1;
-
-                        if (j == subdivision)
-                        {
-                            index++;
+                        if (i == subdivision && j == subdivision)
                             continue;
-                        }
-                    }
 
-                    // Vertical Line
-                    geometryLine->vertexDataAsPoint2D()[countPoint++].set(_vertices[index].x(), _vertices[index].y());
-                    index++;
-                    geometryLine->vertexDataAsPoint2D()[countPoint++].set(_vertices[index].x(), _vertices[index].y());
+                        // Horizontal Line
+                        if (i != subdivision)
+                        {
+                            geometryLine->vertexDataAsPoint2D()[countPoint++].set(_vertices[index].x(), _vertices[index].y());
+                            index += subdivision + 1;
+                            geometryLine->vertexDataAsPoint2D()[countPoint++].set(_vertices[index].x(), _vertices[index].y());
+                            index -= subdivision + 1;
+
+                            if (j == subdivision)
+                            {
+                                index++;
+                                continue;
+                            }
+                        }
+
+                        // Vertical Line
+                        geometryLine->vertexDataAsPoint2D()[countPoint++].set(_vertices[index].x(), _vertices[index].y());
+                        index++;
+                        geometryLine->vertexDataAsPoint2D()[countPoint++].set(_vertices[index].x(), _vertices[index].y());
+                    }
                 }
             }
+            _gridChanged = false;
+            Q_EMIT verticesChanged(false);
+        }
 
-            Q_EMIT verticesChanged(false);
-        }
-        else
-        {
-            for (size_t i = 0; i < geometryLine->vertexCount(); i++)
-            {
-                geometryLine->vertexDataAsPoint2D()[i].set(0, 0);
-            }
-            Q_EMIT verticesChanged(false);
-        }
+
         root->childAtIndex(0)->markDirty(QSGNode::DirtyGeometry | QSGNode::DirtyMaterial);
 
         return root;
