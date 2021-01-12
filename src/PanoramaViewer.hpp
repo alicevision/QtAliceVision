@@ -106,14 +106,17 @@ public:
         QPoint point(x, y);
         _vertices[index] = point; 
         _verticesChanged = true;
+        _gridChanged = true;
         Q_EMIT verticesChanged(false);
     }
     Q_INVOKABLE void displayGrid() 
     {
+        _gridChanged = true;
         if (_isGridDisplayed)
             _isGridDisplayed = false;
         else
             _isGridDisplayed = true;
+        Q_EMIT verticesChanged(false);
     }
     Q_INVOKABLE void setGridColorQML(const QColor & color)
     {
@@ -131,11 +134,13 @@ public:
         _vertices.clear();
         _reinit = true;
         _verticesChanged = true;
+        _gridChanged = true;
 
     }
     Q_INVOKABLE void resized()
     {
         _verticesChanged = true;
+        _gridChanged = true;
         Q_EMIT verticesChanged(false);
     }
     Q_INVOKABLE bool reinit() { return _reinit; }
@@ -171,6 +176,7 @@ private:
 
     QList<QPoint> _vertices;
     bool _isGridDisplayed = false;
+    bool _gridChanged = true;
     QColor _gridColor = QColor(255, 0, 0, 255);
     bool _randomCP = false;
     bool _verticesChanged = true;
