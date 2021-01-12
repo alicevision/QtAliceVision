@@ -251,7 +251,7 @@ namespace qtAliceVision
             }
             geometryRect.moveCenter(_boundingRect.center());
 
-            static const int MARGIN = 50;
+            static const int MARGIN = 0;
             geometryRect = geometryRect.adjusted(MARGIN, MARGIN, -MARGIN, -MARGIN);
 
             QSGGeometry::updateTexturedRectGeometry(root->geometry(), geometryRect, QRectF(0, 0, 1, 1));
@@ -345,7 +345,6 @@ namespace qtAliceVision
         }
 
 
-
         /* Draw the grid */
         if (_isGridDisplayed)
         {
@@ -381,7 +380,6 @@ namespace qtAliceVision
             }
 
             Q_EMIT verticesChanged(false);
-
         }
         else
         {
