@@ -259,14 +259,6 @@ namespace qtAliceVision
             root->markDirty(QSGNode::DirtyGeometry);
         }
 
-        /* Retrieve Sfm Data */
-
-
-        /* Distortion */
-        //bool distortionEnable = true;
-        //if (distortionEnable)
-        //    camera::UndistortImage();
-
         /* Process all the data to calculate the grid */
         if (_verticesChanged)
         {
