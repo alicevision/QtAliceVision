@@ -133,7 +133,6 @@ namespace qtAliceVision
 
             // rotate image
             const auto orientation = metadata.get_int("orientation", 1);
-            qWarning() << orientation << "\n";
             switch (orientation)
             {
             case 1:
@@ -279,6 +278,7 @@ namespace qtAliceVision
 
         if (!root)
         {
+            qWarning() << "create root";
             root = new QSGGeometryNode;
 
             auto geometry = new QSGGeometry(
@@ -350,39 +350,15 @@ namespace qtAliceVision
 
         if (_imageChanged)
         {
-            aliceVision::image::Image<aliceVision::image::RGBfColor> image_ud;
             if (_distortion)
             {
                 updateSfmData = true;
-                
-
-                // Write image
-                //aliceVision::image::readImage(view.getImagePath(), image_d, aliceVision::image::EImageColorSpace::LINEAR);
-
-                // Apply Undistort Function
-                //if (cam->isValid() && cam->hasDistortion())
-                //{
-                //    // undistort the image
-                //    //aliceVision::camera::UndistortImage(image_d, cam, image_ud, aliceVision::image::FBLACK, true); // correct principal point
-                //}
-
-
             }
-
-
             
             QSize newTextureSize;
             auto texture = std::make_unique<FloatTexture>();
             if (_image)
             {
-                /*if (_distortion)
-                {
-                    FloatImage qt_image;
-                    aliceVision::image::ConvertPixelType(image_ud, &qt_image);
-                    rotate(qt_image, RotateAngle::CW_90);
-                    _image = QSharedPointer<FloatImage>::create(qt_image);
-                }*/
-
                 texture->setImage(_image);
                 texture->setFiltering(QSGTexture::Nearest);
                 texture->setHorizontalWrapMode(QSGTexture::Repeat);
@@ -400,7 +376,6 @@ namespace qtAliceVision
                 Q_EMIT textureSizeChanged();
             }
         }
-
 
         const auto newBoundingRect = boundingRect();
         if (updateGeometry || _boundingRect != newBoundingRect)
@@ -457,9 +432,6 @@ namespace qtAliceVision
                     qWarning() << "The input SfMData file '" << QString::fromUtf8(sfmDataFilename.c_str()) << "' is empty.\n";
                 }
 
-                // Create images from sfm data views
-                aliceVision::image::Image<aliceVision::image::RGBfColor> image_d;
-
                 // Retreive id of current view
                 aliceVision::IndexT viewId = 795875689;
 
@@ -474,6 +446,10 @@ namespace qtAliceVision
 
                 _surface.ComputeGrid(vertices, indices, _textureSize, cam);
                 updateSfmData = false;
+            }
+            else
+            {
+                _surface.ComputeGrid(vertices, indices, _textureSize, nullptr);
             }
 
             root->geometry()->markIndexDataDirty();
