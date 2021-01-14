@@ -2,17 +2,22 @@
 #include "FloatTexture.hpp"
 #include "ShaderImageViewer.hpp"
 
-
 #include <QSGGeometryNode>
 #include <QSGGeometry>
 #include <QSGSimpleMaterial>
 #include <QSGSimpleMaterialShader>
+#include <QSGFlatColorMaterial>
 #include <QSGTexture>
 #include <QThreadPool>
+
+#include <aliceVision/sfmData/SfMData.hpp>
+#include <aliceVision/sfmDataIO/sfmDataIO.hpp>
 
 #include <aliceVision/image/Image.hpp>
 #include <aliceVision/image/resampling.hpp>
 #include <aliceVision/image/io.hpp>
+#include <aliceVision/image/Image.hpp>
+#include <aliceVision/image/convertion.hpp>
 
 
 namespace qtAliceVision
@@ -128,6 +133,7 @@ namespace qtAliceVision
 
             // rotate image
             const auto orientation = metadata.get_int("orientation", 1);
+            qWarning() << orientation << "\n";
             switch (orientation)
             {
             case 1:
@@ -168,6 +174,8 @@ namespace qtAliceVision
         connect(this, &FloatImageViewer::channelModeChanged, this, &FloatImageViewer::update);
         connect(this, &FloatImageViewer::imageChanged, this, &FloatImageViewer::update);
         connect(this, &FloatImageViewer::sourceChanged, this, &FloatImageViewer::reload);
+        connect(this, &FloatImageViewer::verticesChanged, this, &FloatImageViewer::update);
+        connect(this, &FloatImageViewer::gridColorChanged, this, &FloatImageViewer::update);
     }
 
     FloatImageViewer::~FloatImageViewer()
@@ -265,11 +273,19 @@ namespace qtAliceVision
 
         QSGGeometryNode* root = static_cast<QSGGeometryNode*>(oldNode);
         QSGSimpleMaterial<ShaderData>* material = nullptr;
+
+        QSGGeometry* geometryLine = nullptr;
+
         if (!root)
         {
             root = new QSGGeometryNode;
 
-            auto geometry = new QSGGeometry(QSGGeometry::defaultAttributes_TexturedPoint2D(), 4);
+            auto geometry = new QSGGeometry(
+                QSGGeometry::defaultAttributes_TexturedPoint2D(), 
+                _surface.VertexCount(), 
+                _surface.IndexCount()
+            );
+            geometry->setDrawingMode(GL_TRIANGLES);
             geometry->setIndexDataPattern(QSGGeometry::StaticPattern);
             geometry->setVertexDataPattern(QSGGeometry::StaticPattern);
             root->setGeometry(geometry);
@@ -278,10 +294,32 @@ namespace qtAliceVision
             material = ImageViewerShader::createMaterial();
             root->setMaterial(material);
             root->setFlags(QSGNode::OwnsMaterial);
+            {
+                /* Geometry and Material for the Grid */
+                auto node = new QSGGeometryNode;
+                auto material = new QSGFlatColorMaterial;
+                material->setColor(_surface.GridColor());
+                {
+                    geometryLine = new QSGGeometry(QSGGeometry::defaultAttributes_Point2D(), _surface.IndexCount());
+                    geometryLine->setDrawingMode(GL_LINES);
+                    geometryLine->setLineWidth(3);
+
+                    node->setGeometry(geometryLine);
+                    node->setFlags(QSGNode::OwnsGeometry);
+                    node->setMaterial(material);
+                    node->setFlags(QSGNode::OwnsMaterial);
+                }
+                root->appendChildNode(node);
+            }
         }
         else
         {
             material = static_cast<QSGSimpleMaterial<ShaderData>*>(root->material());
+
+            QSGGeometryNode* rootGrid = static_cast<QSGGeometryNode*>(oldNode->childAtIndex(0));
+            auto mat = static_cast<QSGFlatColorMaterial*>(rootGrid->activeMaterial());
+            mat->setColor(_surface.GridColor());
+            geometryLine = rootGrid->geometry();
         }
 
         // enable Blending flag for transparency for RGBA
@@ -311,10 +349,63 @@ namespace qtAliceVision
 
         if (_imageChanged)
         {
+            aliceVision::image::Image<aliceVision::image::RGBfColor> image_ud;
+            if (_distortion)
+            {
+                /* SfM Data */
+                // Retrieve Sfm Data Path
+                std::string sfmDataFilename = "C:/Users/Thomas/Desktop/cameras.sfm";
+
+                // load SfMData files
+                aliceVision::sfmData::SfMData sfmData;
+                if (!aliceVision::sfmDataIO::Load(sfmData, sfmDataFilename, aliceVision::sfmDataIO::ESfMData::ALL))
+                {
+                    qWarning() << "The input SfMData file '" << QString::fromUtf8(sfmDataFilename.c_str()) << "' cannot be read.\n";
+                }
+                if (sfmData.getViews().empty())
+                {
+                    qWarning() << "The input SfMData file '" << QString::fromUtf8(sfmDataFilename.c_str()) << "' is empty.\n";
+                }
+
+                // Create images from sfm data views
+                aliceVision::image::Image<aliceVision::image::RGBfColor> image_d;
+
+                // Retreive id of current view
+                aliceVision::IndexT viewId = 795875689;
+
+                // Get view
+                const aliceVision::sfmData::View& view = sfmData.getView(viewId);
+
+                // Get Intrinsics
+                aliceVision::sfmData::Intrinsics::const_iterator iterIntrinsic = sfmData.getIntrinsics().find(view.getIntrinsicId());
+
+                // Get Camera
+                const aliceVision::camera::IntrinsicBase* cam = iterIntrinsic->second.get();
+
+                // Write image
+                aliceVision::image::readImage(view.getImagePath(), image_d, aliceVision::image::EImageColorSpace::LINEAR);
+
+                // Apply Undistort Function
+                if (cam->isValid() && cam->hasDistortion())
+                {
+                    // undistort the image and save it
+                    aliceVision::camera::UndistortImage(image_d, cam, image_ud, aliceVision::image::FBLACK, true); // correct principal point
+                }
+            }
+
+
             QSize newTextureSize;
             auto texture = std::make_unique<FloatTexture>();
             if (_image)
             {
+                if (_distortion)
+                {
+                    FloatImage qt_image;
+                    aliceVision::image::ConvertPixelType(image_ud, &qt_image);
+                    rotate(qt_image, RotateAngle::CW_90);
+                    _image = QSharedPointer<FloatImage>::create(qt_image);
+                }
+
                 texture->setImage(_image);
                 texture->setFiltering(QSGTexture::Nearest);
                 texture->setHorizontalWrapMode(QSGTexture::Repeat);
@@ -357,6 +448,43 @@ namespace qtAliceVision
             QSGGeometry::updateTexturedRectGeometry(root->geometry(), geometryRect, QRectF(0, 0, 1, 1));
             root->markDirty(QSGNode::DirtyGeometry);
         }
+
+        // ============================================================================================
+        // ======================================= Surface ============================================
+        // ============================================================================================
+
+        /* If vertices has changed, Re-Compute the grid */
+        if (_surface.HasVerticesChanged())
+        {
+            // Retrieve Vertices and Index Data
+            QSGGeometry::TexturedPoint2D* vertices = root->geometry()->vertexDataAsTexturedPoint2D();
+            quint16* indices = root->geometry()->indexDataAsUShort();
+
+            // Coordinates of the Grid
+            _surface.ComputeGrid(vertices, indices, _textureSize);
+
+            root->geometry()->markIndexDataDirty();
+            root->geometry()->markVertexDataDirty();
+            root->markDirty(QSGNode::DirtyGeometry | QSGNode::DirtyMaterial);
+
+            // Fill the Surface vertices array
+            _surface.FillVertices(vertices);
+            Q_EMIT verticesChanged(true);
+        }
+
+
+        /* Draw the grid */
+        if (_distortion && _surface.HasGridChanged())
+        {
+            _surface.Draw(geometryLine);
+            Q_EMIT verticesChanged(false);
+        }
+        else if (!_distortion)
+        {
+            _surface.RemoveGrid(geometryLine);
+        }
+
+        root->childAtIndex(0)->markDirty(QSGNode::DirtyGeometry | QSGNode::DirtyMaterial);
 
         return root;
     }
