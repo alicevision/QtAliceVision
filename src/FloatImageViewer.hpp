@@ -129,7 +129,7 @@ namespace qtAliceVision
         Q_INVOKABLE void displayGrid()
         {
             _surface.GridChanged(true);
-            if (_surface.HasGridChanged())
+            if (_surface.IsGridDisplayed())
                 _surface.GridDisplayed(false);
             else
                 _surface.GridDisplayed(true);
