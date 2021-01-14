@@ -2,6 +2,10 @@
 
 #include <QQuickItem>
 #include <QSGGeometry>
+#include <string>
+
+#include <aliceVision/camera/cameraCommon.hpp>
+#include <aliceVision/camera/IntrinsicBase.hpp>
 
 namespace qtAliceVision
 {
@@ -15,7 +19,8 @@ namespace qtAliceVision
 
 		~Surface();
 
-		void ComputeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize);
+		void ComputeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize, 
+			aliceVision::camera::IntrinsicBase* cam);
 
 		void FillVertices(QSGGeometry::TexturedPoint2D* vertices);
 
@@ -49,8 +54,10 @@ namespace qtAliceVision
 		void RemoveGrid(QSGGeometry* geometryLine);
 
 	private:
-		void ComputeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize textureSize);
+		void ComputeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize textureSize,
+			aliceVision::camera::IntrinsicBase* cam);
 		void ComputeIndicesGrid(quint16* indices);
+		void RemoveDistortion(QSGGeometry::TexturedPoint2D* vertices, QSize textureSize);
 
 	private:
 		// Vertex Data
@@ -68,8 +75,6 @@ namespace qtAliceVision
 		bool _gridChanged = true;
 		QColor _gridColor = QColor(255, 0, 0, 255);
 
-		// Distortion State
-		bool _removeDistortion = false;
 	};
 
 }  // ns qtAliceVision
