@@ -1,5 +1,8 @@
 #include "Surface.hpp"
 
+#include <aliceVision/numeric/numeric.hpp>
+
+
 namespace qtAliceVision
 {
 	Surface::Surface(int subdivisions)
@@ -11,13 +14,16 @@ namespace qtAliceVision
 	{
 	}
 
-	void Surface::ComputeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize)
+	void Surface::ComputeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize,
+        aliceVision::camera::IntrinsicBase* cam)
 	{
-        ComputeVerticesGrid(vertices, textureSize);
+        ComputeVerticesGrid(vertices, textureSize, cam);
+        //RemoveDistortion(vertices, textureSize, intrinsicPtr);
         ComputeIndicesGrid(indices);
 	}
 
-    void Surface::ComputeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize textureSize)
+    void Surface::ComputeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize textureSize, 
+        aliceVision::camera::IntrinsicBase* cam)
     {
         int compteur = 0;
         for (size_t i = 0; i <= _subdivisions; i++)
@@ -40,10 +46,22 @@ namespace qtAliceVision
                 float u = i / (float)_subdivisions;
                 float v = j / (float)_subdivisions;
 
-                vertices[compteur].set(x, y, u, v);
+                // Remove Distortion
+                if (cam && cam->hasDistortion())
+                {
+                    const aliceVision::Vec2 undisto_pix(x, y);
+                    const aliceVision::Vec2 disto_pix = cam->get_d_pixel(undisto_pix);
+                    vertices[compteur].set(disto_pix.x(), disto_pix.y(), u, v);
+                }
+                else
+                {
+                    vertices[compteur].set(x, y, u, v);
+                }
+
                 compteur++;
             }
         }
+
     }
 
     void Surface::ComputeIndicesGrid(quint16* indices)
@@ -64,6 +82,20 @@ namespace qtAliceVision
             }
         }
     }
+
+    void Surface::RemoveDistortion(QSGGeometry::TexturedPoint2D* vertices, QSize textureSize)
+    {
+        //for (int j = 0; j < textureSize.height(); ++j)
+        //{
+        //    for (int i = 0; i < textureSize.width(); ++i)
+        //    {
+        //        const aliceVision::Vec2 undisto_pix(i, j);
+        //        // compute coordinates with distortion
+        //        const aliceVision::Vec2 disto_pix = intrinsicPtr->get_d_pixel(undisto_pix);
+        //    }
+        //}
+    }
+
 
     void Surface::FillVertices(QSGGeometry::TexturedPoint2D* vertices)
     {

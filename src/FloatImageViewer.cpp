@@ -275,6 +275,7 @@ namespace qtAliceVision
         QSGSimpleMaterial<ShaderData>* material = nullptr;
 
         QSGGeometry* geometryLine = nullptr;
+        bool updateSfmData = false;
 
         if (!root)
         {
@@ -352,59 +353,35 @@ namespace qtAliceVision
             aliceVision::image::Image<aliceVision::image::RGBfColor> image_ud;
             if (_distortion)
             {
-                /* SfM Data */
-                // Retrieve Sfm Data Path
-                std::string sfmDataFilename = "C:/Users/Thomas/Desktop/cameras.sfm";
-
-                // load SfMData files
-                aliceVision::sfmData::SfMData sfmData;
-                if (!aliceVision::sfmDataIO::Load(sfmData, sfmDataFilename, aliceVision::sfmDataIO::ESfMData::ALL))
-                {
-                    qWarning() << "The input SfMData file '" << QString::fromUtf8(sfmDataFilename.c_str()) << "' cannot be read.\n";
-                }
-                if (sfmData.getViews().empty())
-                {
-                    qWarning() << "The input SfMData file '" << QString::fromUtf8(sfmDataFilename.c_str()) << "' is empty.\n";
-                }
-
-                // Create images from sfm data views
-                aliceVision::image::Image<aliceVision::image::RGBfColor> image_d;
-
-                // Retreive id of current view
-                aliceVision::IndexT viewId = 795875689;
-
-                // Get view
-                const aliceVision::sfmData::View& view = sfmData.getView(viewId);
-
-                // Get Intrinsics
-                aliceVision::sfmData::Intrinsics::const_iterator iterIntrinsic = sfmData.getIntrinsics().find(view.getIntrinsicId());
-
-                // Get Camera
-                const aliceVision::camera::IntrinsicBase* cam = iterIntrinsic->second.get();
+                updateSfmData = true;
+                
 
                 // Write image
-                aliceVision::image::readImage(view.getImagePath(), image_d, aliceVision::image::EImageColorSpace::LINEAR);
+                //aliceVision::image::readImage(view.getImagePath(), image_d, aliceVision::image::EImageColorSpace::LINEAR);
 
                 // Apply Undistort Function
-                if (cam->isValid() && cam->hasDistortion())
-                {
-                    // undistort the image and save it
-                    aliceVision::camera::UndistortImage(image_d, cam, image_ud, aliceVision::image::FBLACK, true); // correct principal point
-                }
+                //if (cam->isValid() && cam->hasDistortion())
+                //{
+                //    // undistort the image
+                //    //aliceVision::camera::UndistortImage(image_d, cam, image_ud, aliceVision::image::FBLACK, true); // correct principal point
+                //}
+
+
             }
 
 
+            
             QSize newTextureSize;
             auto texture = std::make_unique<FloatTexture>();
             if (_image)
             {
-                if (_distortion)
+                /*if (_distortion)
                 {
                     FloatImage qt_image;
                     aliceVision::image::ConvertPixelType(image_ud, &qt_image);
                     rotate(qt_image, RotateAngle::CW_90);
                     _image = QSharedPointer<FloatImage>::create(qt_image);
-                }
+                }*/
 
                 texture->setImage(_image);
                 texture->setFiltering(QSGTexture::Nearest);
@@ -423,6 +400,7 @@ namespace qtAliceVision
                 Q_EMIT textureSizeChanged();
             }
         }
+
 
         const auto newBoundingRect = boundingRect();
         if (updateGeometry || _boundingRect != newBoundingRect)
@@ -461,7 +439,42 @@ namespace qtAliceVision
             quint16* indices = root->geometry()->indexDataAsUShort();
 
             // Coordinates of the Grid
-            _surface.ComputeGrid(vertices, indices, _textureSize);
+            if (updateSfmData)
+            {
+                /* SfM Data */
+                // Retrieve Sfm Data Path
+                std::string sfmDataFilename = "C:/Users/Thomas/Desktop/cameras.sfm";
+
+                // load SfMData files
+                aliceVision::sfmData::SfMData sfmData;
+
+                if (!aliceVision::sfmDataIO::Load(sfmData, sfmDataFilename, aliceVision::sfmDataIO::ESfMData::ALL))
+                {
+                    qWarning() << "The input SfMData file '" << QString::fromUtf8(sfmDataFilename.c_str()) << "' cannot be read.\n";
+                }
+                if (sfmData.getViews().empty())
+                {
+                    qWarning() << "The input SfMData file '" << QString::fromUtf8(sfmDataFilename.c_str()) << "' is empty.\n";
+                }
+
+                // Create images from sfm data views
+                aliceVision::image::Image<aliceVision::image::RGBfColor> image_d;
+
+                // Retreive id of current view
+                aliceVision::IndexT viewId = 795875689;
+
+                // Get view
+                const aliceVision::sfmData::View& view = sfmData.getView(viewId);
+
+                // Get Intrinsics
+                aliceVision::sfmData::Intrinsics::const_iterator iterIntrinsic = sfmData.getIntrinsics().find(view.getIntrinsicId());
+
+                // Get Camera
+                aliceVision::camera::IntrinsicBase* cam = iterIntrinsic->second.get();
+
+                _surface.ComputeGrid(vertices, indices, _textureSize, cam);
+                updateSfmData = false;
+            }
 
             root->geometry()->markIndexDataDirty();
             root->geometry()->markVertexDataDirty();
