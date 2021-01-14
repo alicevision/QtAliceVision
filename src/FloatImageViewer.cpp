@@ -278,7 +278,6 @@ namespace qtAliceVision
 
         if (!root)
         {
-            qWarning() << "create root";
             root = new QSGGeometryNode;
 
             auto geometry = new QSGGeometry(
@@ -303,7 +302,7 @@ namespace qtAliceVision
                 {
                     geometryLine = new QSGGeometry(QSGGeometry::defaultAttributes_Point2D(), _surface.IndexCount());
                     geometryLine->setDrawingMode(GL_LINES);
-                    geometryLine->setLineWidth(3);
+                    geometryLine->setLineWidth(2);
 
                     node->setGeometry(geometryLine);
                     node->setFlags(QSGNode::OwnsGeometry);
@@ -414,7 +413,8 @@ namespace qtAliceVision
             quint16* indices = root->geometry()->indexDataAsUShort();
 
             // Coordinates of the Grid
-            if (updateSfmData)
+            bool LoadSfm = false;
+            if (updateSfmData || _surface.HasSubsChanged())
             {
                 /* SfM Data */
                 // Retrieve Sfm Data Path
@@ -422,32 +422,39 @@ namespace qtAliceVision
 
                 // load SfMData files
                 aliceVision::sfmData::SfMData sfmData;
-
+                
+                LoadSfm = true;
                 if (!aliceVision::sfmDataIO::Load(sfmData, sfmDataFilename, aliceVision::sfmDataIO::ESfMData::ALL))
                 {
                     qWarning() << "The input SfMData file '" << QString::fromUtf8(sfmDataFilename.c_str()) << "' cannot be read.\n";
+                    LoadSfm = false;
                 }
                 if (sfmData.getViews().empty())
                 {
                     qWarning() << "The input SfMData file '" << QString::fromUtf8(sfmDataFilename.c_str()) << "' is empty.\n";
+                    LoadSfm = false;
                 }
 
-                // Retreive id of current view
-                aliceVision::IndexT viewId = 795875689;
+                if (LoadSfm)
+                {
+                    // Retreive id of current view
+                    aliceVision::IndexT viewId = 795875689;
 
-                // Get view
-                const aliceVision::sfmData::View& view = sfmData.getView(viewId);
+                    // Get view
+                    const aliceVision::sfmData::View& view = sfmData.getView(viewId);
 
-                // Get Intrinsics
-                aliceVision::sfmData::Intrinsics::const_iterator iterIntrinsic = sfmData.getIntrinsics().find(view.getIntrinsicId());
+                    // Get Intrinsics
+                    aliceVision::sfmData::Intrinsics::const_iterator iterIntrinsic = sfmData.getIntrinsics().find(view.getIntrinsicId());
 
-                // Get Camera
-                aliceVision::camera::IntrinsicBase* cam = iterIntrinsic->second.get();
+                    // Get Camera
+                    aliceVision::camera::IntrinsicBase* cam = iterIntrinsic->second.get();
 
-                _surface.ComputeGrid(vertices, indices, _textureSize, cam);
-                updateSfmData = false;
+                    _surface.ComputeGrid(vertices, indices, _textureSize, cam);
+                    updateSfmData = false;
+                }
             }
-            else
+            
+            if (!LoadSfm)
             {
                 _surface.ComputeGrid(vertices, indices, _textureSize, nullptr);
             }

@@ -54,6 +54,21 @@ namespace qtAliceVision
 
 		void RemoveGrid(QSGGeometry* geometryLine);
 
+		bool HasSubsChanged() {
+			if (_subsChanged)
+			{
+				_subsChanged = false;
+				return true;
+			}
+			else
+			{
+				_subsChanged = true;
+				return false;
+			}
+		}
+
+		void SubsChanged(bool change) { _subsChanged = change; }
+
 	private:
 		void ComputeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize textureSize,
 			aliceVision::camera::IntrinsicBase* cam);
@@ -75,6 +90,7 @@ namespace qtAliceVision
 		bool _isGridDisplayed = false;
 		bool _gridChanged = true;
 		QColor _gridColor = QColor(255, 0, 0, 255);
+		bool _subsChanged = false;
 
 	};
 
