@@ -18,7 +18,6 @@ namespace qtAliceVision
         aliceVision::camera::IntrinsicBase* cam)
 	{
         ComputeVerticesGrid(vertices, textureSize, cam);
-        //RemoveDistortion(vertices, textureSize, intrinsicPtr);
         ComputeIndicesGrid(indices);
 	}
 
@@ -57,7 +56,6 @@ namespace qtAliceVision
                 {
                     vertices[compteur].set(x, y, u, v);
                 }
-
                 compteur++;
             }
         }
@@ -82,20 +80,6 @@ namespace qtAliceVision
             }
         }
     }
-
-    void Surface::RemoveDistortion(QSGGeometry::TexturedPoint2D* vertices, QSize textureSize)
-    {
-        //for (int j = 0; j < textureSize.height(); ++j)
-        //{
-        //    for (int i = 0; i < textureSize.width(); ++i)
-        //    {
-        //        const aliceVision::Vec2 undisto_pix(i, j);
-        //        // compute coordinates with distortion
-        //        const aliceVision::Vec2 disto_pix = intrinsicPtr->get_d_pixel(undisto_pix);
-        //    }
-        //}
-    }
-
 
     void Surface::FillVertices(QSGGeometry::TexturedPoint2D* vertices)
     {
