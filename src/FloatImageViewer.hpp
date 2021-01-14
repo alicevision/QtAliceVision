@@ -162,6 +162,16 @@ namespace qtAliceVision
         {
             _distortion = distortion;
         }
+        Q_INVOKABLE void updateSubdivisions(int subs)
+        {
+            _surface.SubsChanged(true);
+            _surface.SetSubdivisions(subs);
+
+            _surface.ClearVertices();
+            _surface.VerticesChanged(true);
+            _surface.GridChanged(true);
+            Q_EMIT verticesChanged(false);
+        }
 
     private:
         /// Reload image from source
