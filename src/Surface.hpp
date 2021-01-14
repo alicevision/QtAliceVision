@@ -47,6 +47,7 @@ namespace qtAliceVision
 		void GridChanged(bool change) { _gridChanged = change; }
 
 		void GridDisplayed(bool display) { _isGridDisplayed = display; }
+		bool IsGridDisplayed() const { return _isGridDisplayed; }
 		
 		void Reinitialize(bool reinit) { _reinit = reinit; }
 		bool HasReinitialized() const { return _reinit; }
@@ -71,7 +72,7 @@ namespace qtAliceVision
 		bool _reinit = false;
 
 		// Grid State
-		bool _isGridDisplayed = true;
+		bool _isGridDisplayed = false;
 		bool _gridChanged = true;
 		QColor _gridColor = QColor(255, 0, 0, 255);
 
