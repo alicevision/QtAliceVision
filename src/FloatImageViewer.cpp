@@ -276,10 +276,11 @@ namespace qtAliceVision
         QSGGeometry* geometryLine = nullptr;
         bool updateSfmData = false;
 
+
+
         if (!root)
         {
             root = new QSGGeometryNode;
-
             auto geometry = new QSGGeometry(
                 QSGGeometry::defaultAttributes_TexturedPoint2D(), 
                 _surface.VertexCount(), 
@@ -300,6 +301,7 @@ namespace qtAliceVision
                 auto material = new QSGFlatColorMaterial;
                 material->setColor(_surface.GridColor());
                 {
+                    // Vertexcount of the grid is equal to indexCount of the image
                     geometryLine = new QSGGeometry(QSGGeometry::defaultAttributes_Point2D(), _surface.IndexCount());
                     geometryLine->setDrawingMode(GL_LINES);
                     geometryLine->setLineWidth(2);
@@ -320,6 +322,23 @@ namespace qtAliceVision
             auto mat = static_cast<QSGFlatColorMaterial*>(rootGrid->activeMaterial());
             mat->setColor(_surface.GridColor());
             geometryLine = rootGrid->geometry();
+        }
+
+        if (_surface.HasSubsChanged())
+        {
+            // Re size grid
+            if (geometryLine)
+            {
+                // Vertexcount of the grid is equal to indexCount of the image
+                geometryLine->allocate(_surface.IndexCount());
+                root->childAtIndex(0)->markDirty(QSGNode::DirtyGeometry);
+            }
+            // Re size root
+            if (root)
+            {
+                root->geometry()->allocate(_surface.VertexCount(), _surface.IndexCount());
+                root->markDirty(QSGNode::DirtyGeometry);
+            }
         }
 
         // enable Blending flag for transparency for RGBA
