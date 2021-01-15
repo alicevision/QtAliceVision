@@ -55,16 +55,7 @@ namespace qtAliceVision
 		void RemoveGrid(QSGGeometry* geometryLine);
 
 		bool HasSubsChanged() {
-			if (_subsChanged)
-			{
-				_subsChanged = false;
-				return true;
-			}
-			else
-			{
-				_subsChanged = true;
-				return false;
-			}
+			return _subsChanged;
 		}
 
 		void SubsChanged(bool change) { _subsChanged = change; }
