@@ -83,6 +83,7 @@ namespace qtAliceVision
 		QColor _gridColor = QColor(255, 0, 0, 255);
 		bool _subsChanged = false;
 
+
 	};
 
 }  // ns qtAliceVision

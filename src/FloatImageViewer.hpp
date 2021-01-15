@@ -155,7 +155,7 @@ namespace qtAliceVision
             Q_EMIT verticesChanged(false);
         }
         Q_INVOKABLE bool reinit() 
-        { 
+        {
             return _surface.HasReinitialized();
         }
         Q_INVOKABLE void hasDistortion(bool distortion)
@@ -201,6 +201,9 @@ namespace qtAliceVision
 
         bool _distortion = false;
         Surface _surface;
+
+        // Debug
+        bool _createRoot = true;
     };
 
 }  // ns qtAliceVision
