@@ -416,6 +416,7 @@ namespace qtAliceVision
             bool LoadSfm = false;
             if (updateSfmData || _surface.HasSubsChanged())
             {
+                _surface.SubsChanged(false);
                 /* SfM Data */
                 // Retrieve Sfm Data Path
                 std::string sfmDataFilename = "C:/Users/Thomas/Desktop/cameras.sfm";
