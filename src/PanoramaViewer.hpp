@@ -143,7 +143,9 @@ public:
         _gridChanged = true;
         Q_EMIT verticesChanged(false);
     }
-    Q_INVOKABLE bool reinit() { return _reinit; }
+    Q_INVOKABLE bool reinit() { 
+        return _reinit; 
+    }
 
     
 private:

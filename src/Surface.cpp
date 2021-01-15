@@ -18,6 +18,7 @@ namespace qtAliceVision
         aliceVision::camera::IntrinsicBase* cam)
 	{
         ComputeVerticesGrid(vertices, textureSize, cam);
+        // Change only if subs are changed
         ComputeIndicesGrid(indices);
 	}
 
@@ -48,6 +49,7 @@ namespace qtAliceVision
                 // Remove Distortion
                 if (cam && cam->hasDistortion())
                 {
+                    qWarning() << x << y;
                     const aliceVision::Vec2 undisto_pix(x, y);
                     const aliceVision::Vec2 disto_pix = cam->get_d_pixel(undisto_pix);
                     vertices[compteur].set(disto_pix.x(), disto_pix.y(), u, v);

@@ -274,8 +274,6 @@ namespace qtAliceVision
         QSGGeometry* geometryLine = nullptr;
         bool updateSfmData = false;
 
-
-
         if (!root)
         {
             root = new QSGGeometryNode;
@@ -314,6 +312,7 @@ namespace qtAliceVision
         }
         else
         {
+            _createRoot = false;
             material = static_cast<QSGSimpleMaterial<ShaderData>*>(root->material());
 
             QSGGeometryNode* rootGrid = static_cast<QSGGeometryNode*>(oldNode->childAtIndex(0));
@@ -324,6 +323,8 @@ namespace qtAliceVision
 
         if (_surface.HasSubsChanged())
         {
+            qWarning() << "Subs Changed";
+
             // Re size grid
             if (geometryLine)
             {
@@ -366,6 +367,8 @@ namespace qtAliceVision
 
         if (_imageChanged)
         {
+            qWarning() << "Image Changed";
+
             if (_distortion)
             {
                 updateSfmData = true;
@@ -396,6 +399,8 @@ namespace qtAliceVision
         const auto newBoundingRect = boundingRect();
         if (updateGeometry || _boundingRect != newBoundingRect)
         {
+            qWarning() << "Geometry changed";
+
             _boundingRect = newBoundingRect;
 
             const float windowRatio = _boundingRect.width() / _boundingRect.height();
@@ -423,8 +428,10 @@ namespace qtAliceVision
         // ============================================================================================
 
         /* If vertices has changed, Re-Compute the grid */
-        if (_surface.HasVerticesChanged())
+        if (_surface.HasVerticesChanged() && !_createRoot)
         {
+            qWarning() << "Vertice changed";
+
             // Retrieve Vertices and Index Data
             QSGGeometry::TexturedPoint2D* vertices = root->geometry()->vertexDataAsTexturedPoint2D();
             quint16* indices = root->geometry()->indexDataAsUShort();
@@ -433,6 +440,8 @@ namespace qtAliceVision
             bool LoadSfm = false;
             if (updateSfmData || _surface.HasSubsChanged())
             {
+                qWarning() << "Load Sfm" << updateSfmData << _surface.HasSubsChanged();
+
                 _surface.SubsChanged(false);
                 /* SfM Data */
                 // Retrieve Sfm Data Path
@@ -453,6 +462,7 @@ namespace qtAliceVision
                     LoadSfm = false;
                 }
 
+
                 if (LoadSfm)
                 {
                     // Retreive id of current view
@@ -466,7 +476,7 @@ namespace qtAliceVision
 
                     // Get Camera
                     aliceVision::camera::IntrinsicBase* cam = iterIntrinsic->second.get();
-
+                    
                     _surface.ComputeGrid(vertices, indices, _textureSize, cam);
                     updateSfmData = false;
                 }
@@ -484,11 +494,15 @@ namespace qtAliceVision
             // Fill the Surface vertices array
             _surface.FillVertices(vertices);
             Q_EMIT verticesChanged(true);
+
+            if (LoadSfm)
+            {
+                _surface.VerticesChanged(true);
+            }
         }
 
-
         /* Draw the grid */
-        if (_distortion && _surface.HasGridChanged())
+        if (_distortion && _surface.HasGridChanged() && !_createRoot)
         {
             _surface.Draw(geometryLine);
             Q_EMIT verticesChanged(false);
