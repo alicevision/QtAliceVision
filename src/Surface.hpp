@@ -60,6 +60,9 @@ namespace qtAliceVision
 
 		void SubsChanged(bool change) { _subsChanged = change; }
 
+		void SetSfmPath(const QString& path) { _sfmPath = path; }
+		QString SfmPath() const { return _sfmPath; }
+
 	private:
 		void ComputeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize textureSize,
 			aliceVision::camera::IntrinsicBase* cam);
@@ -83,6 +86,8 @@ namespace qtAliceVision
 		QColor _gridColor = QColor(255, 0, 0, 255);
 		bool _subsChanged = false;
 
+		// Sfm Path
+		QString _sfmPath = "null";
 
 	};
 

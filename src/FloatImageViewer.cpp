@@ -442,23 +442,35 @@ namespace qtAliceVision
             {
                 qWarning() << "Load Sfm" << updateSfmData << _surface.HasSubsChanged();
 
-                _surface.SubsChanged(false);
-                /* SfM Data */
-                // Retrieve Sfm Data Path
-                std::string sfmDataFilename = "C:/Users/Nils/Desktop/cameras.sfm";
-
-                // load SfMData files
-                aliceVision::sfmData::SfMData sfmData;
-                
                 LoadSfm = true;
-                if (!aliceVision::sfmDataIO::Load(sfmData, sfmDataFilename, aliceVision::sfmDataIO::ESfMData::ALL))
+                std::string sfmDataFilename;
+                aliceVision::sfmData::SfMData sfmData;
+                _surface.SubsChanged(false);
+                
+                if (_surface.SfmPath().toStdString() != "null")
                 {
-                    qWarning() << "The input SfMData file '" << QString::fromUtf8(sfmDataFilename.c_str()) << "' cannot be read.\n";
-                    LoadSfm = false;
+                    qWarning() << "Sfm Path not null : ";
+
+                    qWarning() << _surface.SfmPath();
+
+                    // Retrieve Sfm Data Path
+                    sfmDataFilename = _surface.SfmPath().toStdString();
+
+                    // load SfMData files
+                    if (!aliceVision::sfmDataIO::Load(sfmData, sfmDataFilename, aliceVision::sfmDataIO::ESfMData::ALL))
+                    {
+                        qWarning() << "The input SfMData file '" << QString::fromUtf8(sfmDataFilename.c_str()) << "' cannot be read.\n";
+                        LoadSfm = false;
+                    }
+                    if (sfmData.getViews().empty())
+                    {
+                        qWarning() << "The input SfMData file '" << QString::fromUtf8(sfmDataFilename.c_str()) << "' is empty.\n";
+                        LoadSfm = false;
+                    }
                 }
-                if (sfmData.getViews().empty())
+                else
                 {
-                    qWarning() << "The input SfMData file '" << QString::fromUtf8(sfmDataFilename.c_str()) << "' is empty.\n";
+                    qWarning() << "Sfm Path null.";
                     LoadSfm = false;
                 }
 
@@ -484,6 +496,7 @@ namespace qtAliceVision
             
             if (!LoadSfm)
             {
+                qWarning() << "GRID WITH NO DISTO";
                 _surface.ComputeGrid(vertices, indices, _textureSize, nullptr);
             }
 
