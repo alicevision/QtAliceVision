@@ -445,7 +445,7 @@ namespace qtAliceVision
                 _surface.SubsChanged(false);
                 /* SfM Data */
                 // Retrieve Sfm Data Path
-                std::string sfmDataFilename = "C:/Users/Thomas/Desktop/cameras.sfm";
+                std::string sfmDataFilename = "C:/Users/Nils/Desktop/cameras.sfm";
 
                 // load SfMData files
                 aliceVision::sfmData::SfMData sfmData;

@@ -126,13 +126,10 @@ namespace qtAliceVision
             _surface.GridChanged(true);
             Q_EMIT verticesChanged(false);
         }
-        Q_INVOKABLE void displayGrid()
+        Q_INVOKABLE void displayGrid(bool display)
         {
             _surface.GridChanged(true);
-            if (_surface.IsGridDisplayed())
-                _surface.GridDisplayed(false);
-            else
-                _surface.GridDisplayed(true);
+            _surface.GridDisplayed(display);
             Q_EMIT verticesChanged(false);
         }
         Q_INVOKABLE void setGridColorQML(const QColor& color)
