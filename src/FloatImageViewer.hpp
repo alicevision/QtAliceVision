@@ -11,6 +11,7 @@
 #include <QVector4D>
 
 #include <memory>
+#include <string>
 
 
 namespace qtAliceVision
@@ -174,6 +175,11 @@ namespace qtAliceVision
             _surface.GridChanged(true);
             Q_EMIT verticesChanged(false);
         }
+        Q_INVOKABLE void setSfmPath(const QString& path)
+        {
+            _surface.SetSfmPath(path);
+        }
+
 
     private:
         /// Reload image from source
