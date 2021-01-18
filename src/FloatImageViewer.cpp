@@ -98,7 +98,9 @@ void FloatImageIORunnable::run()
     {
         const auto path = _path.toLocalFile().toUtf8().toStdString();
         FloatImage image;
-        image::readImage(path, image, image::EImageColorSpace::LINEAR);  // linear: sRGB conversion is done in display shader
+        image::ImageReadOptions options;
+        options.outputColorSpace = image::EImageColorSpace::LINEAR;
+        image::readImage(path, image, options);  // linear: sRGB conversion is done in display shader
 
         sourceSize = QSize(image.Width(), image.Height());
 
