@@ -158,6 +158,11 @@ namespace qtAliceVision
         Q_INVOKABLE void hasDistortion(bool distortion)
         {
             _distortion = distortion;
+            _imageChanged = true;
+            _surface.VerticesChanged(true);
+            _surface.ClearVertices();
+            Q_EMIT verticesChanged(false);
+
         }
         Q_INVOKABLE void updateSubdivisions(int subs)
         {
