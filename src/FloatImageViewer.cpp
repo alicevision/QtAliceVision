@@ -10,14 +10,11 @@
 #include <QSGTexture>
 #include <QThreadPool>
 
-
-
 #include <aliceVision/image/Image.hpp>
 #include <aliceVision/image/resampling.hpp>
 #include <aliceVision/image/io.hpp>
 #include <aliceVision/image/Image.hpp>
 #include <aliceVision/image/convertion.hpp>
-
 
 namespace qtAliceVision
 {
@@ -279,11 +276,7 @@ namespace qtAliceVision
         if (!root)
         {
             root = new QSGGeometryNode;
-            auto geometry = new QSGGeometry(
-                QSGGeometry::defaultAttributes_TexturedPoint2D(), 
-                _surface.VertexCount(), 
-                _surface.IndexCount()
-            );
+            auto geometry = new QSGGeometry(QSGGeometry::defaultAttributes_TexturedPoint2D(), _surface.VertexCount(), _surface.IndexCount());
             geometry->setDrawingMode(GL_TRIANGLES);
             geometry->setIndexDataPattern(QSGGeometry::StaticPattern);
             geometry->setVertexDataPattern(QSGGeometry::StaticPattern);
@@ -448,7 +441,7 @@ namespace qtAliceVision
             }
         }
 
-        // Draw the grid
+        // Draw the grid if there Disto Viewer is enabled
         if (_distortion && _surface.HasGridChanged() && !_createRoot)
         {
             _surface.Draw(geometryLine);
