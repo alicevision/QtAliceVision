@@ -63,9 +63,9 @@ namespace qtAliceVision
 
             Q_PROPERTY(QVariantMap metadata READ metadata NOTIFY metadataChanged)
 
-            Q_PROPERTY(QList<QPoint> vertices READ vertices WRITE setVertices NOTIFY verticesChanged)
+            Q_PROPERTY(QList<QPoint> vertices READ vertices NOTIFY verticesChanged)
 
-            Q_PROPERTY(QColor gridColor READ gridColor WRITE setGridColor NOTIFY gridColorChanged)
+            Q_PROPERTY(QColor gridColor NOTIFY gridColorChanged)
 
 
     public:
@@ -89,14 +89,9 @@ namespace qtAliceVision
             return _metadata;
         }
 
-        QList<QPoint> vertices() const { return _surface.Vertices(); }
-        void setVertices(const QList<QPoint>& v) {}
-
-        QColor gridColor() const { return _surface.GridColor(); }
-        void setGridColor(const QColor& color)
-        {
-            _surface.SetGridColor(color);
-            Q_EMIT gridColorChanged();
+        QList<QPoint> vertices() const 
+        { 
+            return _surface.Vertices(); 
         }
 
         enum class EChannelMode : quint8 { RGBA, RGB, R, G, B, A };
@@ -118,77 +113,17 @@ namespace qtAliceVision
         Q_SIGNAL void sfmChanged();
 
         Q_INVOKABLE QVector4D pixelValueAt(int x, int y);
-
-        Q_INVOKABLE QPoint getVertex(int index) { return _surface.Vertex(index); }
-        Q_INVOKABLE void setVertex(int index, float x, float y)
-        {
-            QPoint point(x, y);
-            _surface.Vertex(index) = point;
-            _surface.VerticesChanged(true);
-            _surface.GridChanged(true);
-            Q_EMIT verticesChanged(false);
-        }
-        Q_INVOKABLE void displayGrid(bool display)
-        {
-            _surface.GridChanged(true);
-            _surface.GridDisplayed(display);
-            Q_EMIT verticesChanged(false);
-        }
-        Q_INVOKABLE void setGridColorQML(const QColor& color)
-        {
-            _surface.SetGridColor(color);
-            Q_EMIT gridColorChanged();
-        }
-        Q_INVOKABLE void defaultControlPoints()
-        {
-            _surface.ClearVertices();
-            _surface.Reinitialize(true);
-            _surface.VerticesChanged(true);
-            _surface.GridChanged(true);
-            Q_EMIT verticesChanged(false);
-        }
-        Q_INVOKABLE void resized()
-        {
-            _surface.VerticesChanged(true);
-            _surface.GridChanged(true);
-            Q_EMIT verticesChanged(false);
-        }
-        Q_INVOKABLE bool reinit() 
-        {
-            return _surface.HasReinitialized();
-        }
-        Q_INVOKABLE void hasDistortion(bool distortion)
-        {
-            _distortion = distortion;
-            _imageChanged = true;
-            _surface.VerticesChanged(true);
-            _surface.ClearVertices();
-            Q_EMIT verticesChanged(false);
-
-        }
-        Q_INVOKABLE void updateSubdivisions(int subs)
-        {
-            _surface.SubsChanged(true);
-            _surface.SetSubdivisions(subs);
-
-            _surface.ClearVertices();
-            _surface.VerticesChanged(true);
-            _surface.GridChanged(true);
-            Q_EMIT verticesChanged(false);
-        }
-        Q_INVOKABLE void setSfmPath(const QString& path)
-        {
-            _surface.SetSfmPath(path);
-            _imageChanged = true;
-            _surface.VerticesChanged(true);
-            _surface.GridChanged(true);
-            Q_EMIT verticesChanged(false);
-        }
-        Q_INVOKABLE QPoint getPrincipalPoint()
-        {
-            return _surface.PrincipalPoint();
-        }
-
+        Q_INVOKABLE QPoint getVertex(int index);
+        Q_INVOKABLE void setVertex(int index, float x, float y);
+        Q_INVOKABLE void displayGrid(bool display);
+        Q_INVOKABLE void setGridColorQML(const QColor& color);
+        Q_INVOKABLE void defaultControlPoints();
+        Q_INVOKABLE void resized();
+        Q_INVOKABLE bool reinit();
+        Q_INVOKABLE void hasDistortion(bool distortion);
+        Q_INVOKABLE void updateSubdivisions(int subs);
+        Q_INVOKABLE void setSfmPath(const QString& path);
+        Q_INVOKABLE QPoint getPrincipalPoint();
 
     private:
         /// Reload image from source
@@ -216,11 +151,10 @@ namespace qtAliceVision
 
         QVariantMap _metadata;
 
-        bool _distortion = false;
         Surface _surface;
-
-        // Debug
+        bool _distortion = false;
         bool _createRoot = true;
+
     };
 
 }  // ns qtAliceVision
