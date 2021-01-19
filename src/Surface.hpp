@@ -6,6 +6,8 @@
 
 #include <aliceVision/camera/cameraCommon.hpp>
 #include <aliceVision/camera/IntrinsicBase.hpp>
+#include <aliceVision/numeric/numeric.hpp>
+
 
 namespace qtAliceVision
 {
@@ -20,8 +22,8 @@ namespace qtAliceVision
 		~Surface();
 
 		void ComputeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize, 
-			aliceVision::camera::IntrinsicBase* cam);
-
+			std::shared_ptr<aliceVision::camera::IntrinsicBase> cam);
+		
 		void FillVertices(QSGGeometry::TexturedPoint2D* vertices);
 
 		void Draw(QSGGeometry* geometryLine);
@@ -63,11 +65,19 @@ namespace qtAliceVision
 		void SetSfmPath(const QString& path) { _sfmPath = path; }
 		QString SfmPath() const { return _sfmPath; }
 
+		QPoint PrincipalPoint() const { return _principalPoint; }
+
 	private:
 		void ComputeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize textureSize,
-			aliceVision::camera::IntrinsicBase* cam);
+			std::shared_ptr<aliceVision::camera::IntrinsicBase> cam);
+		
 		void ComputeIndicesGrid(quint16* indices);
+		
 		void RemoveDistortion(QSGGeometry::TexturedPoint2D* vertices, QSize textureSize);
+
+		void ComputePrincipalPoint(std::shared_ptr<aliceVision::camera::IntrinsicBase> cam,
+			QSize textureSize);
+
 
 	private:
 		// Vertex Data
@@ -89,6 +99,8 @@ namespace qtAliceVision
 		// Sfm Path
 		QString _sfmPath = "null";
 
+		// Principal Point Coord
+		QPoint _principalPoint = QPoint(150, 150);
 	};
 
 }  // ns qtAliceVision

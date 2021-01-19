@@ -175,6 +175,7 @@ namespace qtAliceVision
         connect(this, &FloatImageViewer::sourceChanged, this, &FloatImageViewer::reload);
         connect(this, &FloatImageViewer::verticesChanged, this, &FloatImageViewer::update);
         connect(this, &FloatImageViewer::gridColorChanged, this, &FloatImageViewer::update);
+        connect(this, &FloatImageViewer::sfmChanged, this, &FloatImageViewer::update);
     }
 
     FloatImageViewer::~FloatImageViewer()
@@ -469,6 +470,12 @@ namespace qtAliceVision
                         qWarning() << "The input SfMData file '" << QString::fromUtf8(sfmDataFilename.c_str()) << "' is empty.\n";
                         LoadSfm = false;
                     }
+                    // Make sure there is only one kind of image in dataset
+                    if (sfmData.getIntrinsics().size() > 1)
+                    {
+                        qWarning() << "Only one intrinsic allowed (" << sfmData.getIntrinsics().size() << " found)";
+                        LoadSfm = false;
+                    }
                 }
                 else
                 {
@@ -479,20 +486,11 @@ namespace qtAliceVision
 
                 if (LoadSfm)
                 {
-                    // Retreive id of current view
-                    aliceVision::IndexT viewId = 795875689;
-
-                    // Get view
-                    const aliceVision::sfmData::View& view = sfmData.getView(viewId);
-
-                    // Get Intrinsics
-                    aliceVision::sfmData::Intrinsics::const_iterator iterIntrinsic = sfmData.getIntrinsics().find(view.getIntrinsicId());
-
-                    // Get Camera
-                    aliceVision::camera::IntrinsicBase* cam = iterIntrinsic->second.get();
-                    
+                    std::shared_ptr<aliceVision::camera::IntrinsicBase> cam = sfmData.getIntrinsics().begin()->second;
                     _surface.ComputeGrid(vertices, indices, _textureSize, cam);
                     updateSfmData = false;
+                    Q_EMIT sfmChanged();
+
                 }
             }
             
