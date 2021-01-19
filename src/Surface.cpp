@@ -164,7 +164,6 @@ namespace qtAliceVision
 
     void Surface::ComputePrincipalPoint(std::shared_ptr<aliceVision::camera::IntrinsicBase> cam, QSize textureSize)
     {
-        qWarning() << "Compute Principal Point";
         const aliceVision::Vec2 center(textureSize.width() * 0.5, textureSize.height() * 0.5);
         aliceVision::Vec2 ppCorrection(0.0, 0.0);
 
