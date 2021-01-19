@@ -3,6 +3,9 @@
 #include <aliceVision/camera/IntrinsicBase.hpp>
 #include <aliceVision/camera/Pinhole.hpp>
 
+#include <aliceVision/sfmData/SfMData.hpp>
+#include <aliceVision/sfmDataIO/sfmDataIO.hpp>
+
 #include <memory>
 
 namespace qtAliceVision
@@ -98,6 +101,61 @@ namespace qtAliceVision
 
         _verticesChanged = false;
         _reinit = false;
+    }
+
+    bool Surface::LoadSfmData(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize, 
+        bool distortion, bool updateSfmData)
+    {
+        bool LoadSfm = false;
+        if (distortion && (updateSfmData || HasSubsChanged()))
+        {
+            LoadSfm = true;
+            std::string sfmDataFilename;
+            aliceVision::sfmData::SfMData sfmData;
+            SubsChanged(false);
+
+            if (SfmPath().toStdString() != "null")
+            {
+                // Retrieve Sfm Data Path
+                sfmDataFilename = SfmPath().toStdString();
+
+                // load SfMData files
+                if (!aliceVision::sfmDataIO::Load(sfmData, sfmDataFilename, aliceVision::sfmDataIO::ESfMData::ALL))
+                {
+                    qWarning() << "The input SfMData file '" << QString::fromUtf8(sfmDataFilename.c_str()) << "' cannot be read.\n";
+                    LoadSfm = false;
+                }
+                if (sfmData.getViews().empty())
+                {
+                    qWarning() << "The input SfMData file '" << QString::fromUtf8(sfmDataFilename.c_str()) << "' is empty.\n";
+                    LoadSfm = false;
+                }
+                // Make sure there is only one kind of image in dataset
+                if (sfmData.getIntrinsics().size() > 1)
+                {
+                    qWarning() << "Only one intrinsic allowed (" << sfmData.getIntrinsics().size() << " found)";
+                    LoadSfm = false;
+                }
+            }
+            else
+            {
+                LoadSfm = false;
+            }
+
+            if (LoadSfm)
+            {
+                std::shared_ptr<aliceVision::camera::IntrinsicBase> cam = sfmData.getIntrinsics().begin()->second;
+                ComputeGrid(vertices, indices, textureSize, cam);
+                updateSfmData = false;
+            }
+        }
+
+        if (!LoadSfm)
+        {
+            ComputeGrid(vertices, indices, textureSize, nullptr);
+        }
+
+        return LoadSfm;
     }
 
     void Surface::Draw(QSGGeometry* geometryLine)
