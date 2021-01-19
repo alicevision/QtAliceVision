@@ -10,8 +10,7 @@
 #include <QSGTexture>
 #include <QThreadPool>
 
-#include <aliceVision/sfmData/SfMData.hpp>
-#include <aliceVision/sfmDataIO/sfmDataIO.hpp>
+
 
 #include <aliceVision/image/Image.hpp>
 #include <aliceVision/image/resampling.hpp>
@@ -424,63 +423,15 @@ namespace qtAliceVision
         *   Surface
         */
 
-        /* If vertices has changed, Re-Compute the grid */
+        // If vertices has changed, Re-Compute the grid 
         if (_surface.HasVerticesChanged() && !_createRoot)
         {
             // Retrieve Vertices and Index Data
             QSGGeometry::TexturedPoint2D* vertices = root->geometry()->vertexDataAsTexturedPoint2D();
             quint16* indices = root->geometry()->indexDataAsUShort();
 
-            // Coordinates of the Grid
-            bool LoadSfm = false;
-            if (_distortion && (updateSfmData || _surface.HasSubsChanged()))
-            {
-                LoadSfm = true;
-                std::string sfmDataFilename;
-                aliceVision::sfmData::SfMData sfmData;
-                _surface.SubsChanged(false);
-                
-                if (_surface.SfmPath().toStdString() != "null")
-                {
-                    // Retrieve Sfm Data Path
-                    sfmDataFilename = _surface.SfmPath().toStdString();
-
-                    // load SfMData files
-                    if (!aliceVision::sfmDataIO::Load(sfmData, sfmDataFilename, aliceVision::sfmDataIO::ESfMData::ALL))
-                    {
-                        qWarning() << "The input SfMData file '" << QString::fromUtf8(sfmDataFilename.c_str()) << "' cannot be read.\n";
-                        LoadSfm = false;
-                    }
-                    if (sfmData.getViews().empty())
-                    {
-                        qWarning() << "The input SfMData file '" << QString::fromUtf8(sfmDataFilename.c_str()) << "' is empty.\n";
-                        LoadSfm = false;
-                    }
-                    // Make sure there is only one kind of image in dataset
-                    if (sfmData.getIntrinsics().size() > 1)
-                    {
-                        qWarning() << "Only one intrinsic allowed (" << sfmData.getIntrinsics().size() << " found)";
-                        LoadSfm = false;
-                    }
-                }
-                else
-                {
-                    LoadSfm = false;
-                }
-
-                if (LoadSfm)
-                {
-                    std::shared_ptr<aliceVision::camera::IntrinsicBase> cam = sfmData.getIntrinsics().begin()->second;
-                    _surface.ComputeGrid(vertices, indices, _textureSize, cam);
-                    updateSfmData = false;
-                    Q_EMIT sfmChanged();
-                }
-            }
-            
-            if (!LoadSfm)
-            {
-                _surface.ComputeGrid(vertices, indices, _textureSize, nullptr);
-            }
+            // Load new sfm Data if there is distortion and sfm data has changed
+            bool LoadSfm = _surface.LoadSfmData(vertices, indices, _textureSize, _distortion, updateSfmData);
 
             root->geometry()->markIndexDataDirty();
             root->geometry()->markVertexDataDirty();
@@ -493,10 +444,11 @@ namespace qtAliceVision
             if (LoadSfm)
             {
                 _surface.VerticesChanged(true);
+                Q_EMIT sfmChanged();
             }
         }
 
-        /* Draw the grid */
+        // Draw the grid
         if (_distortion && _surface.HasGridChanged() && !_createRoot)
         {
             _surface.Draw(geometryLine);

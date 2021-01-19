@@ -20,9 +20,10 @@ namespace qtAliceVision
 		Surface(int subdivisions = 5);
 
 		~Surface();
+		
 
-		void ComputeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize, 
-			std::shared_ptr<aliceVision::camera::IntrinsicBase> cam);
+		bool LoadSfmData(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize,
+			bool distortion, bool updateSfmData);
 		
 		void FillVertices(QSGGeometry::TexturedPoint2D* vertices);
 
@@ -68,6 +69,9 @@ namespace qtAliceVision
 		QPoint PrincipalPoint() const { return _principalPoint; }
 
 	private:
+		void ComputeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize,
+			std::shared_ptr<aliceVision::camera::IntrinsicBase> cam);
+
 		void ComputeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize textureSize,
 			std::shared_ptr<aliceVision::camera::IntrinsicBase> cam);
 		
