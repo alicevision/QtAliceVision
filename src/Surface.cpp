@@ -1,7 +1,9 @@
 #include "Surface.hpp"
 
-#include <aliceVision/numeric/numeric.hpp>
+#include <aliceVision/camera/IntrinsicBase.hpp>
+#include <aliceVision/camera/Pinhole.hpp>
 
+#include <memory>
 
 namespace qtAliceVision
 {
@@ -15,15 +17,17 @@ namespace qtAliceVision
 	}
 
 	void Surface::ComputeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize,
-        aliceVision::camera::IntrinsicBase* cam)
+        std::shared_ptr<aliceVision::camera::IntrinsicBase> cam)
 	{
+        if (cam)
+            ComputePrincipalPoint(cam, textureSize);
+        
         ComputeVerticesGrid(vertices, textureSize, cam);
-        // Change only if subs are changed
         ComputeIndicesGrid(indices);
 	}
 
     void Surface::ComputeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize textureSize, 
-        aliceVision::camera::IntrinsicBase* cam)
+        std::shared_ptr<aliceVision::camera::IntrinsicBase> cam)
     {
         int compteur = 0;
         for (size_t i = 0; i <= _subdivisions; i++)
@@ -50,6 +54,7 @@ namespace qtAliceVision
                 if (cam && cam->hasDistortion())
                 {
                     const aliceVision::Vec2 undisto_pix(x, y);
+                    // TODO : principalPoint
                     const aliceVision::Vec2 disto_pix = cam->get_d_pixel(undisto_pix);
                     vertices[compteur].set(disto_pix.x(), disto_pix.y(), u, v);
                 }
@@ -155,6 +160,21 @@ namespace qtAliceVision
         {
             geometryLine->vertexDataAsPoint2D()[i].set(0, 0);
         }
+    }
+
+    void Surface::ComputePrincipalPoint(std::shared_ptr<aliceVision::camera::IntrinsicBase> cam, QSize textureSize)
+    {
+        qWarning() << "Compute Principal Point";
+        const aliceVision::Vec2 center(textureSize.width() * 0.5, textureSize.height() * 0.5);
+        aliceVision::Vec2 ppCorrection(0.0, 0.0);
+
+        if (aliceVision::camera::isPinhole(cam->getType()))
+        {
+            ppCorrection = dynamic_cast<aliceVision::camera::Pinhole&>(*cam).getPrincipalPoint();
+        }
+
+        _principalPoint.setY(ppCorrection.x());
+        _principalPoint.setX(ppCorrection.y());
     }
 
 
