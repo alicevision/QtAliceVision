@@ -19,91 +19,7 @@ namespace qtAliceVision
 	{
 	}
 
-	void Surface::ComputeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize,
-        std::shared_ptr<aliceVision::camera::IntrinsicBase> cam)
-	{
-        if (cam)
-            ComputePrincipalPoint(cam, textureSize);
-        
-        ComputeVerticesGrid(vertices, textureSize, cam);
-        ComputeIndicesGrid(indices);
-	}
-
-    void Surface::ComputeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize textureSize, 
-        std::shared_ptr<aliceVision::camera::IntrinsicBase> cam)
-    {
-        int compteur = 0;
-        for (size_t i = 0; i <= _subdivisions; i++)
-        {
-            for (size_t j = 0; j <= _subdivisions; j++)
-            {
-                float x = 0.0f;
-                float y = 0.0f;
-                if (_vertices.empty())
-                {
-                    x = i * textureSize.width() / (float)_subdivisions;
-                    y = j * textureSize.height() / (float)_subdivisions;
-                }
-                else
-                {
-                    x = _vertices[compteur].x();
-                    y = _vertices[compteur].y();
-                }
-
-                float u = i / (float)_subdivisions;
-                float v = j / (float)_subdivisions;
-
-                // Remove Distortion
-                if (cam && cam->hasDistortion())
-                {
-                    const aliceVision::Vec2 undisto_pix(x, y);
-                    // TODO : principalPoint
-                    const aliceVision::Vec2 disto_pix = cam->get_d_pixel(undisto_pix);
-                    vertices[compteur].set(disto_pix.x(), disto_pix.y(), u, v);
-                }
-                else
-                {
-                    vertices[compteur].set(x, y, u, v);
-                }
-                compteur++;
-            }
-        }
-
-    }
-
-    void Surface::ComputeIndicesGrid(quint16* indices)
-    {
-        int pointer = 0;
-        for (int j = 0; j < _subdivisions; j++) {
-            for (int i = 0; i < _subdivisions; i++) {
-                int topLeft = (i * (_subdivisions + 1)) + j;
-                int topRight = topLeft + 1;
-                int bottomLeft = topLeft + _subdivisions + 1;
-                int bottomRight = bottomLeft + 1;
-                indices[pointer++] = topLeft;
-                indices[pointer++] = bottomLeft;
-                indices[pointer++] = topRight;
-                indices[pointer++] = topRight;
-                indices[pointer++] = bottomLeft;
-                indices[pointer++] = bottomRight;
-            }
-        }
-    }
-
-    void Surface::FillVertices(QSGGeometry::TexturedPoint2D* vertices)
-    {
-        _vertices.clear();
-        for (int i = 0; i < _vertexCount; i++)
-        {
-            QPoint p(vertices[i].x, vertices[i].y);
-            _vertices.append(p);
-        }
-
-        _verticesChanged = false;
-        _reinit = false;
-    }
-
-    bool Surface::LoadSfmData(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize, 
+    bool Surface::LoadSfmData(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize,
         bool distortion, bool updateSfmData)
     {
         bool LoadSfm = false;
@@ -156,6 +72,90 @@ namespace qtAliceVision
         }
 
         return LoadSfm;
+    }
+
+	void Surface::ComputeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize,
+        std::shared_ptr<aliceVision::camera::IntrinsicBase> cam)
+	{
+        if (cam)
+        {
+            ComputePrincipalPoint(cam, textureSize);
+        }
+        ComputeVerticesGrid(vertices, textureSize, cam);
+        ComputeIndicesGrid(indices);
+	}
+
+    void Surface::ComputeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize textureSize, 
+        std::shared_ptr<aliceVision::camera::IntrinsicBase> cam)
+    {
+        int compteur = 0;
+        for (size_t i = 0; i <= _subdivisions; i++)
+        {
+            for (size_t j = 0; j <= _subdivisions; j++)
+            {
+                float x = 0.0f;
+                float y = 0.0f;
+                if (_vertices.empty())
+                {
+                    x = i * textureSize.width() / (float)_subdivisions;
+                    y = j * textureSize.height() / (float)_subdivisions;
+                }
+                else
+                {
+                    x = _vertices[compteur].x();
+                    y = _vertices[compteur].y();
+                }
+
+                float u = i / (float)_subdivisions;
+                float v = j / (float)_subdivisions;
+
+                // Remove Distortion
+                if (cam && cam->hasDistortion())
+                {
+                    const aliceVision::Vec2 undisto_pix(x, y);
+                    // TODO : principalPoint
+                    const aliceVision::Vec2 disto_pix = cam->get_d_pixel(undisto_pix);
+                    vertices[compteur].set(disto_pix.x(), disto_pix.y(), u, v);
+                }
+                else
+                {
+                    vertices[compteur].set(x, y, u, v);
+                }
+                compteur++;
+            }
+        }
+    }
+
+    void Surface::ComputeIndicesGrid(quint16* indices)
+    {
+        int pointer = 0;
+        for (int j = 0; j < _subdivisions; j++) {
+            for (int i = 0; i < _subdivisions; i++) {
+                int topLeft = (i * (_subdivisions + 1)) + j;
+                int topRight = topLeft + 1;
+                int bottomLeft = topLeft + _subdivisions + 1;
+                int bottomRight = bottomLeft + 1;
+                indices[pointer++] = topLeft;
+                indices[pointer++] = bottomLeft;
+                indices[pointer++] = topRight;
+                indices[pointer++] = topRight;
+                indices[pointer++] = bottomLeft;
+                indices[pointer++] = bottomRight;
+            }
+        }
+    }
+
+    void Surface::FillVertices(QSGGeometry::TexturedPoint2D* vertices)
+    {
+        _vertices.clear();
+        for (int i = 0; i < _vertexCount; i++)
+        {
+            QPoint p(vertices[i].x, vertices[i].y);
+            _vertices.append(p);
+        }
+
+        _verticesChanged = false;
+        _reinit = false;
     }
 
     void Surface::Draw(QSGGeometry* geometryLine)
