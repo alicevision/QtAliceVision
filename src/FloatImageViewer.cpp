@@ -440,7 +440,7 @@ namespace qtAliceVision
 
             // Coordinates of the Grid
             bool LoadSfm = false;
-            if (updateSfmData || _surface.HasSubsChanged())
+            if (_distortion && (updateSfmData || _surface.HasSubsChanged()))
             {
                 qWarning() << "Load Sfm" << updateSfmData << _surface.HasSubsChanged();
 
