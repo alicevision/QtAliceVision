@@ -326,8 +326,6 @@ namespace qtAliceVision
 
         if (_surface.HasSubsChanged())
         {
-            qWarning() << "Subs Changed";
-
             // Re size grid
             if (geometryLine)
             {
@@ -370,8 +368,6 @@ namespace qtAliceVision
 
         if (_imageChanged)
         {
-            qWarning() << "Image Changed";
-
             if (_distortion)
             {
                 updateSfmData = true;
@@ -402,8 +398,6 @@ namespace qtAliceVision
         const auto newBoundingRect = boundingRect();
         if (updateGeometry || _boundingRect != newBoundingRect)
         {
-            qWarning() << "Geometry changed";
-
             _boundingRect = newBoundingRect;
 
             const float windowRatio = _boundingRect.width() / _boundingRect.height();
@@ -426,15 +420,13 @@ namespace qtAliceVision
             root->markDirty(QSGNode::DirtyGeometry);
         }
 
-        // ============================================================================================
-        // ======================================= Surface ============================================
-        // ============================================================================================
+        /*
+        *   Surface
+        */
 
         /* If vertices has changed, Re-Compute the grid */
         if (_surface.HasVerticesChanged() && !_createRoot)
         {
-            qWarning() << "Vertice changed";
-
             // Retrieve Vertices and Index Data
             QSGGeometry::TexturedPoint2D* vertices = root->geometry()->vertexDataAsTexturedPoint2D();
             quint16* indices = root->geometry()->indexDataAsUShort();
@@ -443,8 +435,6 @@ namespace qtAliceVision
             bool LoadSfm = false;
             if (_distortion && (updateSfmData || _surface.HasSubsChanged()))
             {
-                qWarning() << "Load Sfm" << updateSfmData << _surface.HasSubsChanged();
-
                 LoadSfm = true;
                 std::string sfmDataFilename;
                 aliceVision::sfmData::SfMData sfmData;
@@ -452,10 +442,6 @@ namespace qtAliceVision
                 
                 if (_surface.SfmPath().toStdString() != "null")
                 {
-                    qWarning() << "Sfm Path not null : ";
-
-                    qWarning() << _surface.SfmPath();
-
                     // Retrieve Sfm Data Path
                     sfmDataFilename = _surface.SfmPath().toStdString();
 
@@ -479,10 +465,8 @@ namespace qtAliceVision
                 }
                 else
                 {
-                    qWarning() << "Sfm Path null.";
                     LoadSfm = false;
                 }
-
 
                 if (LoadSfm)
                 {
@@ -490,13 +474,11 @@ namespace qtAliceVision
                     _surface.ComputeGrid(vertices, indices, _textureSize, cam);
                     updateSfmData = false;
                     Q_EMIT sfmChanged();
-
                 }
             }
             
             if (!LoadSfm)
             {
-                qWarning() << "GRID WITH NO DISTO";
                 _surface.ComputeGrid(vertices, indices, _textureSize, nullptr);
             }
 
@@ -528,6 +510,93 @@ namespace qtAliceVision
         root->childAtIndex(0)->markDirty(QSGNode::DirtyGeometry | QSGNode::DirtyMaterial);
 
         return root;
+    }
+
+    /*
+    *   Q_INVOKABLE Functions 
+    */
+
+    QPoint FloatImageViewer::getVertex(int index) 
+    { 
+        return _surface.Vertex(index); 
+    }
+
+    void FloatImageViewer::setVertex(int index, float x, float y)
+    {
+        QPoint point(x, y);
+        _surface.Vertex(index) = point;
+        _surface.VerticesChanged(true);
+        _surface.GridChanged(true);
+        Q_EMIT verticesChanged(false);
+    }
+
+    void FloatImageViewer::displayGrid(bool display)
+    {
+        _surface.GridChanged(true);
+        _surface.GridDisplayed(display);
+        Q_EMIT verticesChanged(false);
+    }
+
+    void FloatImageViewer::setGridColorQML(const QColor& color)
+    {
+        _surface.SetGridColor(color);
+        Q_EMIT gridColorChanged();
+    }
+
+    void FloatImageViewer::defaultControlPoints()
+    {
+        _surface.ClearVertices();
+        _surface.Reinitialize(true);
+        _surface.VerticesChanged(true);
+        _surface.GridChanged(true);
+        Q_EMIT verticesChanged(false);
+    }
+
+    void FloatImageViewer::resized()
+    {
+        _surface.VerticesChanged(true);
+        _surface.GridChanged(true);
+        Q_EMIT verticesChanged(false);
+    }
+
+    bool FloatImageViewer::reinit()
+    {
+        return _surface.HasReinitialized();
+    }
+
+    void FloatImageViewer::hasDistortion(bool distortion)
+    {
+        _distortion = distortion;
+        _imageChanged = true;
+        _surface.VerticesChanged(true);
+        _surface.ClearVertices();
+        Q_EMIT verticesChanged(false);
+
+    }
+
+    void FloatImageViewer::updateSubdivisions(int subs)
+    {
+        _surface.SubsChanged(true);
+        _surface.SetSubdivisions(subs);
+
+        _surface.ClearVertices();
+        _surface.VerticesChanged(true);
+        _surface.GridChanged(true);
+        Q_EMIT verticesChanged(false);
+    }
+
+    void FloatImageViewer::setSfmPath(const QString& path)
+    {
+        _surface.SetSfmPath(path);
+        _imageChanged = true;
+        _surface.VerticesChanged(true);
+        _surface.GridChanged(true);
+        Q_EMIT verticesChanged(false);
+    }
+
+    QPoint FloatImageViewer::getPrincipalPoint()
+    {
+        return _surface.PrincipalPoint();
     }
 
 }  // qtAliceVision
