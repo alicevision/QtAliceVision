@@ -115,6 +115,7 @@ namespace qtAliceVision
         Q_SIGNAL void metadataChanged();
         Q_SIGNAL void verticesChanged(bool reinit);
         Q_SIGNAL void gridColorChanged();
+        Q_SIGNAL void sfmChanged();
 
         Q_INVOKABLE QVector4D pixelValueAt(int x, int y);
 
@@ -178,6 +179,14 @@ namespace qtAliceVision
         Q_INVOKABLE void setSfmPath(const QString& path)
         {
             _surface.SetSfmPath(path);
+            _imageChanged = true;
+            _surface.VerticesChanged(true);
+            _surface.GridChanged(true);
+            Q_EMIT verticesChanged(false);
+        }
+        Q_INVOKABLE QPoint getPrincipalPoint()
+        {
+            return _surface.PrincipalPoint();
         }
 
 
