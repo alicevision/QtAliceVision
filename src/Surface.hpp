@@ -20,7 +20,6 @@ namespace qtAliceVision
 		Surface(int subdivisions = 5);
 
 		~Surface();
-		
 
 		bool LoadSfmData(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize,
 			bool distortion, bool updateSfmData);
@@ -29,19 +28,27 @@ namespace qtAliceVision
 
 		void Draw(QSGGeometry* geometryLine);
 
+		void RemoveGrid(QSGGeometry* geometryLine);
+		
+		QPoint PrincipalPoint() const { return _principalPoint; }
+
+		/*
+		* Getters & Setters
+		*/
 		void SetSubdivisions(int sub);
 		int Subdivisions() const;
 
 		const QList<QPoint>& Vertices() const { return _vertices; }
+		void ClearVertices() { _vertices.clear(); }
 		
 		const QPoint& Vertex(int index) const { return _vertices[index]; }
 		QPoint& Vertex(int index) { return _vertices[index]; }
-		void ClearVertices() { _vertices.clear(); }
+
+		inline int IndexCount() const { return _indexCount; }
+		inline int VertexCount() const { return _vertexCount; }
 
 		inline QColor GridColor() const { return _gridColor; }
 		void SetGridColor(const QColor& color) { _gridColor = color; }
-		inline int IndexCount() const { return _indexCount; }
-		inline int VertexCount() const { return _vertexCount; }
 
 		inline bool HasVerticesChanged() const { return _verticesChanged; }
 		void VerticesChanged(bool change) { _verticesChanged = change; }
@@ -55,18 +62,11 @@ namespace qtAliceVision
 		void Reinitialize(bool reinit) { _reinit = reinit; }
 		bool HasReinitialized() const { return _reinit; }
 
-		void RemoveGrid(QSGGeometry* geometryLine);
-
-		bool HasSubsChanged() {
-			return _subsChanged;
-		}
-
+		bool HasSubsChanged() { return _subsChanged; }
 		void SubsChanged(bool change) { _subsChanged = change; }
 
 		void SetSfmPath(const QString& path) { _sfmPath = path; }
 		QString SfmPath() const { return _sfmPath; }
-
-		QPoint PrincipalPoint() const { return _principalPoint; }
 
 	private:
 		void ComputeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize,
@@ -81,7 +81,6 @@ namespace qtAliceVision
 
 		void ComputePrincipalPoint(std::shared_ptr<aliceVision::camera::IntrinsicBase> cam,
 			QSize textureSize);
-
 
 	private:
 		// Vertex Data
@@ -104,7 +103,7 @@ namespace qtAliceVision
 		QString _sfmPath = "null";
 
 		// Principal Point Coord
-		QPoint _principalPoint = QPoint(150, 150);
+		QPoint _principalPoint = QPoint(0, 0);
 	};
 
 }  // ns qtAliceVision
