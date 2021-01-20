@@ -65,7 +65,7 @@ namespace qtAliceVision
 
             Q_PROPERTY(QList<QPoint> vertices READ vertices NOTIFY verticesChanged)
 
-            Q_PROPERTY(QColor gridColor NOTIFY gridColorChanged)
+            Q_PROPERTY(QColor gridColor READ gridColor NOTIFY gridColorChanged)
 
 
     public:
@@ -92,6 +92,11 @@ namespace qtAliceVision
         QList<QPoint> vertices() const 
         { 
             return _surface.Vertices(); 
+        }
+
+        QColor gridColor() 
+        {
+            return _surface.GridColor();
         }
 
         enum class EChannelMode : quint8 { RGBA, RGB, R, G, B, A };
