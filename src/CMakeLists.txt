@@ -5,8 +5,7 @@ set(PLUGIN_SOURCES
     MTracks.cpp
     FloatImageViewer.cpp FloatTexture.cpp
     Surface.cpp
-    MSfMDataStats.cpp
-    PanoramaViewer.cpp)
+    MSfMDataStats.cpp)
 set(PLUGIN_HEADERS
     FeaturesViewer.hpp
     plugin.hpp
@@ -15,7 +14,6 @@ set(PLUGIN_HEADERS
     MViewStats.hpp
     FloatImageViewer.hpp FloatTexture.hpp
     MSfMDataStats.hpp
-    PanoramaViewer.hpp
     Surface.hpp)
 set(PLUGIN_MOCS
     FeaturesViewer.hpp MFeature.hpp
