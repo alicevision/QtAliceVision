@@ -8,6 +8,7 @@ set(PLUGIN_SOURCES
     MTracks.cpp
     FloatImageViewer.cpp 
     FloatTexture.cpp
+    Surface.cpp
     MSfMDataStats.cpp
     PanoramaViewer.cpp)
 
