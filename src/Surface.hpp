@@ -17,7 +17,7 @@ namespace qtAliceVision
 	class Surface
 	{
 	public:
-		Surface(int subdivisions = 5);
+		Surface(int subdivisions = 4);
 
 		~Surface();
 
