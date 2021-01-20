@@ -12,28 +12,28 @@ namespace qtAliceVision
 {
 	Surface::Surface(int subdivisions)
 	{
-		SetSubdivisions(subdivisions);
+		setSubdivisions(subdivisions);
 	}
 
 	Surface::~Surface()
 	{
 	}
 
-    bool Surface::LoadSfmData(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize,
+    bool Surface::loadSfmData(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize,
         bool distortion, bool updateSfmData)
     {
         bool LoadSfm = false;
-        if (distortion && (updateSfmData || HasSubsChanged()))
+        if (distortion && (updateSfmData || hasSubsChanged()))
         {
             LoadSfm = true;
             std::string sfmDataFilename;
             aliceVision::sfmData::SfMData sfmData;
-            SubsChanged(false);
+            subsChanged(false);
 
-            if (SfmPath().toStdString() != "null")
+            if (sfmPath().toStdString() != "")
             {
                 // Retrieve Sfm Data Path
-                sfmDataFilename = SfmPath().toStdString();
+                sfmDataFilename = sfmPath().toStdString();
 
                 // load SfMData files
                 if (!aliceVision::sfmDataIO::Load(sfmData, sfmDataFilename, aliceVision::sfmDataIO::ESfMData::ALL))
@@ -61,31 +61,31 @@ namespace qtAliceVision
             if (LoadSfm)
             {
                 std::shared_ptr<aliceVision::camera::IntrinsicBase> cam = sfmData.getIntrinsics().begin()->second;
-                ComputeGrid(vertices, indices, textureSize, cam);
+                computeGrid(vertices, indices, textureSize, cam);
                 updateSfmData = false;
             }
         }
 
         if (!LoadSfm)
         {
-            ComputeGrid(vertices, indices, textureSize, nullptr);
+            computeGrid(vertices, indices, textureSize, nullptr);
         }
 
         return LoadSfm;
     }
 
-	void Surface::ComputeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize,
+	void Surface::computeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize,
         std::shared_ptr<aliceVision::camera::IntrinsicBase> cam)
 	{
         if (cam)
         {
-            ComputePrincipalPoint(cam, textureSize);
+            computePrincipalPoint(cam, textureSize);
         }
-        ComputeVerticesGrid(vertices, textureSize, cam);
-        ComputeIndicesGrid(indices);
+        computeVerticesGrid(vertices, textureSize, cam);
+        computeIndicesGrid(indices);
 	}
 
-    void Surface::ComputeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize textureSize, 
+    void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize textureSize, 
         std::shared_ptr<aliceVision::camera::IntrinsicBase> cam)
     {
         int compteur = 0;
@@ -126,7 +126,7 @@ namespace qtAliceVision
         }
     }
 
-    void Surface::ComputeIndicesGrid(quint16* indices)
+    void Surface::computeIndicesGrid(quint16* indices)
     {
         int pointer = 0;
         for (int j = 0; j < _subdivisions; j++) {
@@ -145,7 +145,7 @@ namespace qtAliceVision
         }
     }
 
-    void Surface::FillVertices(QSGGeometry::TexturedPoint2D* vertices)
+    void Surface::fillVertices(QSGGeometry::TexturedPoint2D* vertices)
     {
         _vertices.clear();
         for (int i = 0; i < _vertexCount; i++)
@@ -158,9 +158,9 @@ namespace qtAliceVision
         _reinit = false;
     }
 
-    void Surface::Draw(QSGGeometry* geometryLine)
+    void Surface::draw(QSGGeometry* geometryLine)
     {
-        RemoveGrid(geometryLine);
+        removeGrid(geometryLine);
 
         if (_isGridDisplayed)
         {
@@ -198,7 +198,7 @@ namespace qtAliceVision
         _gridChanged = false;
     }
 
-	void Surface::SetSubdivisions(int sub)
+	void Surface::setSubdivisions(int sub)
 	{
 		_subdivisions = sub;
 	
@@ -207,12 +207,12 @@ namespace qtAliceVision
 		_indexCount = _subdivisions * _subdivisions * 6;
 	}
 
-	int Surface::Subdivisions() const
+	int Surface::subdivisions() const
 	{
 		return _subdivisions;
 	}
 
-    void Surface::RemoveGrid(QSGGeometry* geometryLine)
+    void Surface::removeGrid(QSGGeometry* geometryLine)
     {
         for (size_t i = 0; i < geometryLine->vertexCount(); i++)
         {
@@ -220,7 +220,7 @@ namespace qtAliceVision
         }
     }
 
-    void Surface::ComputePrincipalPoint(std::shared_ptr<aliceVision::camera::IntrinsicBase> cam, QSize textureSize)
+    void Surface::computePrincipalPoint(std::shared_ptr<aliceVision::camera::IntrinsicBase> cam, QSize textureSize)
     {
         const aliceVision::Vec2 center(textureSize.width() * 0.5, textureSize.height() * 0.5);
         aliceVision::Vec2 ppCorrection(0.0, 0.0);
