@@ -1,6 +1,8 @@
 #pragma once
+#define _USE_MATH_DEFINES
 
 #include "FloatTexture.hpp"
+#include "FloatImageViewer.hpp"
 #include "Surface.hpp"
 
 #include <QQuickItem>
@@ -10,13 +12,19 @@
 #include <QVariant>
 #include <QVector4D>
 
+#include <aliceVision/numeric/numeric.hpp>
+#include <aliceVision/types.hpp>
 
+// Import M_PI
+#include <math.h>
+#include <map>
+#include <string>
 #include <memory>
+
 
 
 namespace qtAliceVision
 {
-
     /**
      * @brief Load and display image.
      */
@@ -45,6 +53,8 @@ namespace qtAliceVision
             Q_PROPERTY(QList<QPoint> vertices READ vertices NOTIFY verticesChanged)
 
             Q_PROPERTY(QColor gridColor READ gridColor NOTIFY gridColorChanged)
+            
+            Q_PROPERTY(QVariantMap imagesData READ imagesData NOTIFY imagesDataChanged)
 
 
     public:
@@ -66,6 +76,11 @@ namespace qtAliceVision
         const QVariantMap& metadata() const
         {
             return _metadata;
+        }
+
+        const QVariantMap& imagesData() const
+        {
+            return _imagesData;
         }
 
         QList<QPoint> vertices() const
@@ -95,6 +110,8 @@ namespace qtAliceVision
         Q_SIGNAL void verticesChanged(bool reinit);
         Q_SIGNAL void gridColorChanged();
         Q_SIGNAL void sfmChanged();
+        Q_SIGNAL void imagesDataChanged(const QVariantMap& imagesData);
+        
 
         Q_INVOKABLE QVector4D pixelValueAt(int x, int y);
         Q_INVOKABLE QPoint getVertex(int index);
@@ -116,6 +133,8 @@ namespace qtAliceVision
         Q_SLOT void onResultReady(QSharedPointer<qtAliceVision::FloatImage> image, QSize sourceSize, const QVariantMap& metadata);
         /// Custom QSGNode update
         QSGNode* updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePaintNodeData* data) override;
+        /// ...
+        void computeInputImages();
 
     private:
         QUrl _source;
@@ -139,9 +158,13 @@ namespace qtAliceVision
         bool _distortion = false;
         bool _createRoot = true;
 
+        QString _sfmPath;
+        //std::map<std::string, aliceVision::IndexT> _imagesData;
+        QVariantMap _imagesData;
     };
 
 }  // ns qtAliceVision
 
 Q_DECLARE_METATYPE(QList<QPoint>)
+
 

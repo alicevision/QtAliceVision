@@ -63,6 +63,13 @@ namespace qtAliceVision
                 std::shared_ptr<aliceVision::camera::IntrinsicBase> cam = sfmData.getIntrinsics().begin()->second;
                 computeGrid(vertices, indices, textureSize, cam);
                 updateSfmData = false;
+
+                // Test Landmarks
+                aliceVision::sfmData::Landmarks points = sfmData.getLandmarks();
+                for (const auto& point : points)
+                {
+                    qWarning() << point.second.X.x() << point.second.X.y() << point.second.X.z();
+                }
             }
         }
 
@@ -117,7 +124,11 @@ namespace qtAliceVision
                     const aliceVision::Vec2 disto_pix = cam->get_d_pixel(undisto_pix);
                     vertices[compteur].set(disto_pix.x(), disto_pix.y(), u, v);
                 }
-                else
+
+                // Equirectangular Convertion
+
+                // Default 
+                if (!cam)
                 {
                     vertices[compteur].set(x, y, u, v);
                 }
