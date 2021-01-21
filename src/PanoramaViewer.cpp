@@ -16,6 +16,10 @@
 #include <aliceVision/image/io.hpp>
 #include <aliceVision/camera/cameraUndistortImage.hpp>
 
+#include <aliceVision/sfmData/SfMData.hpp>
+#include <aliceVision/sfmDataIO/sfmDataIO.hpp>
+
+
 
 namespace qtAliceVision
 {
@@ -33,6 +37,7 @@ namespace qtAliceVision
         connect(this, &PanoramaViewer::verticesChanged, this, &PanoramaViewer::update);
         connect(this, &PanoramaViewer::gridColorChanged, this, &PanoramaViewer::update);
         connect(this, &PanoramaViewer::sfmChanged, this, &PanoramaViewer::update);
+        connect(this, &PanoramaViewer::imagesDataChanged, this, &PanoramaViewer::update);
     }
 
     PanoramaViewer::~PanoramaViewer()
@@ -122,6 +127,43 @@ namespace qtAliceVision
 
         _metadata = metadata;
         Q_EMIT metadataChanged();
+    }
+
+    void PanoramaViewer::computeInputImages()
+    {
+        // Load Sfm Data
+        std::string sfmDataFilename;
+        aliceVision::sfmData::SfMData sfmData;
+        if (_sfmPath.toStdString() != "")
+        {
+            // Retrieve Sfm Data Path
+            sfmDataFilename = _sfmPath.toStdString();
+
+            // load SfMData files
+            if (!aliceVision::sfmDataIO::Load(sfmData, sfmDataFilename, aliceVision::sfmDataIO::ESfMData::ALL))
+            {
+                qWarning() << "The input SfMData file '" << QString::fromUtf8(sfmDataFilename.c_str()) << "' cannot be read.\n";
+            }
+            if (sfmData.getViews().empty())
+            {
+                qWarning() << "The input SfMData file '" << QString::fromUtf8(sfmDataFilename.c_str()) << "' is empty.\n";
+            }
+            // Make sure there is only one kind of image in dataset
+            if (sfmData.getIntrinsics().size() > 1)
+            {
+                qWarning() << "Only one intrinsic allowed (" << sfmData.getIntrinsics().size() << " found)";
+            }
+        }
+
+        // Loop on Views and insert (path, id)
+        for (const auto& view : sfmData.getViews())
+        {
+            QString path = QString::fromUtf8(view.second->getImagePath().c_str());
+            QVariant id = view.second->getViewId();
+            _imagesData.insert(path, id);
+        }
+
+        Q_EMIT imagesDataChanged(_imagesData);
     }
 
     QSGNode* PanoramaViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePaintNodeData* data)
@@ -277,43 +319,43 @@ namespace qtAliceVision
         *   Surface
         */
 
-        // If vertices has changed, Re-Compute the grid 
-        if (_surface.hasVerticesChanged() && !_createRoot)
-        {
-            // Retrieve Vertices and Index Data
-            QSGGeometry::TexturedPoint2D* vertices = root->geometry()->vertexDataAsTexturedPoint2D();
-            quint16* indices = root->geometry()->indexDataAsUShort();
+        //// If vertices has changed, Re-Compute the grid 
+        //if (_surface.hasVerticesChanged() && !_createRoot)
+        //{
+        //    // Retrieve Vertices and Index Data
+        //    QSGGeometry::TexturedPoint2D* vertices = root->geometry()->vertexDataAsTexturedPoint2D();
+        //    quint16* indices = root->geometry()->indexDataAsUShort();
 
-            // Load new sfm Data if there is distortion and sfm data has changed
-            bool LoadSfm = _surface.loadSfmData(vertices, indices, _textureSize, _distortion, updateSfmData);
+        //    // Load new sfm Data if there is distortion and sfm data has changed
+        //    bool LoadSfm = _surface.loadSfmData(vertices, indices, _textureSize, _distortion, updateSfmData);
 
-            root->geometry()->markIndexDataDirty();
-            root->geometry()->markVertexDataDirty();
-            root->markDirty(QSGNode::DirtyGeometry | QSGNode::DirtyMaterial);
+        //    root->geometry()->markIndexDataDirty();
+        //    root->geometry()->markVertexDataDirty();
+        //    root->markDirty(QSGNode::DirtyGeometry | QSGNode::DirtyMaterial);
 
-            // Fill the Surface vertices array
-            _surface.fillVertices(vertices);
-            Q_EMIT verticesChanged(true);
+        //    // Fill the Surface vertices array
+        //    _surface.fillVertices(vertices);
+        //    Q_EMIT verticesChanged(true);
 
-            if (LoadSfm)
-            {
-                _surface.verticesChanged(true);
-                Q_EMIT sfmChanged();
-            }
-        }
+        //    if (LoadSfm)
+        //    {
+        //        _surface.verticesChanged(true);
+        //        Q_EMIT sfmChanged();
+        //    }
+        //}
 
-        // Draw the grid if there Disto Viewer is enabled
-        if (_distortion && _surface.hasGridChanged() && !_createRoot)
-        {
-            _surface.draw(geometryLine);
-            Q_EMIT verticesChanged(false);
-        }
-        else if (!_distortion)
-        {
-            _surface.removeGrid(geometryLine);
-        }
+        //// Draw the grid if there Disto Viewer is enabled
+        //if (_distortion && _surface.hasGridChanged() && !_createRoot)
+        //{
+        //    _surface.draw(geometryLine);
+        //    Q_EMIT verticesChanged(false);
+        //}
+        //else if (!_distortion)
+        //{
+        //    _surface.removeGrid(geometryLine);
+        //}
 
-        root->childAtIndex(0)->markDirty(QSGNode::DirtyGeometry | QSGNode::DirtyMaterial);
+        //root->childAtIndex(0)->markDirty(QSGNode::DirtyGeometry | QSGNode::DirtyMaterial);
 
         return root;
     }
@@ -393,16 +435,14 @@ namespace qtAliceVision
 
     void PanoramaViewer::setSfmPath(const QString& path)
     {
-        _surface.setSfmPath(path);
-        _imageChanged = true;
-        _surface.verticesChanged(true);
-        _surface.gridChanged(true);
-        Q_EMIT verticesChanged(false);
+        _sfmPath = path;
+        computeInputImages();
     }
 
     QPoint PanoramaViewer::getPrincipalPoint()
     {
         return _surface.principalPoint();
     }
+
 
 }  // qtAliceVision
