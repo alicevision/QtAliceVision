@@ -136,7 +136,7 @@ void FloatImageIORunnable::run()
             rotate(image, RotateAngle::CW_180);
             break;
         case 6:
-            rotate(image, RotateAngle::CW_90);
+            //rotate(image, RotateAngle::CW_90);
             break;
         case 8:
             rotate(image, RotateAngle::CW_270);
@@ -358,7 +358,7 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
 
     if (_imageChanged)
     {
-        if (_distortion)
+        if (_distortion || _surface.IsPanoViewerEnabled())
         {
             updateSfmData = true;
         }
@@ -540,6 +540,11 @@ void FloatImageViewer::setSfmPath(const QString& path)
 QPoint FloatImageViewer::getPrincipalPoint()
 {
     return _surface.principalPoint();
+}
+
+void FloatImageViewer::setIdView(int id)
+{
+    _surface.setIdView(id);
 }
 
 }  // qtAliceVision
