@@ -1,5 +1,4 @@
 #pragma once
-#define _USE_MATH_DEFINES
 
 #include "FloatTexture.hpp"
 #include "FloatImageViewer.hpp"
@@ -15,8 +14,7 @@
 #include <aliceVision/numeric/numeric.hpp>
 #include <aliceVision/types.hpp>
 
-// Import M_PI
-#include <math.h>
+
 #include <map>
 #include <string>
 #include <memory>

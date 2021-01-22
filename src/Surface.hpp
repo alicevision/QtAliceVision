@@ -1,4 +1,5 @@
 #pragma once
+#define _USE_MATH_DEFINES
 
 #include <QQuickItem>
 #include <QSGGeometry>
@@ -7,6 +8,9 @@
 #include <aliceVision/camera/cameraCommon.hpp>
 #include <aliceVision/camera/IntrinsicBase.hpp>
 #include <aliceVision/numeric/numeric.hpp>
+
+#include <aliceVision/sfmData/SfMData.hpp>
+#include <aliceVision/sfmData/CameraPose.hpp>
 
 
 namespace qtAliceVision
@@ -68,17 +72,20 @@ namespace qtAliceVision
 		void setSfmPath(const QString& path) { _sfmPath = path; }
 		QString sfmPath() const { return _sfmPath; }
 
+		void setIdView(aliceVision::IndexT id) { _idView = id; }
+		aliceVision::IndexT idView() const { return _idView; }
+
+		bool IsPanoViewerEnabled() const { return _panoViewer; }
+
 	private:
-		void computeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize,
-			std::shared_ptr<aliceVision::camera::IntrinsicBase> cam);
+		void computeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize, bool loadSfm);
 
 		void computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize textureSize,
-			std::shared_ptr<aliceVision::camera::IntrinsicBase> cam);
+			aliceVision::camera::IntrinsicBase* intrinsic);
 		
 		void computeIndicesGrid(quint16* indices);
 		
-		void computePrincipalPoint(std::shared_ptr<aliceVision::camera::IntrinsicBase> cam,
-			QSize textureSize);
+		void computePrincipalPoint(aliceVision::camera::IntrinsicBase* intrinsic, QSize textureSize);
 
 	private:
 		// Vertex Data
@@ -97,11 +104,18 @@ namespace qtAliceVision
 		QColor _gridColor = QColor(255, 0, 0, 255);
 		bool _subsChanged = false;
 
-		// Sfm Path
+		// Sfm Data
+		aliceVision::sfmData::SfMData _sfmData;
 		QString _sfmPath = "";
 
 		// Principal Point Coord
 		QPoint _principalPoint = QPoint(0, 0);
+
+		// Id View
+		aliceVision::IndexT _idView;
+
+		bool _panoViewer = true;
+
 	};
 
 }  // ns qtAliceVision

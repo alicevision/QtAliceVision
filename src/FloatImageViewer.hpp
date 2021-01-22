@@ -129,6 +129,7 @@ public:
     Q_INVOKABLE void updateSubdivisions(int subs);
     Q_INVOKABLE void setSfmPath(const QString& path);
     Q_INVOKABLE QPoint getPrincipalPoint();
+    Q_INVOKABLE void setIdView(int id);
 
 private:
     /// Reload image from source
