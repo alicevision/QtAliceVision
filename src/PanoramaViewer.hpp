@@ -124,6 +124,7 @@ namespace qtAliceVision
         Q_INVOKABLE void setSfmPath(const QString& path);
         Q_INVOKABLE QPoint getPrincipalPoint();
 
+
     private:
         /// Reload image from source
         void reload();
