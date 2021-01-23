@@ -370,9 +370,7 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
             // Rotate Image if Pano Viewer enable
             if (_surface.isPanoViewerEnabled())
             {
-                qWarning() << "Before rotate";
                 rotate(*_image, RotateAngle::CW_270);
-                qWarning() << "After rotate";
             }
 
             texture->setImage(_image);
@@ -420,6 +418,7 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
 
     /*
     *   Surface
+    *  TODO : update paint node for the surface
     */
 
     // If vertices has changed, Re-Compute the grid 
@@ -430,7 +429,7 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
         quint16* indices = root->geometry()->indexDataAsUShort();
 
         // Update surface
-        bool LoadSfm = _surface.update(vertices, indices, _textureSize, updateSfmData);
+        updateSfmData = _surface.update(vertices, indices, _textureSize, updateSfmData);
 
         root->geometry()->markIndexDataDirty();
         root->geometry()->markVertexDataDirty();
@@ -439,22 +438,24 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
         // Fill the Surface vertices array
         _surface.fillVertices(vertices);
         Q_EMIT verticesChanged(true);
-
-        if (LoadSfm)
+        
+        if (updateSfmData)
         {
+            // Force to re update the surface in order to see changes
             _surface.verticesChanged(true);
             Q_EMIT sfmChanged();
         }
     }
 
-    // Draw the grid if there Disto Viewer is enabled
+    // Draw the grid if Disto Viewer is enabled
     if (_surface.isDistoViewerEnabled() && _surface.hasGridChanged() && !_createRoot)
     {
-        _surface.draw(geometryLine);
+        _surface.drawGrid(geometryLine);
         Q_EMIT verticesChanged(false);
     }
     else if (!_surface.isDistoViewerEnabled())
     {
+        // TODO : line width 0
         _surface.removeGrid(geometryLine);
     }
 
