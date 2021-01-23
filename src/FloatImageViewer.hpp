@@ -6,6 +6,7 @@
 #include <QQuickItem>
 #include <QUrl>
 #include <QRunnable>
+#include <QSGGeometryNode>
 #include <QSharedPointer>
 #include <QVariant>
 #include <QVector4D>
@@ -142,6 +143,8 @@ private:
     QSGNode* updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePaintNodeData* data) override;
 
 private:
+    void updatePaintSurface(QSGGeometryNode* root, QSGGeometry* geometryLine, bool updateSfmData);
+
     QUrl _source;
     float _gamma = 1.f;
     float _gain = 1.f;
