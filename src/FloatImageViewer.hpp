@@ -131,6 +131,7 @@ public:
     Q_INVOKABLE QPoint getPrincipalPoint();
     Q_INVOKABLE void setIdView(int id);
     Q_INVOKABLE void setPanoViewerEnabled(bool state);
+    Q_INVOKABLE void setRotationPano(float tx, float ty);
 
 private:
     /// Reload image from source
