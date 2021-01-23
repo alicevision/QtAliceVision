@@ -33,7 +33,7 @@ namespace qtAliceVision
 		
 		void fillVertices(QSGGeometry::TexturedPoint2D* vertices);
 
-		void draw(QSGGeometry* geometryLine);
+		void drawGrid(QSGGeometry* geometryLine);
 
 		void removeGrid(QSGGeometry* geometryLine);
 		
@@ -88,7 +88,7 @@ namespace qtAliceVision
 	private:
 		bool loadSfmData();
 
-		void computeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize, bool loadSfm);
+		void computeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize, bool updateSfm);
 
 		void computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize textureSize,
 			aliceVision::camera::IntrinsicBase* intrinsic);

@@ -25,23 +25,17 @@ namespace qtAliceVision
 
     bool Surface::update(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize, bool updateSfmData)
     {
-        // Whether we load a sfm data file or not
-        bool LoadSfm = false;
-
         // Load Sfm Data File only if needed
         if ((isDistoViewerEnabled() && (updateSfmData || hasSubsChanged()) ) // Disto Viewer conditions
-         || (isPanoViewerEnabled() && updateSfmData) )                      // Pano Viewer conditions
+         || (isPanoViewerEnabled() && updateSfmData) )                       // Pano Viewer conditions
         {
-            LoadSfm = loadSfmData();
-
-            if (LoadSfm)
-                updateSfmData = false;
+            updateSfmData = loadSfmData();
         }
 
         // Compute Vertices coordinates and Indices order
-        computeGrid(vertices, indices, textureSize, LoadSfm);
+        computeGrid(vertices, indices, textureSize, updateSfmData);
 
-        return LoadSfm;
+        return updateSfmData;
     }
 
     bool Surface::isPanoViewerEnabled() const
@@ -54,36 +48,33 @@ namespace qtAliceVision
         return _viewerType == ViewerType::DISTORTION;
     }
 
-	void Surface::computeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize, bool loadSfm)
+	void Surface::computeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize, bool updateSfmData)
 	{
-        qWarning() << "Compute Grid";
+        qWarning() << "Compute Grid ============================";
 
+        // Retrieve intrisics only if sfmData has been updated, and then Compute vertices
         aliceVision::camera::IntrinsicBase* intrinsic = nullptr;
-        if (loadSfm)
+        if (updateSfmData)
         {
-            qWarning() << "Load Sfm";
-
-            // Retrieve Intrinsic
             std::set<aliceVision::IndexT> intrinsicsIndices = _sfmData.getReconstructedIntrinsics();
-            qWarning() << "Size Intrinsics" << intrinsicsIndices.size();
-
             intrinsic = _sfmData.getIntrinsicPtr(*intrinsicsIndices.begin());
 
             if (intrinsic)
             {
-                qWarning() << "Intrinsic ok";
+                qWarning() << "With Intrinsics";
                 computePrincipalPoint(intrinsic, textureSize);
                 computeVerticesGrid(vertices, textureSize, intrinsic);
             }
         }
         
-        if (!loadSfm || !intrinsic)
+        // If there is no sfm data update or intrinsics are invalid, compute vertices without it
+        if (!updateSfmData || !intrinsic)
         {
-            qWarning() << "Intrinsic not ok";
-
+            qWarning() << "Without Intrinsics";
             computeVerticesGrid(vertices, textureSize, nullptr);
         }
         
+        // TODO : compute indices only if subs has changed
         computeIndicesGrid(indices);
 	}
 
@@ -94,12 +85,8 @@ namespace qtAliceVision
         aliceVision::sfmData::CameraPose pose;
         if (isPanoViewerEnabled() && intrinsic)
         {
-            qWarning() << "Compute Pose";
-
             aliceVision::sfmData::View view = _sfmData.getView(_idView);
             pose = _sfmData.getPose(view);
-
-            qWarning() << "Pose ok";
         }
 
         int compteur = 0;
@@ -120,10 +107,11 @@ namespace qtAliceVision
                     y = _vertices[compteur].y();
                 }
 
+                // TODO : update when subs change
                 float u = i / (float)_subdivisions;
                 float v = j / (float)_subdivisions;
 
-                // Remove Distortion
+                // Remove Distortion only if sfmData has been updated
                 if (intrinsic && intrinsic->hasDistortion())
                 {
                     const aliceVision::Vec2 undisto_pix(x, y);
@@ -131,7 +119,7 @@ namespace qtAliceVision
                     vertices[compteur].set(disto_pix.x(), disto_pix.y(), u, v);
                 }
 
-                // Equirectangular Convertion
+                // Equirectangular Convertion only if sfmData has been updated
                 if (isPanoViewerEnabled() && intrinsic)
                 {
                     //qWarning() << "Pano Distortion" << x << y;
@@ -194,7 +182,7 @@ namespace qtAliceVision
         _reinit = false;
     }
 
-    void Surface::draw(QSGGeometry* geometryLine)
+    void Surface::drawGrid(QSGGeometry* geometryLine)
     {
         removeGrid(geometryLine);
 
@@ -258,6 +246,9 @@ namespace qtAliceVision
 
     bool Surface::loadSfmData()
     {
+        qWarning() << "==============================";
+        qWarning() << "LOADING SFM DATA";
+        qWarning() << "==============================";
         bool LoadSfm = true;
         subsChanged(false);
 
