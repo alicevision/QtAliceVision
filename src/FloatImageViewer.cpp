@@ -358,7 +358,7 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
 
     if (_imageChanged)
     {
-        if (_distortion || _surface.IsPanoViewerEnabled())
+        if (_surface.isDistoViewerEnabled() || _surface.isPanoViewerEnabled())
         {
             updateSfmData = true;
         }
@@ -368,7 +368,7 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
         if (_image)
         {
             // Rotate Image if Pano Viewer enable
-            if (_surface.IsPanoViewerEnabled())
+            if (_surface.isPanoViewerEnabled())
             {
                 qWarning() << "Before rotate";
                 rotate(*_image, RotateAngle::CW_270);
@@ -429,8 +429,8 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
         QSGGeometry::TexturedPoint2D* vertices = root->geometry()->vertexDataAsTexturedPoint2D();
         quint16* indices = root->geometry()->indexDataAsUShort();
 
-        // Load new sfm Data if there is distortion and sfm data has changed
-        bool LoadSfm = _surface.update(vertices, indices, _textureSize, _distortion, updateSfmData);
+        // Update surface
+        bool LoadSfm = _surface.update(vertices, indices, _textureSize, updateSfmData);
 
         root->geometry()->markIndexDataDirty();
         root->geometry()->markVertexDataDirty();
@@ -448,12 +448,12 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
     }
 
     // Draw the grid if there Disto Viewer is enabled
-    if (_distortion && _surface.hasGridChanged() && !_createRoot)
+    if (_surface.isDistoViewerEnabled() && _surface.hasGridChanged() && !_createRoot)
     {
         _surface.draw(geometryLine);
         Q_EMIT verticesChanged(false);
     }
-    else if (!_distortion)
+    else if (!_surface.isDistoViewerEnabled())
     {
         _surface.removeGrid(geometryLine);
     }
@@ -517,12 +517,15 @@ bool FloatImageViewer::reinit()
 
 void FloatImageViewer::hasDistortion(bool distortion)
 {
-    _distortion = distortion;
+    if (distortion)
+        _surface.setViewerType(ViewerType::DISTORTION);
+    else
+        _surface.setViewerType(ViewerType::DEFAULT);
+
     _imageChanged = true;
     _surface.verticesChanged(true);
     _surface.clearVertices();
     Q_EMIT verticesChanged(false);
-
 }
 
 void FloatImageViewer::updateSubdivisions(int subs)
@@ -557,7 +560,10 @@ void FloatImageViewer::setIdView(int id)
 
 void FloatImageViewer::setPanoViewerEnabled(bool state)
 {
-    _surface.setPanoViewerState(state);
+    if (state)
+        _surface.setViewerType(ViewerType::PANORAMA);
+    else
+        _surface.setViewerType(ViewerType::DEFAULT);
 }
 
 void FloatImageViewer::setRotationPano(float tx, float ty)

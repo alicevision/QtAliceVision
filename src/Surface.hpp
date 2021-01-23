@@ -12,6 +12,10 @@
 #include <aliceVision/sfmData/SfMData.hpp>
 #include <aliceVision/sfmData/CameraPose.hpp>
 
+enum class ViewerType
+{
+	DEFAULT = 0, HDR, DISTORTION, PANORAMA 
+};
 
 namespace qtAliceVision
 {
@@ -25,8 +29,7 @@ namespace qtAliceVision
 
 		~Surface();
 
-		bool update(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize,
-			bool distortion, bool updateSfmData);
+		bool update(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize, bool updateSfmData);
 		
 		void fillVertices(QSGGeometry::TexturedPoint2D* vertices);
 
@@ -74,9 +77,13 @@ namespace qtAliceVision
 
 		void setIdView(aliceVision::IndexT id) { _idView = id; }
 		aliceVision::IndexT idView() const { return _idView; }
+		
+		// Viewer Type
+		ViewerType viewerType() const { return _viewerType; }
+		void setViewerType(ViewerType type) { _viewerType = type; }
 
-		bool IsPanoViewerEnabled() const { return _panoViewer; }
-		void setPanoViewerState(bool state) { _panoViewer = state; }
+		bool isPanoViewerEnabled() const;
+		bool isDistoViewerEnabled() const;
 
 	private:
 		bool loadSfmData();
@@ -117,7 +124,8 @@ namespace qtAliceVision
 		// Id View
 		aliceVision::IndexT _idView;
 
-		bool _panoViewer = false;
+		// Viewer
+		ViewerType _viewerType = ViewerType::DEFAULT;
 
 	};
 

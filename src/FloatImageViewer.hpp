@@ -160,7 +160,6 @@ private:
     QVariantMap _metadata;
 
     Surface _surface;
-    bool _distortion = false;
     bool _createRoot = true;
 
 };

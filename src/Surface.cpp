@@ -23,14 +23,14 @@ namespace qtAliceVision
 	{
 	}
 
-    bool Surface::update(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize,
-        bool distortion, bool updateSfmData)
+    bool Surface::update(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize, bool updateSfmData)
     {
+        // Whether we load a sfm data file or not
         bool LoadSfm = false;
 
         // Load Sfm Data File only if needed
-        if (( distortion && (updateSfmData || hasSubsChanged()) ) // Disto Viewer conditions
-         || (_panoViewer && updateSfmData) )                      // Pano Viewer conditions
+        if ((isDistoViewerEnabled() && (updateSfmData || hasSubsChanged()) ) // Disto Viewer conditions
+         || (isPanoViewerEnabled() && updateSfmData) )                      // Pano Viewer conditions
         {
             LoadSfm = loadSfmData();
 
@@ -38,9 +38,20 @@ namespace qtAliceVision
                 updateSfmData = false;
         }
 
+        // Compute Vertices coordinates and Indices order
         computeGrid(vertices, indices, textureSize, LoadSfm);
 
         return LoadSfm;
+    }
+
+    bool Surface::isPanoViewerEnabled() const
+    {
+        return _viewerType == ViewerType::PANORAMA;
+    }
+
+    bool Surface::isDistoViewerEnabled() const
+    {
+        return _viewerType == ViewerType::DISTORTION;
     }
 
 	void Surface::computeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize, bool loadSfm)
@@ -81,7 +92,7 @@ namespace qtAliceVision
     {
         // Retrieve pose if Panorama Viewer is enable
         aliceVision::sfmData::CameraPose pose;
-        if (_panoViewer && intrinsic)
+        if (isPanoViewerEnabled() && intrinsic)
         {
             qWarning() << "Compute Pose";
 
@@ -121,7 +132,7 @@ namespace qtAliceVision
                 }
 
                 // Equirectangular Convertion
-                if (_panoViewer && intrinsic)
+                if (isPanoViewerEnabled() && intrinsic)
                 {
                     //qWarning() << "Pano Distortion" << x << y;
                     // Image System Coordinates
