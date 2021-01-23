@@ -130,6 +130,7 @@ public:
     Q_INVOKABLE void setSfmPath(const QString& path);
     Q_INVOKABLE QPoint getPrincipalPoint();
     Q_INVOKABLE void setIdView(int id);
+    Q_INVOKABLE void setPanoViewerEnabled(bool state);
 
 private:
     /// Reload image from source
