@@ -136,7 +136,7 @@ void FloatImageIORunnable::run()
             rotate(image, RotateAngle::CW_180);
             break;
         case 6:
-            //rotate(image, RotateAngle::CW_90);
+            rotate(image, RotateAngle::CW_90);
             break;
         case 8:
             rotate(image, RotateAngle::CW_270);
@@ -367,6 +367,14 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
         auto texture = std::make_unique<FloatTexture>();
         if (_image)
         {
+            // Rotate Image if Disto Viewer enable
+            if (_surface.IsPanoViewerEnabled())
+            {
+                qWarning() << "Before rotate";
+                rotate(*_image, RotateAngle::CW_270);
+                qWarning() << "After rotate";
+            }
+
             texture->setImage(_image);
             texture->setFiltering(QSGTexture::Nearest);
             texture->setHorizontalWrapMode(QSGTexture::Repeat);
@@ -546,5 +554,11 @@ void FloatImageViewer::setIdView(int id)
 {
     _surface.setIdView(id);
 }
+
+void FloatImageViewer::setPanoViewerEnabled(bool state)
+{
+    _surface.setPanoViewerState(state);
+}
+
 
 }  // qtAliceVision
