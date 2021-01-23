@@ -42,6 +42,8 @@ namespace qtAliceVision
 		/*
 		* Getters & Setters
 		*/
+		void setRotationValues(float tx, float ty);
+
 		void setSubdivisions(int sub);
 		int subdivisions() const;
 
@@ -97,6 +99,12 @@ namespace qtAliceVision
 		
 		void computePrincipalPoint(aliceVision::camera::IntrinsicBase* intrinsic, QSize textureSize);
 
+		void rotatePano(aliceVision::Vec3& position);
+
+		void resetRotationValues();
+
+		bool isPanoramaRotated();
+
 	private:
 		// Vertex Data
 		QList<QPoint> _vertices;
@@ -126,6 +134,9 @@ namespace qtAliceVision
 
 		// Viewer
 		ViewerType _viewerType = ViewerType::DEFAULT;
+
+		// Rotation Pano
+		aliceVision::Vec2 _rotation = aliceVision::Vec2(0, 0);
 
 	};
 
