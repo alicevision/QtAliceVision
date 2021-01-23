@@ -2,7 +2,6 @@
 #include "FloatTexture.hpp"
 #include "ShaderImageViewer.hpp"
 
-#include <QSGGeometryNode>
 #include <QSGGeometry>
 #include <QSGSimpleMaterial>
 #include <QSGSimpleMaterialShader>
@@ -261,6 +260,7 @@ void FloatImageViewer::onResultReady(QSharedPointer<FloatImage> image, QSize sou
     Q_EMIT metadataChanged();
 }
 
+
 QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePaintNodeData* data)
 {
     QVector4D channelOrder(0.f, 1.f, 2.f, 3.f);
@@ -416,13 +416,18 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
         root->markDirty(QSGNode::DirtyGeometry);
     }
 
-    /*
-    *   Surface
-    *  TODO : update paint node for the surface
-    */
+    if (root && !_createRoot)
+    {
+        updatePaintSurface(root, geometryLine, updateSfmData);
+    }
 
+    return root;
+}
+
+void FloatImageViewer::updatePaintSurface(QSGGeometryNode* root, QSGGeometry* geometryLine, bool updateSfmData)
+{
     // If vertices has changed, Re-Compute the grid 
-    if (_surface.hasVerticesChanged() && !_createRoot)
+    if (_surface.hasVerticesChanged())
     {
         // Retrieve Vertices and Index Data
         QSGGeometry::TexturedPoint2D* vertices = root->geometry()->vertexDataAsTexturedPoint2D();
@@ -438,7 +443,7 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
         // Fill the Surface vertices array
         _surface.fillVertices(vertices);
         Q_EMIT verticesChanged(true);
-        
+
         if (updateSfmData)
         {
             // Force to re update the surface in order to see changes
@@ -448,7 +453,7 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
     }
 
     // Draw the grid if Disto Viewer is enabled
-    if (_surface.isDistoViewerEnabled() && _surface.hasGridChanged() && !_createRoot)
+    if (_surface.isDistoViewerEnabled() && _surface.hasGridChanged())
     {
         _surface.drawGrid(geometryLine);
         Q_EMIT verticesChanged(false);
@@ -460,8 +465,6 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
     }
 
     root->childAtIndex(0)->markDirty(QSGNode::DirtyGeometry | QSGNode::DirtyMaterial);
-
-    return root;
 }
 
 /*
