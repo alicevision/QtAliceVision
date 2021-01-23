@@ -23,59 +23,22 @@ namespace qtAliceVision
 	{
 	}
 
-    bool Surface::loadSfmData(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize,
+    bool Surface::update(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize,
         bool distortion, bool updateSfmData)
     {
         bool LoadSfm = false;
+
+        // Load Sfm Data File only if needed
         if (( distortion && (updateSfmData || hasSubsChanged()) ) // Disto Viewer conditions
-            || (_panoViewer && updateSfmData) )                   // Pano Viewer conditions
+         || (_panoViewer && updateSfmData) )                      // Pano Viewer conditions
         {
-            LoadSfm = true;
-            subsChanged(false);
-
-            if (_sfmPath.toStdString() != "")
-            {
-                // Clear sfmData
-                _sfmData.clear();
-                
-                // load SfMData files
-                if (!aliceVision::sfmDataIO::Load(_sfmData, _sfmPath.toStdString(), aliceVision::sfmDataIO::ESfMData::ALL))
-                {
-                    qWarning() << "The input SfMData file '" << _sfmPath << "' cannot be read.\n";
-                    LoadSfm = false;
-                }
-                if (_sfmData.getViews().empty())
-                {
-                    qWarning() << "The input SfMData file '" << _sfmPath << "' is empty.\n";
-                    LoadSfm = false;
-                }
-                // Make sure there is only one kind of image in dataset
-                if (_sfmData.getIntrinsics().size() > 1)
-                {
-                    qWarning() << "Only one intrinsic allowed (" << _sfmData.getIntrinsics().size() << " found)";
-                    LoadSfm = false;
-                }
-            }
-            else
-            {
-                LoadSfm = false;
-            }
-
-            qWarning() << "Debug A" << LoadSfm;
+            LoadSfm = loadSfmData();
 
             if (LoadSfm)
-            {
-                computeGrid(vertices, indices, textureSize, LoadSfm);
                 updateSfmData = false;
-            }
         }
 
-        qWarning() << "Debug B" << LoadSfm;
-
-        if (!LoadSfm)
-        {
-            computeGrid(vertices, indices, textureSize, LoadSfm);
-        }
+        computeGrid(vertices, indices, textureSize, LoadSfm);
 
         return LoadSfm;
     }
@@ -160,7 +123,7 @@ namespace qtAliceVision
                 // Equirectangular Convertion
                 if (_panoViewer && intrinsic)
                 {
-                    qWarning() << "Pano Distortion" << x << y;
+                    //qWarning() << "Pano Distortion" << x << y;
                     // Image System Coordinates
                     aliceVision::Vec2 uvCoord(x, y);
                     const auto& transfromPose = pose.getTransform();
@@ -168,14 +131,14 @@ namespace qtAliceVision
                     // Compute pixel coordinates on the Unit Sphere
                     aliceVision::Vec3 coordSphere = aliceVision::camera::applyIntrinsicExtrinsic(transfromPose, intrinsic, uvCoord);
 
-                    qWarning() << "Coord Sphere" << coordSphere.x() << coordSphere.y() << coordSphere.z();
+                    //qWarning() << "Coord Sphere" << coordSphere.x() << coordSphere.y() << coordSphere.z();
                     
                     // Compute pixel coordinates in the panorama coordinate system
                     aliceVision::Vec2 coordPano = toEquirectangular(coordSphere, 3000, 1000);
 
                     vertices[compteur].set(coordPano.x(), coordPano.y(), u, v);
                     
-                    qWarning() << "Pano Distortion Res" << vertices->x << vertices->y;
+                    //qWarning() << "Pano Distortion Res" << vertices->x << vertices->y;
                 }
 
                 // Default 
@@ -213,7 +176,6 @@ namespace qtAliceVision
         for (int i = 0; i < _vertexCount; i++)
         {
             QPoint p(vertices[i].x, vertices[i].y);
-            qWarning() << p;
             _vertices.append(p);
         }
 
@@ -281,6 +243,42 @@ namespace qtAliceVision
         {
             geometryLine->vertexDataAsPoint2D()[i].set(0, 0);
         }
+    }
+
+    bool Surface::loadSfmData()
+    {
+        bool LoadSfm = true;
+        subsChanged(false);
+
+        if (_sfmPath.toStdString() != "")
+        {
+            // Clear sfmData
+            _sfmData.clear();
+
+            // load SfMData files
+            if (!aliceVision::sfmDataIO::Load(_sfmData, _sfmPath.toStdString(), aliceVision::sfmDataIO::ESfMData::ALL))
+            {
+                qWarning() << "The input SfMData file '" << _sfmPath << "' cannot be read.\n";
+                return false;
+            }
+            if (_sfmData.getViews().empty())
+            {
+                qWarning() << "The input SfMData file '" << _sfmPath << "' is empty.\n";
+                return false;
+            }
+            // Make sure there is only one kind of image in dataset
+            if (_sfmData.getIntrinsics().size() > 1)
+            {
+                qWarning() << "Only one intrinsic allowed (" << _sfmData.getIntrinsics().size() << " found)";
+                return false;
+            }
+        }
+        else
+        {
+            return false;
+        }
+
+        return true;
     }
 
     void Surface::computePrincipalPoint(aliceVision::camera::IntrinsicBase* intrinsic, QSize textureSize)
