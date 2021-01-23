@@ -160,9 +160,9 @@ namespace qtAliceVision
                 // Equirectangular Convertion
                 if (_panoViewer && intrinsic)
                 {
-                    qWarning() << "Pano Distortion" << u << v;
+                    qWarning() << "Pano Distortion" << x << y;
                     // Image System Coordinates
-                    aliceVision::Vec2 uvCoord(u * textureSize.width(), v * textureSize.height());
+                    aliceVision::Vec2 uvCoord(x, y);
                     const auto& transfromPose = pose.getTransform();
                     
                     // Compute pixel coordinates on the Unit Sphere
