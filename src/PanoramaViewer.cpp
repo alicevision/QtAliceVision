@@ -233,7 +233,7 @@ QSGNode* PanoramaViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePai
 
     if (_imageChanged)
     {
-        if (_distortion)
+        if (_surface.isDistoViewerEnabled())
         {
             updateSfmData = true;
         }
