@@ -189,45 +189,15 @@ namespace qtAliceVision
             material = ImageViewerShader::createMaterial();
             root->setMaterial(material);
             root->setFlags(QSGNode::OwnsMaterial);
-            {
-                /* Geometry and Material for the Grid */
-                auto node = new QSGGeometryNode;
-                auto material = new QSGFlatColorMaterial;
-                material->setColor(_surface.gridColor());
-                {
-                    // Vertexcount of the grid is equal to indexCount of the image
-                    geometryLine = new QSGGeometry(QSGGeometry::defaultAttributes_Point2D(), _surface.indexCount());
-                    geometryLine->setDrawingMode(GL_LINES);
-                    geometryLine->setLineWidth(2);
-
-                    node->setGeometry(geometryLine);
-                    node->setFlags(QSGNode::OwnsGeometry);
-                    node->setMaterial(material);
-                    node->setFlags(QSGNode::OwnsMaterial);
-                }
-                root->appendChildNode(node);
-            }
         }
         else
         {
             _createRoot = false;
             material = static_cast<QSGSimpleMaterial<ShaderData>*>(root->material());
-
-            QSGGeometryNode* rootGrid = static_cast<QSGGeometryNode*>(oldNode->childAtIndex(0));
-            auto mat = static_cast<QSGFlatColorMaterial*>(rootGrid->activeMaterial());
-            mat->setColor(_surface.gridColor());
-            geometryLine = rootGrid->geometry();
         }
 
         if (_surface.hasSubsChanged())
         {
-            // Re size grid
-            if (geometryLine)
-            {
-                // Vertexcount of the grid is equal to indexCount of the image
-                geometryLine->allocate(_surface.indexCount());
-                root->childAtIndex(0)->markDirty(QSGNode::DirtyGeometry);
-            }
             // Re size root
             if (root)
             {
@@ -314,48 +284,6 @@ namespace qtAliceVision
             QSGGeometry::updateTexturedRectGeometry(root->geometry(), geometryRect, QRectF(0, 0, 1, 1));
             root->markDirty(QSGNode::DirtyGeometry);
         }
-
-        /*
-        *   Surface
-        */
-
-        //// If vertices has changed, Re-Compute the grid 
-        //if (_surface.hasVerticesChanged() && !_createRoot)
-        //{
-        //    // Retrieve Vertices and Index Data
-        //    QSGGeometry::TexturedPoint2D* vertices = root->geometry()->vertexDataAsTexturedPoint2D();
-        //    quint16* indices = root->geometry()->indexDataAsUShort();
-
-        //    // Load new sfm Data if there is distortion and sfm data has changed
-        //    bool LoadSfm = _surface.loadSfmData(vertices, indices, _textureSize, _distortion, updateSfmData);
-
-        //    root->geometry()->markIndexDataDirty();
-        //    root->geometry()->markVertexDataDirty();
-        //    root->markDirty(QSGNode::DirtyGeometry | QSGNode::DirtyMaterial);
-
-        //    // Fill the Surface vertices array
-        //    _surface.fillVertices(vertices);
-        //    Q_EMIT verticesChanged(true);
-
-        //    if (LoadSfm)
-        //    {
-        //        _surface.verticesChanged(true);
-        //        Q_EMIT sfmChanged();
-        //    }
-        //}
-
-        //// Draw the grid if there Disto Viewer is enabled
-        //if (_distortion && _surface.hasGridChanged() && !_createRoot)
-        //{
-        //    _surface.draw(geometryLine);
-        //    Q_EMIT verticesChanged(false);
-        //}
-        //else if (!_distortion)
-        //{
-        //    _surface.removeGrid(geometryLine);
-        //}
-
-        //root->childAtIndex(0)->markDirty(QSGNode::DirtyGeometry | QSGNode::DirtyMaterial);
 
         return root;
     }
