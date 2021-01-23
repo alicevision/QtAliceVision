@@ -416,6 +416,9 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
         root->markDirty(QSGNode::DirtyGeometry);
     }
 
+    /*
+    * Surface
+    */
     if (root && !_createRoot)
     {
         updatePaintSurface(root, geometryLine, updateSfmData);
@@ -434,7 +437,7 @@ void FloatImageViewer::updatePaintSurface(QSGGeometryNode* root, QSGGeometry* ge
         quint16* indices = root->geometry()->indexDataAsUShort();
 
         // Update surface
-        updateSfmData = _surface.update(vertices, indices, _textureSize, updateSfmData);
+        bool updateSurface = _surface.update(vertices, indices, _textureSize, updateSfmData);
 
         root->geometry()->markIndexDataDirty();
         root->geometry()->markVertexDataDirty();
@@ -444,9 +447,9 @@ void FloatImageViewer::updatePaintSurface(QSGGeometryNode* root, QSGGeometry* ge
         _surface.fillVertices(vertices);
         Q_EMIT verticesChanged(true);
 
-        if (updateSfmData)
+        // Force to re update the surface in order to see changes
+        if (updateSurface)
         {
-            // Force to re update the surface in order to see changes
             _surface.verticesChanged(true);
             Q_EMIT sfmChanged();
         }
@@ -572,11 +575,11 @@ void FloatImageViewer::setPanoViewerEnabled(bool state)
 
 void FloatImageViewer::setRotationPano(float tx, float ty)
 {
-    /*qWarning() << "Rotation C++" << tx << ty;
+    qWarning() << "Rotation C++" << tx << ty;
+    _surface.clearVertices();
     _surface.setRotationValues(tx, ty);
     _surface.verticesChanged(true);
-    Q_EMIT verticesChanged(false);*/
-
+    Q_EMIT verticesChanged(false);
 }
 
 

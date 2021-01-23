@@ -35,6 +35,13 @@ namespace qtAliceVision
         // Compute Vertices coordinates and Indices order
         computeGrid(vertices, indices, textureSize, updateSfmData);
 
+        // If Panorama has been rotated, reset values and return true
+        if (isPanoramaRotated())
+        {
+            resetRotationValues();
+            return true;
+        }
+
         return updateSfmData;
     }
 
@@ -54,7 +61,7 @@ namespace qtAliceVision
 
         // Retrieve intrisics only if sfmData has been updated, and then Compute vertices
         aliceVision::camera::IntrinsicBase* intrinsic = nullptr;
-        if (updateSfmData)
+        if (updateSfmData || isPanoramaRotated())
         {
             std::set<aliceVision::IndexT> intrinsicsIndices = _sfmData.getReconstructedIntrinsics();
             intrinsic = _sfmData.getIntrinsicPtr(*intrinsicsIndices.begin());
@@ -66,9 +73,8 @@ namespace qtAliceVision
                 computeVerticesGrid(vertices, textureSize, intrinsic);
             }
         }
-        
-        // If there is no sfm data update or intrinsics are invalid, compute vertices without it
-        if (!updateSfmData || !intrinsic)
+        // If there is no sfm data update or intrinsics are invalid, keep the same vertices
+        if ((!updateSfmData && !isPanoramaRotated()) || !intrinsic)
         {
             qWarning() << "Without Intrinsics";
             computeVerticesGrid(vertices, textureSize, nullptr);
@@ -112,12 +118,12 @@ namespace qtAliceVision
                 float v = j / (float)_subdivisions;
 
                 // Remove Distortion only if sfmData has been updated
-                if (intrinsic && intrinsic->hasDistortion())
+                /*if (intrinsic && intrinsic->hasDistortion())
                 {
                     const aliceVision::Vec2 undisto_pix(x, y);
                     const aliceVision::Vec2 disto_pix = intrinsic->get_d_pixel(undisto_pix);
                     vertices[compteur].set(disto_pix.x(), disto_pix.y(), u, v);
-                }
+                }*/
 
                 // Equirectangular Convertion only if sfmData has been updated
                 if (isPanoViewerEnabled() && intrinsic)
@@ -132,6 +138,10 @@ namespace qtAliceVision
 
                     //qWarning() << "Coord Sphere" << coordSphere.x() << coordSphere.y() << coordSphere.z();
                     
+                    // Rotate Panorama if some rotation values exist
+                    if (isPanoramaRotated())
+                        rotatePano(coordSphere);
+
                     // Compute pixel coordinates in the panorama coordinate system
                     aliceVision::Vec2 coordPano = toEquirectangular(coordSphere, 3000, 1000);
 
@@ -148,6 +158,7 @@ namespace qtAliceVision
                 compteur++;
             }
         }
+        // End for loop
     }
 
     void Surface::computeIndicesGrid(quint16* indices)
@@ -295,6 +306,37 @@ namespace qtAliceVision
 
         _principalPoint.setY(ppCorrection.x());
         _principalPoint.setX(ppCorrection.y());
+    }
+
+    void Surface::setRotationValues(float tx, float ty)
+    {
+        _rotation.x() = tx;
+        _rotation.y() = ty;
+    }
+
+    void Surface::resetRotationValues()
+    {
+        _rotation = aliceVision::Vec2(0, 0);
+    }
+
+    void Surface::rotatePano(aliceVision::Vec3& position)
+    {
+        // Translation Left - Right
+        double yaw = _rotation.x();
+        Eigen::AngleAxisd yawAngle(yaw, Eigen::Vector3d::UnitY());
+        // Translation Top - Bottom
+        //double pitch = _rotation.y();
+        //Eigen::AngleAxisd pitchAngle(pitch, Eigen::Vector3d::UnitX());
+
+        position = yawAngle * position;
+    }
+
+    bool Surface::isPanoramaRotated()
+    {
+        if (isPanoViewerEnabled())
+            return _rotation != aliceVision::Vec2(0, 0);
+        else
+            return false;
     }
 
     /*
