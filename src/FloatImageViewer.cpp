@@ -430,8 +430,7 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
         quint16* indices = root->geometry()->indexDataAsUShort();
 
         // Load new sfm Data if there is distortion and sfm data has changed
-        // TODO : should be called : update()
-        bool LoadSfm = _surface.loadSfmData(vertices, indices, _textureSize, _distortion, updateSfmData);
+        bool LoadSfm = _surface.update(vertices, indices, _textureSize, _distortion, updateSfmData);
 
         root->geometry()->markIndexDataDirty();
         root->geometry()->markVertexDataDirty();
@@ -563,10 +562,10 @@ void FloatImageViewer::setPanoViewerEnabled(bool state)
 
 void FloatImageViewer::setRotationPano(float tx, float ty)
 {
-    qWarning() << "Rotation C++" << tx << ty;
+    /*qWarning() << "Rotation C++" << tx << ty;
     _surface.setRotationValues(tx, ty);
     _surface.verticesChanged(true);
-    Q_EMIT verticesChanged(false);
+    Q_EMIT verticesChanged(false);*/
 
 }
 

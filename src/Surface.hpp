@@ -25,7 +25,7 @@ namespace qtAliceVision
 
 		~Surface();
 
-		bool loadSfmData(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize,
+		bool update(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize,
 			bool distortion, bool updateSfmData);
 		
 		void fillVertices(QSGGeometry::TexturedPoint2D* vertices);
@@ -79,6 +79,8 @@ namespace qtAliceVision
 		void setPanoViewerState(bool state) { _panoViewer = state; }
 
 	private:
+		bool loadSfmData();
+
 		void computeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize, bool loadSfm);
 
 		void computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize textureSize,
