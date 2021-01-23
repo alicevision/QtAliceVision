@@ -76,6 +76,7 @@ namespace qtAliceVision
 		aliceVision::IndexT idView() const { return _idView; }
 
 		bool IsPanoViewerEnabled() const { return _panoViewer; }
+		void setPanoViewerState(bool state) { _panoViewer = state; }
 
 	private:
 		void computeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize, bool loadSfm);
@@ -114,7 +115,7 @@ namespace qtAliceVision
 		// Id View
 		aliceVision::IndexT _idView;
 
-		bool _panoViewer = true;
+		bool _panoViewer = false;
 
 	};
 
