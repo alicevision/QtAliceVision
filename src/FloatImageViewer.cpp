@@ -367,7 +367,7 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
         auto texture = std::make_unique<FloatTexture>();
         if (_image)
         {
-            // Rotate Image if Disto Viewer enable
+            // Rotate Image if Pano Viewer enable
             if (_surface.IsPanoViewerEnabled())
             {
                 qWarning() << "Before rotate";
