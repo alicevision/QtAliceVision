@@ -128,7 +128,6 @@ namespace qtAliceVision
                 // Equirectangular Convertion only if sfmData has been updated
                 if (isPanoViewerEnabled() && intrinsic)
                 {
-                    //qWarning() << "Pano Distortion" << x << y;
                     // Image System Coordinates
                     aliceVision::Vec2 uvCoord(x, y);
                     const auto& transfromPose = pose.getTransform();
@@ -136,18 +135,15 @@ namespace qtAliceVision
                     // Compute pixel coordinates on the Unit Sphere
                     aliceVision::Vec3 coordSphere = aliceVision::camera::applyIntrinsicExtrinsic(transfromPose, intrinsic, uvCoord);
 
-                    //qWarning() << "Coord Sphere" << coordSphere.x() << coordSphere.y() << coordSphere.z();
-                    
                     // Rotate Panorama if some rotation values exist
                     if (isPanoramaRotated())
+                    {
                         rotatePano(coordSphere);
+                    }
 
                     // Compute pixel coordinates in the panorama coordinate system
                     aliceVision::Vec2 coordPano = toEquirectangular(coordSphere, 3000, 1000);
-
                     vertices[compteur].set(coordPano.x(), coordPano.y(), u, v);
-                    
-                    //qWarning() << "Pano Distortion Res" << vertices->x << vertices->y;
                 }
 
                 // Default 
@@ -159,6 +155,7 @@ namespace qtAliceVision
             }
         }
         // End for loop
+        
     }
 
     void Surface::computeIndicesGrid(quint16* indices)
@@ -188,6 +185,8 @@ namespace qtAliceVision
             QPoint p(vertices[i].x, vertices[i].y);
             _vertices.append(p);
         }
+        
+        updateMouseAeraPanoCoords();
 
         _verticesChanged = false;
         _reinit = false;
@@ -337,6 +336,19 @@ namespace qtAliceVision
             return _rotation != aliceVision::Vec2(0, 0);
         else
             return false;
+    }
+
+    void Surface::updateMouseAeraPanoCoords()
+    {
+        _mouseAreaCoords[0] = _vertices[_vertexCount - 1].x();                                   // x
+        _mouseAreaCoords[1] = _vertices[0].y();                                   // y
+        _mouseAreaCoords[2] = _vertices[0].x() - _vertices[_vertexCount - 1].x(); // width
+        _mouseAreaCoords[3] = _vertices[_vertexCount - 1].y() - _vertices[0].y(); // height
+    }
+
+    QVariantList Surface::mouseAeraPanoCoords() const
+    {
+        return _mouseAreaCoords;
     }
 
     /*
