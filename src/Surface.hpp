@@ -43,9 +43,11 @@ namespace qtAliceVision
 		void updateMouseAeraPanoCoords();
 		QVariantList mouseAeraPanoCoords() const;
 
+
 		/*
 		* Getters & Setters
 		*/
+
 		void setRotationValues(float tx, float ty);
 
 		void setSubdivisions(int sub);
@@ -94,6 +96,12 @@ namespace qtAliceVision
 		bool isPanoViewerEnabled() const;
 		bool isDistoViewerEnabled() const;
 
+		/*
+		* Static Functions
+		*/
+		static int downscaleLevelPanorama() { return _downscaleLevelPanorama; }
+
+
 	private:
 		bool loadSfmData();
 
@@ -113,6 +121,9 @@ namespace qtAliceVision
 		bool isPanoramaRotated();
 
 	private:
+		// Level of downscale for images of a Panorama
+		static const int _downscaleLevelPanorama;
+
 		// Vertex Data
 		QList<QPoint> _vertices;
 		int _subdivisions;

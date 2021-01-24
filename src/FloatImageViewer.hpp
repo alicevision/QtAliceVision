@@ -30,7 +30,7 @@ class FloatImageIORunnable : public QObject, public QRunnable
 
 public:
 
-    explicit FloatImageIORunnable(const QUrl& path, QObject* parent = nullptr);
+    explicit FloatImageIORunnable(const QUrl& path, bool insidePanorama = false, QObject* parent = nullptr);
 
     /// Load image at path
     Q_SLOT void run() override;
@@ -40,6 +40,7 @@ public:
 
 private:
     QUrl _path;
+    bool _insidePanorama;
 };
 
 /**
@@ -169,7 +170,6 @@ private:
 
     Surface _surface;
     bool _createRoot = true;
-
 };
 
 }  // ns qtAliceVision
