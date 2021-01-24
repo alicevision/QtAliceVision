@@ -14,7 +14,9 @@ namespace qtAliceVision
 {
     aliceVision::Vec2 toEquirectangular(const aliceVision::Vec3& spherical, int width, int height);
 
-    const int Surface::_downscaleLevelPanorama = 4;
+    const int Surface::_downscaleLevelPanorama = 2;
+    const int Surface::_panoramaWidth = 3000;
+    const int Surface::_panoramaHeight = 1000;
 
 	Surface::Surface(int subdivisions)
 	{
@@ -146,7 +148,13 @@ namespace qtAliceVision
                     }
 
                     // Compute pixel coordinates in the panorama coordinate system
-                    aliceVision::Vec2 coordPano = toEquirectangular(coordSphere, 3000, 1000);
+                    aliceVision::Vec2 coordPano = toEquirectangular(coordSphere, _panoramaWidth, _panoramaHeight);
+                    
+                    // If image is on the seem
+                    if (abs(coordPano.x() - vertices[compteur - 1].x) > _panoramaWidth * 0.65)
+                    {
+                        coordPano.x() -= _panoramaWidth;
+                    }
                     vertices[compteur].set(coordPano.x(), coordPano.y(), u, v);
                 }
 
@@ -187,6 +195,7 @@ namespace qtAliceVision
         for (int i = 0; i < _vertexCount; i++)
         {
             QPoint p(vertices[i].x, vertices[i].y);
+            qWarning() << p;
             _vertices.append(p);
         }
         
