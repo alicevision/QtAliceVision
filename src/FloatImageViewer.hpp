@@ -2,11 +2,14 @@
 
 #include "FloatTexture.hpp"
 #include "Surface.hpp"
+#include "ShaderImageViewer.hpp"
 
 #include <QQuickItem>
 #include <QUrl>
 #include <QRunnable>
 #include <QSGGeometryNode>
+#include <QSGSimpleMaterial>
+
 #include <QSharedPointer>
 #include <QVariant>
 #include <QVector4D>
@@ -133,6 +136,8 @@ public:
     Q_INVOKABLE void setIdView(int id);
     Q_INVOKABLE void setPanoViewerEnabled(bool state);
     Q_INVOKABLE void setRotationPano(float tx, float ty);
+    Q_INVOKABLE void mouseOver(bool state);
+    Q_INVOKABLE QVariantList getMouseAreaPanoCoords();
 
 private:
     /// Reload image from source
@@ -143,7 +148,7 @@ private:
     QSGNode* updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePaintNodeData* data) override;
 
 private:
-    void updatePaintSurface(QSGGeometryNode* root, QSGGeometry* geometryLine, bool updateSfmData);
+    void updatePaintSurface(QSGGeometryNode* root, QSGSimpleMaterial<ShaderData>* material, QSGGeometry* geometryLine, bool updateSfmData);
 
     QUrl _source;
     float _gamma = 1.f;

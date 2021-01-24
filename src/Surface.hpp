@@ -3,6 +3,7 @@
 
 #include <QQuickItem>
 #include <QSGGeometry>
+#include <QVariant>
 #include <string>
 
 #include <aliceVision/camera/cameraCommon.hpp>
@@ -38,6 +39,9 @@ namespace qtAliceVision
 		void removeGrid(QSGGeometry* geometryLine);
 		
 		QPoint principalPoint() const { return _principalPoint; }
+
+		void updateMouseAeraPanoCoords();
+		QVariantList mouseAeraPanoCoords() const;
 
 		/*
 		* Getters & Setters
@@ -79,7 +83,10 @@ namespace qtAliceVision
 
 		void setIdView(aliceVision::IndexT id) { _idView = id; }
 		aliceVision::IndexT idView() const { return _idView; }
-		
+
+		bool isMouseOver() const { return _mouseOver; }
+		void setMouseOver(bool state) { _mouseOver = state; }
+
 		// Viewer Type
 		ViewerType viewerType() const { return _viewerType; }
 		void setViewerType(ViewerType type) { _viewerType = type; }
@@ -135,9 +142,13 @@ namespace qtAliceVision
 		// Viewer
 		ViewerType _viewerType = ViewerType::DEFAULT;
 
+		/* Panorama Variables */
 		// Rotation Pano
 		aliceVision::Vec2 _rotation = aliceVision::Vec2(0, 0);
-
+		// Mouse Over 
+		bool _mouseOver = false;
+		// Mouse Area Coordinates
+		QVariantList _mouseAreaCoords = { 0, 0, 0, 0 };
 	};
 
 }  // ns qtAliceVision
