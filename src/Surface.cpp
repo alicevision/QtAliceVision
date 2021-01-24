@@ -14,6 +14,8 @@ namespace qtAliceVision
 {
     aliceVision::Vec2 toEquirectangular(const aliceVision::Vec3& spherical, int width, int height);
 
+    const int Surface::_downscaleLevelPanorama = 4;
+
 	Surface::Surface(int subdivisions)
 	{
 		setSubdivisions(subdivisions);
@@ -91,6 +93,8 @@ namespace qtAliceVision
         aliceVision::sfmData::CameraPose pose;
         if (isPanoViewerEnabled() && intrinsic)
         {
+            // Downscale image according to downscale level
+            textureSize *= pow(2.0, _downscaleLevelPanorama);
             aliceVision::sfmData::View view = _sfmData.getView(_idView);
             pose = _sfmData.getPose(view);
         }
@@ -118,12 +122,12 @@ namespace qtAliceVision
                 float v = j / (float)_subdivisions;
 
                 // Remove Distortion only if sfmData has been updated
-                /*if (intrinsic && intrinsic->hasDistortion())
+                if (intrinsic && intrinsic->hasDistortion())
                 {
                     const aliceVision::Vec2 undisto_pix(x, y);
                     const aliceVision::Vec2 disto_pix = intrinsic->get_d_pixel(undisto_pix);
                     vertices[compteur].set(disto_pix.x(), disto_pix.y(), u, v);
-                }*/
+                }
 
                 // Equirectangular Convertion only if sfmData has been updated
                 if (isPanoViewerEnabled() && intrinsic)
