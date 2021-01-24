@@ -1,9 +1,7 @@
 #include "FloatImageViewer.hpp"
 #include "FloatTexture.hpp"
-#include "ShaderImageViewer.hpp"
 
 #include <QSGGeometry>
-#include <QSGSimpleMaterial>
 #include <QSGSimpleMaterialShader>
 #include <QSGFlatColorMaterial>
 #include <QSGTexture>
@@ -421,14 +419,21 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
     */
     if (root && !_createRoot)
     {
-        updatePaintSurface(root, geometryLine, updateSfmData);
+        updatePaintSurface(root, material, geometryLine, updateSfmData);
     }
 
     return root;
 }
 
-void FloatImageViewer::updatePaintSurface(QSGGeometryNode* root, QSGGeometry* geometryLine, bool updateSfmData)
+void FloatImageViewer::updatePaintSurface(QSGGeometryNode* root, QSGSimpleMaterial<ShaderData>* material, QSGGeometry* geometryLine, bool updateSfmData)
 {
+    // Highlight image if Panorama enable and user hovers the image
+    if (_surface.isPanoViewerEnabled())
+    {
+        _surface.isMouseOver() ? material->state()->gamma = 2.0f : material->state()->gamma = 1.0f;
+        root->markDirty(QSGNode::DirtyMaterial);
+    }
+
     // If vertices has changed, Re-Compute the grid 
     if (_surface.hasVerticesChanged())
     {
@@ -580,6 +585,17 @@ void FloatImageViewer::setRotationPano(float tx, float ty)
     _surface.setRotationValues(tx, ty);
     _surface.verticesChanged(true);
     Q_EMIT verticesChanged(false);
+}
+
+void FloatImageViewer::mouseOver(bool state)
+{
+    _surface.setMouseOver(state);
+    Q_EMIT verticesChanged(false);
+}
+
+QVariantList FloatImageViewer::getMouseAreaPanoCoords()
+{
+    return _surface.mouseAeraPanoCoords();
 }
 
 
