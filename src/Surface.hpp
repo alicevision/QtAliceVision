@@ -121,8 +121,13 @@ namespace qtAliceVision
 		bool isPanoramaRotated();
 
 	private:
+		/*
+		* Static Variables
+		*/
 		// Level of downscale for images of a Panorama
 		static const int _downscaleLevelPanorama;
+		static const int _panoramaWidth;
+		static const int _panoramaHeight;
 
 		// Vertex Data
 		QList<QPoint> _vertices;
