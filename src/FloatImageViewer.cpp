@@ -82,9 +82,9 @@ namespace
     }
 }
 
-FloatImageIORunnable::FloatImageIORunnable(const QUrl& path, QObject* parent)
+FloatImageIORunnable::FloatImageIORunnable(const QUrl& path, bool insidePanorama, QObject* parent)
     : QObject(parent)
-    , _path(path)
+    , _path(path), _insidePanorama(insidePanorama)
 {}
 
 void FloatImageIORunnable::run()
@@ -108,6 +108,18 @@ void FloatImageIORunnable::run()
             const auto maxTextureSize = FloatTexture::maxTextureSize();
             while (maxTextureSize != -1 &&
                 (image.Width() > maxTextureSize || image.Height() > maxTextureSize))
+            {
+                FloatImage tmp;
+                aliceVision::image::ImageHalfSample(image, tmp);
+                image = std::move(tmp);
+            }
+        }
+
+        // Downscale if image is part of a panorama
+        qWarning() << "Load Image =================" << _insidePanorama;
+        if (_insidePanorama)
+        {
+            for (size_t i = 0; i < Surface::downscaleLevelPanorama(); i++)
             {
                 FloatImage tmp;
                 aliceVision::image::ImageHalfSample(image, tmp);
@@ -204,6 +216,7 @@ QVector4D FloatImageViewer::pixelValueAt(int x, int y)
 
 void FloatImageViewer::reload()
 {
+    qWarning() << "RELOAD " << _surface.isPanoViewerEnabled();
     if (_clearBeforeLoad)
     {
         _image.reset();
@@ -225,7 +238,7 @@ void FloatImageViewer::reload()
         setLoading(true);
 
         // async load from file
-        auto ioRunnable = new FloatImageIORunnable(_source);
+        auto ioRunnable = new FloatImageIORunnable(_source, _surface.isPanoViewerEnabled());
         connect(ioRunnable, &FloatImageIORunnable::resultReady, this, &FloatImageViewer::onResultReady);
         QThreadPool::globalInstance()->start(ioRunnable);
     }
@@ -572,6 +585,7 @@ void FloatImageViewer::setIdView(int id)
 
 void FloatImageViewer::setPanoViewerEnabled(bool state)
 {
+    qWarning() << "PANO VIEWER ===========" << state;
     if (state)
         _surface.setViewerType(ViewerType::PANORAMA);
     else
