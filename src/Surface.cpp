@@ -153,13 +153,18 @@ namespace qtAliceVision
                     aliceVision::Vec2 coordPano = toEquirectangular(_coordsSphere[compteur], _panoramaWidth, _panoramaHeight);
                     
                     // If image is on the seem
-                    if (compteur > 0 && abs(coordPano.x() - vertices[compteur - 1].x) > _panoramaWidth * 0.9)
+                    double deltaX = coordPano.x() - vertices[compteur - 1].x;
+                    double deltaY = coordPano.y() - vertices[compteur - 1].y;
+                    if (compteur > 0 && abs(deltaX) > _panoramaWidth * 0.5)
                     {
-                        coordPano.x() -= _panoramaWidth;
+                        deltaX > 0 ? coordPano.x() -= _panoramaWidth : coordPano.x() += _panoramaWidth;
                     }
+                    if (compteur > 0 && abs(deltaY) > _panoramaHeight * 0.5)
+                    {
+                        deltaY > 0 ? coordPano.y() -= _panoramaHeight : coordPano.y() += _panoramaHeight;
+                    }
+  
                     vertices[compteur].set(coordPano.x(), coordPano.y(), u, v);
-
-
                 }
 
                 // Default 
@@ -339,14 +344,12 @@ namespace qtAliceVision
     {
         // Translation Left - Right
         double yaw = _rotation.x();
-        qWarning() << "ROTATE PANO" << yaw;
-
         Eigen::AngleAxisd yawAngle(yaw, Eigen::Vector3d::UnitY());
         // Translation Top - Bottom
-        //double pitch = _rotation.y();
-        //Eigen::AngleAxisd pitchAngle(pitch, Eigen::Vector3d::UnitX());
+        double pitch = _rotation.y();
+        Eigen::AngleAxisd pitchAngle(pitch, Eigen::Vector3d::UnitX());
 
-        _coordsSphere[index] = yawAngle * _coordsSphere[index];
+        _coordsSphere[index] = pitchAngle * yawAngle * _coordsSphere[index];
     }
 
     bool Surface::isPanoramaRotated()
