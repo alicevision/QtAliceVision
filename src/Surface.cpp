@@ -101,6 +101,7 @@ namespace qtAliceVision
             pose = _sfmData.getPose(view);
         }
 
+        bool fillCoordsSphere = _coordsSphere.empty();
         int compteur = 0;
         for (size_t i = 0; i <= _subdivisions; i++)
         {
@@ -134,28 +135,31 @@ namespace qtAliceVision
                 // Equirectangular Convertion only if sfmData has been updated
                 if (isPanoViewerEnabled() && intrinsic)
                 {
-                    // Image System Coordinates
-                    aliceVision::Vec2 uvCoord(x, y);
-                    const auto& transfromPose = pose.getTransform();
-                    
                     // Compute pixel coordinates on the Unit Sphere
-                    aliceVision::Vec3 coordSphere = aliceVision::camera::applyIntrinsicExtrinsic(transfromPose, intrinsic, uvCoord);
+                    if (fillCoordsSphere) {
+                        // Image System Coordinates
+                        aliceVision::Vec2 uvCoord(x, y);
+                        const auto& transfromPose = pose.getTransform();
+                        _coordsSphere.push_back(aliceVision::camera::applyIntrinsicExtrinsic(transfromPose, intrinsic, uvCoord));
+                    }
 
                     // Rotate Panorama if some rotation values exist
                     if (isPanoramaRotated())
                     {
-                        rotatePano(coordSphere);
+                        rotatePano(compteur);
                     }
 
                     // Compute pixel coordinates in the panorama coordinate system
-                    aliceVision::Vec2 coordPano = toEquirectangular(coordSphere, _panoramaWidth, _panoramaHeight);
+                    aliceVision::Vec2 coordPano = toEquirectangular(_coordsSphere[compteur], _panoramaWidth, _panoramaHeight);
                     
                     // If image is on the seem
-                    if (abs(coordPano.x() - vertices[compteur - 1].x) > _panoramaWidth * 0.65)
+                    if (compteur > 1 && abs(coordPano.x() - vertices[compteur - 1].x) > _panoramaWidth * 0.9)
                     {
                         coordPano.x() -= _panoramaWidth;
                     }
                     vertices[compteur].set(coordPano.x(), coordPano.y(), u, v);
+
+
                 }
 
                 // Default 
@@ -195,7 +199,7 @@ namespace qtAliceVision
         for (int i = 0; i < _vertexCount; i++)
         {
             QPoint p(vertices[i].x, vertices[i].y);
-            qWarning() << p;
+            //qWarning() << p;
             _vertices.append(p);
         }
         
@@ -331,16 +335,18 @@ namespace qtAliceVision
         _rotation = aliceVision::Vec2(0, 0);
     }
 
-    void Surface::rotatePano(aliceVision::Vec3& position)
+    void Surface::rotatePano(int index)
     {
         // Translation Left - Right
         double yaw = _rotation.x();
+        qWarning() << "ROTATE PANO" << yaw;
+
         Eigen::AngleAxisd yawAngle(yaw, Eigen::Vector3d::UnitY());
         // Translation Top - Bottom
         //double pitch = _rotation.y();
         //Eigen::AngleAxisd pitchAngle(pitch, Eigen::Vector3d::UnitX());
 
-        position = yawAngle * position;
+        _coordsSphere[index] = yawAngle * _coordsSphere[index];
     }
 
     bool Surface::isPanoramaRotated()
@@ -353,7 +359,7 @@ namespace qtAliceVision
 
     void Surface::updateMouseAeraPanoCoords()
     {
-        _mouseAreaCoords[0] = _vertices[_vertexCount - 1].x();                                   // x
+        _mouseAreaCoords[0] = _vertices[_vertexCount - 1].x();                    // x
         _mouseAreaCoords[1] = _vertices[0].y();                                   // y
         _mouseAreaCoords[2] = _vertices[0].x() - _vertices[_vertexCount - 1].x(); // width
         _mouseAreaCoords[3] = _vertices[_vertexCount - 1].y() - _vertices[0].y(); // height
