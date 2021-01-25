@@ -153,7 +153,7 @@ namespace qtAliceVision
                     aliceVision::Vec2 coordPano = toEquirectangular(_coordsSphere[compteur], _panoramaWidth, _panoramaHeight);
                     
                     // If image is on the seem
-                    if (compteur > 1 && abs(coordPano.x() - vertices[compteur - 1].x) > _panoramaWidth * 0.9)
+                    if (compteur > 0 && abs(coordPano.x() - vertices[compteur - 1].x) > _panoramaWidth * 0.9)
                     {
                         coordPano.x() -= _panoramaWidth;
                     }
