@@ -116,7 +116,6 @@ void FloatImageIORunnable::run()
         }
 
         // Downscale if image is part of a panorama
-        qWarning() << "Load Image =================" << _insidePanorama;
         if (_insidePanorama)
         {
             for (size_t i = 0; i < Surface::downscaleLevelPanorama(); i++)
@@ -594,8 +593,6 @@ void FloatImageViewer::setPanoViewerEnabled(bool state)
 
 void FloatImageViewer::setRotationPano(float tx, float ty)
 {
-    qWarning() << "Rotation C++" << tx << ty;
-    _surface.clearVertices();
     _surface.setRotationValues(tx, ty);
     _surface.verticesChanged(true);
     Q_EMIT verticesChanged(false);

@@ -5,6 +5,7 @@
 #include <QSGGeometry>
 #include <QVariant>
 #include <string>
+#include <vector>
 
 #include <aliceVision/camera/cameraCommon.hpp>
 #include <aliceVision/camera/IntrinsicBase.hpp>
@@ -114,7 +115,7 @@ namespace qtAliceVision
 		
 		void computePrincipalPoint(aliceVision::camera::IntrinsicBase* intrinsic, QSize textureSize);
 
-		void rotatePano(aliceVision::Vec3& position);
+		void rotatePano(int index);
 
 		void resetRotationValues();
 
@@ -159,7 +160,9 @@ namespace qtAliceVision
 		ViewerType _viewerType = ViewerType::DEFAULT;
 
 		/* Panorama Variables */
-		// Rotation Pano
+		// Coordinates on Unit Sphere
+		std::vector<aliceVision::Vec3> _coordsSphere;
+		// Rotation Offset
 		aliceVision::Vec2 _rotation = aliceVision::Vec2(0, 0);
 		// Mouse Over 
 		bool _mouseOver = false;
