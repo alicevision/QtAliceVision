@@ -473,12 +473,12 @@ void FloatImageViewer::updatePaintSurface(QSGGeometryNode* root, QSGSimpleMateri
     }
 
     // Draw the grid if Disto Viewer is enabled
-    if (_surface.isDistoViewerEnabled() && _surface.hasGridChanged())
+    if ((_surface.isDistoViewerEnabled() || _surface.isPanoViewerEnabled()) && _surface.hasGridChanged())
     {
         _surface.drawGrid(geometryLine);
         Q_EMIT verticesChanged(false);
     }
-    else if (!_surface.isDistoViewerEnabled())
+    else if (!_surface.isDistoViewerEnabled() && !_surface.isPanoViewerEnabled())
     {
         // TODO : line width 0
         _surface.removeGrid(geometryLine);
