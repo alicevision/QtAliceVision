@@ -140,7 +140,7 @@ public:
     Q_INVOKABLE void mouseOver(bool state);
     Q_INVOKABLE QVariantList getMouseAreaPanoCoords();
     Q_INVOKABLE void setDownscale(int level);
-
+    Q_INVOKABLE QVariantList getPitchAndYaw();
 
 
 private:
