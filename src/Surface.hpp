@@ -51,6 +51,8 @@ public:
 	/*
 	* Getters & Setters
 	*/
+	double pitch() const { return _pitch; }
+	double yaw() const { return _yaw; }
 
 	void setRotationValues(float tx, float ty);
 
