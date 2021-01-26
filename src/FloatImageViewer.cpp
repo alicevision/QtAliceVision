@@ -609,5 +609,18 @@ QVariantList FloatImageViewer::getMouseAreaPanoCoords()
     return _surface.mouseAeraPanoCoords();
 }
 
+void setDownscale(int level)
+{
+    if (level >= 0 && level <= 3)
+    {
+        Surface::setDownscaleLevelePanorama(level);
+    }
+    else
+    {
+        Surface::setDownscaleLevelePanorama(2);
+    }
+}
+
+
 
 }  // qtAliceVision
