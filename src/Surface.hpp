@@ -55,7 +55,7 @@ namespace qtAliceVision
 		int subdivisions() const;
 
 		const QList<QPoint>& vertices() const { return _vertices; }
-		void clearVertices() { _vertices.clear(); }
+		void clearVertices() { _vertices.clear(); _coordsSphere.clear(); }
 		
 		const QPoint& vertex(int index) const { return _vertices[index]; }
 		QPoint& vertex(int index) { return _vertices[index]; }
@@ -101,7 +101,7 @@ namespace qtAliceVision
 		* Static Functions
 		*/
 		static int downscaleLevelPanorama() { return _downscaleLevelPanorama; }
-		static void setDownscaleLevelePanorama(int level) { _downscaleLevelPanorama = level; }
+		static void setDownscaleLevelPanorama(int level) { _downscaleLevelPanorama = level; }
 
 
 	private:
