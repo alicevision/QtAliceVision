@@ -625,4 +625,10 @@ void FloatImageViewer::setDownscale(int level)
     Q_EMIT verticesChanged(false);
 }
 
+QVariantList FloatImageViewer::getPitchAndYaw()
+{
+    return QVariantList({ _surface.pitch(), _surface.yaw() });
+}
+
+
 }  // qtAliceVision
