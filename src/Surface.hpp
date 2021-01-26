@@ -101,6 +101,7 @@ namespace qtAliceVision
 		* Static Functions
 		*/
 		static int downscaleLevelPanorama() { return _downscaleLevelPanorama; }
+		static void setDownscaleLevelePanorama(int level) { _downscaleLevelPanorama = level; }
 
 
 	private:
@@ -126,7 +127,7 @@ namespace qtAliceVision
 		* Static Variables
 		*/
 		// Level of downscale for images of a Panorama
-		static const int _downscaleLevelPanorama;
+		static int _downscaleLevelPanorama;
 		static const int _panoramaWidth;
 		static const int _panoramaHeight;
 

@@ -139,6 +139,9 @@ public:
     Q_INVOKABLE void setRotationPano(float tx, float ty);
     Q_INVOKABLE void mouseOver(bool state);
     Q_INVOKABLE QVariantList getMouseAreaPanoCoords();
+    Q_INVOKABLE void setDownscale(int level);
+
+
 
 private:
     /// Reload image from source
