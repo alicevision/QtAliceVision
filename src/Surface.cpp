@@ -340,7 +340,7 @@ void Surface::rotatePano(aliceVision::Vec3& coordSphere)
     // Translation Top - Bottom
     Eigen::AngleAxisd pitchAngle(_pitch, Eigen::Vector3d::UnitX());
 
-    coordSphere =  yawAngle * pitchAngle * coordSphere;
+    coordSphere = pitchAngle * yawAngle * coordSphere;
 }
 
 void Surface::updateMouseAeraPanoCoords()
