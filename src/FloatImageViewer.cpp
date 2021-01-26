@@ -619,10 +619,10 @@ void FloatImageViewer::setDownscale(int level)
     {
         Surface::setDownscaleLevelPanorama(2);
     }
+    reload();
+    _imageChanged = true;
     _surface.verticesChanged(true);
     Q_EMIT verticesChanged(false);
 }
-
-
 
 }  // qtAliceVision
