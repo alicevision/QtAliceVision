@@ -18,8 +18,7 @@ aliceVision::Vec2 toEquirectangular(const aliceVision::Vec3& spherical, int widt
 int Surface::_downscaleLevelPanorama = 2;
 const int Surface::_panoramaWidth = 3000;
 const int Surface::_panoramaHeight = 1000;
-double Surface::_pitch = 0.0;
-double Surface::_yaw = 0.0;
+
 
 Surface::Surface(int subdivisions)
 {
@@ -148,7 +147,7 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
 
                 // Rotate Panorama if some rotation values exist
                 aliceVision::Vec3 coordSphere(_coordsSphereDefault[compteur]);
-                rotatePano(coordSphere, fillCoordsSphere);
+                rotatePano(coordSphere);
 
                 // Compute pixel coordinates in the panorama coordinate system
                 aliceVision::Vec2 coordPano = toEquirectangular(coordSphere, _panoramaWidth, _panoramaHeight);
@@ -205,7 +204,6 @@ void Surface::fillVertices(QSGGeometry::TexturedPoint2D* vertices)
     for (int i = 0; i < _vertexCount; i++)
     {
         QPoint p(vertices[i].x, vertices[i].y);
-        //qWarning() << p;
         _vertices.append(p);
     }
         
@@ -335,14 +333,14 @@ void Surface::setRotationValues(float tx, float ty)
     _isPanoramaRotating = true;
 }
 
-void Surface::rotatePano(aliceVision::Vec3& coordSphere, bool reinit)
+void Surface::rotatePano(aliceVision::Vec3& coordSphere)
 {
     // Translation Left - Right
     Eigen::AngleAxisd yawAngle(_yaw, Eigen::Vector3d::UnitY());
     // Translation Top - Bottom
     Eigen::AngleAxisd pitchAngle(_pitch, Eigen::Vector3d::UnitX());
 
-    coordSphere = pitchAngle * yawAngle * coordSphere;
+    coordSphere =  yawAngle * pitchAngle * coordSphere;
 }
 
 void Surface::updateMouseAeraPanoCoords()

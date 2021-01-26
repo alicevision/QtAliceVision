@@ -119,7 +119,7 @@ private:
 		
 	void computePrincipalPoint(aliceVision::camera::IntrinsicBase* intrinsic, QSize textureSize);
 
-	void rotatePano(aliceVision::Vec3& coordSphere, bool reinit = false);
+	void rotatePano(aliceVision::Vec3& coordSphere);
 
 private:
 	/*
@@ -129,8 +129,6 @@ private:
 	static int _downscaleLevelPanorama;
 	static const int _panoramaWidth;
 	static const int _panoramaHeight;
-	static double _pitch;
-	static double _yaw;
 
 	// Vertex Data
 	QList<QPoint> _vertices;
@@ -162,6 +160,8 @@ private:
 	ViewerType _viewerType = ViewerType::DEFAULT;
 
 	/* Panorama Variables */
+	double _pitch = 0.0;
+	double _yaw = 0.0;
 	// Coordinates on Unit Sphere without any rotation
 	std::vector<aliceVision::Vec3> _coordsSphereDefault;
 	// Mouse Over 
