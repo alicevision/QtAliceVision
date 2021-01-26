@@ -473,12 +473,12 @@ void FloatImageViewer::updatePaintSurface(QSGGeometryNode* root, QSGSimpleMateri
     }
 
     // Draw the grid if Disto Viewer is enabled
-    if ((_surface.isDistoViewerEnabled() || _surface.isPanoViewerEnabled()) && _surface.hasGridChanged())
+    if (_surface.isDistoViewerEnabled() && _surface.hasGridChanged())
     {
         _surface.drawGrid(geometryLine);
         Q_EMIT verticesChanged(false);
     }
-    else if (!_surface.isDistoViewerEnabled() && !_surface.isPanoViewerEnabled())
+    else if (!_surface.isDistoViewerEnabled())
     {
         // TODO : line width 0
         _surface.removeGrid(geometryLine);
@@ -609,16 +609,18 @@ QVariantList FloatImageViewer::getMouseAreaPanoCoords()
     return _surface.mouseAeraPanoCoords();
 }
 
-void setDownscale(int level)
+void FloatImageViewer::setDownscale(int level)
 {
     if (level >= 0 && level <= 3)
     {
-        Surface::setDownscaleLevelePanorama(level);
+        Surface::setDownscaleLevelPanorama(level);
     }
-    else
+    else   // Default value : 2
     {
-        Surface::setDownscaleLevelePanorama(2);
+        Surface::setDownscaleLevelPanorama(2);
     }
+    _surface.verticesChanged(true);
+    Q_EMIT verticesChanged(false);
 }
 
 

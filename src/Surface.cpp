@@ -14,7 +14,7 @@ namespace qtAliceVision
 {
     aliceVision::Vec2 toEquirectangular(const aliceVision::Vec3& spherical, int width, int height);
 
-    const int Surface::_downscaleLevelPanorama = 2;
+    int Surface::_downscaleLevelPanorama = 2;
     const int Surface::_panoramaWidth = 3000;
     const int Surface::_panoramaHeight = 1000;
 
@@ -30,8 +30,8 @@ namespace qtAliceVision
     bool Surface::update(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize, bool updateSfmData)
     {
         // Load Sfm Data File only if needed
-        if ((isDistoViewerEnabled() && (updateSfmData || hasSubsChanged()) ) // Disto Viewer conditions
-         || (isPanoViewerEnabled() && updateSfmData) )                       // Pano Viewer conditions
+        if ( (isDistoViewerEnabled() || isPanoViewerEnabled()) 
+          && (updateSfmData || hasSubsChanged()) )
         {
             updateSfmData = loadSfmData();
         }
