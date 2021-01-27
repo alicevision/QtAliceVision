@@ -137,6 +137,7 @@ private:
 	int _subdivisions;
 	int _vertexCount;
 	int _indexCount;
+	int _deletedColIndex = -1;
 
 	// Vertices State
 	bool _verticesChanged = true;

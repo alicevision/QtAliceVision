@@ -105,6 +105,9 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
 
     bool fillCoordsSphere = _coordsSphereDefault.empty();
     int compteur = 0;
+    int rowsCut = 0;
+    int saveJLeft = -1;
+    int saveJRight = -1;
     for (size_t i = 0; i <= _subdivisions; i++)
     {
         for (size_t j = 0; j <= _subdivisions; j++)
@@ -153,15 +156,19 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
                 aliceVision::Vec2 coordPano = toEquirectangular(coordSphere, _panoramaWidth, _panoramaHeight);
                     
                 // If image is on the seem
-                double deltaX = coordPano.x() - vertices[compteur - 1].x;
-                double deltaY = coordPano.y() - vertices[compteur - 1].y;
-                if (compteur > 0 && abs(deltaX) > _panoramaWidth * 0.5)
+                if (compteur > 0)
                 {
-                    deltaX > 0 ? coordPano.x() -= _panoramaWidth : coordPano.x() += _panoramaWidth;
-                }
-                if (compteur > 0 && abs(deltaY) > _panoramaHeight * 0.5)
-                {
-                    deltaY > 0 ? coordPano.y() -= _panoramaHeight : coordPano.y() += _panoramaHeight;
+                    double deltaX = coordPano.x() - vertices[compteur - 1].x;
+                    if (abs(deltaX) > 0.5 * _panoramaWidth && j != 0)
+                    {
+                        rowsCut++;
+                        if (deltaX > 0)
+                        {
+                            _deletedColIndex = j - 1;
+                            saveJLeft = j - 1;
+                            saveJRight = j;
+                        }
+                    }
                 }
   
                 vertices[compteur].set(coordPano.x(), coordPano.y(), u, v);
@@ -176,6 +183,45 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
         }
     }
     // End for loop
+
+    // Colle les points sur les bords du panorama (Left and Right)
+    compteur = 0;
+    for (size_t i = 0; i <= _subdivisions; i++)
+    {
+        for (size_t j = 0; j <= _subdivisions; j++)
+        {
+            if (j == saveJLeft) vertices[compteur].x = 0;
+            if (j == saveJRight) vertices[compteur].x = 3000;
+            compteur++;
+        }
+    }
+
+    //// Colle les points sur les bords du panorama (Top and Bottom)
+    //compteur = 0;
+    //bool columCut = false;
+    //for (size_t i = 0; i <= _subdivisions; i++)
+    //{
+    //    columCut = false;
+    //    for (size_t j = 0; j <= _subdivisions; j++)
+    //    {
+    //        if (!columCut && i != 0 && vertices[compteur].y > vertices[compteur - (_subdivisions + 1)].y)
+    //        {
+    //            // Coller tous les points de la ligne précédente sur le dessus de l'image
+    //            columCut = true;
+    //            for (size_t n = compteur - j - (_subdivisions + 1); n <= compteur - j - 1; n++)
+    //            {
+    //                vertices[n].y = 0;
+    //            }
+    //        }
+    //        compteur++;
+    //    }
+    //}
+
+
+    if (rowsCut == 0)
+    {
+        //_deletedColIndex = -1;
+    }
     qWarning() << "Yaw" << _yaw << "Pitch" << _pitch;
 }
 
@@ -184,16 +230,28 @@ void Surface::computeIndicesGrid(quint16* indices)
     int pointer = 0;
     for (int j = 0; j < _subdivisions; j++) {
         for (int i = 0; i < _subdivisions; i++) {
-            int topLeft = (i * (_subdivisions + 1)) + j;
-            int topRight = topLeft + 1;
-            int bottomLeft = topLeft + _subdivisions + 1;
-            int bottomRight = bottomLeft + 1;
-            indices[pointer++] = topLeft;
-            indices[pointer++] = bottomLeft;
-            indices[pointer++] = topRight;
-            indices[pointer++] = topRight;
-            indices[pointer++] = bottomLeft;
-            indices[pointer++] = bottomRight;
+            if (j == _deletedColIndex)
+            {
+                indices[pointer++] = 0;
+                indices[pointer++] = 0;
+                indices[pointer++] = 0;
+                indices[pointer++] = 0;
+                indices[pointer++] = 0;
+                indices[pointer++] = 0;
+            }
+            else
+            {
+                int topLeft = (i * (_subdivisions + 1)) + j;
+                int topRight = topLeft + 1;
+                int bottomLeft = topLeft + _subdivisions + 1;
+                int bottomRight = bottomLeft + 1;
+                indices[pointer++] = topLeft;
+                indices[pointer++] = bottomLeft;
+                indices[pointer++] = topRight;
+                indices[pointer++] = topRight;
+                indices[pointer++] = bottomLeft;
+                indices[pointer++] = bottomRight;
+            }
         }
     }
 }
