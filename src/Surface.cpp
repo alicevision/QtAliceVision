@@ -17,7 +17,7 @@ aliceVision::Vec2 toEquirectangular(const aliceVision::Vec3& spherical, int widt
 // Static Variables Initialisation
 int Surface::_downscaleLevelPanorama = 2;
 const int Surface::_panoramaWidth = 3000;
-const int Surface::_panoramaHeight = 1000;
+const int Surface::_panoramaHeight = 1500;
 
 
 Surface::Surface(int subdivisions)
@@ -161,9 +161,9 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
                     double deltaX = coordPano.x() - vertices[compteur - 1].x;
                     if (abs(deltaX) > 0.5 * _panoramaWidth && j != 0)
                     {
-                        rowsCut++;
                         if (deltaX > 0)
                         {
+                            rowsCut++;
                             _deletedColIndex = j - 1;
                             saveJLeft = j - 1;
                             saveJRight = j;
@@ -196,31 +196,9 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
         }
     }
 
-    //// Colle les points sur les bords du panorama (Top and Bottom)
-    //compteur = 0;
-    //bool columCut = false;
-    //for (size_t i = 0; i <= _subdivisions; i++)
-    //{
-    //    columCut = false;
-    //    for (size_t j = 0; j <= _subdivisions; j++)
-    //    {
-    //        if (!columCut && i != 0 && vertices[compteur].y > vertices[compteur - (_subdivisions + 1)].y)
-    //        {
-    //            // Coller tous les points de la ligne précédente sur le dessus de l'image
-    //            columCut = true;
-    //            for (size_t n = compteur - j - (_subdivisions + 1); n <= compteur - j - 1; n++)
-    //            {
-    //                vertices[n].y = 0;
-    //            }
-    //        }
-    //        compteur++;
-    //    }
-    //}
-
-
-    if (rowsCut == 0)
+    if (intrinsic && rowsCut == 0)
     {
-        //_deletedColIndex = -1;
+        _deletedColIndex = -1;
     }
     qWarning() << "Yaw" << _yaw << "Pitch" << _pitch;
 }
