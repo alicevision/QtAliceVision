@@ -101,13 +101,11 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
         textureSize *= pow(2.0, _downscaleLevelPanorama);
         aliceVision::sfmData::View view = _sfmData.getView(_idView);
         pose = _sfmData.getPose(view);
+        _deletedColIndex.clear();
     }
 
     bool fillCoordsSphere = _coordsSphereDefault.empty();
     int compteur = 0;
-    int rowsCut = 0;
-    int saveJLeft = -1;
-    int saveJRight = -1;
     for (size_t i = 0; i <= _subdivisions; i++)
     {
         for (size_t j = 0; j <= _subdivisions; j++)
@@ -159,18 +157,19 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
                 if (compteur > 0)
                 {
                     double deltaX = coordPano.x() - vertices[compteur - 1].x;
-                    if (abs(deltaX) > 0.5 * _panoramaWidth && j != 0)
+                    if (abs(deltaX) > 0.7 * _panoramaWidth)
                     {
-                        if (deltaX > 0)
-                        {
-                            rowsCut++;
-                            _deletedColIndex = j - 1;
-                            saveJLeft = j - 1;
-                            saveJRight = j;
-                        }
+                        _deletedColIndex.push_back(std::pair<int, int>(j - 1, i));
                     }
                 }
-  
+                if (compteur >= (_subdivisions + 1))
+                {
+                    double deltaY = coordPano.x() - vertices[compteur - (_subdivisions + 1)].x;
+                    if (abs(deltaY) > 0.7 * _panoramaWidth)
+                    {
+                        _deletedColIndex.push_back(std::pair<int, int>(j - 1, i));
+                    }
+                }
                 vertices[compteur].set(coordPano.x(), coordPano.y(), u, v);
             }
 
@@ -184,22 +183,7 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
     }
     // End for loop
 
-    // Colle les points sur les bords du panorama (Left and Right)
-    compteur = 0;
-    for (size_t i = 0; i <= _subdivisions; i++)
-    {
-        for (size_t j = 0; j <= _subdivisions; j++)
-        {
-            if (j == saveJLeft) vertices[compteur].x = 0;
-            if (j == saveJRight) vertices[compteur].x = 3000;
-            compteur++;
-        }
-    }
-
-    if (intrinsic && rowsCut == 0)
-    {
-        _deletedColIndex = -1;
-    }
+    
     qWarning() << "Yaw" << _yaw << "Pitch" << _pitch;
 }
 
@@ -208,7 +192,16 @@ void Surface::computeIndicesGrid(quint16* indices)
     int pointer = 0;
     for (int j = 0; j < _subdivisions; j++) {
         for (int i = 0; i < _subdivisions; i++) {
-            if (j == _deletedColIndex)
+            int remove = 0;
+            for (const auto it : _deletedColIndex) {
+                if ((j == it.first || (j == it.first + 1 && j != -1) || (j == it.first - 1))
+                    && (it.second == i || (it.second == i + 1) || (it.second == i - 1) ))
+                {
+                    remove++;
+                    // TODO mettre la 3eme boucle en dehors de la 2eme
+                }
+            }
+            if (remove > 0)
             {
                 indices[pointer++] = 0;
                 indices[pointer++] = 0;

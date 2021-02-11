@@ -137,7 +137,7 @@ private:
 	int _subdivisions;
 	int _vertexCount;
 	int _indexCount;
-	int _deletedColIndex = -1;
+	std::vector<std::pair<int, int> > _deletedColIndex;
 
 	// Vertices State
 	bool _verticesChanged = true;
