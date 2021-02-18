@@ -63,8 +63,6 @@ bool Surface::isDistoViewerEnabled() const
 
 void Surface::computeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize, bool updateSfmData)
 {
-    qWarning() << "Compute Grid";
-
     // Retrieve intrisics only if sfmData has been updated, and then Compute vertices
     aliceVision::camera::IntrinsicBase* intrinsic = nullptr;
     if (updateSfmData || _isPanoramaRotating)
@@ -74,7 +72,6 @@ void Surface::computeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indic
 
         if (intrinsic)
         {
-            qWarning() << "With Intrinsics";
             computePrincipalPoint(intrinsic, textureSize);
             computeVerticesGrid(vertices, textureSize, intrinsic);
         }
@@ -82,7 +79,6 @@ void Surface::computeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indic
     // If there is no sfm data update or intrinsics are invalid, keep the same vertices
     if ((!updateSfmData && !_isPanoramaRotating) || !intrinsic)
     {
-        qWarning() << "Without Intrinsics";
         computeVerticesGrid(vertices, textureSize, nullptr);
     }
         
@@ -183,8 +179,6 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
     }
     // End for loop
 
-    
-    qWarning() << "Yaw" << _yaw << "Pitch" << _pitch;
 }
 
 void Surface::computeIndicesGrid(quint16* indices)
@@ -306,7 +300,6 @@ void Surface::removeGrid(QSGGeometry* geometryLine)
 
 bool Surface::loadSfmData()
 {
-    qWarning() << "Loading Sfm Data";
     bool LoadSfm = true;
     subsChanged(false);
 
@@ -364,12 +357,12 @@ void Surface::setRotationValues(float tx, float ty)
 
 void Surface::rotatePano(aliceVision::Vec3& coordSphere)
 {
-    // Translation Left - Right
-    Eigen::AngleAxisd yawAngle(_yaw, Eigen::Vector3d::UnitY());
-    // Translation Top - Bottom
-    Eigen::AngleAxisd pitchAngle(_pitch, Eigen::Vector3d::UnitX());
+    Eigen::AngleAxis<double> Myaw(_yaw, Eigen::Vector3d::UnitY());
+    Eigen::AngleAxis<double> Mpitch(_pitch, Eigen::Vector3d::UnitX());
 
-    coordSphere = pitchAngle * yawAngle * coordSphere;
+    Eigen::Matrix3d cRo = Myaw.toRotationMatrix() * Mpitch.toRotationMatrix();
+
+    coordSphere = cRo * coordSphere;
 }
 
 void Surface::updateMouseAeraPanoCoords()

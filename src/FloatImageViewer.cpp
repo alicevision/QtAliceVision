@@ -215,7 +215,6 @@ QVector4D FloatImageViewer::pixelValueAt(int x, int y)
 
 void FloatImageViewer::reload()
 {
-    qWarning() << "RELOAD " << _surface.isPanoViewerEnabled();
     if (_clearBeforeLoad)
     {
         _image.reset();
@@ -456,6 +455,8 @@ void FloatImageViewer::updatePaintSurface(QSGGeometryNode* root, QSGSimpleMateri
         // Update surface
         bool updateSurface = _surface.update(vertices, indices, _textureSize, updateSfmData);
 
+        qWarning() << "Yaw :" << getYaw() << "Pitch :" << getPitch();
+
         root->geometry()->markIndexDataDirty();
         root->geometry()->markVertexDataDirty();
         root->markDirty(QSGNode::DirtyGeometry | QSGNode::DirtyMaterial);
@@ -584,7 +585,6 @@ void FloatImageViewer::setIdView(int id)
 
 void FloatImageViewer::setPanoViewerEnabled(bool state)
 {
-    qWarning() << "PANO VIEWER ===========" << state;
     if (state)
         _surface.setViewerType(ViewerType::PANORAMA);
     else
@@ -625,10 +625,34 @@ void FloatImageViewer::setDownscale(int level)
     Q_EMIT verticesChanged(false);
 }
 
-QVariantList FloatImageViewer::getPitchAndYaw()
+// return pitch in degrees
+double FloatImageViewer::getPitch()
 {
-    return QVariantList({ _surface.pitch(), _surface.yaw() });
+    // Radians
+    double pitch = _surface.pitch(); 
+    int power = pitch / M_PI_2;
+    pitch = fmod(pitch, M_PI_2) * pow(-1, power);
+
+    // Degres
+    pitch *= (180.0f / M_PI);        
+    if (power % 2 != 0) pitch = -90.0 - pitch;
+
+    return pitch;
 }
 
+// return yaw in degrees
+double FloatImageViewer::getYaw()
+{
+    // Radians
+    double yaw = _surface.yaw();
+    int power = yaw / M_PI;
+    yaw = fmod(yaw, M_PI) * pow(-1, power);
+
+    // Degres
+    yaw *= (180.0f / M_PI);
+    if (power % 2 != 0) yaw = -180.0 - yaw;
+
+    return yaw;
+}
 
 }  // qtAliceVision
