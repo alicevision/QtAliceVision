@@ -591,9 +591,19 @@ void FloatImageViewer::setPanoViewerEnabled(bool state)
         _surface.setViewerType(ViewerType::DEFAULT);
 }
 
-void FloatImageViewer::setRotationPano(float tx, float ty)
+void FloatImageViewer::rotatePanoramaRadians(float yawRadians, float pitchRadians)
 {
-    _surface.setRotationValues(tx, ty);
+    _surface.incrementRotationValues(yawRadians, pitchRadians);
+    _surface.verticesChanged(true);
+    Q_EMIT verticesChanged(false);
+}
+
+void FloatImageViewer::rotatePanoramaDegrees(float yawDegrees, float pitchDegrees)
+{
+    double yawRadians = yawDegrees * (M_PI / 180.0f);
+    double pitchRadians = pitchDegrees * (M_PI / 180.0f);
+
+    _surface.setRotationValues(yawRadians, pitchRadians);
     _surface.verticesChanged(true);
     Q_EMIT verticesChanged(false);
 }
