@@ -162,7 +162,7 @@ private:
 	// Viewer
 	ViewerType _viewerType = ViewerType::DEFAULT;
 
-	/* Panorama Variables */
+	/* Euler angle in radians */
 	double _pitch = 0.0;
 	double _yaw = 0.0;
 	// Coordinates on Unit Sphere without any rotation

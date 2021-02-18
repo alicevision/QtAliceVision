@@ -91,4 +91,6 @@ void PanoramaViewer::setSfmPath(const QString& path)
 }
 
 
+
+
 }  // qtAliceVision

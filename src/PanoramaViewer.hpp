@@ -70,6 +70,7 @@ namespace qtAliceVision
         Q_INVOKABLE void setSfmPath(const QString& path);
 
 
+
     private:
         /// Custom QSGNode update
         QSGNode* updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePaintNodeData* data) override;
