@@ -136,7 +136,8 @@ public:
     Q_INVOKABLE QPoint getPrincipalPoint();
     Q_INVOKABLE void setIdView(int id);
     Q_INVOKABLE void setPanoViewerEnabled(bool state);
-    Q_INVOKABLE void setRotationPano(float tx, float ty);
+    Q_INVOKABLE void rotatePanoramaRadians(float yawRadians, float pitchRadians);
+    Q_INVOKABLE void rotatePanoramaDegrees(float yawDegrees, float pitchDegrees);
     Q_INVOKABLE void mouseOver(bool state);
     Q_INVOKABLE QVariantList getMouseAreaPanoCoords();
     Q_INVOKABLE void setDownscale(int level);
