@@ -54,7 +54,8 @@ public:
 	double pitch() const { return _pitch; }
 	double yaw() const { return _yaw; }
 
-	void setRotationValues(float tx, float ty);
+	void setRotationValues(float yaw, float pitch);
+	void incrementRotationValues(float yaw, float pitch);
 
 	void setSubdivisions(int sub);
 	int subdivisions() const;

@@ -348,10 +348,17 @@ void Surface::computePrincipalPoint(aliceVision::camera::IntrinsicBase* intrinsi
     _principalPoint.setX(ppCorrection.y());
 }
 
-void Surface::setRotationValues(float tx, float ty)
+void Surface::setRotationValues(float yaw, float pitch)
 {
-    _yaw += tx;
-    _pitch += ty;
+    _yaw = yaw;
+    _pitch = pitch;
+    _isPanoramaRotating = true;
+}
+
+void Surface::incrementRotationValues(float yaw, float pitch)
+{
+    _yaw += yaw;
+    _pitch += pitch;
     _isPanoramaRotating = true;
 }
 
