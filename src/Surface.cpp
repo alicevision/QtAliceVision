@@ -358,7 +358,10 @@ void Surface::setRotationValues(float yaw, float pitch)
 void Surface::incrementRotationValues(float yaw, float pitch)
 {
     _yaw += yaw;
-    _pitch += pitch;
+    if (aliceVision::radianToDegree(_pitch + pitch) <= 90 && aliceVision::radianToDegree(_pitch + pitch) >= -90)
+    {
+        _pitch += pitch;
+    }
     _isPanoramaRotating = true;
 }
 

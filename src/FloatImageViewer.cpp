@@ -457,8 +457,6 @@ void FloatImageViewer::updatePaintSurface(QSGGeometryNode* root, QSGSimpleMateri
         // Update surface
         bool updateSurface = _surface.update(vertices, indices, _textureSize, updateSfmData);
 
-        qWarning() << "Yaw :" << getYaw() << "Pitch :" << getPitch();
-
         root->geometry()->markIndexDataDirty();
         root->geometry()->markVertexDataDirty();
         root->markDirty(QSGNode::DirtyGeometry | QSGNode::DirtyMaterial);
