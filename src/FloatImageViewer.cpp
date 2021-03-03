@@ -119,7 +119,6 @@ void FloatImageIORunnable::run()
         // ensure it fits in RAM memory
         if (_insidePanorama)
         {
-            qWarning() << "Level Downscale Panorama:" << Surface::downscaleLevelPanorama();
             for (size_t i = 0; i < Surface::downscaleLevelPanorama(); i++)
             {
                 FloatImage tmp;
