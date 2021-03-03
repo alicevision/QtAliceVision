@@ -78,18 +78,14 @@ void PanoramaViewer::computeInputImages()
     // ensure it fits in RAM memory
     aliceVision::system::MemoryInfo memInfo = aliceVision::system::getMemoryInfo();
     const int freeRam = int(memInfo.freeRam / std::pow(2, 20));
-    qWarning() << "Total amount of free RAM  : " << freeRam << " MB.";
-
     int downscaleLevel = 0;
-    while (totalSizeImages > freeRam * 0.05)
+    while (totalSizeImages > freeRam * 0.5)
     {
         downscaleLevel++;
         totalSizeImages *= 0.5;
     }
 
     _imagesData.insert("lvl", downscaleLevel);
-
-    qWarning() << "Total size of Images : " << totalSizeImages << " MB with a downscale level of " << downscaleLevel;
 
     Q_EMIT imagesDataChanged(_imagesData);
 }
