@@ -71,7 +71,7 @@ class FloatImageViewer : public QQuickItem
         Q_PROPERTY(QList<QPoint> vertices READ vertices NOTIFY verticesChanged)
 
         Q_PROPERTY(QColor gridColor READ gridColor NOTIFY gridColorChanged)
-
+        
 
 public:
     explicit FloatImageViewer(QQuickItem* parent = nullptr);

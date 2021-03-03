@@ -13,6 +13,7 @@
 #include <aliceVision/image/Image.hpp>
 #include <aliceVision/image/convertion.hpp>
 
+
 namespace qtAliceVision
 {
 
@@ -115,9 +116,10 @@ void FloatImageIORunnable::run()
             }
         }
 
-        // Downscale if image is part of a panorama
+        // ensure it fits in RAM memory
         if (_insidePanorama)
         {
+            qWarning() << "Level Downscale Panorama:" << Surface::downscaleLevelPanorama();
             for (size_t i = 0; i < Surface::downscaleLevelPanorama(); i++)
             {
                 FloatImage tmp;

@@ -18,7 +18,7 @@
 
 #include <aliceVision/sfmData/SfMData.hpp>
 #include <aliceVision/sfmDataIO/sfmDataIO.hpp>
-
+#include <aliceVision/system/MemoryInfo.hpp>
 
 
 namespace qtAliceVision
@@ -63,13 +63,33 @@ void PanoramaViewer::computeInputImages()
         }
     }
 
+
     // Loop on Views and insert (path, id)
+    int totalSizeImages = 0;
     for (const auto& view : sfmData.getViews())
     {
         QString path = QString::fromUtf8(view.second->getImagePath().c_str());
         QVariant id = view.second->getViewId();
         _imagesData.insert(path, id);
+
+        totalSizeImages += int(((view.second->getWidth() * view.second->getHeight()) * 4) / std::pow(10, 6));
     }
+
+    // ensure it fits in RAM memory
+    aliceVision::system::MemoryInfo memInfo = aliceVision::system::getMemoryInfo();
+    const int freeRam = int(memInfo.freeRam / std::pow(2, 20));
+    qWarning() << "Total amount of free RAM  : " << freeRam << " MB.";
+
+    int downscaleLevel = 0;
+    while (totalSizeImages > freeRam * 0.05)
+    {
+        downscaleLevel++;
+        totalSizeImages *= 0.5;
+    }
+
+    _imagesData.insert("lvl", downscaleLevel);
+
+    qWarning() << "Total size of Images : " << totalSizeImages << " MB with a downscale level of " << downscaleLevel;
 
     Q_EMIT imagesDataChanged(_imagesData);
 }
