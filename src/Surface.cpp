@@ -15,7 +15,7 @@ namespace qtAliceVision
 aliceVision::Vec2 toEquirectangular(const aliceVision::Vec3& spherical, int width, int height);
 
 // Static Variables Initialisation
-int Surface::_downscaleLevelPanorama = 2;
+int Surface::_downscaleLevelPanorama = 0;
 const int Surface::_panoramaWidth = 3000;
 const int Surface::_panoramaHeight = 1500;
 
