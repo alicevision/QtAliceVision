@@ -350,7 +350,7 @@ void FloatImageViewer::updatePaintSurface(QSGGeometryNode* root, QSGSimpleMateri
     // Highlight image if Panorama enable and user hovers the image
     if (_surface.isPanoViewerEnabled())
     {
-        _surface.isMouseOver() ? material->state()->gamma = 1.0f : material->state()->gamma = 2.0f;
+        _surface.isMouseOver() ? material->state()->gamma = 2.0f : material->state()->gamma = 1.0f;
         root->markDirty(QSGNode::DirtyMaterial);
     }
 
