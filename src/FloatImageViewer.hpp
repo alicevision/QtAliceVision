@@ -139,10 +139,11 @@ public:
     Q_INVOKABLE void rotatePanoramaRadians(float yawRadians, float pitchRadians);
     Q_INVOKABLE void rotatePanoramaDegrees(float yawDegrees, float pitchDegrees);
     Q_INVOKABLE void mouseOver(bool state);
-    Q_INVOKABLE QVariantList getMouseAreaPanoCoords();
     Q_INVOKABLE void setDownscale(int level);
     Q_INVOKABLE double getPitch();
     Q_INVOKABLE double getYaw();
+    Q_INVOKABLE bool isMouseInside(float mx, float my);
+
 
 
 private:

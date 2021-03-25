@@ -219,6 +219,11 @@ void Surface::computeIndicesGrid(quint16* indices)
             }
         }
     }
+
+    _indices.clear();
+    for (size_t i = 0; i < _indexCount; i++)
+        _indices.append(indices[i]);
+
 }
 
 void Surface::fillVertices(QSGGeometry::TexturedPoint2D* vertices)

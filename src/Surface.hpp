@@ -65,6 +65,7 @@ public:
 		
 	const QPoint& vertex(int index) const { return _vertices[index]; }
 	QPoint& vertex(int index) { return _vertices[index]; }
+	const quint32 index(int index) { return _indices[index]; }
 
 	inline int indexCount() const { return _indexCount; }
 	inline int vertexCount() const { return _vertexCount; }
@@ -135,6 +136,7 @@ private:
 
 	// Vertex Data
 	QList<QPoint> _vertices;
+	QList<quint16> _indices;
 	int _subdivisions;
 	int _vertexCount;
 	int _indexCount;
