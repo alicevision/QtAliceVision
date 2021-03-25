@@ -235,8 +235,6 @@ void Surface::fillVertices(QSGGeometry::TexturedPoint2D* vertices)
         _vertices.append(p);
     }
         
-    updateMouseAeraPanoCoords();
-
     _verticesChanged = false;
     _reinit = false;
 }
@@ -378,19 +376,6 @@ void Surface::rotatePano(aliceVision::Vec3& coordSphere)
     Eigen::Matrix3d cRo = Myaw.toRotationMatrix() * Mpitch.toRotationMatrix();
 
     coordSphere = cRo * coordSphere;
-}
-
-void Surface::updateMouseAeraPanoCoords()
-{
-    _mouseAreaCoords[0] = _vertices[_vertexCount - 1].x();                    // x
-    _mouseAreaCoords[1] = _vertices[0].y();                                   // y
-    _mouseAreaCoords[2] = _vertices[0].x() - _vertices[_vertexCount - 1].x(); // width
-    _mouseAreaCoords[3] = _vertices[_vertexCount - 1].y() - _vertices[0].y(); // height
-}
-
-QVariantList Surface::mouseAeraPanoCoords() const
-{
-    return _mouseAreaCoords;
 }
 
 /*

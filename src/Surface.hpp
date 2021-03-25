@@ -44,9 +44,6 @@ public:
 		
 	QPoint principalPoint() const { return _principalPoint; }
 
-	void updateMouseAeraPanoCoords();
-	QVariantList mouseAeraPanoCoords() const;
-
 
 	/*
 	* Getters & Setters
