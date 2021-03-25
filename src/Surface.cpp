@@ -347,8 +347,8 @@ void Surface::computePrincipalPoint(aliceVision::camera::IntrinsicBase* intrinsi
         ppCorrection = dynamic_cast<aliceVision::camera::Pinhole&>(*intrinsic).getPrincipalPoint();
     }
 
-    _principalPoint.setY(ppCorrection.x());
-    _principalPoint.setX(ppCorrection.y());
+    _principalPoint.setX(ppCorrection.x());
+    _principalPoint.setY(ppCorrection.y());
 }
 
 void Surface::setRotationValues(float yaw, float pitch)
