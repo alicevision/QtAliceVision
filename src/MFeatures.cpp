@@ -354,6 +354,7 @@ void MFeatures::getViewIdsToLoad(std::vector<aliceVision::IndexT>& viewIdsToLoad
       {
         viewIdsToKeep.push_back(viewFeaturesPerViewPair.first);
         toKeep = true;
+        break;
       }
     }
 
@@ -381,7 +382,7 @@ void MFeatures::getViewIdsToLoad(std::vector<aliceVision::IndexT>& viewIdsToLoad
     }
   }
 
-  // Remove view ids keeped from view ids to load
+  // Remove view ids kept from view ids to load
   for (aliceVision::IndexT viewId: viewIdsToKeep)
   {
     auto iter = std::find(viewIdsToLoad.begin(), viewIdsToLoad.end(), viewId);
