@@ -179,41 +179,14 @@ void MFeatures::load()
 
   std::vector<aliceVision::IndexT> viewIds;
 
-  if (_loadTimeWindow && _timeWindow > 0 &&  haveValidLandmarks())
+  getViewIdsToLoad(viewIds);
+
+  if (viewIds.empty())
   {
-    const aliceVision::sfmData::SfMData& sfmData = _msfmData->rawData();
-    
-    aliceVision::IndexT currentIntrinsicId = aliceVision::UndefinedIndexT;
-    aliceVision::IndexT currentFrameId = aliceVision::UndefinedIndexT;
-
-    try
-    {
-      currentIntrinsicId = sfmData.getView(_currentViewId).getIntrinsicId();
-      currentFrameId = sfmData.getView(_currentViewId).getFrameId();;
-    }
-    catch (std::exception& e)
-    {
-      qDebug() << "[QtAliceVision] Features: Failed to find the current view in the SfM: " << "\n" << e.what();
-    }
-
-    if (currentFrameId != aliceVision::UndefinedIndexT)
-    {
-      const aliceVision::IndexT minFrameId = (currentFrameId < _timeWindow) ? 0 : currentFrameId - _timeWindow;
-      const aliceVision::IndexT maxFrameId = currentFrameId + _timeWindow;
-
-      for (const auto& viewPair : sfmData.getViews())
-      {
-        const aliceVision::sfmData::View& view = *(viewPair.second);
-        if(currentIntrinsicId  == view.getIntrinsicId())
-          if((view.getFrameId() >= minFrameId) && (view.getFrameId() <= maxFrameId))
-            viewIds.emplace_back(view.getViewId());
-      }
-    }
-  }
-
-  if (viewIds.size() <= 1)
-  {
-    viewIds.emplace_back(_currentViewId);
+    // no need to load features in a seperate thread (e.g. data already in memory).
+    // call onFeaturesReady because Tracks / SfMData information may need to be updated.
+    onFeaturesReady(nullptr);
+    return;
   }
 
   qDebug("[QtAliceVision] Features: Load features from file in a seperate thread.");
@@ -228,16 +201,23 @@ void MFeatures::onFeaturesReady(MViewFeaturesPerViewPerDesc* viewFeaturesPerView
 {
   if (_outdatedFeatures) 
   {
-    clearViewFeaturesPerViewPerDesc(viewFeaturesPerViewPerDesc);
+    clearViewFeaturesPerViewPerDesc(viewFeaturesPerViewPerDesc); // handle viewFeaturesPerViewPerDesc == nullptr case
     setStatus(None);
     load();
     return;
   }
 
-  clearViewFeaturesPerViewPerDesc(_viewFeaturesPerViewPerDesc);
-  updateFromTracks(viewFeaturesPerViewPerDesc);
-  updateFromSfM(viewFeaturesPerViewPerDesc);
-  _viewFeaturesPerViewPerDesc = viewFeaturesPerViewPerDesc;
+  if (viewFeaturesPerViewPerDesc != nullptr)
+  {
+    for (auto& viewFeaturesPerViewPerDescPair : *viewFeaturesPerViewPerDesc)
+    {
+      const auto& describerType = viewFeaturesPerViewPerDescPair.first;
+      (*_viewFeaturesPerViewPerDesc)[describerType].insert(viewFeaturesPerViewPerDescPair.second.begin(), viewFeaturesPerViewPerDescPair.second.end());
+    }
+  }
+
+  updateFromTracks(_viewFeaturesPerViewPerDesc);
+  updateFromSfM(_viewFeaturesPerViewPerDesc);
   updateFeaturesInfo();
 
   setStatus(Ready);
@@ -302,6 +282,119 @@ void MFeatures::getViewFeaturesPerFramePerTrack(const QString& describerType, MV
   }
 }
 
+void MFeatures::getViewIdsToLoad(std::vector<aliceVision::IndexT>& viewIdsToLoad)
+{
+  // multiple views
+  if (_loadTimeWindow && _timeWindow > 0 && haveValidLandmarks())
+  {
+    const aliceVision::sfmData::SfMData& sfmData = _msfmData->rawData();
+
+    aliceVision::IndexT currentIntrinsicId = aliceVision::UndefinedIndexT;
+    aliceVision::IndexT currentFrameId = aliceVision::UndefinedIndexT;
+
+    try
+    {
+      currentIntrinsicId = sfmData.getView(_currentViewId).getIntrinsicId();
+      currentFrameId = sfmData.getView(_currentViewId).getFrameId();;
+    }
+    catch (std::exception& e)
+    {
+      qDebug() << "[QtAliceVision] Features: Failed to find the current view in the SfM: " << "\n" << e.what();
+    }
+
+    if (currentFrameId != aliceVision::UndefinedIndexT)
+    {
+      const aliceVision::IndexT minFrameId = (currentFrameId < _timeWindow) ? 0 : currentFrameId - _timeWindow;
+      const aliceVision::IndexT maxFrameId = currentFrameId + _timeWindow;
+
+      for (const auto& viewPair : sfmData.getViews())
+      {
+        const aliceVision::sfmData::View& view = *(viewPair.second);
+        if (currentIntrinsicId == view.getIntrinsicId())
+          if ((view.getFrameId() >= minFrameId) && (view.getFrameId() <= maxFrameId))
+            viewIdsToLoad.emplace_back(view.getViewId());
+      }
+    }
+  }
+
+  // single view
+  if (viewIdsToLoad.empty())
+  {
+    viewIdsToLoad.emplace_back(_currentViewId);
+  }
+
+  // first initialization
+  if (_viewFeaturesPerViewPerDesc == nullptr)
+  {
+    _viewFeaturesPerViewPerDesc = new MViewFeaturesPerViewPerDesc();
+    return;
+  }
+
+  // desciber types changed
+  if (_viewFeaturesPerViewPerDesc->size() != _describerTypes.size())
+  {
+    clearViewFeaturesPerViewPerDesc(_viewFeaturesPerViewPerDesc);
+    return;
+  }
+
+  // caching mechanism
+  std::vector<aliceVision::IndexT> viewIdsToKeep;
+  std::vector<aliceVision::IndexT> viewIdsToRemove;
+
+  const MViewFeaturesPerView& viewFeaturesPerView = _viewFeaturesPerViewPerDesc->begin()->second;
+
+  // find view id to keep / to remove
+  for (const auto& viewFeaturesPerViewPair : viewFeaturesPerView)
+  {
+    bool toKeep = false;
+      
+    for (aliceVision::IndexT viewId : viewIdsToLoad)
+    {
+      if (viewFeaturesPerViewPair.first == viewId)
+      {
+        viewIdsToKeep.push_back(viewFeaturesPerViewPair.first);
+        toKeep = true;
+      }
+    }
+
+    if(!toKeep)
+      viewIdsToRemove.push_back(viewFeaturesPerViewPair.first);
+  }
+
+  if (viewIdsToKeep.empty()) // nothing to do
+  {
+    clearViewFeaturesPerViewPerDesc(_viewFeaturesPerViewPerDesc);
+    return;
+  }
+
+  // Remove MViewFeatures in memory
+  for (const auto& decriberType : _describerTypes)
+  {
+    MViewFeaturesPerView& viewFeaturesPerView = _viewFeaturesPerViewPerDesc->at(decriberType.toString());
+
+    for (aliceVision::IndexT viewIdToRemove : viewIdsToRemove)
+    {
+      auto iter = viewFeaturesPerView.find(viewIdToRemove);
+
+      if (iter != viewFeaturesPerView.end())
+        viewFeaturesPerView.erase(iter);
+    }
+  }
+
+  // Remove view ids keeped from view ids to load
+  for (aliceVision::IndexT viewId: viewIdsToKeep)
+  {
+    auto iter = std::find(viewIdsToLoad.begin(), viewIdsToLoad.end(), viewId);
+
+    if (iter != viewIdsToLoad.end())
+      viewIdsToLoad.erase(iter);
+  }
+
+  qDebug() << "[QtAliceVision] Features: Caching: " << viewIdsToKeep.size() << " frame(s) kept, " 
+                                                    << viewIdsToRemove.size() << " frame(s) removed, " 
+                                                    << viewIdsToLoad.size() << " frame(s) requested.";
+}
+
 void MFeatures::updateFromTracks(MViewFeaturesPerViewPerDesc* viewFeaturesPerViewPerDesc)
 {
   if (viewFeaturesPerViewPerDesc == nullptr || viewFeaturesPerViewPerDesc->empty())
@@ -339,6 +432,9 @@ void MFeatures::updateFromTracks(MViewFeaturesPerViewPerDesc* viewFeaturesPerVie
     {
       const aliceVision::IndexT viewId = viewFeaturesPair.first;
       MViewFeatures& featuresPerView = viewFeaturesPair.second;
+
+      if (featuresPerView.nbTracks > 0) // view already update 
+        continue;
 
       auto tracksPerViewIt = _mtracks->tracksPerView().find(viewId);
       if (tracksPerViewIt == _mtracks->tracksPerView().end())
@@ -420,6 +516,9 @@ void MFeatures::updateFromSfM(MViewFeaturesPerViewPerDesc* viewFeaturesPerViewPe
     {
       const aliceVision::IndexT viewId = viewFeaturesPair.first;
       MViewFeatures& featuresPerView = viewFeaturesPair.second;
+
+      if (featuresPerView.nbLandmarks > 0) // view already update 
+        continue;
 
       const auto viewIt = _msfmData->rawData().getViews().find(viewId);
       if (viewIt == _msfmData->rawData().getViews().end())

@@ -195,9 +195,29 @@ private:
     
     // Private methods (to use with Loading status)
 
+    /**
+    * @brief Get the list of view ids to load in memory
+    * Handle muliple views (time window) / single view cases.
+    * @note Implements simple caching mechanism to avoid loading view information already in memory, removed unused view information.
+    * @param[in,out] viewIds The list of viewIds to load in memory
+    */
+    void getViewIdsToLoad(std::vector<aliceVision::IndexT>& viewIds);
+
+    /**
+    * @brief Update MViewFeatures information with Tracks information
+    * @param[in,out] viewFeaturesPerViewPerDesc (handle nullptr / empty cases)
+    */
     void updateFromTracks(MViewFeaturesPerViewPerDesc* viewFeaturesPerViewPerDesc);
+
+    /**
+    * @brief Update MViewFeatures information with SfMData information
+    * @param[in,out] viewFeaturesPerViewPerDesc (handle nullptr / empty cases)
+    */
     void updateFromSfM(MViewFeaturesPerViewPerDesc* viewFeaturesPerViewPerDesc);
 
+    /**
+    * @brief Update the QVariantMap featuresInfo (useful for QML) from loaded data
+    */
     void updateFeaturesInfo();
 
     void clearViewFeaturesPerViewPerDesc(MViewFeaturesPerViewPerDesc* viewFeaturesPerViewPerDesc);
