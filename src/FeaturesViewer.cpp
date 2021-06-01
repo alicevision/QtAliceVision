@@ -249,7 +249,7 @@ namespace qtAliceVision
         ++nbTracksToDraw;
       }
 
-      if (_maxTracksToDisplay > 0 && nbTracksToDraw >= _maxTracksToDisplay)
+      if (_maxTracksToDisplay >= 0 && nbTracksToDraw >= _maxTracksToDisplay)
         break;
     }
 
@@ -361,7 +361,7 @@ namespace qtAliceVision
           setVerticeLine(vIdx + 1, QPointF(it->second->x(), it->second->y()), contiguousFeaturesInTrack, inliersInTrack);
           ++nbLinesDrawn;
 
-          if (nbLinesDrawn >= nbLinesToDraw) // useful if _maxTracksToDisplay > 0
+          if (nbLinesDrawn >= nbLinesToDraw) // useful if _maxTracksToDisplay >= 0
             return;
         }
 

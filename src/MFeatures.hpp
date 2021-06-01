@@ -230,7 +230,7 @@ private:
     QUrl _featureFolder;
     QVariantList _describerTypes;
     aliceVision::IndexT _currentViewId;
-    int _timeWindow = 1;
+    int _timeWindow = 1; // -1 is no limit
     bool _loadTimeWindow = false;
     bool _outdatedFeatures = false;
 

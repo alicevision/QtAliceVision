@@ -285,7 +285,7 @@ void MFeatures::getViewFeaturesPerFramePerTrack(const QString& describerType, MV
 void MFeatures::getViewIdsToLoad(std::vector<aliceVision::IndexT>& viewIdsToLoad)
 {
   // multiple views
-  if (_loadTimeWindow && _timeWindow > 0 && haveValidLandmarks())
+  if (_loadTimeWindow && _timeWindow != 0 && haveValidLandmarks())
   {
     const aliceVision::sfmData::SfMData& sfmData = _msfmData->rawData();
 
@@ -304,15 +304,27 @@ void MFeatures::getViewIdsToLoad(std::vector<aliceVision::IndexT>& viewIdsToLoad
 
     if (currentFrameId != aliceVision::UndefinedIndexT)
     {
-      const aliceVision::IndexT minFrameId = (currentFrameId < _timeWindow) ? 0 : currentFrameId - _timeWindow;
-      const aliceVision::IndexT maxFrameId = currentFrameId + _timeWindow;
-
-      for (const auto& viewPair : sfmData.getViews())
+      if (_timeWindow < 0) // no limit
       {
-        const aliceVision::sfmData::View& view = *(viewPair.second);
-        if (currentIntrinsicId == view.getIntrinsicId())
-          if ((view.getFrameId() >= minFrameId) && (view.getFrameId() <= maxFrameId))
-            viewIdsToLoad.emplace_back(view.getViewId());
+        for (const auto& viewPair : sfmData.getViews())
+        {
+          const aliceVision::sfmData::View& view = *(viewPair.second);
+          if ((currentIntrinsicId == view.getIntrinsicId() && (view.getFrameId() != aliceVision::UndefinedIndexT)))
+              viewIdsToLoad.emplace_back(view.getViewId());
+        }
+
+      }
+      else // time window
+      {
+        const aliceVision::IndexT minFrameId = (currentFrameId < _timeWindow) ? 0 : currentFrameId - _timeWindow;
+        const aliceVision::IndexT maxFrameId = currentFrameId + _timeWindow;
+
+        for (const auto& viewPair : sfmData.getViews())
+        {
+          const aliceVision::sfmData::View& view = *(viewPair.second);
+          if ((currentIntrinsicId == view.getIntrinsicId()) && (view.getFrameId() >= minFrameId) && (view.getFrameId() <= maxFrameId))
+              viewIdsToLoad.emplace_back(view.getViewId());
+        }
       }
     }
   }
