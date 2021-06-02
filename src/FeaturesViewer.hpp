@@ -57,9 +57,11 @@ namespace qtAliceVision {
     Q_ENUM(FeatureDisplayMode)
 
     enum TrackDisplayMode {
-      All = 0,            // non-contiguous, contiguous outliers, contiguous inliers
-      Contiguous,         // Keep only: contiguous outliers, contiguous inliers
-      ContiguousInliers   // Keep only: contiguous inliers
+      All = 0,                // All tracks: non-contiguous, contiguous outliers, contiguous inliers
+      WithInliers,            // Keep tracks with at least one inlier
+      Contiguous,             // Keep contiguous tracks (with contiguous outliers and/or contiguous inliers)
+      ContiguousWithInliers,  // Keep contiguous tracks with at least one inlier
+      ContiguousInliers       // Keep contiguous inliers tracks 
     };
     Q_ENUM(TrackDisplayMode)
 

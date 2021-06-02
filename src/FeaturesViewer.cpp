@@ -300,14 +300,16 @@ namespace qtAliceVision
     QSGGeometry::ColoredPoint2D* verticesLines = geometryLine->vertexDataAsColoredPoint2D();
 
     // utility lambda to register a vertex
-    const auto setVerticeLine = [&](unsigned int index, const QPointF& point, bool contiguous, bool inliers)
+    const auto setVerticeLine = [&](unsigned int index, const QPointF& point, bool contiguous, bool inliers, bool trackHasInliers)
     {
       QColor c = contiguous ? (inliers ? _landmarkColor : _matchColor) : QColor(50, 50, 50);
 
       switch (_trackDisplayMode)
       {
-      case FeaturesViewer::Contiguous:  if (!contiguous) { c = QColor(0, 0, 0, 0); }  break;
-      case FeaturesViewer::ContiguousInliers:  if (!contiguous || !inliers) { c = QColor(0, 0, 0, 0); }  break;
+        case FeaturesViewer::WithInliers: if (!trackHasInliers) { c = QColor(0, 0, 0, 0); }  break;
+        case FeaturesViewer::Contiguous:  if (!contiguous) { c = QColor(0, 0, 0, 0); }  break;
+        case FeaturesViewer::ContiguousWithInliers:  if (!contiguous || !trackHasInliers) { c = QColor(0, 0, 0, 0); }  break;
+        case FeaturesViewer::ContiguousInliers:  if (!contiguous || !inliers) { c = QColor(0, 0, 0, 0); }  break;
       }
 
       verticesLines[index].set(
@@ -337,6 +339,8 @@ namespace qtAliceVision
       aliceVision::IndexT previousFrameId = aliceVision::UndefinedIndexT;
       const MFeature* previousFeature = nullptr;
 
+      const bool trackHasInliers = (trackFeaturesPair.second.nbLandmarks > 0);
+
       for (aliceVision::IndexT frameId = firstFrameId; frameId <= lastFrameId; ++frameId)
       {
         auto it = featuresPerFrame.find(frameId);
@@ -347,14 +351,14 @@ namespace qtAliceVision
         if (previousFrameId != aliceVision::UndefinedIndexT)
         {
           // The 2 features of the track are contiguous
-          const bool contiguousFeaturesInTrack = (previousFrameId == (frameId - 1));
+          const bool contiguous = (previousFrameId == (frameId - 1));
           // The 2 features of the track are resectioning inliers
-          const bool inliersInTrack = ((previousFeature->landmarkId() > 0) && (it->second->landmarkId() > 0));
+          const bool inliers = ((previousFeature->landmarkId() > 0) && (it->second->landmarkId() > 0));
 
           const unsigned vIdx = nbLinesDrawn * kTrackLineVertices;
 
-          setVerticeLine(vIdx, QPointF(previousFeature->x(), previousFeature->y()), contiguousFeaturesInTrack, inliersInTrack);
-          setVerticeLine(vIdx + 1, QPointF(it->second->x(), it->second->y()), contiguousFeaturesInTrack, inliersInTrack);
+          setVerticeLine(vIdx, QPointF(previousFeature->x(), previousFeature->y()), contiguous, inliers, trackHasInliers);
+          setVerticeLine(vIdx + 1, QPointF(it->second->x(), it->second->y()), contiguous, inliers, trackHasInliers);
           ++nbLinesDrawn;
 
           if (nbLinesDrawn >= nbLinesToDraw) // useful if _maxTracksToDisplay >= 0
