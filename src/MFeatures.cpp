@@ -637,7 +637,7 @@ void MFeatures::updateTrackFeaturesPerTrackPerDesc()
           if (feature->landmarkId() >= 0)
             ++trackFreatures.nbLandmarks;
           maxFeatureScale = std::max(maxFeatureScale, feature->scale());
-          minFeatureScale = std::min(maxFeatureScale, feature->scale());
+          minFeatureScale = std::min(minFeatureScale, feature->scale());
           trackFreatures.maxFrameId = std::max(trackFreatures.maxFrameId, frameId);
           trackFreatures.minFrameId = std::min(trackFreatures.minFrameId, frameId);
           trackFreatures.featureScaleScore += feature->scale(); // initialize score with feature scale sum
