@@ -29,8 +29,10 @@ namespace qtAliceVision {
       Q_PROPERTY(FeatureDisplayMode featureDisplayMode MEMBER _featureDisplayMode NOTIFY featureDisplayModeChanged)
       // Track display mode (see TrackDisplayMode enum)
       Q_PROPERTY(TrackDisplayMode trackDisplayMode MEMBER _trackDisplayMode NOTIFY trackDisplayModeChanged)
-      // Maximum number of track to display
-      Q_PROPERTY(int maxTracksToDisplay MEMBER _maxTracksToDisplay NOTIFY maxTracksToDisplayChanged)
+      // Minimum track feature scale to display
+      Q_PROPERTY(float minTrackFeatureScaleFilter MEMBER _minTrackFeatureScaleFilter NOTIFY minTrackFeatureScaleFilterChanged)
+      // Minimum track feature scale to display
+      Q_PROPERTY(float maxTrackFeatureScaleFilter MEMBER _maxTrackFeatureScaleFilter NOTIFY maxTrackFeatureScaleFilterChanged)
       // Features color
       Q_PROPERTY(QColor featureColor MEMBER _featureColor NOTIFY featureColorChanged)
       // Matches color
@@ -74,7 +76,9 @@ namespace qtAliceVision {
 
     Q_SIGNAL void featureDisplayModeChanged();
     Q_SIGNAL void trackDisplayModeChanged();
-    Q_SIGNAL void maxTracksToDisplayChanged();
+
+    Q_SIGNAL void minTrackFeatureScaleFilterChanged();
+    Q_SIGNAL void maxTrackFeatureScaleFilterChanged();
 
     Q_SIGNAL void featureColorChanged();
     Q_SIGNAL void matchColorChanged();
@@ -108,7 +112,9 @@ namespace qtAliceVision {
 
     FeatureDisplayMode _featureDisplayMode = FeaturesViewer::Points;
     TrackDisplayMode _trackDisplayMode = FeaturesViewer::Contiguous;
-    int _maxTracksToDisplay = -1; // no limit
+
+    float _minTrackFeatureScaleFilter = 0.f;
+    float _maxTrackFeatureScaleFilter = 1.f;
 
     QColor _featureColor = QColor(20, 220, 80);
     QColor _matchColor = QColor(255, 127, 0);

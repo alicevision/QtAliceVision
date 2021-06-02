@@ -24,7 +24,9 @@ namespace qtAliceVision
 
     connect(this, &FeaturesViewer::featureDisplayModeChanged, this, &FeaturesViewer::update);
     connect(this, &FeaturesViewer::trackDisplayModeChanged, this, &FeaturesViewer::update);
-    connect(this, &FeaturesViewer::maxTracksToDisplayChanged, this, &FeaturesViewer::update);
+
+    connect(this, &FeaturesViewer::minTrackFeatureScaleFilterChanged, this, &FeaturesViewer::update);
+    connect(this, &FeaturesViewer::maxTrackFeatureScaleFilterChanged, this, &FeaturesViewer::update);
 
     connect(this, &FeaturesViewer::featureColorChanged, this, &FeaturesViewer::update);
     connect(this, &FeaturesViewer::matchColorChanged, this, &FeaturesViewer::update);
@@ -239,14 +241,19 @@ namespace qtAliceVision
     {
       for (const auto& trackFeaturesPair : *trackFeaturesPerTrack)
       {
-        if (!trackFeaturesPair.second.featuresPerFrame.empty())
+        if (trackFeaturesPair.second.featureScaleScore > _maxTrackFeatureScaleFilter ||
+            trackFeaturesPair.second.featureScaleScore < _minTrackFeatureScaleFilter)
         {
-          nbLinesToDraw += (trackFeaturesPair.second.featuresPerFrame.size() - 1);
-          ++nbTracksToDraw;
+          continue;
         }
 
-        if (_maxTracksToDisplay >= 0 && nbTracksToDraw >= _maxTracksToDisplay)
-          break;
+        if (trackFeaturesPair.second.featuresPerFrame.empty())
+        {
+          continue;
+        }
+
+        nbLinesToDraw += (trackFeaturesPair.second.featuresPerFrame.size() - 1);
+        ++nbTracksToDraw;
       }
     }
 
