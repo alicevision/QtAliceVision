@@ -70,16 +70,27 @@ public:
       QList<MFeature*> features;
 
       aliceVision::IndexT frameId = aliceVision::UndefinedIndexT;
-      int nbLandmarks = 0; // number of features associated to a 3D landmark
+      int nbLandmarks = 0; // number of features of the view associated to a 3D landmark
       int nbTracks = 0; // number of tracks unvalidated after resection
     };
     using MViewFeaturesPerView = std::map<aliceVision::IndexT, MViewFeatures>;
     using MViewFeaturesPerViewPerDesc = std::map<QString, MViewFeaturesPerView>;
-    using MViewFeaturesPerFramePerTrack = std::map<int, std::map<aliceVision::IndexT, const MFeature*>>;
+
+    struct MTrackFeatures {
+      std::map<aliceVision::IndexT, const MFeature*> featuresPerFrame;
+
+      aliceVision::IndexT minFrameId = std::numeric_limits<aliceVision::IndexT>::max();
+      aliceVision::IndexT maxFrameId = std::numeric_limits<aliceVision::IndexT>::min();
+      int nbLandmarks = 0; // number of features of the track associated to a 3D landmark 
+      float featureScaleScore = 0.f; // score based on sum of feature scale
+    };
+    using MTrackFeaturesPerTrack = std::map<aliceVision::IndexT, MTrackFeatures>;
+    using MTrackFeaturesPerTrackPerDesc = std::map<QString, MTrackFeaturesPerTrack>;
 
     // SLOTS
 
     Q_SLOT void load();
+    Q_SLOT void clearAndLoad();
     Q_SLOT void onFeaturesReady(MViewFeaturesPerViewPerDesc* viewFeaturesPerViewPerDesc);
 
     // SIGNALS
@@ -113,7 +124,7 @@ public:
     * @brief Allows to know if feature info can be accessed / are available
     * @return true if the feature info can be accessed
     */
-    bool haveValidFeatures() const { return (_viewFeaturesPerViewPerDesc != nullptr) && (_status == Ready); }
+    bool haveValidFeatures() const { return (!_viewFeaturesPerViewPerDesc.empty()) && (_status == Ready); }
 
     /**
     * @brief Allows to know if SfMData info can be accessed / are available
@@ -156,9 +167,9 @@ public:
     /**
      * @brief Build / Organize feature info per track for a giver decriber type
      * @param[in] describerType The given describer type
-     * @param[in,out] viewFeaturesPerFramePerTrack
+     * @return MTrackFeaturesPerTrack pointer (or nullptr)
      */
-    void getViewFeaturesPerFramePerTrack(const QString& describerType, MViewFeaturesPerFramePerTrack& viewFeaturesPerFramePerTrack) const;
+    const MTrackFeaturesPerTrack* getTrackFeaturesPerTrack(const QString& describerType)  const;
 
     /**
      * @brief Allow access of feature info directly in QML
@@ -206,14 +217,21 @@ private:
     /**
     * @brief Update MViewFeatures information with Tracks information
     * @param[in,out] viewFeaturesPerViewPerDesc (handle nullptr / empty cases)
+    * @return true if MViewFeatures information have been updated
     */
-    void updateFromTracks(MViewFeaturesPerViewPerDesc* viewFeaturesPerViewPerDesc);
+    bool updateFromTracks(MViewFeaturesPerViewPerDesc* viewFeaturesPerViewPerDesc);
 
     /**
     * @brief Update MViewFeatures information with SfMData information
     * @param[in,out] viewFeaturesPerViewPerDesc (handle nullptr / empty cases)
+    * @return true if MViewFeatures information have been updated
     */
-    void updateFromSfM(MViewFeaturesPerViewPerDesc* viewFeaturesPerViewPerDesc);
+    bool updateFromSfM(MViewFeaturesPerViewPerDesc* viewFeaturesPerViewPerDesc);
+
+    /**
+    * @brief Update MTrackFeaturesPerTrackPerDesc in order to get per track feature access
+    */
+    void updateTrackFeaturesPerTrackPerDesc();
 
     /**
     * @brief Update the QVariantMap featuresInfo (useful for QML) from loaded data
@@ -221,6 +239,7 @@ private:
     void updateFeaturesInfo();
 
     void clearViewFeaturesPerViewPerDesc(MViewFeaturesPerViewPerDesc* viewFeaturesPerViewPerDesc);
+
     void clearAllTrackInfo();
     void clearAllSfMInfo();
     void clearAll();
@@ -234,7 +253,8 @@ private:
     bool _loadTimeWindow = false;
     bool _outdatedFeatures = false;
 
-    MViewFeaturesPerViewPerDesc* _viewFeaturesPerViewPerDesc = nullptr;
+    MViewFeaturesPerViewPerDesc _viewFeaturesPerViewPerDesc;
+    MTrackFeaturesPerTrackPerDesc _trackFeaturesPerTrackPerDesc;
 
     MSfMData* _msfmData = nullptr;
     MTracks* _mtracks = nullptr;

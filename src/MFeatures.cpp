@@ -96,8 +96,8 @@ MFeatures::MFeatures()
   connect(this, &MFeatures::currentViewIdChanged, this, &MFeatures::load);
   connect(this, &MFeatures::loadTimeWindowChanged, this, &MFeatures::load);
   connect(this, &MFeatures::timeWindowChanged, this, &MFeatures::load);
-  connect(this, &MFeatures::tracksChanged, this, &MFeatures::load);
-  connect(this, &MFeatures::sfmDataChanged, this, &MFeatures::load);
+  connect(this, &MFeatures::tracksChanged, this, &MFeatures::clearAndLoad);
+  connect(this, &MFeatures::sfmDataChanged, this, &MFeatures::clearAndLoad);
 }
 
 MFeatures::~MFeatures()
@@ -197,29 +197,55 @@ void MFeatures::load()
   QThreadPool::globalInstance()->start(ioRunnable);
 }
 
+void MFeatures::clearAndLoad()
+{
+  // unsafe clear
+  clearAllTrackInfo();
+  clearAllSfMInfo();
+
+  load();
+}
+
 void MFeatures::onFeaturesReady(MViewFeaturesPerViewPerDesc* viewFeaturesPerViewPerDesc)
 {
-  if (_outdatedFeatures) 
+  if (_outdatedFeatures)
   {
-    clearViewFeaturesPerViewPerDesc(viewFeaturesPerViewPerDesc); // handle viewFeaturesPerViewPerDesc == nullptr case
+    clearViewFeaturesPerViewPerDesc(viewFeaturesPerViewPerDesc); // handle nullptr cases
     setStatus(None);
     load();
     return;
   }
 
+  // add loaded features
   if (viewFeaturesPerViewPerDesc != nullptr)
   {
     for (auto& viewFeaturesPerViewPerDescPair : *viewFeaturesPerViewPerDesc)
     {
       const auto& describerType = viewFeaturesPerViewPerDescPair.first;
-      (*_viewFeaturesPerViewPerDesc)[describerType].insert(viewFeaturesPerViewPerDescPair.second.begin(), viewFeaturesPerViewPerDescPair.second.end());
+      _viewFeaturesPerViewPerDesc[describerType].insert(viewFeaturesPerViewPerDescPair.second.begin(), viewFeaturesPerViewPerDescPair.second.end());
     }
   }
 
-  updateFromTracks(_viewFeaturesPerViewPerDesc);
-  updateFromSfM(_viewFeaturesPerViewPerDesc);
-  updateFeaturesInfo();
+  // update features with Tracks and SfMData information
+  const bool tracksUpdated = updateFromTracks(&_viewFeaturesPerViewPerDesc);
+  const bool sfmUpdated = updateFromSfM(&_viewFeaturesPerViewPerDesc);
 
+  // update internal structures
+  if (viewFeaturesPerViewPerDesc != nullptr || _trackFeaturesPerTrackPerDesc.empty() || tracksUpdated || sfmUpdated)
+  {
+    updateTrackFeaturesPerTrackPerDesc();
+    updateFeaturesInfo();
+  }
+
+  //clear loaded features pointer
+  if (viewFeaturesPerViewPerDesc != nullptr)
+  {
+    viewFeaturesPerViewPerDesc->clear();
+    // no need to delete feature pointers, they are hosted and manage by _viewFeaturesPerViewPerDesc
+    delete viewFeaturesPerViewPerDesc;
+  }
+
+  // done
   setStatus(Ready);
 }
 
@@ -244,11 +270,11 @@ aliceVision::IndexT MFeatures::getCurrentFrameId() const
 
 const MFeatures::MViewFeatures* MFeatures::getCurrentViewFeatures(const QString& describerType) const
 {
-  if (_viewFeaturesPerViewPerDesc == nullptr)
+  if (_viewFeaturesPerViewPerDesc.empty())
     return nullptr;
 
-  auto itrDesc = _viewFeaturesPerViewPerDesc->find(describerType);
-  if (itrDesc == _viewFeaturesPerViewPerDesc->end())
+  auto itrDesc = _viewFeaturesPerViewPerDesc.find(describerType);
+  if (itrDesc == _viewFeaturesPerViewPerDesc.end())
     return nullptr;
 
   auto itrView = itrDesc->second.find(_currentViewId);
@@ -258,28 +284,16 @@ const MFeatures::MViewFeatures* MFeatures::getCurrentViewFeatures(const QString&
   return &(itrView->second);
 }
 
-void MFeatures::getViewFeaturesPerFramePerTrack(const QString& describerType, MViewFeaturesPerFramePerTrack& featurePerFramePerTrack) const
+const MFeatures::MTrackFeaturesPerTrack* MFeatures::getTrackFeaturesPerTrack(const QString& describerType)  const
 {
-  if (_viewFeaturesPerViewPerDesc == nullptr)
-    return;
+  if (_trackFeaturesPerTrackPerDesc.empty())
+    return nullptr;
 
-  auto itrDesc = _viewFeaturesPerViewPerDesc->find(describerType);
-  if (itrDesc == _viewFeaturesPerViewPerDesc->end())
-    return;
+  auto itrDesc = _trackFeaturesPerTrackPerDesc.find(describerType);
+  if (itrDesc == _trackFeaturesPerTrackPerDesc.end())
+    return nullptr;
 
-  const MViewFeaturesPerView& featuresPerView = itrDesc->second;
-
-  for (const auto& featuresPerViewPair : featuresPerView)
-  {
-    const aliceVision::IndexT frameId = featuresPerViewPair.second.frameId;
-
-    if (frameId == aliceVision::UndefinedIndexT)
-      continue;
-
-    for (const MFeature* feature : featuresPerViewPair.second.features)
-      if (feature->trackId() >= 0)
-        featurePerFramePerTrack[feature->trackId()][frameId] = feature;
-  }
+  return &(itrDesc->second);
 }
 
 void MFeatures::getViewIdsToLoad(std::vector<aliceVision::IndexT>& viewIdsToLoad)
@@ -331,21 +345,16 @@ void MFeatures::getViewIdsToLoad(std::vector<aliceVision::IndexT>& viewIdsToLoad
 
   // single view
   if (viewIdsToLoad.empty())
-  {
     viewIdsToLoad.emplace_back(_currentViewId);
-  }
-
+  
   // first initialization
-  if (_viewFeaturesPerViewPerDesc == nullptr)
-  {
-    _viewFeaturesPerViewPerDesc = new MViewFeaturesPerViewPerDesc();
+  if (_viewFeaturesPerViewPerDesc.empty())
     return;
-  }
 
   // desciber types changed
-  if (_viewFeaturesPerViewPerDesc->size() != _describerTypes.size())
+  if (_viewFeaturesPerViewPerDesc.size() != _describerTypes.size())
   {
-    clearViewFeaturesPerViewPerDesc(_viewFeaturesPerViewPerDesc);
+    clearAll(); // erase all data in memory
     return;
   }
 
@@ -353,7 +362,7 @@ void MFeatures::getViewIdsToLoad(std::vector<aliceVision::IndexT>& viewIdsToLoad
   std::vector<aliceVision::IndexT> viewIdsToKeep;
   std::vector<aliceVision::IndexT> viewIdsToRemove;
 
-  const MViewFeaturesPerView& viewFeaturesPerView = _viewFeaturesPerViewPerDesc->begin()->second;
+  const MViewFeaturesPerView& viewFeaturesPerView = _viewFeaturesPerViewPerDesc.begin()->second;
 
   // find view id to keep / to remove
   for (const auto& viewFeaturesPerViewPair : viewFeaturesPerView)
@@ -376,22 +385,28 @@ void MFeatures::getViewIdsToLoad(std::vector<aliceVision::IndexT>& viewIdsToLoad
 
   if (viewIdsToKeep.empty()) // nothing to do
   {
-    clearViewFeaturesPerViewPerDesc(_viewFeaturesPerViewPerDesc);
+    clearAll(); // erase all data in memory
     return;
   }
 
   // Remove MViewFeatures in memory
-  for (const auto& decriberType : _describerTypes)
+  if (!viewIdsToRemove.empty())
   {
-    MViewFeaturesPerView& viewFeaturesPerView = _viewFeaturesPerViewPerDesc->at(decriberType.toString());
-
-    for (aliceVision::IndexT viewIdToRemove : viewIdsToRemove)
+    for (const auto& decriberType : _describerTypes)
     {
-      auto iter = viewFeaturesPerView.find(viewIdToRemove);
+      MViewFeaturesPerView& viewFeaturesPerView = _viewFeaturesPerViewPerDesc.at(decriberType.toString());
 
-      if (iter != viewFeaturesPerView.end())
-        viewFeaturesPerView.erase(iter);
+      for (aliceVision::IndexT viewIdToRemove : viewIdsToRemove)
+      {
+        auto iter = viewFeaturesPerView.find(viewIdToRemove);
+
+        if (iter != viewFeaturesPerView.end())
+          viewFeaturesPerView.erase(iter);
+      }
     }
+
+    // trackFeaturesPerTrackPerDesc need to be recomputed (MViewFeatures have been removed)
+    _trackFeaturesPerTrackPerDesc.clear();
   }
 
   // Remove view ids kept from view ids to load
@@ -408,30 +423,32 @@ void MFeatures::getViewIdsToLoad(std::vector<aliceVision::IndexT>& viewIdsToLoad
                                                     << viewIdsToLoad.size() << " frame(s) requested.";
 }
 
-void MFeatures::updateFromTracks(MViewFeaturesPerViewPerDesc* viewFeaturesPerViewPerDesc)
+bool MFeatures::updateFromTracks(MViewFeaturesPerViewPerDesc* viewFeaturesPerViewPerDesc)
 {
+  bool updated = false;
+
   if (viewFeaturesPerViewPerDesc == nullptr || viewFeaturesPerViewPerDesc->empty())
   {
     qDebug("[QtAliceVision] Features: Unable to update from tracks, no features loaded.");
-    return;
+    return updated;
   }
 
   if (_mtracks == nullptr)
   {
     qDebug("[QtAliceVision] Features: Unable to update from tracks, no Tracks given");
-    return;
+    return updated;
   }
 
   if (_mtracks->status() != MTracks::Ready)
   {
     qDebug() << "[QtAliceVision] Features: Unable to update from tracks, Tracks is not ready: " << _mtracks->status();
-    return;
+    return updated;
   }
 
   if (_mtracks->tracks().empty() || _mtracks->tracksPerView().empty())
   {
     qDebug("[QtAliceVision] Features: Unable to update from tracks, Tracks is empty");
-    return;
+    return updated;
   }
 
   qDebug("[QtAliceVision] Features: Update from tracks.");
@@ -453,7 +470,7 @@ void MFeatures::updateFromTracks(MViewFeaturesPerViewPerDesc* viewFeaturesPerVie
       if (tracksPerViewIt == _mtracks->tracksPerView().end())
       {
         qInfo() << "[QtAliceVision] Features: Update from tracks, view: " << viewId << " does not exist in tracks";
-        return;
+        return updated;
       }
 
       const auto& tracksInCurrentView = tracksPerViewIt->second;
@@ -488,35 +505,39 @@ void MFeatures::updateFromTracks(MViewFeaturesPerViewPerDesc* viewFeaturesPerVie
         MFeature* feature = featuresPerView.features.at(featId);
         feature->setTrackId(trackId);
         ++featuresPerView.nbTracks;
+        updated = true;
       }
     }
   }
+  return updated;
 }
 
-void MFeatures::updateFromSfM(MViewFeaturesPerViewPerDesc* viewFeaturesPerViewPerDesc)
+bool MFeatures::updateFromSfM(MViewFeaturesPerViewPerDesc* viewFeaturesPerViewPerDesc)
 {
+  bool updated = false;
+
   if (viewFeaturesPerViewPerDesc == nullptr || viewFeaturesPerViewPerDesc->empty())
   {
     qDebug("[QtAliceVision] Features: Unable to update from SfM, no features loaded.");
-    return;
+    return updated;
   }
 
   if (_msfmData == nullptr)
   {
     qDebug("[QtAliceVision] Features: Unable to update from SfM, no SfMData given.");
-    return;
+    return updated;
   }
 
   if (_msfmData->status() != MSfMData::Ready)
   {
     qDebug() << "[QtAliceVision] Features: Unable to update from SfM, SfMData is not ready: " << _msfmData->status();
-    return;
+    return updated;
   }
 
   if (_msfmData->rawData().getViews().empty())
   {
     qDebug("[QtAliceVision] Features: Unable to update from SfM, SfMData is empty");
-    return;
+    return updated;
   }
 
   qDebug("[QtAliceVision] Features: Update from SfM.");
@@ -537,7 +558,7 @@ void MFeatures::updateFromSfM(MViewFeaturesPerViewPerDesc* viewFeaturesPerViewPe
       if (viewIt == _msfmData->rawData().getViews().end())
       {
         qInfo() << "[QtAliceVision] Features: Update from SfM, view: " << viewId << " is not is the SfMData";
-        return;
+        return updated;
       }
       const aliceVision::sfmData::View& view = *viewIt->second;
 
@@ -547,7 +568,7 @@ void MFeatures::updateFromSfM(MViewFeaturesPerViewPerDesc* viewFeaturesPerViewPe
       if (!_msfmData->rawData().isPoseAndIntrinsicDefined(&view))
       {
         qInfo() << "[QtAliceVision] Features: Update from SfM, SfMData has no valid pose and intrinsic for view: " << viewId;
-        return;
+        return updated;
       }
 
       // Update newly loaded features with information from the sfmData
@@ -576,7 +597,66 @@ void MFeatures::updateFromSfM(MViewFeaturesPerViewPerDesc* viewFeaturesPerViewPe
           }
 
           ++featuresPerView.nbLandmarks; // Update nb landmarks
+          updated = true;
         }
+      }
+    }
+  }
+  return updated;
+}
+
+void MFeatures::updateTrackFeaturesPerTrackPerDesc()
+{
+  qDebug("[QtAliceVision] Features: Update per track features info.");
+
+  // clear previous data
+  // no need to delete feature pointers, they are hosted and manage by viewFeaturesPerViewPerDesc
+  _trackFeaturesPerTrackPerDesc.clear();
+  
+  float maxFeatureScale = std::numeric_limits<float>::min();
+  float minFeatureScale = std::numeric_limits<float>::max();
+
+  // build structure from viewFeaturesPerViewPerDesc
+  for (const auto& viewFeaturesPerViewPerDescPair : _viewFeaturesPerViewPerDesc)
+  {
+    const QString& describerType = viewFeaturesPerViewPerDescPair.first;
+
+    for (const auto& viewFeaturesPerViewPair : viewFeaturesPerViewPerDescPair.second)
+    {
+      const aliceVision::IndexT frameId = viewFeaturesPerViewPair.second.frameId;
+
+      if (frameId == aliceVision::UndefinedIndexT)
+        continue;
+
+      for (const MFeature* feature : viewFeaturesPerViewPair.second.features)
+      {
+        if (feature->trackId() >= 0)
+        {
+          MTrackFeatures& trackFreatures = _trackFeaturesPerTrackPerDesc[describerType][feature->trackId()];
+          trackFreatures.featuresPerFrame[frameId] = feature;
+          if (feature->landmarkId() >= 0)
+            ++trackFreatures.nbLandmarks;
+          maxFeatureScale = std::max(maxFeatureScale, feature->scale());
+          minFeatureScale = std::min(maxFeatureScale, feature->scale());
+          trackFreatures.maxFrameId = std::max(trackFreatures.maxFrameId, frameId);
+          trackFreatures.minFrameId = std::min(trackFreatures.minFrameId, frameId);
+          trackFreatures.featureScaleScore += feature->scale(); // initialize score with feature scale sum
+        }
+      }
+    }
+  }
+
+  // compute score based on feature scale
+  for (auto& trackFeaturesPerTrackPerDescPair : _trackFeaturesPerTrackPerDesc)
+  {
+    for (auto& trackFeaturesPerTrackPair : trackFeaturesPerTrackPerDescPair.second)
+    {
+      MTrackFeatures& trackFreatures = trackFeaturesPerTrackPair.second;
+
+      if (!trackFreatures.featuresPerFrame.empty())
+      {
+        trackFreatures.featureScaleScore /= trackFreatures.featuresPerFrame.size(); // compute average feature scale
+        trackFreatures.featureScaleScore = (trackFreatures.featureScaleScore - minFeatureScale) / (maxFeatureScale - minFeatureScale); // bound to minFeatureScale / maxFeatureScale
       }
     }
   }
@@ -588,10 +668,10 @@ void MFeatures::updateFeaturesInfo()
 
   _featuresInfo.clear();
 
-  if (_viewFeaturesPerViewPerDesc == nullptr || _viewFeaturesPerViewPerDesc->empty())
+  if (_viewFeaturesPerViewPerDesc.empty())
     return;
 
-  for (auto& viewFeaturesPerViewPerDescPair : *_viewFeaturesPerViewPerDesc)
+  for (auto& viewFeaturesPerViewPerDescPair : _viewFeaturesPerViewPerDesc)
   {
     QMap<QString, QVariant> featuresPerViewInfo;
     for (auto& featuresPerViewPair : viewFeaturesPerViewPerDescPair.second)
@@ -625,10 +705,10 @@ void MFeatures::clearViewFeaturesPerViewPerDesc(MViewFeaturesPerViewPerDesc* vie
 
 void MFeatures::clearAllTrackInfo()
 {
-  if (_viewFeaturesPerViewPerDesc == nullptr || _viewFeaturesPerViewPerDesc->empty())
+  if (_viewFeaturesPerViewPerDesc.empty())
     return;
 
-  for (auto& viewFeaturesPerViewPerDescPair : *_viewFeaturesPerViewPerDesc)
+  for (auto& viewFeaturesPerViewPerDescPair : _viewFeaturesPerViewPerDesc)
   {
     for (auto& featuresPerViewPair : viewFeaturesPerViewPerDescPair.second)
     {
@@ -641,10 +721,10 @@ void MFeatures::clearAllTrackInfo()
 
 void MFeatures::clearAllSfMInfo()
 {
-  if (_viewFeaturesPerViewPerDesc == nullptr || _viewFeaturesPerViewPerDesc->empty())
+  if (_viewFeaturesPerViewPerDesc.empty())
     return;
 
-  for (auto& viewFeaturesPerViewPerDescPair : *_viewFeaturesPerViewPerDesc)
+  for (auto& viewFeaturesPerViewPerDescPair : _viewFeaturesPerViewPerDesc)
   {
     for (auto& featuresPerViewPair : viewFeaturesPerViewPerDescPair.second)
     {
@@ -657,7 +737,10 @@ void MFeatures::clearAllSfMInfo()
 
 void MFeatures::clearAll()
 {
-  clearViewFeaturesPerViewPerDesc(_viewFeaturesPerViewPerDesc);
+  // clear data structures
+  clearViewFeaturesPerViewPerDesc(&_viewFeaturesPerViewPerDesc);
+  _trackFeaturesPerTrackPerDesc.clear(); // no need to delete feature pointers, they are hosted and manage by viewFeaturesPerViewPerDesc
+
   qInfo() << "[QtAliceVision] MFeatures clear";
 }
 

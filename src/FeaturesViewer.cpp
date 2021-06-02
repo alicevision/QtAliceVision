@@ -63,7 +63,7 @@ namespace qtAliceVision
 
     const bool validFeatures = (_mfeatures != nullptr) && (_mfeatures->haveValidFeatures());
 
-    const MFeatures::MViewFeatures* currentViewFeatures = validFeatures ? _mfeatures->getCurrentViewFeatures(_describerType) : 0;
+    const MFeatures::MViewFeatures* currentViewFeatures = validFeatures ? _mfeatures->getCurrentViewFeatures(_describerType) : nullptr;
     const std::size_t displayNbFeatures = (_displayFeatures && (currentViewFeatures != nullptr)) ? currentViewFeatures->features.size() : 0;
     QSGGeometry* geometry = nullptr;
 
@@ -229,28 +229,25 @@ namespace qtAliceVision
     const bool validTracks = (_mfeatures != nullptr) && _mfeatures->haveValidTracks();
     const bool validLandmarks = (_mfeatures != nullptr) && _mfeatures->haveValidLandmarks(); // TODO: shouldn't be required, should be optionnal but required for now in order to get frameId (SfMData).
 
-    MFeatures::MViewFeaturesPerFramePerTrack viewFeaturesPerFramePerTrack;
-    aliceVision::IndexT currentFrameId = aliceVision::UndefinedIndexT;
-
-    if (_displayTracks && validFeatures && validTracks && validLandmarks)
-    {
-      _mfeatures->getViewFeaturesPerFramePerTrack(_describerType, viewFeaturesPerFramePerTrack);
-      currentFrameId = _mfeatures->getCurrentFrameId();
-    }
+    const MFeatures::MTrackFeaturesPerTrack* trackFeaturesPerTrack = (_displayTracks && validFeatures && validTracks && validLandmarks) ? _mfeatures->getTrackFeaturesPerTrack(_describerType) : nullptr;
+    const aliceVision::IndexT currentFrameId = (trackFeaturesPerTrack != nullptr) ? _mfeatures->getCurrentFrameId() : aliceVision::UndefinedIndexT;
 
     std::size_t nbLinesToDraw = 0;
     std::size_t nbTracksToDraw = 0;
 
-    for (const auto& viewFeaturesPerFramePerTrackPair : viewFeaturesPerFramePerTrack)
+    if (trackFeaturesPerTrack != nullptr)
     {
-      if (!viewFeaturesPerFramePerTrackPair.second.empty())
+      for (const auto& trackFeaturesPair : *trackFeaturesPerTrack)
       {
-        nbLinesToDraw += (viewFeaturesPerFramePerTrackPair.second.size() - 1);
-        ++nbTracksToDraw;
-      }
+        if (!trackFeaturesPair.second.featuresPerFrame.empty())
+        {
+          nbLinesToDraw += (trackFeaturesPair.second.featuresPerFrame.size() - 1);
+          ++nbTracksToDraw;
+        }
 
-      if (_maxTracksToDisplay >= 0 && nbTracksToDraw >= _maxTracksToDisplay)
-        break;
+        if (_maxTracksToDisplay >= 0 && nbTracksToDraw >= _maxTracksToDisplay)
+          break;
+      }
     }
 
     QSGGeometry* geometryLine = nullptr;
@@ -328,15 +325,14 @@ namespace qtAliceVision
       return;
     }
 
-    const int timeWindow = _mfeatures->getTimeWindow();
-    const aliceVision::IndexT firstFrameId = (currentFrameId < timeWindow) ? 0 : currentFrameId - timeWindow;
-    const aliceVision::IndexT lastFrameId = currentFrameId + timeWindow;
-
     unsigned int nbLinesDrawn = 0;
 
-    for (const auto& viewFeaturesPerFramePerTrackPair : viewFeaturesPerFramePerTrack)
+    for (const auto& trackFeaturesPair : *trackFeaturesPerTrack)
     {
-      const auto& featuresPerFrame = viewFeaturesPerFramePerTrackPair.second;
+      const auto& featuresPerFrame = trackFeaturesPair.second.featuresPerFrame;
+
+      const aliceVision::IndexT firstFrameId = trackFeaturesPair.second.minFrameId;
+      const aliceVision::IndexT lastFrameId = trackFeaturesPair.second.maxFrameId;
 
       aliceVision::IndexT previousFrameId = aliceVision::UndefinedIndexT;
       const MFeature* previousFeature = nullptr;
