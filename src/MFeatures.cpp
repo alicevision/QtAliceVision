@@ -94,7 +94,7 @@ MFeatures::MFeatures()
   connect(this, &MFeatures::featureFolderChanged, this, &MFeatures::load);
   connect(this, &MFeatures::describerTypesChanged, this, &MFeatures::load);
   connect(this, &MFeatures::currentViewIdChanged, this, &MFeatures::load);
-  connect(this, &MFeatures::loadTimeWindowChanged, this, &MFeatures::load);
+  connect(this, &MFeatures::enableTimeWindowChanged, this, &MFeatures::load);
   connect(this, &MFeatures::timeWindowChanged, this, &MFeatures::load);
   connect(this, &MFeatures::tracksChanged, this, &MFeatures::clearAndLoad);
   connect(this, &MFeatures::sfmDataChanged, this, &MFeatures::clearAndLoad);
@@ -227,8 +227,8 @@ void MFeatures::onFeaturesReady(MViewFeaturesPerViewPerDesc* viewFeaturesPerView
   }
 
   // update features with Tracks and SfMData information
-  const bool tracksUpdated = updateFromTracks(&_viewFeaturesPerViewPerDesc);
-  const bool sfmUpdated = updateFromSfM(&_viewFeaturesPerViewPerDesc);
+  const bool tracksUpdated = updateFromTracks();
+  const bool sfmUpdated = updateFromSfM();
 
   // update internal structures
   if (viewFeaturesPerViewPerDesc != nullptr || _trackFeaturesPerTrackPerDesc.empty() || tracksUpdated || sfmUpdated)
@@ -299,7 +299,7 @@ const MFeatures::MTrackFeaturesPerTrack* MFeatures::getTrackFeaturesPerTrack(con
 void MFeatures::getViewIdsToLoad(std::vector<aliceVision::IndexT>& viewIdsToLoad)
 {
   // multiple views
-  if (_loadTimeWindow && _timeWindow != 0 && haveValidLandmarks())
+  if (_enableTimeWindow && _timeWindow != 0 && haveValidLandmarks())
   {
     const aliceVision::sfmData::SfMData& sfmData = _msfmData->rawData();
 
@@ -423,11 +423,11 @@ void MFeatures::getViewIdsToLoad(std::vector<aliceVision::IndexT>& viewIdsToLoad
                                                     << viewIdsToLoad.size() << " frame(s) requested.";
 }
 
-bool MFeatures::updateFromTracks(MViewFeaturesPerViewPerDesc* viewFeaturesPerViewPerDesc)
+bool MFeatures::updateFromTracks()
 {
   bool updated = false;
 
-  if (viewFeaturesPerViewPerDesc == nullptr || viewFeaturesPerViewPerDesc->empty())
+  if (_viewFeaturesPerViewPerDesc.empty())
   {
     qDebug("[QtAliceVision] Features: Unable to update from tracks, no features loaded.");
     return updated;
@@ -454,16 +454,16 @@ bool MFeatures::updateFromTracks(MViewFeaturesPerViewPerDesc* viewFeaturesPerVie
   qDebug("[QtAliceVision] Features: Update from tracks.");
 
   // Update newly loaded features with information from the sfmData
-  for (const auto& describerTypeName : _describerTypes)
+  for (auto& viewFeaturesPerViewPerDescPair : _viewFeaturesPerViewPerDesc)
   {
-    const aliceVision::feature::EImageDescriberType descType = aliceVision::feature::EImageDescriberType_stringToEnum(describerTypeName.toString().toStdString());
+    const aliceVision::feature::EImageDescriberType descType = aliceVision::feature::EImageDescriberType_stringToEnum(viewFeaturesPerViewPerDescPair.first.toStdString());
 
-    for (auto& viewFeaturesPair : viewFeaturesPerViewPerDesc->at(describerTypeName.toString()))
+    for (auto& viewFeaturesPerViewPair : viewFeaturesPerViewPerDescPair.second)
     {
-      const aliceVision::IndexT viewId = viewFeaturesPair.first;
-      MViewFeatures& featuresPerView = viewFeaturesPair.second;
+      const aliceVision::IndexT viewId = viewFeaturesPerViewPair.first;
+      MViewFeatures& viewFeatures = viewFeaturesPerViewPair.second;
 
-      if (featuresPerView.nbTracks > 0) // view already update 
+      if (viewFeatures.nbTracks > 0) // view already update 
         continue;
 
       auto tracksPerViewIt = _mtracks->tracksPerView().find(viewId);
@@ -496,15 +496,15 @@ bool MFeatures::updateFromTracks(MViewFeaturesPerViewPerDesc* viewFeaturesPerVie
           continue;
         }
         const std::size_t featId = featIdPerViewIt->second;
-        if (featId >= featuresPerView.features.size())
+        if (featId >= viewFeatures.features.size())
         {
           qInfo() << "[QtAliceVision] Features: Update from tracks, featId invalid regarding loaded features for view: " << viewId;
           continue;
         }
 
-        MFeature* feature = featuresPerView.features.at(featId);
+        MFeature* feature = viewFeatures.features.at(featId);
         feature->setTrackId(trackId);
-        ++featuresPerView.nbTracks;
+        ++viewFeatures.nbTracks;
         updated = true;
       }
     }
@@ -512,11 +512,11 @@ bool MFeatures::updateFromTracks(MViewFeaturesPerViewPerDesc* viewFeaturesPerVie
   return updated;
 }
 
-bool MFeatures::updateFromSfM(MViewFeaturesPerViewPerDesc* viewFeaturesPerViewPerDesc)
+bool MFeatures::updateFromSfM()
 {
   bool updated = false;
 
-  if (viewFeaturesPerViewPerDesc == nullptr || viewFeaturesPerViewPerDesc->empty())
+  if (_viewFeaturesPerViewPerDesc.empty())
   {
     qDebug("[QtAliceVision] Features: Unable to update from SfM, no features loaded.");
     return updated;
@@ -542,16 +542,16 @@ bool MFeatures::updateFromSfM(MViewFeaturesPerViewPerDesc* viewFeaturesPerViewPe
 
   qDebug("[QtAliceVision] Features: Update from SfM.");
 
-  for (const auto& describerTypeName : _describerTypes)
+  for (auto& viewFeaturesPerViewPerDescPair : _viewFeaturesPerViewPerDesc)
   {
-    const aliceVision::feature::EImageDescriberType descType = aliceVision::feature::EImageDescriberType_stringToEnum(describerTypeName.toString().toStdString());
+    const aliceVision::feature::EImageDescriberType descType = aliceVision::feature::EImageDescriberType_stringToEnum(viewFeaturesPerViewPerDescPair.first.toStdString());
 
-    for (auto& viewFeaturesPair : viewFeaturesPerViewPerDesc->at(describerTypeName.toString()))
+    for (auto& viewFeaturesPerViewPair : viewFeaturesPerViewPerDescPair.second)
     {
-      const aliceVision::IndexT viewId = viewFeaturesPair.first;
-      MViewFeatures& featuresPerView = viewFeaturesPair.second;
+      const aliceVision::IndexT viewId = viewFeaturesPerViewPair.first;
+      MViewFeatures& viewFeatures = viewFeaturesPerViewPair.second;
 
-      if (featuresPerView.nbLandmarks > 0) // view already update 
+      if (viewFeatures.nbLandmarks > 0) // view already update 
         continue;
 
       const auto viewIt = _msfmData->rawData().getViews().find(viewId);
@@ -563,7 +563,7 @@ bool MFeatures::updateFromSfM(MViewFeaturesPerViewPerDesc* viewFeaturesPerViewPe
       const aliceVision::sfmData::View& view = *viewIt->second;
 
       // Update frame Id
-      featuresPerView.frameId = view.getFrameId();
+      viewFeatures.frameId = view.getFrameId();
 
       if (!_msfmData->rawData().isPoseAndIntrinsicDefined(&view))
       {
@@ -587,16 +587,16 @@ bool MFeatures::updateFromSfM(MViewFeaturesPerViewPerDesc* viewFeaturesPerViewPe
           // setup landmark id and landmark 2d reprojection in the current view
           aliceVision::Vec2 r = intrinsic->project(camTransform, landmark.second.X);
 
-          if (itObs->second.id_feat >= 0 && itObs->second.id_feat < featuresPerView.features.size())
+          if (itObs->second.id_feat >= 0 && itObs->second.id_feat < viewFeatures.features.size())
           {
-            featuresPerView.features.at(itObs->second.id_feat)->setLandmarkInfo(landmark.first, r.cast<float>());
+            viewFeatures.features.at(itObs->second.id_feat)->setLandmarkInfo(landmark.first, r.cast<float>());
           }
-          else if (!featuresPerView.features.empty())
+          else if (!viewFeatures.features.empty())
           {
-            qWarning() << "[QtAliceVision] [ERROR] Features: Update from SfM, view: " << viewId << ", id_feat: " << itObs->second.id_feat << ", size: " << featuresPerView.features.size();
+            qWarning() << "[QtAliceVision] [ERROR] Features: Update from SfM, view: " << viewId << ", id_feat: " << itObs->second.id_feat << ", size: " << viewFeatures.features.size();
           }
 
-          ++featuresPerView.nbLandmarks; // Update nb landmarks
+          ++viewFeatures.nbLandmarks; // Update nb landmarks
           updated = true;
         }
       }
@@ -607,7 +607,7 @@ bool MFeatures::updateFromSfM(MViewFeaturesPerViewPerDesc* viewFeaturesPerViewPe
 
 void MFeatures::updateTrackFeaturesPerTrackPerDesc()
 {
-  qDebug("[QtAliceVision] Features: Update per track features info.");
+  qDebug("[QtAliceVision] Features: Update per track features information.");
 
   // clear previous data
   // no need to delete feature pointers, they are hosted and manage by viewFeaturesPerViewPerDesc
@@ -664,7 +664,7 @@ void MFeatures::updateTrackFeaturesPerTrackPerDesc()
 
 void MFeatures::updateFeaturesInfo()
 {
-  qDebug("[QtAliceVision] Features: Update UI features info.");
+  qDebug("[QtAliceVision] Features: Update UI features information.");
 
   _featuresInfo.clear();
 

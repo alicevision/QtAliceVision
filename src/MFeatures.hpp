@@ -31,7 +31,7 @@ class MFeatures : public QObject
     // ViewId to consider
     Q_PROPERTY(quint32 currentViewId MEMBER _currentViewId NOTIFY currentViewIdChanged)
     // Time window to consider
-    Q_PROPERTY(bool loadTimeWindow MEMBER _loadTimeWindow NOTIFY loadTimeWindowChanged)
+    Q_PROPERTY(bool enableTimeWindow MEMBER _enableTimeWindow NOTIFY enableTimeWindowChanged)
     // Time window to consider
     Q_PROPERTY(int timeWindow MEMBER _timeWindow NOTIFY timeWindowChanged)
     /// The list of features information (per view, per describer) for UI
@@ -98,7 +98,7 @@ public:
     Q_SIGNAL void featureFolderChanged();
     Q_SIGNAL void describerTypesChanged();
     Q_SIGNAL void currentViewIdChanged();
-    Q_SIGNAL void loadTimeWindowChanged();
+    Q_SIGNAL void enableTimeWindowChanged();
     Q_SIGNAL void timeWindowChanged();
     Q_SIGNAL void featuresInfoChanged();
 
@@ -216,17 +216,15 @@ private:
 
     /**
     * @brief Update MViewFeatures information with Tracks information
-    * @param[in,out] viewFeaturesPerViewPerDesc (handle nullptr / empty cases)
     * @return true if MViewFeatures information have been updated
     */
-    bool updateFromTracks(MViewFeaturesPerViewPerDesc* viewFeaturesPerViewPerDesc);
+    bool updateFromTracks();
 
     /**
     * @brief Update MViewFeatures information with SfMData information
-    * @param[in,out] viewFeaturesPerViewPerDesc (handle nullptr / empty cases)
     * @return true if MViewFeatures information have been updated
     */
-    bool updateFromSfM(MViewFeaturesPerViewPerDesc* viewFeaturesPerViewPerDesc);
+    bool updateFromSfM();
 
     /**
     * @brief Update MTrackFeaturesPerTrackPerDesc in order to get per track feature access
@@ -249,17 +247,21 @@ private:
     QUrl _featureFolder;
     QVariantList _describerTypes;
     aliceVision::IndexT _currentViewId;
-    int _timeWindow = 1; // -1 is no limit
-    bool _loadTimeWindow = false;
-    bool _outdatedFeatures = false;
 
+    bool _outdatedFeatures = false; // set to true if a loading request occurs during another
+    bool _enableTimeWindow = false; // set to true if the user request multiple frames (e.g. display tracks)
+    int _timeWindow = 1; // size of the time window (from current frame - time window to current frame + time window), 0 is disable, -1 is no limit
+
+    // internal data
     MViewFeaturesPerViewPerDesc _viewFeaturesPerViewPerDesc;
     MTrackFeaturesPerTrackPerDesc _trackFeaturesPerTrackPerDesc;
+    QVariantMap _featuresInfo;
 
+    /// external data
     MSfMData* _msfmData = nullptr;
     MTracks* _mtracks = nullptr;
 
-    QVariantMap _featuresInfo;
+    /// status
     Status _status = MFeatures::None;
 };
 
