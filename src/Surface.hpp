@@ -27,11 +27,29 @@ enum class ViewerType
 /**
  * @brief Discretization of FloatImageViewer surface
  */
-class Surface
+class Surface : public QObject
 {
-public:
-	Surface(int subdivisions = 4);
+Q_OBJECT
+	Q_PROPERTY(QColor gridColor READ getGridColor WRITE setGridColor NOTIFY gridColorChanged);
 
+public:
+	QColor getGridColor()
+	{
+		qWarning() << "GET COLOR SURFACE";
+		return _gridColor;
+	}
+	void setGridColor(const QColor& color)
+	{
+		qWarning() << "SET COLOR SURFACE";
+		_gridColor = color;
+		Q_EMIT gridColorChanged(color);
+	}
+	Q_SIGNAL void gridColorChanged(QColor);
+
+
+public:
+	Surface(int subdivisions = 4, QObject* parent = nullptr);
+	Surface& operator=(const Surface& other) = default;
 	~Surface();
 
 	bool update(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize, bool updateSfmData);
@@ -66,9 +84,6 @@ public:
 
 	inline int indexCount() const { return _indexCount; }
 	inline int vertexCount() const { return _vertexCount; }
-
-	inline QColor gridColor() const { return _gridColor; }
-	void setGridColor(const QColor& color) { _gridColor = color; }
 
 	inline bool hasVerticesChanged() const { return _verticesChanged; }
 	void verticesChanged(bool change) { _verticesChanged = change; }

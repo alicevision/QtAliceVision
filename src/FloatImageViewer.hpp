@@ -70,8 +70,7 @@ class FloatImageViewer : public QQuickItem
 
         Q_PROPERTY(QList<QPoint> vertices READ vertices NOTIFY verticesChanged)
 
-        Q_PROPERTY(QColor gridColor READ gridColor NOTIFY gridColorChanged)
-        
+        Q_PROPERTY(Surface* surface READ getSurfacePtr NOTIFY surfaceChanged)
 
 public:
     explicit FloatImageViewer(QQuickItem* parent = nullptr);
@@ -99,11 +98,6 @@ public:
         return _surface.vertices(); 
     }
 
-    QColor gridColor() 
-    {
-        return _surface.gridColor();
-    }
-
     enum class EChannelMode : quint8 { RGBA, RGB, R, G, B, A };
     Q_ENUM(EChannelMode)
 
@@ -119,21 +113,21 @@ public:
     Q_SIGNAL void imageChanged();
     Q_SIGNAL void metadataChanged();
     Q_SIGNAL void verticesChanged(bool reinit);
-    Q_SIGNAL void gridColorChanged();
     Q_SIGNAL void sfmChanged();
+    Q_SIGNAL void surfaceChanged();
 
     Q_INVOKABLE QVector4D pixelValueAt(int x, int y);
     Q_INVOKABLE QPoint getVertex(int index);
+    Q_INVOKABLE QPoint getPrincipalPoint();
+
     Q_INVOKABLE void setVertex(int index, float x, float y);
     Q_INVOKABLE void displayGrid(bool display);
-    Q_INVOKABLE void setGridColorQML(const QColor& color);
     Q_INVOKABLE void defaultControlPoints();
     Q_INVOKABLE void resized();
     Q_INVOKABLE bool reinit();
     Q_INVOKABLE void hasDistortion(bool distortion);
     Q_INVOKABLE void updateSubdivisions(int subs);
     Q_INVOKABLE void setSfmPath(const QString& path);
-    Q_INVOKABLE QPoint getPrincipalPoint();
     Q_INVOKABLE void setIdView(int id);
     Q_INVOKABLE void setPanoViewerEnabled(bool state);
     Q_INVOKABLE void rotatePanoramaRadians(float yawRadians, float pitchRadians);
@@ -144,7 +138,7 @@ public:
     Q_INVOKABLE double getYaw();
     Q_INVOKABLE bool isMouseInside(float mx, float my);
 
-
+    Surface* getSurfacePtr() { return &_surface; }
 
 private:
     /// Reload image from source

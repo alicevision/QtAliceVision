@@ -91,8 +91,9 @@ FloatImageViewer::FloatImageViewer(QQuickItem* parent)
     connect(this, &FloatImageViewer::imageChanged, this, &FloatImageViewer::update);
     connect(this, &FloatImageViewer::sourceChanged, this, &FloatImageViewer::reload);
     connect(this, &FloatImageViewer::verticesChanged, this, &FloatImageViewer::update);
-    connect(this, &FloatImageViewer::gridColorChanged, this, &FloatImageViewer::update);
     connect(this, &FloatImageViewer::sfmChanged, this, &FloatImageViewer::update);
+
+    connect(&_surface, &Surface::gridColorChanged, this, &FloatImageViewer::update);
 }
 
 FloatImageViewer::~FloatImageViewer()
@@ -212,7 +213,7 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
             /* Geometry and Material for the Grid */
             auto node = new QSGGeometryNode;
             auto material = new QSGFlatColorMaterial;
-            material->setColor(_surface.gridColor());
+            material->setColor(_surface.getGridColor());
             {
                 // Vertexcount of the grid is equal to indexCount of the image
                 geometryLine = new QSGGeometry(QSGGeometry::defaultAttributes_Point2D(), _surface.indexCount());
@@ -234,7 +235,7 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
 
         QSGGeometryNode* rootGrid = static_cast<QSGGeometryNode*>(oldNode->childAtIndex(0));
         auto mat = static_cast<QSGFlatColorMaterial*>(rootGrid->activeMaterial());
-        mat->setColor(_surface.gridColor());
+        mat->setColor(_surface.getGridColor());
         geometryLine = rootGrid->geometry();
     }
 
@@ -420,11 +421,6 @@ void FloatImageViewer::displayGrid(bool display)
     Q_EMIT verticesChanged(false);
 }
 
-void FloatImageViewer::setGridColorQML(const QColor& color)
-{
-    _surface.setGridColor(color);
-    Q_EMIT gridColorChanged();
-}
 
 void FloatImageViewer::defaultControlPoints()
 {
