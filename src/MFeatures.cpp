@@ -558,7 +558,7 @@ bool MFeatures::updateFromSfM()
       if (viewIt == _msfmData->rawData().getViews().end())
       {
         qInfo() << "[QtAliceVision] Features: Update from SfM, view: " << viewId << " is not is the SfMData";
-        return updated;
+        continue;
       }
       const aliceVision::sfmData::View& view = *viewIt->second;
 
@@ -568,7 +568,7 @@ bool MFeatures::updateFromSfM()
       if (!_msfmData->rawData().isPoseAndIntrinsicDefined(&view))
       {
         qInfo() << "[QtAliceVision] Features: Update from SfM, SfMData has no valid pose and intrinsic for view: " << viewId;
-        return updated;
+        continue;
       }
 
       // Update newly loaded features with information from the sfmData
