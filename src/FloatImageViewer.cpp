@@ -17,9 +17,8 @@
 namespace qtAliceVision
 {
 
-FloatImageIORunnable::FloatImageIORunnable(const QUrl& path, bool insidePanorama, QObject* parent)
-    : QObject(parent)
-    , _path(path), _insidePanorama(insidePanorama)
+FloatImageIORunnable::FloatImageIORunnable(const QUrl& path, int downscaleLevel, QObject* parent)
+    : QObject(parent), _path(path), _downscaleLevel(downscaleLevel)
 {}
 
 void FloatImageIORunnable::run()
@@ -51,14 +50,12 @@ void FloatImageIORunnable::run()
         }
 
         // ensure it fits in RAM memory
-        if (_insidePanorama)
+        qWarning() << "Downscale " << _downscaleLevel;
+        for (size_t i = 0; i < _downscaleLevel; i++)
         {
-            for (size_t i = 0; i < Surface::downscaleLevelPanorama(); i++)
-            {
-                FloatImage tmp;
-                aliceVision::image::ImageHalfSample(image, tmp);
-                image = std::move(tmp);
-            }
+            FloatImage tmp;
+            aliceVision::image::ImageHalfSample(image, tmp);
+            image = std::move(tmp);
         }
 
         // load metadata as well
@@ -92,6 +89,8 @@ FloatImageViewer::FloatImageViewer(QQuickItem* parent)
     connect(this, &FloatImageViewer::sourceChanged, this, &FloatImageViewer::reload);
     connect(this, &FloatImageViewer::verticesChanged, this, &FloatImageViewer::update);
     connect(this, &FloatImageViewer::sfmChanged, this, &FloatImageViewer::update);
+
+    connect(this, &FloatImageViewer::downscaleLevelChanged, this, &FloatImageViewer::reload);
 
     connect(&_surface, &Surface::gridColorChanged, this, &FloatImageViewer::update);
 }
@@ -152,7 +151,7 @@ void FloatImageViewer::reload()
         setLoading(true);
 
         // async load from file
-        auto ioRunnable = new FloatImageIORunnable(_source, _surface.isPanoViewerEnabled());
+        auto ioRunnable = new FloatImageIORunnable(_source, _surface.isPanoViewerEnabled() ? _downscaleLevel : 0);
         connect(ioRunnable, &FloatImageIORunnable::resultReady, this, &FloatImageViewer::onResultReady);
         QThreadPool::globalInstance()->start(ioRunnable);
     }
@@ -365,7 +364,7 @@ void FloatImageViewer::updatePaintSurface(QSGGeometryNode* root, QSGSimpleMateri
         quint16* indices = root->geometry()->indexDataAsUShort();
 
         // Update surface
-        bool updateSurface = _surface.update(vertices, indices, _textureSize, updateSfmData);
+        bool updateSurface = _surface.update(vertices, indices, _textureSize, updateSfmData, _downscaleLevel);
 
         root->geometry()->markIndexDataDirty();
         root->geometry()->markVertexDataDirty();
@@ -519,21 +518,11 @@ void FloatImageViewer::mouseOver(bool state)
     Q_EMIT verticesChanged(false);
 }
 
-void FloatImageViewer::setDownscale(int level)
-{
-    if (level >= 0 && level <= 3)
-    {
-        Surface::setDownscaleLevelPanorama(level);
-    }
-    else   // Default value : 2
-    {
-        Surface::setDownscaleLevelPanorama(2);
-    }
-    reload();
-    _imageChanged = true;
-    _surface.verticesChanged(true);
-    Q_EMIT verticesChanged(false);
-}
+//void FloatImageViewer::setDownscale(int level)
+//{
+//    reload();
+//    _imageChanged = true;
+//}
 
 // return pitch in degrees
 double FloatImageViewer::getPitch()

@@ -10,12 +10,22 @@
 #include <math.h>
 #include <memory>
 
-namespace qtAliceVision
+namespace qtAliceVision {
+
+
+aliceVision::Vec2 toEquirectangular(const aliceVision::Vec3& spherical, int width, int height)
 {
-aliceVision::Vec2 toEquirectangular(const aliceVision::Vec3& spherical, int width, int height);
+    const double vertical_angle = asin(spherical(1));
+    const double horizontal_angle = atan2(spherical(0), spherical(2));
+
+    const double latitude = ((vertical_angle + M_PI_2) / M_PI) * height;
+    const double longitude = ((horizontal_angle + M_PI) / (2.0 * M_PI)) * width;
+
+    return aliceVision::Vec2(longitude, latitude);
+}
 
 // Static Variables Initialisation
-int Surface::_downscaleLevelPanorama = 0;
+//int Surface::_downscaleLevelPanorama = 0;
 const int Surface::_panoramaWidth = 3000;
 const int Surface::_panoramaHeight = 1500;
 
@@ -23,7 +33,6 @@ const int Surface::_panoramaHeight = 1500;
 Surface::Surface(int subdivisions, QObject* parent)
     : QObject(parent)
 {
-
     setSubdivisions(subdivisions);
 }
 
@@ -31,7 +40,7 @@ Surface::~Surface()
 {
 }
 
-bool Surface::update(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize, bool updateSfmData)
+bool Surface::update(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize, bool updateSfmData, int downscaleLevel)
 {
     // Load Sfm Data File only if needed
     if ( (isDistoViewerEnabled() || isPanoViewerEnabled()) 
@@ -41,7 +50,7 @@ bool Surface::update(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, Q
     }
 
     // Compute Vertices coordinates and Indices order
-    computeGrid(vertices, indices, textureSize, updateSfmData);
+    computeGrid(vertices, indices, textureSize, updateSfmData, downscaleLevel);
 
     // If Panorama has been rotated, reset values and return true
     if (_isPanoramaRotating)
@@ -63,7 +72,7 @@ bool Surface::isDistoViewerEnabled() const
     return _viewerType == ViewerType::DISTORTION;
 }
 
-void Surface::computeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize, bool updateSfmData)
+void Surface::computeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize, bool updateSfmData, int downscaleLevel)
 {
     // Retrieve intrisics only if sfmData has been updated, and then Compute vertices
     aliceVision::camera::IntrinsicBase* intrinsic = nullptr;
@@ -75,7 +84,7 @@ void Surface::computeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indic
         if (intrinsic)
         {
             computePrincipalPoint(intrinsic, textureSize);
-            computeVerticesGrid(vertices, textureSize, intrinsic);
+            computeVerticesGrid(vertices, textureSize, intrinsic, downscaleLevel);
         }
     }
     // If there is no sfm data update or intrinsics are invalid, keep the same vertices
@@ -89,14 +98,14 @@ void Surface::computeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indic
 }
 
 void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize textureSize, 
-    aliceVision::camera::IntrinsicBase* intrinsic)
+    aliceVision::camera::IntrinsicBase* intrinsic, int downscaleLevel)
 {
     // Retrieve pose if Panorama Viewer is enable
     aliceVision::sfmData::CameraPose pose;
     if (isPanoViewerEnabled() && intrinsic)
     {
         // Downscale image according to downscale level
-        textureSize *= pow(2.0, _downscaleLevelPanorama);
+        textureSize *= pow(2.0, downscaleLevel);
         aliceVision::sfmData::View view = _sfmData.getView(_idView);
         pose = _sfmData.getPose(view);
         _deletedColIndex.clear();
@@ -378,21 +387,6 @@ void Surface::rotatePano(aliceVision::Vec3& coordSphere)
     Eigen::Matrix3d cRo = Myaw.toRotationMatrix() * Mpitch.toRotationMatrix();
 
     coordSphere = cRo * coordSphere;
-}
-
-/*
-* Utils Functions
-*/
-
-aliceVision::Vec2 toEquirectangular(const aliceVision::Vec3& spherical, int width, int height) {
-
-    double vertical_angle = asin(spherical(1));
-    double horizontal_angle = atan2(spherical(0), spherical(2));
-
-    double latitude = ((vertical_angle + M_PI_2) / M_PI) * height;
-    double longitude = ((horizontal_angle + M_PI) / (2.0 * M_PI)) * width;
-
-    return aliceVision::Vec2(longitude, latitude);
 }
 
 

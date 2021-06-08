@@ -30,7 +30,7 @@ class FloatImageIORunnable : public QObject, public QRunnable
 
 public:
 
-    explicit FloatImageIORunnable(const QUrl& path, bool insidePanorama = false, QObject* parent = nullptr);
+    explicit FloatImageIORunnable(const QUrl& path, int downscaleLevel = 0, QObject* parent = nullptr);
 
     /// Load image at path
     Q_SLOT void run() override;
@@ -40,7 +40,7 @@ public:
 
 private:
     QUrl _path;
-    bool _insidePanorama;
+    int _downscaleLevel;
 };
 
 /**
@@ -68,7 +68,9 @@ class FloatImageViewer : public QQuickItem
 
         Q_PROPERTY(QVariantMap metadata READ metadata NOTIFY metadataChanged)
 
-        Q_PROPERTY(QList<QPoint> vertices READ vertices NOTIFY verticesChanged)
+        Q_PROPERTY(QList<QPoint> vertices READ vertices NOTIFY verticesChanged)     // --> Surface
+
+        Q_PROPERTY(int downscaleLevel READ getDownscaleLevel WRITE setDownscaleLevel NOTIFY downscaleLevelChanged)
 
         Q_PROPERTY(Surface* surface READ getSurfacePtr NOTIFY surfaceChanged)
 
@@ -93,9 +95,27 @@ public:
         return _metadata;
     }
 
-    QList<QPoint> vertices() const 
+    QList<QPoint> vertices() const     // --> Surface
     { 
         return _surface.vertices(); 
+    }
+
+    int getDownscaleLevel() const { return _downscaleLevel; }
+    void setDownscaleLevel(int level)
+    {
+        if (level != _downscaleLevel)
+        {
+            // Level [0;3]
+            if (level < 0 && level > 3) level = 2;
+
+            qWarning() << "Set Downscale " << level;
+            _downscaleLevel = level;
+
+            reload();
+            _imageChanged = true;
+            Q_EMIT verticesChanged(true);
+            Q_EMIT downscaleLevelChanged();
+        }
     }
 
     enum class EChannelMode : quint8 { RGBA, RGB, R, G, B, A };
@@ -112,31 +132,32 @@ public:
     Q_SIGNAL void channelModeChanged();
     Q_SIGNAL void imageChanged();
     Q_SIGNAL void metadataChanged();
-    Q_SIGNAL void verticesChanged(bool reinit);
+    Q_SIGNAL void verticesChanged(bool reinit);    // --> Surface
     Q_SIGNAL void sfmChanged();
+    Q_SIGNAL void downscaleLevelChanged();
     Q_SIGNAL void surfaceChanged();
 
     Q_INVOKABLE QVector4D pixelValueAt(int x, int y);
-    Q_INVOKABLE QPoint getVertex(int index);
-    Q_INVOKABLE QPoint getPrincipalPoint();
+    Q_INVOKABLE QPoint getVertex(int index);    // --> Surface
+    Q_INVOKABLE QPoint getPrincipalPoint();    // --> Surface
 
-    Q_INVOKABLE void setVertex(int index, float x, float y);
-    Q_INVOKABLE void displayGrid(bool display);
-    Q_INVOKABLE void defaultControlPoints();
-    Q_INVOKABLE void resized();
-    Q_INVOKABLE bool reinit();
-    Q_INVOKABLE void hasDistortion(bool distortion);
-    Q_INVOKABLE void updateSubdivisions(int subs);
-    Q_INVOKABLE void setSfmPath(const QString& path);
-    Q_INVOKABLE void setIdView(int id);
-    Q_INVOKABLE void setPanoViewerEnabled(bool state);
-    Q_INVOKABLE void rotatePanoramaRadians(float yawRadians, float pitchRadians);
-    Q_INVOKABLE void rotatePanoramaDegrees(float yawDegrees, float pitchDegrees);
-    Q_INVOKABLE void mouseOver(bool state);
-    Q_INVOKABLE void setDownscale(int level);
-    Q_INVOKABLE double getPitch();
-    Q_INVOKABLE double getYaw();
-    Q_INVOKABLE bool isMouseInside(float mx, float my);
+    Q_INVOKABLE void setVertex(int index, float x, float y);    // --> Surface
+    Q_INVOKABLE void displayGrid(bool display);    // --> Surface
+    Q_INVOKABLE void defaultControlPoints();    // --> Surface
+    Q_INVOKABLE void resized();    // --> Surface (Check if use ?)
+    Q_INVOKABLE bool reinit();     // --> Surface (Check if use ?)
+    Q_INVOKABLE void hasDistortion(bool distortion);    // --> Surface (Change Name : setDistoViewerEnabled())
+    Q_INVOKABLE void updateSubdivisions(int subs);      // --> Surface
+    Q_INVOKABLE void setSfmPath(const QString& path);   // --> Surface
+    Q_INVOKABLE void setIdView(int id);                 // --> Surface
+    Q_INVOKABLE void setPanoViewerEnabled(bool state);  // --> Surface
+    Q_INVOKABLE void rotatePanoramaRadians(float yawRadians, float pitchRadians);   // --> Surface
+    Q_INVOKABLE void rotatePanoramaDegrees(float yawDegrees, float pitchDegrees);   // --> Surface
+    Q_INVOKABLE void mouseOver(bool state);     // --> Surface
+    //Q_INVOKABLE void setDownscale(int level); // SLOT ?
+    Q_INVOKABLE double getPitch();  // --> Surface
+    Q_INVOKABLE double getYaw();    // --> Surface
+    Q_INVOKABLE bool isMouseInside(float mx, float my); // --> Surface
 
     Surface* getSurfacePtr() { return &_surface; }
 
@@ -170,6 +191,9 @@ private:
 
     Surface _surface;
     bool _createRoot = true;
+
+    // Level of downscale for images of a Panorama
+    int _downscaleLevel = 0;
 };
 
 }  // ns qtAliceVision

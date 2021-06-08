@@ -35,12 +35,10 @@ Q_OBJECT
 public:
 	QColor getGridColor()
 	{
-		qWarning() << "GET COLOR SURFACE";
 		return _gridColor;
 	}
 	void setGridColor(const QColor& color)
 	{
-		qWarning() << "SET COLOR SURFACE";
 		_gridColor = color;
 		Q_EMIT gridColorChanged(color);
 	}
@@ -52,7 +50,7 @@ public:
 	Surface& operator=(const Surface& other) = default;
 	~Surface();
 
-	bool update(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize, bool updateSfmData);
+	bool update(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize, bool updateSfmData, int downscaleLevel = 0);
 		
 	void fillVertices(QSGGeometry::TexturedPoint2D* vertices);
 
@@ -116,20 +114,17 @@ public:
 	bool isPanoViewerEnabled() const;
 	bool isDistoViewerEnabled() const;
 
-	/*
-	* Static Functions
-	*/
-	static int downscaleLevelPanorama() { return _downscaleLevelPanorama; }
-	static void setDownscaleLevelPanorama(int level) { _downscaleLevelPanorama = level; }
+	//static int downscaleLevelPanorama() { return _downscaleLevelPanorama; }					// --> FIV Not Static
+	//static void setDownscaleLevelPanorama(int level) { _downscaleLevelPanorama = level; }	// --> FIV Not Static
 
 
 private:
 	bool loadSfmData();
 
-	void computeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize, bool updateSfm);
+	void computeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize, bool updateSfm, int downscaleLevel = 0);
 
 	void computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize textureSize,
-		aliceVision::camera::IntrinsicBase* intrinsic);
+		aliceVision::camera::IntrinsicBase* intrinsic, int downscaleLevel = 0);
 		
 	void computeIndicesGrid(quint16* indices);
 		
@@ -142,9 +137,9 @@ private:
 	* Static Variables
 	*/
 	// Level of downscale for images of a Panorama
-	static int _downscaleLevelPanorama;
-	static const int _panoramaWidth;
-	static const int _panoramaHeight;
+	//static int _downscaleLevelPanorama;	// --> Not Static
+	static const int _panoramaWidth;	// --> Not Static
+	static const int _panoramaHeight;	// --> Not Static
 
 	// Vertex Data
 	QList<QPoint> _vertices;
