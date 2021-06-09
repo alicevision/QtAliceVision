@@ -61,9 +61,6 @@ public:
 	QPoint principalPoint() const { return _principalPoint; }
 
 
-	/*
-	* Getters & Setters
-	*/
 	double pitch() const { return _pitch; }
 	double yaw() const { return _yaw; }
 
@@ -113,10 +110,6 @@ public:
 
 	bool isPanoViewerEnabled() const;
 	bool isDistoViewerEnabled() const;
-
-	//static int downscaleLevelPanorama() { return _downscaleLevelPanorama; }					// --> FIV Not Static
-	//static void setDownscaleLevelPanorama(int level) { _downscaleLevelPanorama = level; }	// --> FIV Not Static
-
 
 private:
 	bool loadSfmData();

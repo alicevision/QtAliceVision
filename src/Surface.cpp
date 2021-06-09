@@ -194,7 +194,7 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
 
 void Surface::computeIndicesGrid(quint16* indices)
 {
-    int pointer = 0;
+    int index = 0;
     for (int j = 0; j < _subdivisions; j++) {
         for (int i = 0; i < _subdivisions; i++) {
             int remove = 0;
@@ -208,12 +208,12 @@ void Surface::computeIndicesGrid(quint16* indices)
             }
             if (remove > 0)
             {
-                indices[pointer++] = 0;
-                indices[pointer++] = 0;
-                indices[pointer++] = 0;
-                indices[pointer++] = 0;
-                indices[pointer++] = 0;
-                indices[pointer++] = 0;
+                indices[index++] = 0;
+                indices[index++] = 0;
+                indices[index++] = 0;
+                indices[index++] = 0;
+                indices[index++] = 0;
+                indices[index++] = 0;
             }
             else
             {
@@ -221,12 +221,12 @@ void Surface::computeIndicesGrid(quint16* indices)
                 int topRight = topLeft + 1;
                 int bottomLeft = topLeft + _subdivisions + 1;
                 int bottomRight = bottomLeft + 1;
-                indices[pointer++] = topLeft;
-                indices[pointer++] = bottomLeft;
-                indices[pointer++] = topRight;
-                indices[pointer++] = topRight;
-                indices[pointer++] = bottomLeft;
-                indices[pointer++] = bottomRight;
+                indices[index++] = topLeft;
+                indices[index++] = bottomLeft;
+                indices[index++] = topRight;
+                indices[index++] = topRight;
+                indices[index++] = bottomLeft;
+                indices[index++] = bottomRight;
             }
         }
     }
