@@ -146,8 +146,6 @@ public:
 
     
     Q_INVOKABLE void updateSubdivisions(int subs);      // --> Surface
-    Q_INVOKABLE void setSfmPath(const QString& path);   // --> Surface
-    Q_INVOKABLE void setIdView(int id);                 // --> Surface
     
     Q_INVOKABLE void rotatePanoramaRadians(float yawRadians, float pitchRadians);   // --> Surface
     Q_INVOKABLE void rotatePanoramaDegrees(float yawDegrees, float pitchDegrees);   // --> Surface

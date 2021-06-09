@@ -459,20 +459,6 @@ void FloatImageViewer::updateSubdivisions(int subs)
     Q_EMIT verticesChanged(false);
 }
 
-void FloatImageViewer::setSfmPath(const QString& path)
-{
-    _surface.setSfmPath(path);
-    _imageChanged = true;
-    _surface.verticesChanged(true);
-   // _surface.gridChanged(true);
-    Q_EMIT verticesChanged(false);
-}
-
-void FloatImageViewer::setIdView(int id)
-{
-    _surface.setIdView(id);
-}
-
 
 
 void FloatImageViewer::rotatePanoramaRadians(float yawRadians, float pitchRadians)

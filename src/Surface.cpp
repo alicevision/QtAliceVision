@@ -391,6 +391,12 @@ void Surface::rotatePano(aliceVision::Vec3& coordSphere)
 *   Q_INVOKABLE Functions
 */
 
+void Surface::setIdView(int id)
+{
+    _idView = id;
+}
+
+
 void Surface::setPanoViewerEnabled(bool state)
 {
     if (state)

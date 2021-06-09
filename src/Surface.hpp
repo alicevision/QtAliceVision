@@ -36,6 +36,8 @@ Q_OBJECT
 
 	Q_PROPERTY(bool mouseOver READ getMouseOver WRITE setMouseOver NOTIFY mouseOverChanged)
 
+	Q_PROPERTY(QString sfmPath WRITE setSfmPath NOTIFY sfmPathChanged)
+
 public:
 	// GRID COLOR
 	QColor getGridColor() const { return _gridColor; }
@@ -56,6 +58,7 @@ public:
 	}
 	Q_SIGNAL void displayGridChanged();
 
+	// MOUSE OVER
 	bool getMouseOver() const { return _mouseOver; }
 	void setMouseOver(bool state)
 	{
@@ -66,6 +69,14 @@ public:
 		}
 	}
 	Q_SIGNAL void mouseOverChanged();
+
+	// SFM PATH
+	void setSfmPath(const QString& path)
+	{
+		_sfmPath = path;
+		Q_EMIT sfmPathChanged();
+	}
+	Q_SIGNAL void sfmPathChanged();
 
 public:
 	Surface(int subdivisions = 4, QObject* parent = nullptr);
@@ -103,12 +114,6 @@ public:
 	bool hasSubsChanged() { return _subsChanged; }
 	void subsChanged(bool change) { _subsChanged = change; }
 
-	void setSfmPath(const QString& path) { _sfmPath = path; }
-	QString sfmPath() const { return _sfmPath; }
-
-	void setIdView(aliceVision::IndexT id) { _idView = id; }
-	aliceVision::IndexT idView() const { return _idView; }
-
 	// Viewer Type
 	ViewerType viewerType() const { return _viewerType; }
 	void setViewerType(ViewerType type) { _viewerType = type; }
@@ -124,7 +129,7 @@ public:
 	Q_INVOKABLE bool isMouseInside(float mx, float my);
 
 	Q_INVOKABLE void setPanoViewerEnabled(bool state);
-
+	Q_INVOKABLE void setIdView(int id);
 
 private:
 	bool loadSfmData();
