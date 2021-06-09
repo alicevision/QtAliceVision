@@ -89,9 +89,6 @@ public:
 
 	void gridDisplayed(bool display) { _isGridDisplayed = display; }
 	bool isGridDisplayed() const { return _isGridDisplayed; }
-		
-	void reinitialize(bool reinit) { _reinit = reinit; }
-	bool hasReinitialized() const { return _reinit; }
 
 	bool hasSubsChanged() { return _subsChanged; }
 	void subsChanged(bool change) { _subsChanged = change; }

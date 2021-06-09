@@ -421,7 +421,6 @@ void FloatImageViewer::displayGrid(bool display)
 void FloatImageViewer::defaultControlPoints()
 {
     _surface.clearVertices();
-    _surface.reinitialize(true);
     _surface.verticesChanged(true);
     _surface.gridChanged(true);
     Q_EMIT verticesChanged(false);
@@ -432,11 +431,6 @@ void FloatImageViewer::resized()
     _surface.verticesChanged(true);
     _surface.gridChanged(true);
     Q_EMIT verticesChanged(false);
-}
-
-bool FloatImageViewer::reinit()
-{
-    return _surface.hasReinitialized();
 }
 
 void FloatImageViewer::hasDistortion(bool distortion)

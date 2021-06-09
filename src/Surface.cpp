@@ -247,7 +247,6 @@ void Surface::fillVertices(QSGGeometry::TexturedPoint2D* vertices)
     }
         
     _verticesChanged = false;
-    _reinit = false;
 }
 
 void Surface::drawGrid(QSGGeometry* geometryLine)

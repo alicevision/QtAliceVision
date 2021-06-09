@@ -143,7 +143,6 @@ public:
     Q_INVOKABLE void displayGrid(bool display);    // --> Surface
     Q_INVOKABLE void defaultControlPoints();    // --> Surface
     Q_INVOKABLE void resized();    // --> Surface (Check if use ?)
-    Q_INVOKABLE bool reinit();     // --> Surface (Check if use ?)
     Q_INVOKABLE void hasDistortion(bool distortion);    // --> Surface (Change Name : setDistoViewerEnabled())
     Q_INVOKABLE void updateSubdivisions(int subs);      // --> Surface
     Q_INVOKABLE void setSfmPath(const QString& path);   // --> Surface
