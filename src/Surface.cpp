@@ -391,6 +391,14 @@ void Surface::rotatePano(aliceVision::Vec3& coordSphere)
 *   Q_INVOKABLE Functions
 */
 
+void Surface::setPanoViewerEnabled(bool state)
+{
+    if (state)
+        setViewerType(ViewerType::PANORAMA);
+    else
+        setViewerType(ViewerType::DEFAULT);
+}
+
 // return pitch in degrees
 double Surface::getPitch()
 {

@@ -34,6 +34,8 @@ Q_OBJECT
 
 	Q_PROPERTY(bool displayGrid READ getDisplayGrid WRITE setDisplayGrid NOTIFY displayGridChanged);
 
+	Q_PROPERTY(bool mouseOver READ getMouseOver WRITE setMouseOver NOTIFY mouseOverChanged)
+
 public:
 	// GRID COLOR
 	QColor getGridColor() const { return _gridColor; }
@@ -53,6 +55,17 @@ public:
 		Q_EMIT displayGridChanged();
 	}
 	Q_SIGNAL void displayGridChanged();
+
+	bool getMouseOver() const { return _mouseOver; }
+	void setMouseOver(bool state)
+	{
+		if (state != _mouseOver)
+		{
+			_mouseOver = state;
+			Q_EMIT mouseOverChanged();
+		}
+	}
+	Q_SIGNAL void mouseOverChanged();
 
 public:
 	Surface(int subdivisions = 4, QObject* parent = nullptr);
@@ -87,12 +100,6 @@ public:
 	inline bool hasVerticesChanged() const { return _verticesChanged; }
 	void verticesChanged(bool change) { _verticesChanged = change; }
 
-	//inline bool hasGridChanged() const { return _gridChanged; }
-	//void gridChanged(bool change) { _gridChanged = change; }
-
-	//void gridDisplayed(bool display) { _isGridDisplayed = display; }
-	//bool isGridDisplayed() const { return _isGridDisplayed; }
-
 	bool hasSubsChanged() { return _subsChanged; }
 	void subsChanged(bool change) { _subsChanged = change; }
 
@@ -101,9 +108,6 @@ public:
 
 	void setIdView(aliceVision::IndexT id) { _idView = id; }
 	aliceVision::IndexT idView() const { return _idView; }
-
-	bool isMouseOver() const { return _mouseOver; }
-	void setMouseOver(bool state) { _mouseOver = state; }
 
 	// Viewer Type
 	ViewerType viewerType() const { return _viewerType; }
@@ -118,6 +122,9 @@ public:
 	Q_INVOKABLE double getPitch();
 	Q_INVOKABLE double getYaw();
 	Q_INVOKABLE bool isMouseInside(float mx, float my);
+
+	Q_INVOKABLE void setPanoViewerEnabled(bool state);
+
 
 private:
 	bool loadSfmData();
@@ -155,8 +162,6 @@ private:
 	bool _reinit = false;
 
 	// Grid State
-	//bool _isGridDisplayed = false;
-	//bool _gridChanged = true;
 	bool _displayGrid;
 	QColor _gridColor = QColor(255, 0, 0, 255);
 	bool _subsChanged = false;

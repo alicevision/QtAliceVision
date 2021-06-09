@@ -94,6 +94,7 @@ FloatImageViewer::FloatImageViewer(QQuickItem* parent)
 
     connect(&_surface, &Surface::gridColorChanged, this, &FloatImageViewer::update);
     connect(&_surface, &Surface::displayGridChanged, this, &FloatImageViewer::update);
+    connect(&_surface, &Surface::mouseOverChanged, this, &FloatImageViewer::update);
 }
 
 FloatImageViewer::~FloatImageViewer()
@@ -351,7 +352,7 @@ void FloatImageViewer::updatePaintSurface(QSGGeometryNode* root, QSGSimpleMateri
     // Highlight image if Panorama enable and user hovers the image
     if (_surface.isPanoViewerEnabled())
     {
-        if(_surface.isMouseOver()){
+        if(_surface.getMouseOver()){
             material->state()->gamma += 1.0f;
         }
         root->markDirty(QSGNode::DirtyMaterial);
@@ -472,13 +473,7 @@ void FloatImageViewer::setIdView(int id)
     _surface.setIdView(id);
 }
 
-void FloatImageViewer::setPanoViewerEnabled(bool state)
-{
-    if (state)
-        _surface.setViewerType(ViewerType::PANORAMA);
-    else
-        _surface.setViewerType(ViewerType::DEFAULT);
-}
+
 
 void FloatImageViewer::rotatePanoramaRadians(float yawRadians, float pitchRadians)
 {
@@ -497,11 +492,7 @@ void FloatImageViewer::rotatePanoramaDegrees(float yawDegrees, float pitchDegree
     Q_EMIT verticesChanged(false);
 }
 
-void FloatImageViewer::mouseOver(bool state)
-{
-    _surface.setMouseOver(state);
-    Q_EMIT verticesChanged(false);
-}
+
 
 //void FloatImageViewer::setDownscale(int level)
 //{
