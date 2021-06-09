@@ -386,14 +386,11 @@ void FloatImageViewer::updatePaintSurface(QSGGeometryNode* root, QSGSimpleMateri
     // Draw the grid if Distortion Viewer is enabled and Grid Mode is enabled
     if (_surface.isDistoViewerEnabled())
     {
-        _surface.computeGrid(geometryLine);
+        _surface.getDisplayGrid() ? _surface.computeGrid(geometryLine) : _surface.removeGrid(geometryLine);
     }
-    else if (!_surface.isDistoViewerEnabled())
+    else
     {
-        // TODO : line width 0
-        qWarning() << "REMOVE GRID";
-        geometryLine->setLineWidth(0);
-        //_surface.removeGrid(geometryLine);
+        _surface.removeGrid(geometryLine);
     }
 
     root->childAtIndex(0)->markDirty(QSGNode::DirtyGeometry | QSGNode::DirtyMaterial);

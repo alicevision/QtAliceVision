@@ -39,9 +39,8 @@ public:
 	QColor getGridColor() const { return _gridColor; }
 	void setGridColor(const QColor& color)
 	{
+		qWarning() << "set grid color";
 		_gridColor = color;
-		_gridColor.setAlpha(_displayGrid ? 255 : 0);
-		qWarning() << "SET GRID COLOR";
 		Q_EMIT gridColorChanged(color);
 	}
 	Q_SIGNAL void gridColorChanged(QColor);
@@ -51,7 +50,6 @@ public:
 	void setDisplayGrid(bool display)
 	{
 		_displayGrid = display;
-		_gridColor.setAlpha(_displayGrid ? 255 : 0);
 		Q_EMIT displayGridChanged();
 	}
 	Q_SIGNAL void displayGridChanged();
