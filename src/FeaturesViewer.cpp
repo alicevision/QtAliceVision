@@ -240,7 +240,7 @@ namespace qtAliceVision
     std::size_t nbTracksToDraw = 0;
     std::size_t nbLinesToDraw = 0;
     std::size_t nbPointsToDraw = 0;
-    std::size_t nbHelperPointsToDraw = 0;
+    std::size_t nbHighlightPointsToDraw = 0;
 
     if (trackFeaturesPerTrack != nullptr)
     {
@@ -272,13 +272,14 @@ namespace qtAliceVision
             if (it->second->landmarkId() >= 0)
               ++nbLinesToDraw; // to draw landmark rerojection error
             ++nbPointsToDraw;
+            ++nbHighlightPointsToDraw;
           }
         }
         else if (_trackDisplayMode == WithAllMatches)
         {
           const auto it = trackFeatures.featuresPerFrame.find(currentFrameId);
           if (it != trackFeatures.featuresPerFrame.end())
-            ++nbHelperPointsToDraw; // to draw a helper point in order to identify the current match
+            ++nbHighlightPointsToDraw; // to draw a highlight point in order to identify the current match
           
           nbLinesToDraw += trackFeatures.nbLandmarks; // one line per landmark for rerojection error
           nbPointsToDraw += trackFeatures.featuresPerFrame.size(); // one point per matches
@@ -287,7 +288,7 @@ namespace qtAliceVision
     }
 
     QSGGeometry* geometryLine = nullptr;
-    QSGGeometry* geometryHelperPoint = nullptr;
+    QSGGeometry* geometryHighlightPoint = nullptr;
     QSGGeometry* geometryPoint = nullptr;
 
     if (!oldNode || oldNode->childCount() < 4)
@@ -319,16 +320,16 @@ namespace qtAliceVision
         // use VertexColorMaterial to later be able to draw selection in another color
         auto material = new QSGVertexColorMaterial;
         {
-          geometryHelperPoint = new QSGGeometry(
+          geometryHighlightPoint = new QSGGeometry(
             QSGGeometry::defaultAttributes_ColoredPoint2D(),
-            static_cast<int>(nbHelperPointsToDraw),
+            static_cast<int>(nbHighlightPointsToDraw),
             static_cast<int>(0),
             QSGGeometry::UnsignedIntType);
 
-          geometryHelperPoint->setIndexDataPattern(QSGGeometry::StaticPattern);
-          geometryHelperPoint->setVertexDataPattern(QSGGeometry::StaticPattern);
+          geometryHighlightPoint->setIndexDataPattern(QSGGeometry::StaticPattern);
+          geometryHighlightPoint->setVertexDataPattern(QSGGeometry::StaticPattern);
 
-          root->setGeometry(geometryHelperPoint);
+          root->setGeometry(geometryHighlightPoint);
           root->setFlags(QSGNode::OwnsGeometry);
           root->setFlags(QSGNode::OwnsMaterial);
           root->setMaterial(material);
@@ -363,14 +364,14 @@ namespace qtAliceVision
         return;
 
       auto* rootLine = static_cast<QSGGeometryNode*>(oldNode->childAtIndex(1));
-      auto* rootHelperPoint = static_cast<QSGGeometryNode*>(oldNode->childAtIndex(2));
+      auto* rootHighlightPoint = static_cast<QSGGeometryNode*>(oldNode->childAtIndex(2));
       auto* rootPoint = static_cast<QSGGeometryNode*>(oldNode->childAtIndex(3));
 
-      if (!rootHelperPoint || !rootLine || !rootPoint)
+      if (!rootHighlightPoint || !rootLine || !rootPoint)
         return;
 
       rootLine->markDirty(QSGNode::DirtyGeometry);
-      rootHelperPoint->markDirty(QSGNode::DirtyGeometry);
+      rootHighlightPoint->markDirty(QSGNode::DirtyGeometry);
       rootPoint->markDirty(QSGNode::DirtyGeometry);
 
       geometryLine = rootLine->geometry();
@@ -378,9 +379,9 @@ namespace qtAliceVision
         static_cast<int>(nbLinesToDraw * kTrackLineVertices),
         static_cast<int>(0)
       );
-      geometryHelperPoint = rootHelperPoint->geometry();
-      geometryHelperPoint->allocate(
-        static_cast<int>(nbHelperPointsToDraw),
+      geometryHighlightPoint = rootHighlightPoint->geometry();
+      geometryHighlightPoint->allocate(
+        static_cast<int>(nbHighlightPointsToDraw),
         static_cast<int>(0)
       );
       geometryPoint = rootPoint->geometry();
@@ -393,14 +394,14 @@ namespace qtAliceVision
     geometryLine->setDrawingMode(QSGGeometry::DrawLines);
     geometryLine->setLineWidth(2.0f);
 
-    geometryHelperPoint->setDrawingMode(QSGGeometry::DrawPoints);
-    geometryHelperPoint->setLineWidth(6.0f);
+    geometryHighlightPoint->setDrawingMode(QSGGeometry::DrawPoints);
+    geometryHighlightPoint->setLineWidth(6.0f);
 
     geometryPoint->setDrawingMode(QSGGeometry::DrawPoints);
     geometryPoint->setLineWidth(4.0f);
 
     QSGGeometry::ColoredPoint2D* verticesLines = geometryLine->vertexDataAsColoredPoint2D();
-    QSGGeometry::ColoredPoint2D* verticesHelperPoints = geometryHelperPoint->vertexDataAsColoredPoint2D();
+    QSGGeometry::ColoredPoint2D* verticesHighlightPoints = geometryHighlightPoint->vertexDataAsColoredPoint2D();
     QSGGeometry::ColoredPoint2D* verticesPoints = geometryPoint->vertexDataAsColoredPoint2D();
 
     // utility lambda to get line / point color
@@ -430,13 +431,13 @@ namespace qtAliceVision
       verticesPoints[index].set(point.x(), point.y(), c.red(), c.green(), c.blue(), c.alpha());
     };
 
-    // utility lambda to register a line helper vertex
-    const auto setVerticeHelperPoint = [&](unsigned int index, const QPointF& point, int alpha)
+    // utility lambda to register a highlight point vertex
+    const auto setVerticeHighlightPoint = [&](unsigned int index, const QPointF& point, int alpha)
     {
       QColor c = QColor(200, 200, 200);
       if (alpha == 0)
         c = QColor(0, 0, 0, 0); // color should be rgba(0,0,0,0) in order to be transparent.
-      verticesHelperPoints[index].set(point.x(), point.y(), c.red(), c.green(), c.blue(), c.alpha());
+      verticesHighlightPoints[index].set(point.x(), point.y(), c.red(), c.green(), c.blue(), c.alpha());
     };
 
     // utility lambda to register a feature point, to avoid code complexity
@@ -444,7 +445,7 @@ namespace qtAliceVision
                                       aliceVision::IndexT frameId, 
                                       const MFeature* feature, 
                                       const QColor& color,
-                                      unsigned int& nbLinesDrawn, unsigned int& nbHelperPointsDrawn, unsigned int& nbPointsDrawn)
+                                      unsigned int& nbLinesDrawn, unsigned int& nbHighlightPointsDrawn, unsigned int& nbPointsDrawn)
     {
       if (_trackDisplayMode == WithAllMatches || (frameId == currentFrameId && _trackDisplayMode == WithCurrentMatches))
       {
@@ -453,11 +454,11 @@ namespace qtAliceVision
         setVerticePoint(nbPointsDrawn, point, color);
         ++nbPointsDrawn;
 
-        // draw a helper point in order to identify the current match from the others
-        if (frameId == currentFrameId && _trackDisplayMode == WithAllMatches) 
+        // draw a highlight point in order to identify the current match from the others
+        if (frameId == currentFrameId) 
         {
-          setVerticeHelperPoint(nbHelperPointsDrawn, point, color.alpha());
-          ++nbHelperPointsDrawn;
+          setVerticeHighlightPoint(nbHighlightPointsDrawn, point, color.alpha());
+          ++nbHighlightPointsDrawn;
         }
 
         // draw reprojection error for landmark
@@ -481,7 +482,7 @@ namespace qtAliceVision
     }
 
     unsigned int nbLinesDrawn = 0;
-    unsigned int nbHelperPointsDrawn = 0;
+    unsigned int nbHighlightPointsDrawn = 0;
     unsigned int nbPointsDrawn = 0;
 
     for (const auto& trackFeaturesPair : *trackFeaturesPerTrack)
@@ -526,11 +527,11 @@ namespace qtAliceVision
 
           // draw previous point
           const QColor& previousPointColor = getColor(false, contiguous || previousTrackLineContiguous, previousFeatureInlier, trackHasInliers);
-          drawFeaturePoint(currentFrameId, previousFrameId, previousFeature, previousPointColor, nbLinesDrawn, nbHelperPointsDrawn, nbPointsDrawn);
+          drawFeaturePoint(currentFrameId, previousFrameId, previousFeature, previousPointColor, nbLinesDrawn, nbHighlightPointsDrawn, nbPointsDrawn);
 
           // draw track last point
           if (frameId == trackFeatures.maxFrameId)
-            drawFeaturePoint(currentFrameId, frameId, feature, getColor(false, contiguous, previousFeatureInlier, trackHasInliers), nbLinesDrawn, nbHelperPointsDrawn, nbPointsDrawn);
+            drawFeaturePoint(currentFrameId, frameId, feature, getColor(false, contiguous, previousFeatureInlier, trackHasInliers), nbLinesDrawn, nbHighlightPointsDrawn, nbPointsDrawn);
 
           // draw track line
           const QColor&  c = getColor(true, contiguous, inliers, trackHasInliers);
