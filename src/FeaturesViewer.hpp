@@ -29,12 +29,14 @@ namespace qtAliceVision {
       Q_PROPERTY(FeatureDisplayMode featureDisplayMode MEMBER _featureDisplayMode NOTIFY featureDisplayModeChanged)
       // Track display mode (see TrackDisplayMode enum)
       Q_PROPERTY(TrackDisplayMode trackDisplayMode MEMBER _trackDisplayMode NOTIFY trackDisplayModeChanged)
-      // Track filter mode (see TrackFilterMode enum)
-      Q_PROPERTY(TrackFilterMode trackFilterMode MEMBER _trackFilterMode NOTIFY trackFilterModeChanged)
+      // Display only contiguous tracks
+      Q_PROPERTY(bool trackContiguousFilter MEMBER _trackContiguousFilter NOTIFY trackContiguousFilterChanged)
+      // Display only tracks with at least one inlier
+      Q_PROPERTY(bool trackInliersFilter MEMBER _trackInliersFilter NOTIFY trackInliersFilterChanged)
       // Minimum track feature scale to display
-      Q_PROPERTY(float minTrackFeatureScaleFilter MEMBER _minTrackFeatureScaleFilter NOTIFY minTrackFeatureScaleFilterChanged)
+      Q_PROPERTY(float trackMinFeatureScaleFilter MEMBER _trackMinFeatureScaleFilter NOTIFY trackMinFeatureScaleFilterChanged)
       // Minimum track feature scale to display
-      Q_PROPERTY(float maxTrackFeatureScaleFilter MEMBER _maxTrackFeatureScaleFilter NOTIFY maxTrackFeatureScaleFilterChanged)
+      Q_PROPERTY(float trackMaxFeatureScaleFilter MEMBER _trackMaxFeatureScaleFilter NOTIFY trackMaxFeatureScaleFilterChanged)
       // Features color
       Q_PROPERTY(QColor featureColor MEMBER _featureColor NOTIFY featureColorChanged)
       // Matches color
@@ -67,15 +69,6 @@ namespace qtAliceVision {
     };
     Q_ENUM(TrackDisplayMode)
 
-    enum TrackFilterMode {
-      All = 0,                // All tracks: non-contiguous, contiguous outliers, contiguous inliers
-      WithInliers,            // Keep tracks with at least one inlier
-      Contiguous,             // Keep contiguous tracks (with contiguous outliers and/or contiguous inliers)
-      ContiguousWithInliers,  // Keep contiguous tracks with at least one inlier
-      ContiguousInliers       // Keep contiguous inliers tracks 
-    };
-    Q_ENUM(TrackFilterMode)
-
     /// Signals
 
     Q_SIGNAL void displayFeaturesChanged();
@@ -85,10 +78,12 @@ namespace qtAliceVision {
 
     Q_SIGNAL void featureDisplayModeChanged();
     Q_SIGNAL void trackDisplayModeChanged();
-    Q_SIGNAL void trackFilterModeChanged();
 
-    Q_SIGNAL void minTrackFeatureScaleFilterChanged();
-    Q_SIGNAL void maxTrackFeatureScaleFilterChanged();
+    Q_SIGNAL void trackContiguousFilterChanged();
+    Q_SIGNAL void trackInliersFilterChanged();
+
+    Q_SIGNAL void trackMinFeatureScaleFilterChanged();
+    Q_SIGNAL void trackMaxFeatureScaleFilterChanged();
 
     Q_SIGNAL void featureColorChanged();
     Q_SIGNAL void matchColorChanged();
@@ -122,10 +117,12 @@ namespace qtAliceVision {
 
     FeatureDisplayMode _featureDisplayMode = FeaturesViewer::Points;
     TrackDisplayMode _trackDisplayMode = FeaturesViewer::WithCurrentMatches;
-    TrackFilterMode _trackFilterMode = FeaturesViewer::Contiguous;
+    
+    bool _trackContiguousFilter = true;
+    bool _trackInliersFilter = false;
 
-    float _minTrackFeatureScaleFilter = 0.f;
-    float _maxTrackFeatureScaleFilter = 1.f;
+    float _trackMinFeatureScaleFilter = 0.f;
+    float _trackMaxFeatureScaleFilter = 1.f;
 
     QColor _featureColor = QColor(20, 220, 80);
     QColor _matchColor = QColor(255, 127, 0);

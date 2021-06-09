@@ -24,10 +24,12 @@ namespace qtAliceVision
 
     connect(this, &FeaturesViewer::featureDisplayModeChanged, this, &FeaturesViewer::update);
     connect(this, &FeaturesViewer::trackDisplayModeChanged, this, &FeaturesViewer::update);
-    connect(this, &FeaturesViewer::trackFilterModeChanged, this, &FeaturesViewer::update);
 
-    connect(this, &FeaturesViewer::minTrackFeatureScaleFilterChanged, this, &FeaturesViewer::update);
-    connect(this, &FeaturesViewer::maxTrackFeatureScaleFilterChanged, this, &FeaturesViewer::update);
+    connect(this, &FeaturesViewer::trackContiguousFilterChanged, this, &FeaturesViewer::update);
+    connect(this, &FeaturesViewer::trackInliersFilterChanged, this, &FeaturesViewer::update);
+
+    connect(this, &FeaturesViewer::trackMinFeatureScaleFilterChanged, this, &FeaturesViewer::update);
+    connect(this, &FeaturesViewer::trackMaxFeatureScaleFilterChanged, this, &FeaturesViewer::update);
 
     connect(this, &FeaturesViewer::featureColorChanged, this, &FeaturesViewer::update);
     connect(this, &FeaturesViewer::matchColorChanged, this, &FeaturesViewer::update);
@@ -247,8 +249,8 @@ namespace qtAliceVision
         const auto& trackFeatures = trackFeaturesPair.second;
 
         // feature scale score filter
-        if (trackFeatures.featureScaleScore > _maxTrackFeatureScaleFilter ||
-            trackFeatures.featureScaleScore < _minTrackFeatureScaleFilter)
+        if (trackFeatures.featureScaleScore > _trackMaxFeatureScaleFilter ||
+            trackFeatures.featureScaleScore < _trackMinFeatureScaleFilter)
         {
           continue;
         }
@@ -402,22 +404,18 @@ namespace qtAliceVision
     QSGGeometry::ColoredPoint2D* verticesPoints = geometryPoint->vertexDataAsColoredPoint2D();
 
     // utility lambda to get line / point color
-    const auto getColor = [&](bool colorForNonContiguous, bool contiguous, bool inliers, bool trackHasInliers) -> QColor
+    const auto getColor = [&](bool colorizeNonContiguous, bool contiguous, bool inliers, bool trackHasInliers) -> QColor
     {
-      QColor c = inliers ? _landmarkColor : _matchColor;
+      if (_trackContiguousFilter && !contiguous)
+        return QColor(0, 0, 0, 0);
 
-      if(colorForNonContiguous & !contiguous)
-        c = QColor(50, 50, 50);
+      if (_trackInliersFilter && !trackHasInliers)
+        return QColor(0, 0, 0, 0);
 
-      switch (_trackFilterMode)
-      {
-      case FeaturesViewer::WithInliers: if (!trackHasInliers) { c = QColor(0, 0, 0, 0); }  break;
-      case FeaturesViewer::Contiguous:  if (!contiguous) { c = QColor(0, 0, 0, 0); }  break;
-      case FeaturesViewer::ContiguousWithInliers:  if (!contiguous || !trackHasInliers) { c = QColor(0, 0, 0, 0); }  break;
-      case FeaturesViewer::ContiguousInliers:  if (!contiguous || !inliers) { c = QColor(0, 0, 0, 0); }  break;
-      }
+      if (colorizeNonContiguous & !contiguous)
+        return QColor(50, 50, 50);
 
-      return c;
+      return inliers ? _landmarkColor : _matchColor;
     };
 
     // utility lambda to register a line vertex
@@ -491,8 +489,8 @@ namespace qtAliceVision
       const auto& trackFeatures = trackFeaturesPair.second;
 
       // feature scale score filter
-      if (trackFeatures.featureScaleScore > _maxTrackFeatureScaleFilter ||
-        trackFeatures.featureScaleScore < _minTrackFeatureScaleFilter)
+      if (trackFeatures.featureScaleScore > _trackMaxFeatureScaleFilter ||
+        trackFeatures.featureScaleScore < _trackMinFeatureScaleFilter)
       {
         continue;
       }
@@ -508,7 +506,6 @@ namespace qtAliceVision
       const MFeature* previousFeature = nullptr;
       aliceVision::IndexT previousFrameId = aliceVision::UndefinedIndexT;
       bool previousTrackLineContiguous = false;
-      bool previousTrackLineInliers = false;
 
       for (aliceVision::IndexT frameId = trackFeatures.minFrameId; frameId <= trackFeatures.maxFrameId; ++frameId)
       {
@@ -524,14 +521,16 @@ namespace qtAliceVision
           const bool contiguous = (previousFrameId == (frameId - 1));
           // The 2 features of the track are resectioning inliers
           const bool inliers = ((previousFeature->landmarkId() >= 0) && (feature->landmarkId() >= 0));
+          // The previous feature is a resectioning inlier
+          const bool previousFeatureInlier = previousFeature->landmarkId() >= 0;
 
           // draw previous point
-          const QColor& previousPointColor = getColor(false, contiguous || previousTrackLineContiguous, inliers || previousTrackLineInliers, trackHasInliers);
+          const QColor& previousPointColor = getColor(false, contiguous || previousTrackLineContiguous, previousFeatureInlier, trackHasInliers);
           drawFeaturePoint(currentFrameId, previousFrameId, previousFeature, previousPointColor, nbLinesDrawn, nbHelperPointsDrawn, nbPointsDrawn);
 
           // draw track last point
           if (frameId == trackFeatures.maxFrameId)
-            drawFeaturePoint(currentFrameId, frameId, feature, getColor(false, contiguous, inliers, trackHasInliers), nbLinesDrawn, nbHelperPointsDrawn, nbPointsDrawn);
+            drawFeaturePoint(currentFrameId, frameId, feature, getColor(false, contiguous, previousFeatureInlier, trackHasInliers), nbLinesDrawn, nbHelperPointsDrawn, nbPointsDrawn);
 
           // draw track line
           const QColor&  c = getColor(true, contiguous, inliers, trackHasInliers);
@@ -541,7 +540,6 @@ namespace qtAliceVision
           ++nbLinesDrawn;
 
           previousTrackLineContiguous = contiguous;
-          previousTrackLineInliers = inliers;
         }
 
         // frame id is now previous frame id
