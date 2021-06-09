@@ -140,7 +140,6 @@ public:
     Q_INVOKABLE QVector4D pixelValueAt(int x, int y);
 
     Q_INVOKABLE void setVertex(int index, float x, float y);    // --> Surface
-    Q_INVOKABLE void displayGrid(bool display);    // --> Surface
     Q_INVOKABLE void defaultControlPoints();    // --> Surface
     Q_INVOKABLE void resized();    // --> Surface (Check if use ?)
     Q_INVOKABLE void hasDistortion(bool distortion);    // --> Surface (Change Name : setDistoViewerEnabled())

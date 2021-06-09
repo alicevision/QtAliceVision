@@ -93,6 +93,7 @@ FloatImageViewer::FloatImageViewer(QQuickItem* parent)
     connect(this, &FloatImageViewer::downscaleLevelChanged, this, &FloatImageViewer::reload);
 
     connect(&_surface, &Surface::gridColorChanged, this, &FloatImageViewer::update);
+    connect(&_surface, &Surface::displayGridChanged, this, &FloatImageViewer::update);
 }
 
 FloatImageViewer::~FloatImageViewer()
@@ -382,16 +383,17 @@ void FloatImageViewer::updatePaintSurface(QSGGeometryNode* root, QSGSimpleMateri
         }
     }
 
-    // Draw the grid if Disto Viewer is enabled
-    if (_surface.isDistoViewerEnabled() && _surface.hasGridChanged())
+    // Draw the grid if Distortion Viewer is enabled and Grid Mode is enabled
+    if (_surface.isDistoViewerEnabled())
     {
-        _surface.drawGrid(geometryLine);
-        Q_EMIT verticesChanged(false);
+        _surface.computeGrid(geometryLine);
     }
     else if (!_surface.isDistoViewerEnabled())
     {
         // TODO : line width 0
-        _surface.removeGrid(geometryLine);
+        qWarning() << "REMOVE GRID";
+        geometryLine->setLineWidth(0);
+        //_surface.removeGrid(geometryLine);
     }
 
     root->childAtIndex(0)->markDirty(QSGNode::DirtyGeometry | QSGNode::DirtyMaterial);
@@ -406,30 +408,32 @@ void FloatImageViewer::setVertex(int index, float x, float y)
     QPoint point(x, y);
     _surface.getVertex(index) = point;
     _surface.verticesChanged(true);
-    _surface.gridChanged(true);
+    //_surface.gridChanged(true);
     Q_EMIT verticesChanged(false);
 }
 
-void FloatImageViewer::displayGrid(bool display)
-{
-    _surface.gridChanged(true);
-    _surface.gridDisplayed(display);
-    Q_EMIT verticesChanged(false);
-}
+//void FloatImageViewer::displayGrid(bool display)
+//{
+//    //_surface.gridChanged(true);
+//    //_surface.gridDisplayed(display);
+//    //Q_EMIT verticesChanged(false);
+//
+//    _surface.displayGrid(display);
+//}
 
 
 void FloatImageViewer::defaultControlPoints()
 {
     _surface.clearVertices();
     _surface.verticesChanged(true);
-    _surface.gridChanged(true);
+    //_surface.gridChanged(true);
     Q_EMIT verticesChanged(false);
 }
 
 void FloatImageViewer::resized()
 {
     _surface.verticesChanged(true);
-    _surface.gridChanged(true);
+    //_surface.gridChanged(true);
     Q_EMIT verticesChanged(false);
 }
 
@@ -453,7 +457,7 @@ void FloatImageViewer::updateSubdivisions(int subs)
 
     _surface.clearVertices();
     _surface.verticesChanged(true);
-    _surface.gridChanged(true);
+    //_surface.gridChanged(true);
     Q_EMIT verticesChanged(false);
 }
 
@@ -462,7 +466,7 @@ void FloatImageViewer::setSfmPath(const QString& path)
     _surface.setSfmPath(path);
     _imageChanged = true;
     _surface.verticesChanged(true);
-    _surface.gridChanged(true);
+   // _surface.gridChanged(true);
     Q_EMIT verticesChanged(false);
 }
 

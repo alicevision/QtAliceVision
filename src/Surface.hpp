@@ -32,19 +32,29 @@ class Surface : public QObject
 Q_OBJECT
 	Q_PROPERTY(QColor gridColor READ getGridColor WRITE setGridColor NOTIFY gridColorChanged);
 
+	Q_PROPERTY(bool displayGrid READ getDisplayGrid WRITE setDisplayGrid NOTIFY displayGridChanged);
+
 public:
-	QColor getGridColor()
-	{
-		return _gridColor;
-	}
+	// GRID COLOR
+	QColor getGridColor() const { return _gridColor; }
 	void setGridColor(const QColor& color)
 	{
 		_gridColor = color;
+		_gridColor.setAlpha(_displayGrid ? 255 : 0);
+		qWarning() << "SET GRID COLOR";
 		Q_EMIT gridColorChanged(color);
 	}
 	Q_SIGNAL void gridColorChanged(QColor);
 
-
+	// DISPLAY GRID
+	bool getDisplayGrid() const { return _displayGrid; }
+	void setDisplayGrid(bool display)
+	{
+		_displayGrid = display;
+		_gridColor.setAlpha(_displayGrid ? 255 : 0);
+		Q_EMIT displayGridChanged();
+	}
+	Q_SIGNAL void displayGridChanged();
 
 public:
 	Surface(int subdivisions = 4, QObject* parent = nullptr);
@@ -55,7 +65,7 @@ public:
 		
 	void fillVertices(QSGGeometry::TexturedPoint2D* vertices);
 
-	void drawGrid(QSGGeometry* geometryLine);
+	void computeGrid(QSGGeometry* geometryLine);
 
 	void removeGrid(QSGGeometry* geometryLine);
 		
@@ -79,11 +89,11 @@ public:
 	inline bool hasVerticesChanged() const { return _verticesChanged; }
 	void verticesChanged(bool change) { _verticesChanged = change; }
 
-	inline bool hasGridChanged() const { return _gridChanged; }
-	void gridChanged(bool change) { _gridChanged = change; }
+	//inline bool hasGridChanged() const { return _gridChanged; }
+	//void gridChanged(bool change) { _gridChanged = change; }
 
-	void gridDisplayed(bool display) { _isGridDisplayed = display; }
-	bool isGridDisplayed() const { return _isGridDisplayed; }
+	//void gridDisplayed(bool display) { _isGridDisplayed = display; }
+	//bool isGridDisplayed() const { return _isGridDisplayed; }
 
 	bool hasSubsChanged() { return _subsChanged; }
 	void subsChanged(bool change) { _subsChanged = change; }
@@ -147,8 +157,9 @@ private:
 	bool _reinit = false;
 
 	// Grid State
-	bool _isGridDisplayed = false;
-	bool _gridChanged = true;
+	//bool _isGridDisplayed = false;
+	//bool _gridChanged = true;
+	bool _displayGrid;
 	QColor _gridColor = QColor(255, 0, 0, 255);
 	bool _subsChanged = false;
 

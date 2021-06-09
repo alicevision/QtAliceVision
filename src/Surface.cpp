@@ -34,6 +34,8 @@ Surface::Surface(int subdivisions, QObject* parent)
     : QObject(parent)
 {
     setSubdivisions(subdivisions);
+
+    //connect(this, &Surface::gridChanged, this, &FloatImageViewer::updateGrid);
 }
 
 Surface::~Surface()
@@ -190,6 +192,7 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
     }
     // End for loop
 
+    Q_EMIT verticesChanged(false);
 }
 
 void Surface::computeIndicesGrid(quint16* indices)
@@ -249,44 +252,40 @@ void Surface::fillVertices(QSGGeometry::TexturedPoint2D* vertices)
     _verticesChanged = false;
 }
 
-void Surface::drawGrid(QSGGeometry* geometryLine)
+void Surface::computeGrid(QSGGeometry* geometryLine)
 {
     removeGrid(geometryLine);
 
-    if (_isGridDisplayed)
+    int countPoint = 0;
+    int index = 0;
+    for (size_t i = 0; i <= _subdivisions; i++)
     {
-        int countPoint = 0;
-        int index = 0;
-        for (size_t i = 0; i <= _subdivisions; i++)
+        for (size_t j = 0; j <= _subdivisions; j++)
         {
-            for (size_t j = 0; j <= _subdivisions; j++)
+            if (i == _subdivisions && j == _subdivisions)
+                continue;
+
+            // Horizontal Line
+            if (i != _subdivisions)
             {
-                if (i == _subdivisions && j == _subdivisions)
-                    continue;
+                geometryLine->vertexDataAsPoint2D()[countPoint++].set(_vertices[index].x(), _vertices[index].y());
+                index += _subdivisions + 1;
+                geometryLine->vertexDataAsPoint2D()[countPoint++].set(_vertices[index].x(), _vertices[index].y());
+                index -= _subdivisions + 1;
 
-                // Horizontal Line
-                if (i != _subdivisions)
+                if (j == _subdivisions)
                 {
-                    geometryLine->vertexDataAsPoint2D()[countPoint++].set(_vertices[index].x(), _vertices[index].y());
-                    index += _subdivisions + 1;
-                    geometryLine->vertexDataAsPoint2D()[countPoint++].set(_vertices[index].x(), _vertices[index].y());
-                    index -= _subdivisions + 1;
-
-                    if (j == _subdivisions)
-                    {
-                        index++;
-                        continue;
-                    }
+                    index++;
+                    continue;
                 }
-
-                // Vertical Line
-                geometryLine->vertexDataAsPoint2D()[countPoint++].set(_vertices[index].x(), _vertices[index].y());
-                index++;
-                geometryLine->vertexDataAsPoint2D()[countPoint++].set(_vertices[index].x(), _vertices[index].y());
             }
+
+            // Vertical Line
+            geometryLine->vertexDataAsPoint2D()[countPoint++].set(_vertices[index].x(), _vertices[index].y());
+            index++;
+            geometryLine->vertexDataAsPoint2D()[countPoint++].set(_vertices[index].x(), _vertices[index].y());
         }
     }
-    _gridChanged = false;
 }
 
 void Surface::setSubdivisions(int sub)
