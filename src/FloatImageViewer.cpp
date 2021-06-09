@@ -404,7 +404,7 @@ void FloatImageViewer::updatePaintSurface(QSGGeometryNode* root, QSGSimpleMateri
 void FloatImageViewer::setVertex(int index, float x, float y)
 {
     QPoint point(x, y);
-    _surface.vertex(index) = point;
+    _surface.getVertex(index) = point;
     _surface.verticesChanged(true);
     _surface.gridChanged(true);
     Q_EMIT verticesChanged(false);

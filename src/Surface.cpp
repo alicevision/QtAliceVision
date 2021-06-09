@@ -392,16 +392,6 @@ void Surface::rotatePano(aliceVision::Vec3& coordSphere)
 *   Q_INVOKABLE Functions
 */
 
-QPoint Surface::getVertex(int index)
-{
-    return vertex(index);
-}
-
-QPoint Surface::getPrincipalPoint()
-{
-    return principalPoint();
-}
-
 // return pitch in degrees
 double Surface::getPitch()
 {
@@ -440,9 +430,9 @@ bool Surface::isMouseInside(float mx, float my)
 
     for (size_t i = 0; i < indexCount(); i += 3)
     {
-        QPoint A = vertex(index(i));
-        QPoint B = vertex(index(i + 1));
-        QPoint C = vertex(index(i + 2));
+        QPoint A = _vertices[_indices[i]];
+        QPoint B = _vertices[_indices[i + 1]];
+        QPoint C = _vertices[_indices[i + 2]];
 
         // Compute vectors        
         QPoint v0 = C - A;
@@ -468,7 +458,6 @@ bool Surface::isMouseInside(float mx, float my)
             break;
         }
     }
-
     return inside;
 }
 

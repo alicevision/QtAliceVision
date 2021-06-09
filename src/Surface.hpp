@@ -59,9 +59,6 @@ public:
 
 	void removeGrid(QSGGeometry* geometryLine);
 		
-	QPoint principalPoint() const { return _principalPoint; }
-
-
 	double pitch() const { return _pitch; }
 	double yaw() const { return _yaw; }
 
@@ -74,8 +71,6 @@ public:
 	const QList<QPoint>& vertices() const { return _vertices; }
 	void clearVertices() { _vertices.clear(); _coordsSphereDefault.clear(); }
 		
-	const QPoint& vertex(int index) const { return _vertices[index]; }
-	QPoint& vertex(int index) { return _vertices[index]; }
 	const quint32 index(int index) { return _indices[index]; }
 
 	inline int indexCount() const { return _indexCount; }
@@ -109,12 +104,13 @@ public:
 	bool isPanoViewerEnabled() const;
 	bool isDistoViewerEnabled() const;
 
-	Q_INVOKABLE QPoint getVertex(int index);
-	Q_INVOKABLE QPoint getPrincipalPoint();
+	QPoint& getVertex(int index) { return _vertices[index]; }
+	Q_INVOKABLE QPoint getVertex(int index) const { return _vertices[index]; };
+	Q_INVOKABLE QPoint getPrincipalPoint() { return _principalPoint; };
 	Q_INVOKABLE double getPitch();
 	Q_INVOKABLE double getYaw();
-
 	Q_INVOKABLE bool isMouseInside(float mx, float my);
+
 private:
 	bool loadSfmData();
 
