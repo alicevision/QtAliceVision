@@ -45,6 +45,7 @@ public:
 	Q_SIGNAL void gridColorChanged(QColor);
 
 
+
 public:
 	Surface(int subdivisions = 4, QObject* parent = nullptr);
 	Surface& operator=(const Surface& other) = default;
@@ -113,7 +114,10 @@ public:
 
 	Q_INVOKABLE QPoint getVertex(int index);
 	Q_INVOKABLE QPoint getPrincipalPoint();
+	Q_INVOKABLE double getPitch();
+	Q_INVOKABLE double getYaw();
 
+	Q_INVOKABLE bool isMouseInside(float mx, float my);
 private:
 	bool loadSfmData();
 

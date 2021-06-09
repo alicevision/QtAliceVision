@@ -152,9 +152,6 @@ public:
     Q_INVOKABLE void rotatePanoramaRadians(float yawRadians, float pitchRadians);   // --> Surface
     Q_INVOKABLE void rotatePanoramaDegrees(float yawDegrees, float pitchDegrees);   // --> Surface
     Q_INVOKABLE void mouseOver(bool state);     // --> Surface
-    Q_INVOKABLE double getPitch();  // --> Surface
-    Q_INVOKABLE double getYaw();    // --> Surface
-    Q_INVOKABLE bool isMouseInside(float mx, float my); // --> Surface
 
     Surface* getSurfacePtr() { return &_surface; }
 

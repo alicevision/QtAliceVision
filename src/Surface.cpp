@@ -403,5 +403,76 @@ QPoint Surface::getPrincipalPoint()
     return principalPoint();
 }
 
+// return pitch in degrees
+double Surface::getPitch()
+{
+    // Radians
+    double pitch = _pitch;
+    int power = pitch / M_PI_2;
+    pitch = fmod(pitch, M_PI_2) * pow(-1, power);
+
+    // Degres
+    pitch *= (180.0f / M_PI);
+    if (power % 2 != 0) pitch = -90.0 - pitch;
+
+    return pitch;
+}
+
+// return yaw in degrees
+double Surface::getYaw()
+{
+    // Radians
+    double yaw = _yaw;
+    int power = yaw / M_PI;
+    yaw = fmod(yaw, M_PI) * pow(-1, power);
+
+    // Degres
+    yaw *= (180.0f / M_PI);
+    if (power % 2 != 0) yaw = -180.0 - yaw;
+
+    return yaw;
+}
+
+
+bool Surface::isMouseInside(float mx, float my)
+{
+    QPoint P(mx, my);
+    bool inside = false;
+
+    for (size_t i = 0; i < indexCount(); i += 3)
+    {
+        QPoint A = vertex(index(i));
+        QPoint B = vertex(index(i + 1));
+        QPoint C = vertex(index(i + 2));
+
+        // Compute vectors        
+        QPoint v0 = C - A;
+        QPoint v1 = B - A;
+        QPoint v2 = P - A;
+
+        // Compute dot products
+        float dot00 = QPoint::dotProduct(v0, v0);
+        float dot01 = QPoint::dotProduct(v0, v1);
+        float dot02 = QPoint::dotProduct(v0, v2);
+        float dot11 = QPoint::dotProduct(v1, v1);
+        float dot12 = QPoint::dotProduct(v1, v2);
+
+        // Compute barycentric coordinates
+        float invDenom = 1 / (dot00 * dot11 - dot01 * dot01);
+        float u = (dot11 * dot02 - dot01 * dot12) * invDenom;
+        float v = (dot00 * dot12 - dot01 * dot02) * invDenom;
+
+        // Check if point is in triangle
+        if ((u >= 0) && (v >= 0) && (u + v < 1))
+        {
+            inside = true;
+            break;
+        }
+    }
+
+    return inside;
+}
+
+
 
 }  // ns qtAliceVision
