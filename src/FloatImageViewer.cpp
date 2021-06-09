@@ -401,11 +401,6 @@ void FloatImageViewer::updatePaintSurface(QSGGeometryNode* root, QSGSimpleMateri
 *   Q_INVOKABLE Functions 
 */
 
-QPoint FloatImageViewer::getVertex(int index) 
-{ 
-    return _surface.vertex(index); 
-}
-
 void FloatImageViewer::setVertex(int index, float x, float y)
 {
     QPoint point(x, y);
@@ -475,11 +470,6 @@ void FloatImageViewer::setSfmPath(const QString& path)
     _surface.verticesChanged(true);
     _surface.gridChanged(true);
     Q_EMIT verticesChanged(false);
-}
-
-QPoint FloatImageViewer::getPrincipalPoint()
-{
-    return _surface.principalPoint();
 }
 
 void FloatImageViewer::setIdView(int id)

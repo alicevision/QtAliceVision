@@ -111,6 +111,9 @@ public:
 	bool isPanoViewerEnabled() const;
 	bool isDistoViewerEnabled() const;
 
+	Q_INVOKABLE QPoint getVertex(int index);
+	Q_INVOKABLE QPoint getPrincipalPoint();
+
 private:
 	bool loadSfmData();
 

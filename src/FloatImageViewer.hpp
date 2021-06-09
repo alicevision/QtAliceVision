@@ -138,8 +138,6 @@ public:
     Q_SIGNAL void surfaceChanged();
 
     Q_INVOKABLE QVector4D pixelValueAt(int x, int y);
-    Q_INVOKABLE QPoint getVertex(int index);    // --> Surface
-    Q_INVOKABLE QPoint getPrincipalPoint();    // --> Surface
 
     Q_INVOKABLE void setVertex(int index, float x, float y);    // --> Surface
     Q_INVOKABLE void displayGrid(bool display);    // --> Surface

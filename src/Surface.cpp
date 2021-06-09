@@ -389,5 +389,19 @@ void Surface::rotatePano(aliceVision::Vec3& coordSphere)
     coordSphere = cRo * coordSphere;
 }
 
+/*
+*   Q_INVOKABLE Functions
+*/
+
+QPoint Surface::getVertex(int index)
+{
+    return vertex(index);
+}
+
+QPoint Surface::getPrincipalPoint()
+{
+    return principalPoint();
+}
+
 
 }  // ns qtAliceVision
