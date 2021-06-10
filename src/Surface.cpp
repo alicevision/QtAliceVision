@@ -33,9 +33,7 @@ const int Surface::_panoramaHeight = 1500;
 Surface::Surface(int subdivisions, QObject* parent)
     : QObject(parent)
 {
-    setSubdivisions(subdivisions);
-
-    //connect(this, &Surface::gridChanged, this, &FloatImageViewer::updateGrid);
+    //setSubdivisions(subdivisions);
 }
 
 Surface::~Surface()
@@ -102,6 +100,8 @@ void Surface::computeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indic
 void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize textureSize, 
     aliceVision::camera::IntrinsicBase* intrinsic, int downscaleLevel)
 {
+    qWarning() << "COMPUTE VERTICES";
+
     // Retrieve pose if Panorama Viewer is enable
     aliceVision::sfmData::CameraPose pose;
     if (isPanoViewerEnabled() && intrinsic)
@@ -288,7 +288,7 @@ void Surface::computeGrid(QSGGeometry* geometryLine)
     }
 }
 
-void Surface::setSubdivisions(int sub)
+void Surface::setSubdivisions_old(int sub)
 {
 	_subdivisions = sub;
 	
@@ -297,7 +297,7 @@ void Surface::setSubdivisions(int sub)
 	_indexCount = _subdivisions * _subdivisions * 6;
 }
 
-int Surface::subdivisions() const
+int Surface::subdivisions_old() const
 {
 	return _subdivisions;
 }

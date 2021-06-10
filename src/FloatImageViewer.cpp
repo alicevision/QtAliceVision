@@ -87,7 +87,6 @@ FloatImageViewer::FloatImageViewer(QQuickItem* parent)
     connect(this, &FloatImageViewer::channelModeChanged, this, &FloatImageViewer::update);
     connect(this, &FloatImageViewer::imageChanged, this, &FloatImageViewer::update);
     connect(this, &FloatImageViewer::sourceChanged, this, &FloatImageViewer::reload);
-    connect(this, &FloatImageViewer::verticesChanged, this, &FloatImageViewer::update);
     connect(this, &FloatImageViewer::sfmChanged, this, &FloatImageViewer::update);
 
     connect(this, &FloatImageViewer::downscaleLevelChanged, this, &FloatImageViewer::reload);
@@ -95,6 +94,9 @@ FloatImageViewer::FloatImageViewer(QQuickItem* parent)
     connect(&_surface, &Surface::gridColorChanged, this, &FloatImageViewer::update);
     connect(&_surface, &Surface::displayGridChanged, this, &FloatImageViewer::update);
     connect(&_surface, &Surface::mouseOverChanged, this, &FloatImageViewer::update);
+
+    connect(&_surface, &Surface::subdivisionsChanged, this, &FloatImageViewer::update);
+    connect(this, &FloatImageViewer::verticesChanged, this, &FloatImageViewer::update);
 }
 
 FloatImageViewer::~FloatImageViewer()
@@ -349,6 +351,8 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
 
 void FloatImageViewer::updatePaintSurface(QSGGeometryNode* root, QSGSimpleMaterial<ShaderData>* material, QSGGeometry* geometryLine, bool updateSfmData)
 {
+    //qWarning() << "UPDATE";
+
     // Highlight image if Panorama enable and user hovers the image
     if (_surface.isPanoViewerEnabled())
     {
@@ -361,6 +365,7 @@ void FloatImageViewer::updatePaintSurface(QSGGeometryNode* root, QSGSimpleMateri
     // If vertices has changed, Re-Compute the grid 
     if (_surface.hasVerticesChanged())
     {
+        //qWarning() << _surface.getSubdivisions();
         // Retrieve Vertices and Index Data
         QSGGeometry::TexturedPoint2D* vertices = root->geometry()->vertexDataAsTexturedPoint2D();
         quint16* indices = root->geometry()->indexDataAsUShort();
@@ -450,16 +455,15 @@ void FloatImageViewer::hasDistortion(bool distortion)
 
 void FloatImageViewer::updateSubdivisions(int subs)
 {
+    qWarning() << "Q INVOKABLE" << subs;
     _surface.subsChanged(true);
-    _surface.setSubdivisions(subs);
+    _surface.setSubdivisions_old(subs);
 
     _surface.clearVertices();
     _surface.verticesChanged(true);
     //_surface.gridChanged(true);
     Q_EMIT verticesChanged(false);
 }
-
-
 
 void FloatImageViewer::rotatePanoramaRadians(float yawRadians, float pitchRadians)
 {

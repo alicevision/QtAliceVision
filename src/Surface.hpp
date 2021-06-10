@@ -34,9 +34,11 @@ Q_OBJECT
 
 	Q_PROPERTY(bool displayGrid READ getDisplayGrid WRITE setDisplayGrid NOTIFY displayGridChanged);
 
-	Q_PROPERTY(bool mouseOver READ getMouseOver WRITE setMouseOver NOTIFY mouseOverChanged)
+	Q_PROPERTY(bool mouseOver READ getMouseOver WRITE setMouseOver NOTIFY mouseOverChanged);
 
-	Q_PROPERTY(QString sfmPath WRITE setSfmPath NOTIFY sfmPathChanged)
+	Q_PROPERTY(QString sfmPath WRITE setSfmPath NOTIFY sfmPathChanged);
+
+	Q_PROPERTY(int subdivisions READ getSubdivisions WRITE setSubdivisions NOTIFY subdivisionsChanged);
 
 public:
 	// GRID COLOR
@@ -70,6 +72,21 @@ public:
 	}
 	Q_SIGNAL void mouseOverChanged();
 
+	// SUBDIVISION
+	int getSubdivisions() const { return _subdivisions; }
+	void setSubdivisions(int newSubdivisions)
+	{
+		qWarning() << "Q PROPERTY" << newSubdivisions;
+		subsChanged(true);
+		setSubdivisions_old(newSubdivisions);
+
+		clearVertices();
+		verticesChanged(true);
+		//_surface.gridChanged(true);
+		Q_EMIT subdivisionsChanged();
+	}
+	Q_SIGNAL void subdivisionsChanged();
+
 	// SFM PATH
 	void setSfmPath(const QString& path)
 	{
@@ -97,8 +114,8 @@ public:
 	void setRotationValues(float yaw, float pitch);
 	void incrementRotationValues(float yaw, float pitch);
 
-	void setSubdivisions(int sub);
-	int subdivisions() const;
+	void setSubdivisions_old(int sub);
+	int subdivisions_old() const;
 
 	const QList<QPoint>& vertices() const { return _vertices; }
 	void clearVertices() { _vertices.clear(); _coordsSphereDefault.clear(); }
