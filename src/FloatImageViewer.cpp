@@ -92,6 +92,7 @@ FloatImageViewer::FloatImageViewer(QQuickItem* parent)
     connect(this, &FloatImageViewer::downscaleLevelChanged, this, &FloatImageViewer::reload);
 
     connect(&_surface, &Surface::gridColorChanged, this, &FloatImageViewer::update);
+    connect(&_surface, &Surface::gridOpacityChanged, this, &FloatImageViewer::update);
     connect(&_surface, &Surface::displayGridChanged, this, &FloatImageViewer::update);
     connect(&_surface, &Surface::mouseOverChanged, this, &FloatImageViewer::update);
     connect(&_surface, &Surface::viewerTypeChanged, this, &FloatImageViewer::update);

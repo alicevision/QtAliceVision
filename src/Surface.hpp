@@ -32,6 +32,8 @@ class Surface : public QObject
 Q_OBJECT
 	Q_PROPERTY(QColor gridColor READ getGridColor WRITE setGridColor NOTIFY gridColorChanged);
 
+	Q_PROPERTY(int gridOpacity READ getGridOpacity WRITE setGridOpacity NOTIFY gridOpacityChanged);
+
 	Q_PROPERTY(bool displayGrid READ getDisplayGrid WRITE setDisplayGrid NOTIFY displayGridChanged);
 
 	Q_PROPERTY(bool mouseOver READ getMouseOver WRITE setMouseOver NOTIFY mouseOverChanged);
@@ -47,11 +49,25 @@ public:
 	QColor getGridColor() const { return _gridColor; }
 	void setGridColor(const QColor& color)
 	{
-		qWarning() << "set grid color";
 		_gridColor = color;
+		_gridColor.setAlpha(_gridOpacity);
 		Q_EMIT gridColorChanged(color);
 	}
 	Q_SIGNAL void gridColorChanged(QColor);
+
+	//GRID OPACITY
+	int getGridOpacity() const { return _gridOpacity; }
+	void setGridOpacity(const int& opacity)
+	{
+		if (_gridOpacity == int((opacity / 100.0) * 255)) {
+			return;
+		}
+		_gridOpacity = int((opacity / 100.0) * 255);
+		qWarning() << "Opacity is " << _gridOpacity;
+		_gridColor.setAlpha(_gridOpacity);
+		Q_EMIT gridOpacityChanged(opacity);
+	}
+	Q_SIGNAL void gridOpacityChanged(int);
 
 	// DISPLAY GRID
 	bool getDisplayGrid() const { return _displayGrid; }
@@ -198,6 +214,7 @@ private:
 	// Grid State
 	bool _displayGrid;
 	QColor _gridColor = QColor(255, 0, 0, 255);
+	int _gridOpacity = 255;
 	bool _subsChanged = false;
 
 	// Sfm Data
