@@ -139,19 +139,17 @@ public:
 
     Q_INVOKABLE QVector4D pixelValueAt(int x, int y);
 
+    // DISTO VIEWER ???
     Q_INVOKABLE void setVertex(int index, float x, float y);    // --> Surface
     Q_INVOKABLE void defaultControlPoints();    // --> Surface
-    Q_INVOKABLE void resized();    // --> Surface (Check if use ?)
+    // ===============================================
+    
+    // INVOKABLE ???
+    Q_INVOKABLE void updateSubdivisions(int subs);      // --> Surface
+    // ===============================================
+    
     Q_INVOKABLE void hasDistortion(bool distortion);    // --> Surface (Change Name : setDistoViewerEnabled())
 
-    
-    Q_INVOKABLE void updateSubdivisions(int subs);      // --> Surface
-    
-    Q_INVOKABLE void rotatePanoramaRadians(float yawRadians, float pitchRadians);   // --> Surface
-    Q_INVOKABLE void rotatePanoramaDegrees(float yawDegrees, float pitchDegrees);   // --> Surface
-    
-    
-    
     Surface* getSurfacePtr() { return &_surface; }
 
 private:

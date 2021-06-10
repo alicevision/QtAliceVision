@@ -141,12 +141,15 @@ public:
 	QPoint& getVertex(int index) { return _vertices[index]; }
 	Q_INVOKABLE QPoint getVertex(int index) const { return _vertices[index]; };
 	Q_INVOKABLE QPoint getPrincipalPoint() { return _principalPoint; };
-	Q_INVOKABLE double getPitch();
-	Q_INVOKABLE double getYaw();
 	Q_INVOKABLE bool isMouseInside(float mx, float my);
 
 	Q_INVOKABLE void setPanoViewerEnabled(bool state);
 	Q_INVOKABLE void setIdView(int id);
+
+	Q_INVOKABLE double getPitch();
+	Q_INVOKABLE double getYaw();
+	Q_INVOKABLE void rotateSurfaceRadians(float yawRadians, float pitchRadians);
+	Q_INVOKABLE void rotateSurfaceDegrees(float yawDegrees, float pitchDegrees);
 
 private:
 	bool loadSfmData();

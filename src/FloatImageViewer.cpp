@@ -433,13 +433,6 @@ void FloatImageViewer::defaultControlPoints()
     Q_EMIT verticesChanged(false);
 }
 
-void FloatImageViewer::resized()
-{
-    _surface.verticesChanged(true);
-    //_surface.gridChanged(true);
-    Q_EMIT verticesChanged(false);
-}
-
 void FloatImageViewer::hasDistortion(bool distortion)
 {
     if (distortion)
@@ -465,22 +458,7 @@ void FloatImageViewer::updateSubdivisions(int subs)
     Q_EMIT verticesChanged(false);
 }
 
-void FloatImageViewer::rotatePanoramaRadians(float yawRadians, float pitchRadians)
-{
-    _surface.incrementRotationValues(yawRadians, pitchRadians);
-    _surface.verticesChanged(true);
-    Q_EMIT verticesChanged(false);
-}
 
-void FloatImageViewer::rotatePanoramaDegrees(float yawDegrees, float pitchDegrees)
-{
-    double yawRadians = yawDegrees * (M_PI / 180.0f);
-    double pitchRadians = pitchDegrees * (M_PI / 180.0f);
-
-    _surface.setRotationValues(yawRadians, pitchRadians);
-    _surface.verticesChanged(true);
-    Q_EMIT verticesChanged(false);
-}
 
 
 

@@ -391,11 +391,27 @@ void Surface::rotatePano(aliceVision::Vec3& coordSphere)
 *   Q_INVOKABLE Functions
 */
 
+void Surface::rotateSurfaceRadians(float yawRadians, float pitchRadians)
+{
+    incrementRotationValues(yawRadians, pitchRadians);
+    verticesChanged(true);
+    Q_EMIT subdivisionsChanged();
+}
+
+void Surface::rotateSurfaceDegrees(float yawDegrees, float pitchDegrees)
+{
+    double yawRadians = yawDegrees * (M_PI / 180.0f);
+    double pitchRadians = pitchDegrees * (M_PI / 180.0f);
+
+    setRotationValues(yawRadians, pitchRadians);
+    verticesChanged(true);
+    Q_EMIT subdivisionsChanged();
+}
+
 void Surface::setIdView(int id)
 {
     _idView = id;
 }
-
 
 void Surface::setPanoViewerEnabled(bool state)
 {
