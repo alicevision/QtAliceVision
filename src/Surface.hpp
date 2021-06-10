@@ -19,10 +19,10 @@
 namespace qtAliceVision
 {
 
-enum class ViewerType
-{
-	DEFAULT = 0, HDR, DISTORTION, PANORAMA
-};
+//enum class ViewerType
+//{
+//	DEFAULT = 0, HDR, DISTORTION, PANORAMA
+//};
 
 /**
  * @brief Discretization of FloatImageViewer surface
@@ -39,6 +39,8 @@ Q_OBJECT
 	Q_PROPERTY(QString sfmPath WRITE setSfmPath NOTIFY sfmPathChanged);
 
 	Q_PROPERTY(int subdivisions READ getSubdivisions WRITE setSubdivisions NOTIFY subdivisionsChanged);
+
+	Q_PROPERTY(EViewerType viewerType WRITE setViewerType NOTIFY viewerTypeChanged);
 
 public:
 	// GRID COLOR
@@ -95,6 +97,19 @@ public:
 	}
 	Q_SIGNAL void sfmPathChanged();
 
+	// Viewer Type
+	enum class EViewerType : quint8 { DEFAULT = 0, HDR, DISTORTION, PANORAMA };
+	Q_ENUM(EViewerType)
+	void setViewerType(EViewerType type)
+	{
+		if (_viewerType != type)
+		{
+			_viewerType = type;
+			Q_EMIT viewerTypeChanged();
+		}
+	}
+	Q_SIGNAL void viewerTypeChanged();
+
 public:
 	Surface(int subdivisions = 4, QObject* parent = nullptr);
 	Surface& operator=(const Surface& other) = default;
@@ -131,21 +146,15 @@ public:
 	bool hasSubsChanged() { return _subsChanged; }
 	void subsChanged(bool change) { _subsChanged = change; }
 
-	// Viewer Type
-	ViewerType viewerType() const { return _viewerType; }
-	void setViewerType(ViewerType type) { _viewerType = type; }
-
 	bool isPanoViewerEnabled() const;
 	bool isDistoViewerEnabled() const;
 
 	QPoint& getVertex(int index) { return _vertices[index]; }
+
 	Q_INVOKABLE QPoint getVertex(int index) const { return _vertices[index]; };
 	Q_INVOKABLE QPoint getPrincipalPoint() { return _principalPoint; };
 	Q_INVOKABLE bool isMouseInside(float mx, float my);
-
-	Q_INVOKABLE void setPanoViewerEnabled(bool state);
 	Q_INVOKABLE void setIdView(int id);
-
 	Q_INVOKABLE double getPitch();
 	Q_INVOKABLE double getYaw();
 	Q_INVOKABLE void rotateSurfaceRadians(float yawRadians, float pitchRadians);
@@ -202,7 +211,7 @@ private:
 	aliceVision::IndexT _idView;
 
 	// Viewer
-	ViewerType _viewerType = ViewerType::DEFAULT;
+	EViewerType _viewerType = EViewerType::DEFAULT;
 
 	/* Euler angle in radians */
 	double _pitch = 0.0;

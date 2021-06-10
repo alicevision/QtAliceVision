@@ -94,6 +94,7 @@ FloatImageViewer::FloatImageViewer(QQuickItem* parent)
     connect(&_surface, &Surface::gridColorChanged, this, &FloatImageViewer::update);
     connect(&_surface, &Surface::displayGridChanged, this, &FloatImageViewer::update);
     connect(&_surface, &Surface::mouseOverChanged, this, &FloatImageViewer::update);
+    connect(&_surface, &Surface::viewerTypeChanged, this, &FloatImageViewer::update);
 
     connect(&_surface, &Surface::subdivisionsChanged, this, &FloatImageViewer::update);
     connect(this, &FloatImageViewer::verticesChanged, this, &FloatImageViewer::update);
@@ -415,34 +416,11 @@ void FloatImageViewer::setVertex(int index, float x, float y)
     Q_EMIT verticesChanged(false);
 }
 
-//void FloatImageViewer::displayGrid(bool display)
-//{
-//    //_surface.gridChanged(true);
-//    //_surface.gridDisplayed(display);
-//    //Q_EMIT verticesChanged(false);
-//
-//    _surface.displayGrid(display);
-//}
-
-
 void FloatImageViewer::defaultControlPoints()
 {
     _surface.clearVertices();
     _surface.verticesChanged(true);
     //_surface.gridChanged(true);
-    Q_EMIT verticesChanged(false);
-}
-
-void FloatImageViewer::hasDistortion(bool distortion)
-{
-    if (distortion)
-        _surface.setViewerType(ViewerType::DISTORTION);
-    else
-        _surface.setViewerType(ViewerType::DEFAULT);
-
-    _imageChanged = true;
-    _surface.verticesChanged(true);
-    _surface.clearVertices();
     Q_EMIT verticesChanged(false);
 }
 
@@ -457,16 +435,5 @@ void FloatImageViewer::updateSubdivisions(int subs)
     //_surface.gridChanged(true);
     Q_EMIT verticesChanged(false);
 }
-
-
-
-
-
-//void FloatImageViewer::setDownscale(int level)
-//{
-//    reload();
-//    _imageChanged = true;
-//}
-
 
 }  // qtAliceVision

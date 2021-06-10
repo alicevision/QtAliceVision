@@ -3,6 +3,7 @@
 #include "FeaturesViewer.hpp"
 #include "FloatImageViewer.hpp"
 #include "PanoramaViewer.hpp"
+#include "Surface.hpp"
 #include "MViewStats.hpp"
 #include "MSfMDataStats.hpp"
 #include "MTracks.hpp"
@@ -43,6 +44,7 @@ public:
         qRegisterMetaType<aliceVision::sfmData::SfMData>( "QSharedPtr<aliceVision::sfmData::SfMData>" ); // for usage in signals/slots
 
         qmlRegisterType<FloatImageViewer>(uri, 1, 0, "FloatImageViewer");
+        qmlRegisterType<Surface>(uri, 1, 0, "Surface");
         qmlRegisterType<PanoramaViewer>(uri, 1, 0, "PanoramaViewer");
         qRegisterMetaType<QPointF>("QPointF");
         qRegisterMetaType<FloatImage>();

@@ -148,8 +148,6 @@ public:
     Q_INVOKABLE void updateSubdivisions(int subs);      // --> Surface
     // ===============================================
     
-    Q_INVOKABLE void hasDistortion(bool distortion);    // --> Surface (Change Name : setDistoViewerEnabled())
-
     Surface* getSurfacePtr() { return &_surface; }
 
 private:

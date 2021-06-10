@@ -64,12 +64,12 @@ bool Surface::update(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, Q
 
 bool Surface::isPanoViewerEnabled() const
 {
-    return _viewerType == ViewerType::PANORAMA;
+    return _viewerType == EViewerType::PANORAMA;
 }
 
 bool Surface::isDistoViewerEnabled() const
 {
-    return _viewerType == ViewerType::DISTORTION;
+    return _viewerType == EViewerType::DISTORTION;
 }
 
 void Surface::computeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize, bool updateSfmData, int downscaleLevel)
@@ -100,8 +100,6 @@ void Surface::computeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indic
 void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize textureSize, 
     aliceVision::camera::IntrinsicBase* intrinsic, int downscaleLevel)
 {
-    qWarning() << "COMPUTE VERTICES";
-
     // Retrieve pose if Panorama Viewer is enable
     aliceVision::sfmData::CameraPose pose;
     if (isPanoViewerEnabled() && intrinsic)
@@ -411,14 +409,6 @@ void Surface::rotateSurfaceDegrees(float yawDegrees, float pitchDegrees)
 void Surface::setIdView(int id)
 {
     _idView = id;
-}
-
-void Surface::setPanoViewerEnabled(bool state)
-{
-    if (state)
-        setViewerType(ViewerType::PANORAMA);
-    else
-        setViewerType(ViewerType::DEFAULT);
 }
 
 // return pitch in degrees
