@@ -96,16 +96,13 @@ public:
     int getDownscaleLevel() const { return _downscaleLevel; }
     void setDownscaleLevel(int level)
     {
-        if (level != _downscaleLevel)
-        {
-            // Level [0;3]
-            if (level < 0 && level > 3) level = 2;
+        if (level == _downscaleLevel) return;
 
-            _downscaleLevel = level;
-
-            reload();
-            Q_EMIT downscaleLevelChanged();
-        }
+        // Level [0;3]
+        if (level < 0 && level > 3) level = 2;
+        _downscaleLevel = level;
+        reload();
+        Q_EMIT downscaleLevelChanged();
     }
 
     enum class EChannelMode : quint8 { RGBA, RGB, R, G, B, A };
@@ -159,8 +156,8 @@ private:
     QVariantMap _metadata;
 
     Surface _surface;
+    // Prevent to update surface without the root created
     bool _createRoot = true;
-
     // Level of downscale for images of a Panorama
     int _downscaleLevel = 0;
 };

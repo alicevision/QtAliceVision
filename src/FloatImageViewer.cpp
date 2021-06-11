@@ -156,7 +156,7 @@ void FloatImageViewer::reload()
         setLoading(true);
 
         // async load from file
-        auto ioRunnable = new FloatImageIORunnable(_source, _surface.isPanoViewerEnabled() ? _downscaleLevel : 0);
+        auto ioRunnable = new FloatImageIORunnable(_source, _surface.isPanoramaViewerEnabled() ? _downscaleLevel : 0);
         connect(ioRunnable, &FloatImageIORunnable::resultReady, this, &FloatImageViewer::onResultReady);
         QThreadPool::globalInstance()->start(ioRunnable);
     }
@@ -243,7 +243,7 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
         geometryLine = rootGrid->geometry();
     }
 
-    if (_surface.hasSubsChanged())
+    if (_surface.hasSubdivisionsChanged())
     {
         // Re size grid
         if (geometryLine)
@@ -287,7 +287,7 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
 
     if (_imageChanged)
     {
-        if (_surface.isDistoViewerEnabled() || _surface.isPanoViewerEnabled())
+        if (_surface.isDistortionViewerEnabled() || _surface.isPanoramaViewerEnabled())
         {
             updateSfmData = true;
         }
@@ -353,7 +353,7 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
 void FloatImageViewer::updatePaintSurface(QSGGeometryNode* root, QSGSimpleMaterial<ShaderData>* material, QSGGeometry* geometryLine, bool updateSfmData)
 {
     // Highlight image if Panorama enable and user hovers the image
-    if (_surface.isPanoViewerEnabled())
+    if (_surface.isPanoramaViewerEnabled())
     {
         if(_surface.getMouseOver()){
             material->state()->gamma += 1.0f;
@@ -388,7 +388,7 @@ void FloatImageViewer::updatePaintSurface(QSGGeometryNode* root, QSGSimpleMateri
     }
 
     // Draw the grid if Distortion Viewer is enabled and Grid Mode is enabled
-    if (_surface.isDistoViewerEnabled())
+    if (_surface.isDistortionViewerEnabled())
     {
         _surface.getDisplayGrid() ? _surface.computeGrid(geometryLine) : _surface.removeGrid(geometryLine);
     }

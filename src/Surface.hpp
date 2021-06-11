@@ -90,8 +90,8 @@ public:
 	int getSubdivisions() const { return _subdivisions; }
 	void setSubdivisions(int newSubdivisions)
 	{
-		subsChanged(true);
-		setSubdivisions_old(newSubdivisions);
+		setHasSubdivisionsChanged(true);
+		updateSubdivisions(newSubdivisions);
 
 		clearVertices();
 		setVerticesChanged(true);
@@ -139,34 +139,23 @@ public:
 
 	void removeGrid(QSGGeometry* geometryLine);
 		
-	double pitch() const { return _pitch; }
-	double yaw() const { return _yaw; }
-
 	void setRotationValues(float yaw, float pitch);
 	void incrementRotationValues(float yaw, float pitch);
 
-	void setSubdivisions_old(int sub);
-	int subdivisions_old() const;
-
 	void clearVertices() { _vertices.clear(); _coordsSphereDefault.clear(); }
 		
-	const quint32 index(int index) { return _indices[index]; }
-
 	inline int indexCount() const { return _indexCount; }
 	inline int vertexCount() const { return _vertexCount; }
 
 	inline bool hasVerticesChanged() const { return _verticesChanged; }
 	void setVerticesChanged(bool change) { _verticesChanged = change; }
 
-	bool hasSubsChanged() { return _subsChanged; }
-	void subsChanged(bool change) { _subsChanged = change; }
+	bool hasSubdivisionsChanged() { return _subdivisionsChanged; }
+	void setHasSubdivisionsChanged(bool state) { _subdivisionsChanged = state; }
 
-	bool isPanoViewerEnabled() const;
-	bool isDistoViewerEnabled() const;
+	bool isPanoramaViewerEnabled() const;
+	bool isDistortionViewerEnabled() const;
 
-	QPoint& getVertex(int index) { return _vertices[index]; }
-
-	Q_INVOKABLE QPoint getVertex(int index) const { return _vertices[index]; };
 	Q_INVOKABLE QPoint getPrincipalPoint() { return _principalPoint; };
 	Q_INVOKABLE bool isMouseInside(float mx, float my);
 	Q_INVOKABLE void setIdView(int id);
@@ -189,12 +178,11 @@ private:
 
 	void rotatePano(aliceVision::Vec3& coordSphere);
 
+	void updateSubdivisions(int sub);
+
 private:
-	/*
-	* Static Variables
-	*/
-	static const int _panoramaWidth;	// --> Not Static
-	static const int _panoramaHeight;	// --> Not Static
+	const int _panoramaWidth = 3000;
+	const int _panoramaHeight = 1500;
 
 	// Vertex Data
 	QList<QPoint> _vertices;
@@ -206,13 +194,12 @@ private:
 
 	// Vertices State
 	bool _verticesChanged = true;
-	bool _reinit = false;
 
 	// Grid State
 	bool _displayGrid;
 	QColor _gridColor = QColor(255, 0, 0, 255);
 	int _gridOpacity = 255;
-	bool _subsChanged = false;
+	bool _subdivisionsChanged = false;
 
 	// Sfm Data
 	aliceVision::sfmData::SfMData _sfmData;
@@ -236,8 +223,6 @@ private:
 	bool _mouseOver = false;
 	// If panorama is currently rotating
 	bool _isPanoramaRotating = false;
-	// Mouse Area Coordinates
-	QVariantList _mouseAreaCoords = { 0, 0, 0, 0 };
 };
 
 }  // ns qtAliceVision

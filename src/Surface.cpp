@@ -24,16 +24,10 @@ aliceVision::Vec2 toEquirectangular(const aliceVision::Vec3& spherical, int widt
     return aliceVision::Vec2(longitude, latitude);
 }
 
-// Static Variables Initialisation
-//int Surface::_downscaleLevelPanorama = 0;
-const int Surface::_panoramaWidth = 3000;
-const int Surface::_panoramaHeight = 1500;
-
-
 Surface::Surface(int subdivisions, QObject* parent)
     : QObject(parent)
 {
-    setSubdivisions(subdivisions);
+    updateSubdivisions(subdivisions);
 }
 
 Surface::~Surface()
@@ -43,8 +37,8 @@ Surface::~Surface()
 bool Surface::update(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize, bool updateSfmData, int downscaleLevel)
 {
     // Load Sfm Data File only if needed
-    if ( (isDistoViewerEnabled() || isPanoViewerEnabled()) 
-        && (updateSfmData || hasSubsChanged() || _vertices.empty()) )
+    if ( (isDistortionViewerEnabled() || isPanoramaViewerEnabled()) 
+        && (updateSfmData || hasSubdivisionsChanged() || _vertices.empty()) )
     {
         updateSfmData = loadSfmData();
     }
@@ -62,12 +56,12 @@ bool Surface::update(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, Q
     return updateSfmData;
 }
 
-bool Surface::isPanoViewerEnabled() const
+bool Surface::isPanoramaViewerEnabled() const
 {
     return _viewerType == EViewerType::PANORAMA;
 }
 
-bool Surface::isDistoViewerEnabled() const
+bool Surface::isDistortionViewerEnabled() const
 {
     return _viewerType == EViewerType::DISTORTION;
 }
@@ -104,7 +98,7 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
 {
     // Retrieve pose if Panorama Viewer is enable
     aliceVision::sfmData::CameraPose pose;
-    if (isPanoViewerEnabled() && intrinsic)
+    if (isPanoramaViewerEnabled() && intrinsic)
     {
         // Downscale image according to downscale level
         textureSize *= pow(2.0, downscaleLevel);
@@ -145,7 +139,7 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
             }
 
             // Equirectangular Convertion only if sfmData has been updated
-            if (isPanoViewerEnabled() && intrinsic)
+            if (isPanoramaViewerEnabled() && intrinsic)
             {
                 // Compute pixel coordinates on the Unit Sphere
                 if (fillCoordsSphere) {
@@ -287,18 +281,13 @@ void Surface::computeGrid(QSGGeometry* geometryLine)
     }
 }
 
-void Surface::setSubdivisions_old(int sub)
+void Surface::updateSubdivisions(int sub)
 {
 	_subdivisions = sub;
 	
 	// Update vertexCount and indexCount according to new subdivision count
 	_vertexCount = (_subdivisions + 1) * (_subdivisions + 1);
 	_indexCount = _subdivisions * _subdivisions * 6;
-}
-
-int Surface::subdivisions_old() const
-{
-	return _subdivisions;
 }
 
 void Surface::removeGrid(QSGGeometry* geometryLine)
@@ -312,7 +301,7 @@ void Surface::removeGrid(QSGGeometry* geometryLine)
 bool Surface::loadSfmData()
 {
     bool LoadSfm = true;
-    subsChanged(false);
+    setHasSubdivisionsChanged(false);
 
     if (_sfmPath.toStdString() != "")
     {
