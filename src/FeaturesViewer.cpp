@@ -269,8 +269,8 @@ namespace qtAliceVision
           const auto it = trackFeatures.featuresPerFrame.find(currentFrameId);
           if (it != trackFeatures.featuresPerFrame.end())
           {
-            if (it->second->landmarkId() >= 0)
-              ++nbLinesToDraw; // to draw landmark rerojection error
+            if (trackFeatures.nbLandmarks > 0)
+              ++nbLinesToDraw; // to draw rerojection error
             ++nbPointsToDraw;
             ++nbHighlightPointsToDraw;
           }
@@ -281,7 +281,9 @@ namespace qtAliceVision
           if (it != trackFeatures.featuresPerFrame.end())
             ++nbHighlightPointsToDraw; // to draw a highlight point in order to identify the current match
           
-          nbLinesToDraw += trackFeatures.nbLandmarks; // one line per landmark for rerojection error
+          if (trackFeatures.nbLandmarks > 0)
+            nbLinesToDraw += trackFeatures.featuresPerFrame.size(); // one line per matches for rerojection error
+
           nbPointsToDraw += trackFeatures.featuresPerFrame.size(); // one point per matches
         }
       }
@@ -445,11 +447,11 @@ namespace qtAliceVision
                                       aliceVision::IndexT frameId, 
                                       const MFeature* feature, 
                                       const QColor& color,
-                                      unsigned int& nbLinesDrawn, unsigned int& nbHighlightPointsDrawn, unsigned int& nbPointsDrawn)
+                                      unsigned int& nbLinesDrawn, unsigned int& nbHighlightPointsDrawn, unsigned int& nbPointsDrawn, bool trackHasInliers)
     {
       if (_trackDisplayMode == WithAllMatches || (frameId == currentFrameId && _trackDisplayMode == WithCurrentMatches))
       {
-        QPointF point = (feature->landmarkId() >= 0) ? QPointF(feature->rx(), feature->ry()) : QPointF(feature->x(), feature->y());
+        QPointF point = trackHasInliers ? QPointF(feature->rx(), feature->ry()) : QPointF(feature->x(), feature->y());
        
         setVerticePoint(nbPointsDrawn, point, color);
         ++nbPointsDrawn;
@@ -462,7 +464,7 @@ namespace qtAliceVision
         }
 
         // draw reprojection error for landmark
-        if (feature->landmarkId() >= 0)
+        if (trackHasInliers)
         {
           const unsigned vIdx = nbLinesDrawn * kTrackLineVertices;
           setVerticeLine(vIdx, QPointF(feature->x(), feature->y()), color);
@@ -527,11 +529,11 @@ namespace qtAliceVision
 
           // draw previous point
           const QColor& previousPointColor = getColor(false, contiguous || previousTrackLineContiguous, previousFeatureInlier, trackHasInliers);
-          drawFeaturePoint(currentFrameId, previousFrameId, previousFeature, previousPointColor, nbLinesDrawn, nbHighlightPointsDrawn, nbPointsDrawn);
+          drawFeaturePoint(currentFrameId, previousFrameId, previousFeature, previousPointColor, nbLinesDrawn, nbHighlightPointsDrawn, nbPointsDrawn, trackHasInliers);
 
           // draw track last point
           if (frameId == trackFeatures.maxFrameId)
-            drawFeaturePoint(currentFrameId, frameId, feature, getColor(false, contiguous, previousFeatureInlier, trackHasInliers), nbLinesDrawn, nbHighlightPointsDrawn, nbPointsDrawn);
+            drawFeaturePoint(currentFrameId, frameId, feature, getColor(false, contiguous, previousFeatureInlier, trackHasInliers), nbLinesDrawn, nbHighlightPointsDrawn, nbPointsDrawn, trackHasInliers);
 
           // draw track line
           const QColor&  c = getColor(true, contiguous, inliers, trackHasInliers);
