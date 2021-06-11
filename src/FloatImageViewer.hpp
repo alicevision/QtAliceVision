@@ -68,8 +68,6 @@ class FloatImageViewer : public QQuickItem
 
         Q_PROPERTY(QVariantMap metadata READ metadata NOTIFY metadataChanged)
 
-        Q_PROPERTY(QList<QPoint> vertices READ vertices NOTIFY verticesChanged)
-
         Q_PROPERTY(int downscaleLevel READ getDownscaleLevel WRITE setDownscaleLevel NOTIFY downscaleLevelChanged)
 
         Q_PROPERTY(Surface* surface READ getSurfacePtr NOTIFY surfaceChanged)
@@ -93,11 +91,6 @@ public:
     const QVariantMap& metadata() const
     {
         return _metadata;
-    }
-
-    QList<QPoint> vertices() const     // --> Surface
-    { 
-        return _surface.vertices(); 
     }
 
     int getDownscaleLevel() const { return _downscaleLevel; }
@@ -129,7 +122,6 @@ public:
     Q_SIGNAL void channelModeChanged();
     Q_SIGNAL void imageChanged();
     Q_SIGNAL void metadataChanged();
-    Q_SIGNAL void verticesChanged(bool reinit);    // --> Surface
     Q_SIGNAL void sfmChanged();
     Q_SIGNAL void downscaleLevelChanged();
     Q_SIGNAL void surfaceChanged();

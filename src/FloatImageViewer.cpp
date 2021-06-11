@@ -97,7 +97,7 @@ FloatImageViewer::FloatImageViewer(QQuickItem* parent)
     connect(&_surface, &Surface::viewerTypeChanged, this, &FloatImageViewer::update);
 
     connect(&_surface, &Surface::subdivisionsChanged, this, &FloatImageViewer::update);
-    connect(this, &FloatImageViewer::verticesChanged, this, &FloatImageViewer::update);
+    connect(&_surface, &Surface::verticesChanged, this, &FloatImageViewer::update);
 }
 
 FloatImageViewer::~FloatImageViewer()
@@ -377,12 +377,12 @@ void FloatImageViewer::updatePaintSurface(QSGGeometryNode* root, QSGSimpleMateri
 
         // Fill the Surface vertices array
         _surface.fillVertices(vertices);
-        Q_EMIT verticesChanged(true);
+        Q_EMIT _surface.verticesChanged();
 
         // Force to re update the surface in order to see changes
         if (updateSurface)
         {
-            _surface.verticesChanged(true);
+            _surface.setVerticesChanged(true);
             Q_EMIT sfmChanged();
         }
     }

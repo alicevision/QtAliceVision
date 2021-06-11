@@ -39,6 +39,8 @@ Q_OBJECT
 
 	Q_PROPERTY(EViewerType viewerType WRITE setViewerType NOTIFY viewerTypeChanged);
 
+	Q_PROPERTY(QList<QPoint> vertices READ vertices NOTIFY verticesChanged);
+
 public:
 	// GRID COLOR
 	QColor getGridColor() const { return _gridColor; }
@@ -92,7 +94,7 @@ public:
 		setSubdivisions_old(newSubdivisions);
 
 		clearVertices();
-		verticesChanged(true);
+		setVerticesChanged(true);
 		Q_EMIT subdivisionsChanged();
 	}
 	Q_SIGNAL void subdivisionsChanged();
@@ -115,11 +117,14 @@ public:
 			_viewerType = type;
 			
 			clearVertices();
-			verticesChanged(true);
+			setVerticesChanged(true);
 			Q_EMIT viewerTypeChanged();
 		}
 	}
 	Q_SIGNAL void viewerTypeChanged();
+
+	const QList<QPoint>& vertices() const { return _vertices; }
+	Q_SIGNAL void verticesChanged();
 
 public:
 	Surface(int subdivisions = 12, QObject* parent = nullptr);
@@ -143,7 +148,6 @@ public:
 	void setSubdivisions_old(int sub);
 	int subdivisions_old() const;
 
-	const QList<QPoint>& vertices() const { return _vertices; }
 	void clearVertices() { _vertices.clear(); _coordsSphereDefault.clear(); }
 		
 	const quint32 index(int index) { return _indices[index]; }
@@ -152,7 +156,7 @@ public:
 	inline int vertexCount() const { return _vertexCount; }
 
 	inline bool hasVerticesChanged() const { return _verticesChanged; }
-	void verticesChanged(bool change) { _verticesChanged = change; }
+	void setVerticesChanged(bool change) { _verticesChanged = change; }
 
 	bool hasSubsChanged() { return _subsChanged; }
 	void subsChanged(bool change) { _subsChanged = change; }

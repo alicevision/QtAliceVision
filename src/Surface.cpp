@@ -192,7 +192,7 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
     }
     // End for loop
 
-    Q_EMIT verticesChanged(false);
+    Q_EMIT verticesChanged();
 }
 
 void Surface::computeIndicesGrid(quint16* indices)
@@ -248,8 +248,7 @@ void Surface::fillVertices(QSGGeometry::TexturedPoint2D* vertices)
         QPoint p(vertices[i].x, vertices[i].y);
         _vertices.append(p);
     }
-        
-    _verticesChanged = false;
+    setVerticesChanged(false);
 }
 
 void Surface::computeGrid(QSGGeometry* geometryLine)
@@ -394,7 +393,7 @@ void Surface::rotatePano(aliceVision::Vec3& coordSphere)
 void Surface::rotateSurfaceRadians(float yawRadians, float pitchRadians)
 {
     incrementRotationValues(yawRadians, pitchRadians);
-    verticesChanged(true);
+    setVerticesChanged(true);
     Q_EMIT subdivisionsChanged();
 }
 
@@ -404,7 +403,7 @@ void Surface::rotateSurfaceDegrees(float yawDegrees, float pitchDegrees)
     double pitchRadians = pitchDegrees * (M_PI / 180.0f);
 
     setRotationValues(yawRadians, pitchRadians);
-    verticesChanged(true);
+    setVerticesChanged(true);
     Q_EMIT subdivisionsChanged();
 }
 
