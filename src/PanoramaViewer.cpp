@@ -63,7 +63,6 @@ void PanoramaViewer::computeInputImages()
         }
     }
 
-
     // Loop on Views and insert (path, id)
     int totalSizeImages = 0;
     for (const auto& view : sfmData.getViews())
@@ -78,14 +77,12 @@ void PanoramaViewer::computeInputImages()
     // ensure it fits in RAM memory
     aliceVision::system::MemoryInfo memInfo = aliceVision::system::getMemoryInfo();
     const int freeRam = int(memInfo.freeRam / std::pow(2, 20));
-    int downscaleLevel = 0;
+    _downscale = 0;
     while (totalSizeImages > freeRam * 0.5)
     {
-        downscaleLevel++;
+        _downscale++;
         totalSizeImages *= 0.5;
     }
-
-    _imagesData.insert("lvl", downscaleLevel);
 
     Q_EMIT imagesDataChanged(_imagesData);
 }
@@ -96,17 +93,15 @@ QSGNode* PanoramaViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePai
     return root;
 }
 
-/*
-*   Q_INVOKABLE Functions
-*/
-
 void PanoramaViewer::setSfmPath(const QString& path)
 {
     _sfmPath = path;
     computeInputImages();
 }
 
-
-
+int PanoramaViewer::getDownscale() const
+{ 
+    return _downscale; 
+}
 
 }  // qtAliceVision

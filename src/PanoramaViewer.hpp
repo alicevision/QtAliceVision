@@ -14,12 +14,9 @@
 #include <aliceVision/numeric/numeric.hpp>
 #include <aliceVision/types.hpp>
 
-
 #include <map>
 #include <string>
 #include <memory>
-
-
 
 namespace qtAliceVision
 {
@@ -37,7 +34,6 @@ namespace qtAliceVision
             Q_PROPERTY(bool clearBeforeLoad MEMBER _clearBeforeLoad NOTIFY clearBeforeLoadChanged)
 
             Q_PROPERTY(QVariantMap imagesData READ imagesData NOTIFY imagesDataChanged)
-
 
     public:
         explicit PanoramaViewer(QQuickItem* parent = nullptr);
@@ -68,8 +64,7 @@ namespace qtAliceVision
         Q_SIGNAL void imagesDataChanged(const QVariantMap& imagesData);
         
         Q_INVOKABLE void setSfmPath(const QString& path);
-
-
+        Q_INVOKABLE int getDownscale() const;
 
     private:
         /// Custom QSGNode update
@@ -86,6 +81,8 @@ namespace qtAliceVision
 
         QString _sfmPath;
         QVariantMap _imagesData;
+
+        int _downscale;
     };
 
 }  // ns qtAliceVision
