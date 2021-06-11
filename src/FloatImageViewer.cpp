@@ -364,7 +364,6 @@ void FloatImageViewer::updatePaintSurface(QSGGeometryNode* root, QSGSimpleMateri
     // If vertices has changed, Re-Compute the grid 
     if (_surface.hasVerticesChanged())
     {
-        //qWarning() << _surface.getSubdivisions();
         // Retrieve Vertices and Index Data
         QSGGeometry::TexturedPoint2D* vertices = root->geometry()->vertexDataAsTexturedPoint2D();
         quint16* indices = root->geometry()->indexDataAsUShort();

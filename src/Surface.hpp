@@ -113,6 +113,9 @@ public:
 		if (_viewerType != type)
 		{
 			_viewerType = type;
+			
+			clearVertices();
+			verticesChanged(true);
 			Q_EMIT viewerTypeChanged();
 		}
 	}

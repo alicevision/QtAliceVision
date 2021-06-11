@@ -44,7 +44,7 @@ bool Surface::update(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, Q
 {
     // Load Sfm Data File only if needed
     if ( (isDistoViewerEnabled() || isPanoViewerEnabled()) 
-        && (updateSfmData || hasSubsChanged()) )
+        && (updateSfmData || hasSubsChanged() || _vertices.empty()) )
     {
         updateSfmData = loadSfmData();
     }
@@ -74,13 +74,15 @@ bool Surface::isDistoViewerEnabled() const
 
 void Surface::computeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize, bool updateSfmData, int downscaleLevel)
 {
-    // Retrieve intrisics only if sfmData has been updated, and then Compute vertices
+    /* Retrieve intrisics only if:
+    * sfmData has been updated
+    * or User rotate panorama
+    */
     aliceVision::camera::IntrinsicBase* intrinsic = nullptr;
     if (updateSfmData || _isPanoramaRotating)
     {
         std::set<aliceVision::IndexT> intrinsicsIndices = _sfmData.getReconstructedIntrinsics();
         intrinsic = _sfmData.getIntrinsicPtr(*intrinsicsIndices.begin());
-
         if (intrinsic)
         {
             computePrincipalPoint(intrinsic, textureSize);
