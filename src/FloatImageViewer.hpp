@@ -68,7 +68,7 @@ class FloatImageViewer : public QQuickItem
 
         Q_PROPERTY(QVariantMap metadata READ metadata NOTIFY metadataChanged)
 
-        Q_PROPERTY(QList<QPoint> vertices READ vertices NOTIFY verticesChanged)     // --> Surface
+        Q_PROPERTY(QList<QPoint> vertices READ vertices NOTIFY verticesChanged)
 
         Q_PROPERTY(int downscaleLevel READ getDownscaleLevel WRITE setDownscaleLevel NOTIFY downscaleLevelChanged)
 
@@ -108,12 +108,9 @@ public:
             // Level [0;3]
             if (level < 0 && level > 3) level = 2;
 
-            qWarning() << "Set Downscale " << level;
             _downscaleLevel = level;
 
             reload();
-            _imageChanged = true;
-            Q_EMIT verticesChanged(true);
             Q_EMIT downscaleLevelChanged();
         }
     }
@@ -138,15 +135,6 @@ public:
     Q_SIGNAL void surfaceChanged();
 
     Q_INVOKABLE QVector4D pixelValueAt(int x, int y);
-
-    // DISTO VIEWER ???
-    Q_INVOKABLE void setVertex(int index, float x, float y);    // --> Surface
-    Q_INVOKABLE void defaultControlPoints();    // --> Surface
-    // ===============================================
-    
-    // INVOKABLE ???
-    Q_INVOKABLE void updateSubdivisions(int subs);      // --> Surface
-    // ===============================================
     
     Surface* getSurfacePtr() { return &_surface; }
 

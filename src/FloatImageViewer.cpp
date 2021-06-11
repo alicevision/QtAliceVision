@@ -50,7 +50,6 @@ void FloatImageIORunnable::run()
         }
 
         // ensure it fits in RAM memory
-        qWarning() << "Downscale " << _downscaleLevel;
         for (size_t i = 0; i < _downscaleLevel; i++)
         {
             FloatImage tmp;
@@ -353,8 +352,6 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
 
 void FloatImageViewer::updatePaintSurface(QSGGeometryNode* root, QSGSimpleMaterial<ShaderData>* material, QSGGeometry* geometryLine, bool updateSfmData)
 {
-    //qWarning() << "UPDATE";
-
     // Highlight image if Panorama enable and user hovers the image
     if (_surface.isPanoViewerEnabled())
     {
@@ -402,39 +399,6 @@ void FloatImageViewer::updatePaintSurface(QSGGeometryNode* root, QSGSimpleMateri
     }
 
     root->childAtIndex(0)->markDirty(QSGNode::DirtyGeometry | QSGNode::DirtyMaterial);
-}
-
-/*
-*   Q_INVOKABLE Functions 
-*/
-
-void FloatImageViewer::setVertex(int index, float x, float y)
-{
-    QPoint point(x, y);
-    _surface.getVertex(index) = point;
-    _surface.verticesChanged(true);
-    //_surface.gridChanged(true);
-    Q_EMIT verticesChanged(false);
-}
-
-void FloatImageViewer::defaultControlPoints()
-{
-    _surface.clearVertices();
-    _surface.verticesChanged(true);
-    //_surface.gridChanged(true);
-    Q_EMIT verticesChanged(false);
-}
-
-void FloatImageViewer::updateSubdivisions(int subs)
-{
-    qWarning() << "Q INVOKABLE" << subs;
-    _surface.subsChanged(true);
-    _surface.setSubdivisions_old(subs);
-
-    _surface.clearVertices();
-    _surface.verticesChanged(true);
-    //_surface.gridChanged(true);
-    Q_EMIT verticesChanged(false);
 }
 
 }  // qtAliceVision

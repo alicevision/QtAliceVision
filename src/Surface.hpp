@@ -19,11 +19,6 @@
 namespace qtAliceVision
 {
 
-//enum class ViewerType
-//{
-//	DEFAULT = 0, HDR, DISTORTION, PANORAMA
-//};
-
 /**
  * @brief Discretization of FloatImageViewer surface
  */
@@ -63,7 +58,6 @@ public:
 			return;
 		}
 		_gridOpacity = int((opacity / 100.0) * 255);
-		qWarning() << "Opacity is " << _gridOpacity;
 		_gridColor.setAlpha(_gridOpacity);
 		Q_EMIT gridOpacityChanged(opacity);
 	}
@@ -94,13 +88,11 @@ public:
 	int getSubdivisions() const { return _subdivisions; }
 	void setSubdivisions(int newSubdivisions)
 	{
-		qWarning() << "Q PROPERTY" << newSubdivisions;
 		subsChanged(true);
 		setSubdivisions_old(newSubdivisions);
 
 		clearVertices();
 		verticesChanged(true);
-		//_surface.gridChanged(true);
 		Q_EMIT subdivisionsChanged();
 	}
 	Q_SIGNAL void subdivisionsChanged();
@@ -127,7 +119,7 @@ public:
 	Q_SIGNAL void viewerTypeChanged();
 
 public:
-	Surface(int subdivisions = 4, QObject* parent = nullptr);
+	Surface(int subdivisions = 12, QObject* parent = nullptr);
 	Surface& operator=(const Surface& other) = default;
 	~Surface();
 
@@ -194,8 +186,6 @@ private:
 	/*
 	* Static Variables
 	*/
-	// Level of downscale for images of a Panorama
-	//static int _downscaleLevelPanorama;	// --> Not Static
 	static const int _panoramaWidth;	// --> Not Static
 	static const int _panoramaHeight;	// --> Not Static
 

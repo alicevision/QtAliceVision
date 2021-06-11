@@ -33,7 +33,7 @@ const int Surface::_panoramaHeight = 1500;
 Surface::Surface(int subdivisions, QObject* parent)
     : QObject(parent)
 {
-    //setSubdivisions(subdivisions);
+    setSubdivisions(subdivisions);
 }
 
 Surface::~Surface()
