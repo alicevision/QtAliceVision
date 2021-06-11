@@ -216,8 +216,10 @@ void MFeatures::onFeaturesReady(MViewFeaturesPerViewPerDesc* viewFeaturesPerView
     return;
   }
 
+  const bool newFeaturesLoaded = (viewFeaturesPerViewPerDesc != nullptr);
+
   // add loaded features
-  if (viewFeaturesPerViewPerDesc != nullptr)
+  if (newFeaturesLoaded)
   {
     for (auto& viewFeaturesPerViewPerDescPair : *viewFeaturesPerViewPerDesc)
     {
@@ -230,12 +232,15 @@ void MFeatures::onFeaturesReady(MViewFeaturesPerViewPerDesc* viewFeaturesPerView
   const bool tracksUpdated = updateFromTracks();
   const bool sfmUpdated = updateFromSfM();
 
-  // update internal structures
-  if (viewFeaturesPerViewPerDesc != nullptr || _trackFeaturesPerTrackPerDesc.empty() || tracksUpdated || sfmUpdated)
-  {
-    updateTrackFeaturesPerTrackPerDesc();
-    updateFeaturesInfo();
-  }
+  const bool featuresChanged = newFeaturesLoaded || tracksUpdated || sfmUpdated;
+
+  // update per track information
+  if (featuresChanged || _trackFeaturesPerTrackPerDesc.empty())
+    updatePerTrackInformation();
+
+  // update UI features information
+  if (featuresChanged || _featuresInfo.empty())
+    updateUIFeaturesInformation();
 
   //clear loaded features pointer
   if (viewFeaturesPerViewPerDesc != nullptr)
@@ -605,9 +610,12 @@ bool MFeatures::updateFromSfM()
   return updated;
 }
 
-void MFeatures::updateTrackFeaturesPerTrackPerDesc()
+void MFeatures::updatePerTrackInformation()
 {
-  qDebug("[QtAliceVision] Features: Update per track features information.");
+  if (!haveValidTracks() || !haveValidLandmarks())
+    return;
+
+  qDebug("[QtAliceVision] Features: Update per track information.");
 
   // clear previous data
   // no need to delete feature pointers, they are hosted and manage by viewFeaturesPerViewPerDesc
@@ -708,7 +716,7 @@ void MFeatures::updateTrackFeaturesPerTrackPerDesc()
   }
 }
 
-void MFeatures::updateFeaturesInfo()
+void MFeatures::updateUIFeaturesInformation()
 {
   qDebug("[QtAliceVision] Features: Update UI features information.");
 

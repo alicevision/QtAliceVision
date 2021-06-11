@@ -54,7 +54,7 @@ class MFeatures : public QObject
 
 public:
 
-    // Status Enum
+    /// Status Enum
 
     enum Status {
       None = 0,
@@ -64,14 +64,14 @@ public:
     };
     Q_ENUM(Status)
 
-    // Helpers
+    /// Helpers
 
     struct MViewFeatures {
       QList<MFeature*> features;
 
       aliceVision::IndexT frameId = aliceVision::UndefinedIndexT;
       int nbLandmarks = 0; // number of features of the view associated to a 3D landmark
-      int nbTracks = 0; // number of tracks unvalidated after resection
+      int nbTracks = 0;    // number of tracks unvalidated after resection
     };
     using MViewFeaturesPerView = std::map<aliceVision::IndexT, MViewFeatures>;
     using MViewFeaturesPerViewPerDesc = std::map<QString, MViewFeaturesPerView>;
@@ -81,19 +81,19 @@ public:
 
       aliceVision::IndexT minFrameId = std::numeric_limits<aliceVision::IndexT>::max();
       aliceVision::IndexT maxFrameId = std::numeric_limits<aliceVision::IndexT>::min();
-      int nbLandmarks = 0; // number of features of the track associated to a 3D landmark 
+      int nbLandmarks = 0;           // number of features of the track associated to a 3D landmark 
       float featureScaleScore = 0.f; // score based on sum of feature scale
     };
     using MTrackFeaturesPerTrack = std::map<aliceVision::IndexT, MTrackFeatures>;
     using MTrackFeaturesPerTrackPerDesc = std::map<QString, MTrackFeaturesPerTrack>;
 
-    // SLOTS
+    /// Slots
 
     Q_SLOT void load();
     Q_SLOT void clearAndLoad();
     Q_SLOT void onFeaturesReady(MViewFeaturesPerViewPerDesc* viewFeaturesPerViewPerDesc);
 
-    // SIGNALS
+    /// Signals
 
     Q_SIGNAL void featureFolderChanged();
     Q_SIGNAL void describerTypesChanged();
@@ -108,7 +108,7 @@ public:
 
     Q_SIGNAL void statusChanged(Status status);
 
-    // Public methods
+    /// Public methods
 
     MFeatures();
     MFeatures(const MFeatures& other) = default;
@@ -204,7 +204,7 @@ public:
 
 private:
     
-    // Private methods (to use with Loading status)
+    /// Private methods (to use with Loading status)
 
     /**
     * @brief Get the list of view ids to load in memory
@@ -227,30 +227,33 @@ private:
     bool updateFromSfM();
 
     /**
-    * @brief Update MTrackFeaturesPerTrackPerDesc in order to get per track feature access
+    * @brief Update / Compute per track information:
+    *        - Build Per track feature access structure _trackFeaturesPerTrackPerDesc
+    *        - Compute per track feature scale score
+    *        - Compute track mathes reprojection error
     */
-    void updateTrackFeaturesPerTrackPerDesc();
+    void updatePerTrackInformation();
 
     /**
     * @brief Update the QVariantMap featuresInfo (useful for QML) from loaded data
     */
-    void updateFeaturesInfo();
+    void updateUIFeaturesInformation();
 
     void clearViewFeaturesPerViewPerDesc(MViewFeaturesPerViewPerDesc* viewFeaturesPerViewPerDesc);
-
     void clearAllTrackInfo();
     void clearAllSfMInfo();
     void clearAll();
     
-    // Private members
+    /// Private members
 
+    // inputs
     QUrl _featureFolder;
     QVariantList _describerTypes;
     aliceVision::IndexT _currentViewId;
 
     bool _outdatedFeatures = false; // set to true if a loading request occurs during another
     bool _enableTimeWindow = false; // set to true if the user request multiple frames (e.g. display tracks)
-    int _timeWindow = 1; // size of the time window (from current frame - time window to current frame + time window), 0 is disable, -1 is no limit
+    int _timeWindow = 1;            // size of the time window (from current frame - time window to current frame + time window), 0 is disable, -1 is no limit
 
     // internal data
     MViewFeaturesPerViewPerDesc _viewFeaturesPerViewPerDesc;
