@@ -38,10 +38,16 @@ public:
     {
         setLandmarkInfo(-1, aliceVision::Vec2f(.0f, .0f));
     }
+
     void setLandmarkInfo(int landmarkId, const aliceVision::Vec2f& reprojection)
     {
         _landmarkId = landmarkId;
         _reprojection = reprojection;
+    }
+
+    void setReprojection(const aliceVision::Vec2f& reprojection)
+    {
+      _reprojection = reprojection;
     }
 
     void clearTrack()

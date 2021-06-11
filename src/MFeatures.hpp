@@ -77,7 +77,7 @@ public:
     using MViewFeaturesPerViewPerDesc = std::map<QString, MViewFeaturesPerView>;
 
     struct MTrackFeatures {
-      std::map<aliceVision::IndexT, const MFeature*> featuresPerFrame;
+      std::map<aliceVision::IndexT, MFeature*> featuresPerFrame;
 
       aliceVision::IndexT minFrameId = std::numeric_limits<aliceVision::IndexT>::max();
       aliceVision::IndexT maxFrameId = std::numeric_limits<aliceVision::IndexT>::min();

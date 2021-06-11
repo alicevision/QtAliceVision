@@ -612,30 +612,44 @@ void MFeatures::updateTrackFeaturesPerTrackPerDesc()
   // clear previous data
   // no need to delete feature pointers, they are hosted and manage by viewFeaturesPerViewPerDesc
   _trackFeaturesPerTrackPerDesc.clear();
-  
+
+  // temporary structures for track matches reprojection error computation
+  // these structures are needed because landmarkId is not the same as trackId outside pipeline SfM computation
+  std::map<aliceVision::IndexT, aliceVision::IndexT> trackIdPerLandmark;
+  std::map <QString, std::map<aliceVision::IndexT, aliceVision::IndexT>> viewIdPerFramePerDesc;
+
+  // min & max feature scale for feature scale score computation
   float maxFeatureScale = std::numeric_limits<float>::min();
   float minFeatureScale = std::numeric_limits<float>::max();
 
-  // build structure from viewFeaturesPerViewPerDesc
-  for (const auto& viewFeaturesPerViewPerDescPair : _viewFeaturesPerViewPerDesc)
+  // build _trackFeaturesPerTrackPerDesc and temporary structures
+  for (auto& viewFeaturesPerViewPerDescPair : _viewFeaturesPerViewPerDesc)
   {
     const QString& describerType = viewFeaturesPerViewPerDescPair.first;
 
-    for (const auto& viewFeaturesPerViewPair : viewFeaturesPerViewPerDescPair.second)
+    for (auto& viewFeaturesPerViewPair : viewFeaturesPerViewPerDescPair.second)
     {
+      const aliceVision::IndexT viewId = viewFeaturesPerViewPair.first;
       const aliceVision::IndexT frameId = viewFeaturesPerViewPair.second.frameId;
 
       if (frameId == aliceVision::UndefinedIndexT)
         continue;
 
-      for (const MFeature* feature : viewFeaturesPerViewPair.second.features)
+      for (MFeature* feature : viewFeaturesPerViewPair.second.features)
       {
         if (feature->trackId() >= 0)
         {
           MTrackFeatures& trackFreatures = _trackFeaturesPerTrackPerDesc[describerType][feature->trackId()];
           trackFreatures.featuresPerFrame[frameId] = feature;
+
+          viewIdPerFramePerDesc[describerType][frameId] = viewId;
+
           if (feature->landmarkId() >= 0)
+          {
             ++trackFreatures.nbLandmarks;
+            if (trackIdPerLandmark.find(feature->landmarkId()) == trackIdPerLandmark.end())
+              trackIdPerLandmark[feature->landmarkId()] = feature->trackId();
+          }
           maxFeatureScale = std::max(maxFeatureScale, feature->scale());
           minFeatureScale = std::min(minFeatureScale, feature->scale());
           trackFreatures.maxFrameId = std::max(trackFreatures.maxFrameId, frameId);
@@ -658,6 +672,38 @@ void MFeatures::updateTrackFeaturesPerTrackPerDesc()
         trackFreatures.featureScaleScore /= trackFreatures.featuresPerFrame.size(); // compute average feature scale
         trackFreatures.featureScaleScore = (trackFreatures.featureScaleScore - minFeatureScale) / (maxFeatureScale - minFeatureScale); // bound to minFeatureScale / maxFeatureScale
       }
+    }
+  }
+
+  // compute track matches reprojection error
+  for (const auto& landmark : _msfmData->rawData().getLandmarks())
+  {
+    const auto& describerTypeName = QString::fromStdString(aliceVision::feature::EImageDescriberType_enumToString(landmark.second.descType));
+
+    auto trackIdIt = trackIdPerLandmark.find(landmark.first);
+    if (trackIdIt == trackIdPerLandmark.end())
+      continue;
+
+    const aliceVision::IndexT trackId = trackIdIt->second;
+    auto& trackFeatures = _trackFeaturesPerTrackPerDesc[describerTypeName][trackId];
+    
+    for (auto& featuresPerFramePair : trackFeatures.featuresPerFrame)
+    {
+      if (featuresPerFramePair.second->landmarkId() >= 0)
+        continue; //already computed in updateFromSfM
+
+      const aliceVision::IndexT viewId = viewIdPerFramePerDesc[describerTypeName][featuresPerFramePair.first];
+      const auto viewIt = _msfmData->rawData().getViews().find(viewId);
+      if (viewIt == _msfmData->rawData().getViews().end())
+        continue;
+
+      const aliceVision::sfmData::View& view = *viewIt->second;
+      const aliceVision::sfmData::CameraPose pose = _msfmData->rawData().getPose(view);
+      const aliceVision::geometry::Pose3 camTransform = pose.getTransform();
+      const aliceVision::camera::IntrinsicBase* intrinsic = _msfmData->rawData().getIntrinsicPtr(view.getIntrinsicId());
+
+      const aliceVision::Vec2 r = intrinsic->project(camTransform, landmark.second.X);
+      featuresPerFramePair.second->setReprojection(r.cast<float>());
     }
   }
 }
