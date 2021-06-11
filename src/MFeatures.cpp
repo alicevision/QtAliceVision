@@ -202,6 +202,7 @@ void MFeatures::clearAndLoad()
   // unsafe clear
   clearAllTrackInfo();
   clearAllSfMInfo();
+  clearAllFeatureReprojection();
 
   load();
 }
@@ -785,6 +786,21 @@ void MFeatures::clearAllSfMInfo()
       featuresPerViewPair.second.nbLandmarks = 0;
       for (MFeature* feature : featuresPerViewPair.second.features)
         feature->clearLandmarkInfo();
+    }
+  }
+}
+
+void MFeatures::clearAllFeatureReprojection()
+{
+  if (_viewFeaturesPerViewPerDesc.empty())
+    return;
+
+  for (auto& viewFeaturesPerViewPerDescPair : _viewFeaturesPerViewPerDesc)
+  {
+    for (auto& featuresPerViewPair : viewFeaturesPerViewPerDescPair.second)
+    {
+      for (MFeature* feature : featuresPerViewPair.second.features)
+        feature->setReprojection({ 0.0f, 0.0f });
     }
   }
 }

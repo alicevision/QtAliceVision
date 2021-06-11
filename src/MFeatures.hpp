@@ -242,6 +242,7 @@ private:
     void clearViewFeaturesPerViewPerDesc(MViewFeaturesPerViewPerDesc* viewFeaturesPerViewPerDesc);
     void clearAllTrackInfo();
     void clearAllSfMInfo();
+    void clearAllFeatureReprojection();
     void clearAll();
     
     /// Private members
