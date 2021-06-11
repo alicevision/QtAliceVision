@@ -12,7 +12,6 @@
 
 namespace qtAliceVision {
 
-
 aliceVision::Vec2 toEquirectangular(const aliceVision::Vec3& spherical, int width, int height)
 {
     const double vertical_angle = asin(spherical(1));
@@ -56,16 +55,7 @@ bool Surface::update(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, Q
     return updateSfmData;
 }
 
-bool Surface::isPanoramaViewerEnabled() const
-{
-    return _viewerType == EViewerType::PANORAMA;
-}
-
-bool Surface::isDistortionViewerEnabled() const
-{
-    return _viewerType == EViewerType::DISTORTION;
-}
-
+// GRID METHODS
 void Surface::computeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize, bool updateSfmData, int downscaleLevel)
 {
     /* Retrieve intrisics only if:
@@ -89,8 +79,43 @@ void Surface::computeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indic
         computeVerticesGrid(vertices, textureSize, nullptr);
     }
         
-    // TODO : compute indices only if subs has changed
     computeIndicesGrid(indices);
+}
+
+void Surface::computeGrid(QSGGeometry* geometryLine)
+{
+    removeGrid(geometryLine);
+
+    int countPoint = 0;
+    int index = 0;
+    for (size_t i = 0; i <= _subdivisions; i++)
+    {
+        for (size_t j = 0; j <= _subdivisions; j++)
+        {
+            if (i == _subdivisions && j == _subdivisions)
+                continue;
+
+            // Horizontal Lines
+            if (i != _subdivisions)
+            {
+                geometryLine->vertexDataAsPoint2D()[countPoint++].set(_vertices[index].x(), _vertices[index].y());
+                index += _subdivisions + 1;
+                geometryLine->vertexDataAsPoint2D()[countPoint++].set(_vertices[index].x(), _vertices[index].y());
+                index -= _subdivisions + 1;
+
+                if (j == _subdivisions)
+                {
+                    index++;
+                    continue;
+                }
+            }
+
+            // Vertical Lines
+            geometryLine->vertexDataAsPoint2D()[countPoint++].set(_vertices[index].x(), _vertices[index].y());
+            index++;
+            geometryLine->vertexDataAsPoint2D()[countPoint++].set(_vertices[index].x(), _vertices[index].y());
+        }
+    }
 }
 
 void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize textureSize, 
@@ -98,6 +123,7 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
 {
     // Retrieve pose if Panorama Viewer is enable
     aliceVision::sfmData::CameraPose pose;
+
     if (isPanoramaViewerEnabled() && intrinsic)
     {
         // Downscale image according to downscale level
@@ -126,7 +152,6 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
                 y = _vertices[compteur].y();
             }
 
-            // TODO : update when subs change
             float u = i / (float)_subdivisions;
             float v = j / (float)_subdivisions;
 
@@ -185,7 +210,6 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
         }
     }
     // End for loop
-
     Q_EMIT verticesChanged();
 }
 
@@ -200,7 +224,6 @@ void Surface::computeIndicesGrid(quint16* indices)
                     && (it.second == i || (it.second == i + 1) || (it.second == i - 1) ))
                 {
                     remove++;
-                    // TODO mettre la 3eme boucle en dehors de la 2eme
                 }
             }
             if (remove > 0)
@@ -227,13 +250,41 @@ void Surface::computeIndicesGrid(quint16* indices)
             }
         }
     }
-
     _indices.clear();
     for (size_t i = 0; i < _indexCount; i++)
         _indices.append(indices[i]);
-
 }
 
+void Surface::removeGrid(QSGGeometry* geometryLine)
+{
+    for (size_t i = 0; i < geometryLine->vertexCount(); i++)
+    {
+        geometryLine->vertexDataAsPoint2D()[i].set(0, 0);
+    }
+}
+
+void Surface::setGridColor(const QColor& color)
+{
+    _gridColor = color;
+    _gridColor.setAlpha(_gridOpacity);
+    Q_EMIT gridColorChanged(color);
+}
+void Surface::setGridOpacity(const int& opacity)
+{
+    if (_gridOpacity == int((opacity / 100.0) * 255)) return;
+    _gridOpacity = int((opacity / 100.0) * 255);
+    _gridColor.setAlpha(_gridOpacity);
+    Q_EMIT gridOpacityChanged(opacity);
+}
+
+void Surface::setDisplayGrid(bool display)
+{
+    _displayGrid = display;
+    Q_EMIT displayGridChanged();
+}
+
+
+// VERTICES FUNCTION
 void Surface::fillVertices(QSGGeometry::TexturedPoint2D* vertices)
 {
     _vertices.clear();
@@ -245,42 +296,7 @@ void Surface::fillVertices(QSGGeometry::TexturedPoint2D* vertices)
     setVerticesChanged(false);
 }
 
-void Surface::computeGrid(QSGGeometry* geometryLine)
-{
-    removeGrid(geometryLine);
-
-    int countPoint = 0;
-    int index = 0;
-    for (size_t i = 0; i <= _subdivisions; i++)
-    {
-        for (size_t j = 0; j <= _subdivisions; j++)
-        {
-            if (i == _subdivisions && j == _subdivisions)
-                continue;
-
-            // Horizontal Line
-            if (i != _subdivisions)
-            {
-                geometryLine->vertexDataAsPoint2D()[countPoint++].set(_vertices[index].x(), _vertices[index].y());
-                index += _subdivisions + 1;
-                geometryLine->vertexDataAsPoint2D()[countPoint++].set(_vertices[index].x(), _vertices[index].y());
-                index -= _subdivisions + 1;
-
-                if (j == _subdivisions)
-                {
-                    index++;
-                    continue;
-                }
-            }
-
-            // Vertical Line
-            geometryLine->vertexDataAsPoint2D()[countPoint++].set(_vertices[index].x(), _vertices[index].y());
-            index++;
-            geometryLine->vertexDataAsPoint2D()[countPoint++].set(_vertices[index].x(), _vertices[index].y());
-        }
-    }
-}
-
+// SUBDIVISIONS FUNCTIONS
 void Surface::updateSubdivisions(int sub)
 {
 	_subdivisions = sub;
@@ -290,14 +306,18 @@ void Surface::updateSubdivisions(int sub)
 	_indexCount = _subdivisions * _subdivisions * 6;
 }
 
-void Surface::removeGrid(QSGGeometry* geometryLine)
+void Surface::setSubdivisions(int newSubdivisions)
 {
-    for (size_t i = 0; i < geometryLine->vertexCount(); i++)
-    {
-        geometryLine->vertexDataAsPoint2D()[i].set(0, 0);
-    }
+    setHasSubdivisionsChanged(true);
+    updateSubdivisions(newSubdivisions);
+    
+    clearVertices();
+    setVerticesChanged(true);
+    Q_EMIT subdivisionsChanged();
 }
 
+
+// SFM FUNCTIONS
 bool Surface::loadSfmData()
 {
     bool LoadSfm = true;
@@ -334,6 +354,13 @@ bool Surface::loadSfmData()
     return true;
 }
 
+void Surface::setSfmPath(const QString& path)
+{
+    _sfmPath = path;
+    Q_EMIT sfmPathChanged();
+}
+
+// PRINCIPAL POINT FUNCTION
 void Surface::computePrincipalPoint(aliceVision::camera::IntrinsicBase* intrinsic, QSize textureSize)
 {
     const aliceVision::Vec2 center(textureSize.width() * 0.5, textureSize.height() * 0.5);
@@ -348,6 +375,7 @@ void Surface::computePrincipalPoint(aliceVision::camera::IntrinsicBase* intrinsi
     _principalPoint.setY(ppCorrection.y());
 }
 
+// ROTATION FUNCTIONS
 void Surface::setRotationValues(float yaw, float pitch)
 {
     _yaw = yaw;
@@ -375,10 +403,6 @@ void Surface::rotatePano(aliceVision::Vec3& coordSphere)
     coordSphere = cRo * coordSphere;
 }
 
-/*
-*   Q_INVOKABLE Functions
-*/
-
 void Surface::rotateSurfaceRadians(float yawRadians, float pitchRadians)
 {
     incrementRotationValues(yawRadians, pitchRadians);
@@ -388,6 +412,7 @@ void Surface::rotateSurfaceRadians(float yawRadians, float pitchRadians)
 
 void Surface::rotateSurfaceDegrees(float yawDegrees, float pitchDegrees)
 {
+    // To degrees conversion
     double yawRadians = yawDegrees * (M_PI / 180.0f);
     double pitchRadians = pitchDegrees * (M_PI / 180.0f);
 
@@ -396,14 +421,10 @@ void Surface::rotateSurfaceDegrees(float yawDegrees, float pitchDegrees)
     Q_EMIT subdivisionsChanged();
 }
 
-void Surface::setIdView(int id)
-{
-    _idView = id;
-}
-
-// return pitch in degrees
 double Surface::getPitch()
 {
+    // Get pitch in degrees
+
     // Radians
     double pitch = _pitch;
     int power = pitch / M_PI_2;
@@ -416,9 +437,10 @@ double Surface::getPitch()
     return pitch;
 }
 
-// return yaw in degrees
 double Surface::getYaw()
 {
+    // Get yaw in degrees
+
     // Radians
     double yaw = _yaw;
     int power = yaw / M_PI;
@@ -432,6 +454,13 @@ double Surface::getYaw()
 }
 
 
+// ID VIEW FUNCTION
+void Surface::setIdView(int id)
+{
+    _idView = id;
+}
+
+// MOUSE FUNCTIONS
 bool Surface::isMouseInside(float mx, float my)
 {
     QPoint P(mx, my);
@@ -470,6 +499,37 @@ bool Surface::isMouseInside(float mx, float my)
     return inside;
 }
 
+void Surface::setMouseOver(bool state)
+{
+    if (state != _mouseOver)
+    {
+        _mouseOver = state;
+        Q_EMIT mouseOverChanged();
+    }
+}
 
+// VIEWER TYPE FUNCTIONS
 
-}  // ns qtAliceVision
+void Surface::setViewerType(EViewerType type)
+{
+    if (_viewerType != type)
+    {
+        _viewerType = type;
+
+        clearVertices();
+        setVerticesChanged(true);
+        Q_EMIT viewerTypeChanged();
+    }
+}
+
+bool Surface::isPanoramaViewerEnabled() const
+{
+    return _viewerType == EViewerType::PANORAMA;
+}
+
+bool Surface::isDistortionViewerEnabled() const
+{
+    return _viewerType == EViewerType::DISTORTION;
+}
+
+}
