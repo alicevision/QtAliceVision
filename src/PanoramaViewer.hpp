@@ -21,19 +21,18 @@
 namespace qtAliceVision
 {
     /**
-     * @brief Load and display image.
+     * @brief Displays a list of Float Images.
      */
     class PanoramaViewer : public QQuickItem
     {
         Q_OBJECT
-            /// Path to image
-            Q_PROPERTY(QSize textureSize MEMBER _textureSize NOTIFY textureSizeChanged)
-            ///
             Q_PROPERTY(QSize sourceSize READ sourceSize NOTIFY sourceSizeChanged)
 
-            Q_PROPERTY(bool clearBeforeLoad MEMBER _clearBeforeLoad NOTIFY clearBeforeLoadChanged)
-
             Q_PROPERTY(QVariantMap imagesData READ imagesData NOTIFY imagesDataChanged)
+
+            Q_PROPERTY(QString sfmPath WRITE setSfmPath NOTIFY sfmPathChanged)
+
+            Q_PROPERTY(int downscale MEMBER _downscale NOTIFY downscaleChanged)
 
     public:
         explicit PanoramaViewer(QQuickItem* parent = nullptr);
@@ -44,45 +43,36 @@ namespace qtAliceVision
             return _sourceSize;
         }
 
-        const QVariantMap& metadata() const
-        {
-            return _metadata;
-        }
-
         const QVariantMap& imagesData() const
         {
             return _imagesData;
         }
 
+        void setSfmPath(const QString& path);
+
     public:
-        Q_SIGNAL void clearBeforeLoadChanged();
-        Q_SIGNAL void textureSizeChanged();
         Q_SIGNAL void sourceSizeChanged();
-        Q_SIGNAL void imageChanged();
-        Q_SIGNAL void metadataChanged();
-        Q_SIGNAL void sfmChanged();
+
+        Q_SIGNAL void sfmPathChanged();
+
+        Q_SIGNAL void downscaleChanged();
+
         Q_SIGNAL void imagesDataChanged(const QVariantMap& imagesData);
         
-        Q_INVOKABLE void setSfmPath(const QString& path);
-        Q_INVOKABLE int getDownscale() const;
-
     private:
         /// Custom QSGNode update
         QSGNode* updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePaintNodeData* data) override;
+
         void computeInputImages();
 
     private:
-        bool _clearBeforeLoad = true;
-
-        QSize _textureSize;
-        QSize _sourceSize = QSize(0, 0);
-
-        QVariantMap _metadata;
-
+        QSize _sourceSize = QSize(3000, 1500);
+        
         QString _sfmPath;
+
         QVariantMap _imagesData;
 
-        int _downscale;
+        int _downscale = 0;
     };
 
 }  // ns qtAliceVision

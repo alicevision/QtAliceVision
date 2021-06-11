@@ -27,10 +27,10 @@ PanoramaViewer::PanoramaViewer(QQuickItem* parent)
     : QQuickItem(parent)
 {
     setFlag(QQuickItem::ItemHasContents, true);
-    connect(this, &PanoramaViewer::textureSizeChanged, this, &PanoramaViewer::update);
     connect(this, &PanoramaViewer::sourceSizeChanged, this, &PanoramaViewer::update);
-    connect(this, &PanoramaViewer::sfmChanged, this, &PanoramaViewer::update);
+    connect(this, &PanoramaViewer::sfmPathChanged, this, &PanoramaViewer::update);
     connect(this, &PanoramaViewer::imagesDataChanged, this, &PanoramaViewer::update);
+    connect(this, &PanoramaViewer::downscaleChanged, this, &PanoramaViewer::update);
 }
 
 PanoramaViewer::~PanoramaViewer()
@@ -97,11 +97,6 @@ void PanoramaViewer::setSfmPath(const QString& path)
 {
     _sfmPath = path;
     computeInputImages();
-}
-
-int PanoramaViewer::getDownscale() const
-{ 
-    return _downscale; 
 }
 
 }  // qtAliceVision
