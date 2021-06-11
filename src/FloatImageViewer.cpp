@@ -13,7 +13,6 @@
 #include <aliceVision/image/Image.hpp>
 #include <aliceVision/image/convertion.hpp>
 
-
 namespace qtAliceVision
 {
 
@@ -79,13 +78,18 @@ FloatImageViewer::FloatImageViewer(QQuickItem* parent)
     : QQuickItem(parent)
 {
     setFlag(QQuickItem::ItemHasContents, true);
+
+    // CONNECTS
     connect(this, &FloatImageViewer::gammaChanged, this, &FloatImageViewer::update);
     connect(this, &FloatImageViewer::gainChanged, this, &FloatImageViewer::update);
+    
     connect(this, &FloatImageViewer::textureSizeChanged, this, &FloatImageViewer::update);
     connect(this, &FloatImageViewer::sourceSizeChanged, this, &FloatImageViewer::update);
-    connect(this, &FloatImageViewer::channelModeChanged, this, &FloatImageViewer::update);
     connect(this, &FloatImageViewer::imageChanged, this, &FloatImageViewer::update);
     connect(this, &FloatImageViewer::sourceChanged, this, &FloatImageViewer::reload);
+    
+    connect(this, &FloatImageViewer::channelModeChanged, this, &FloatImageViewer::update);
+ 
     connect(this, &FloatImageViewer::sfmChanged, this, &FloatImageViewer::update);
 
     connect(this, &FloatImageViewer::downscaleLevelChanged, this, &FloatImageViewer::reload);
@@ -93,6 +97,7 @@ FloatImageViewer::FloatImageViewer(QQuickItem* parent)
     connect(&_surface, &Surface::gridColorChanged, this, &FloatImageViewer::update);
     connect(&_surface, &Surface::gridOpacityChanged, this, &FloatImageViewer::update);
     connect(&_surface, &Surface::displayGridChanged, this, &FloatImageViewer::update);
+   
     connect(&_surface, &Surface::mouseOverChanged, this, &FloatImageViewer::update);
     connect(&_surface, &Surface::viewerTypeChanged, this, &FloatImageViewer::update);
 
@@ -104,6 +109,7 @@ FloatImageViewer::~FloatImageViewer()
 {
 }
 
+// LOADING FUNCTIONS
 void FloatImageViewer::setLoading(bool loading)
 {
     if (_loading == loading)
@@ -112,25 +118,6 @@ void FloatImageViewer::setLoading(bool loading)
     }
     _loading = loading;
     Q_EMIT loadingChanged();
-}
-
-
-QVector4D FloatImageViewer::pixelValueAt(int x, int y)
-{
-    if (!_image)
-    {
-        // qInfo() << "[QtAliceVision] FloatImageViewer::pixelValueAt(" << x << ", " << y << ") => no valid image";
-        return QVector4D(0.0, 0.0, 0.0, 0.0);
-    }
-    else if (x < 0 || x >= _image->Width() ||
-        y < 0 || y >= _image->Height())
-    {
-        // qInfo() << "[QtAliceVision] FloatImageViewer::pixelValueAt(" << x << ", " << y << ") => out of range";
-        return QVector4D(0.0, 0.0, 0.0, 0.0);
-    }
-    aliceVision::image::RGBAfColor color = (*_image)(y, x);
-    // qInfo() << "[QtAliceVision] FloatImageViewer::pixelValueAt(" << x << ", " << y << ") => valid pixel: " << color(0) << ", " << color(1) << ", " << color(2) << ", " << color(3);
-    return QVector4D(color(0), color(1), color(2), color(3));
 }
 
 void FloatImageViewer::reload()
@@ -189,6 +176,24 @@ void FloatImageViewer::onResultReady(QSharedPointer<FloatImage> image, QSize sou
     Q_EMIT metadataChanged();
 }
 
+
+QVector4D FloatImageViewer::pixelValueAt(int x, int y)
+{
+    if (!_image)
+    {
+        // qInfo() << "[QtAliceVision] FloatImageViewer::pixelValueAt(" << x << ", " << y << ") => no valid image";
+        return QVector4D(0.0, 0.0, 0.0, 0.0);
+    }
+    else if (x < 0 || x >= _image->Width() ||
+        y < 0 || y >= _image->Height())
+    {
+        // qInfo() << "[QtAliceVision] FloatImageViewer::pixelValueAt(" << x << ", " << y << ") => out of range";
+        return QVector4D(0.0, 0.0, 0.0, 0.0);
+    }
+    aliceVision::image::RGBAfColor color = (*_image)(y, x);
+    // qInfo() << "[QtAliceVision] FloatImageViewer::pixelValueAt(" << x << ", " << y << ") => valid pixel: " << color(0) << ", " << color(1) << ", " << color(2) << ", " << color(3);
+    return QVector4D(color(0), color(1), color(2), color(3));
+}
 
 QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePaintNodeData* data)
 {
@@ -400,4 +405,4 @@ void FloatImageViewer::updatePaintSurface(QSGGeometryNode* root, QSGSimpleMateri
     root->childAtIndex(0)->markDirty(QSGNode::DirtyGeometry | QSGNode::DirtyMaterial);
 }
 
-}  // qtAliceVision
+}

@@ -39,6 +39,12 @@ Q_OBJECT
 	Q_PROPERTY(int subdivisions READ getSubdivisions WRITE setSubdivisions NOTIFY subdivisionsChanged);
 
 public:
+	Surface(int subdivisions = 12, QObject* parent = nullptr);
+	Surface& operator=(const Surface& other) = default;
+	~Surface();
+
+	bool update(QSGGeometry::TexturedPoint2D * vertices, quint16 * indices, QSize textureSize, bool updateSfmData, int downscaleLevel = 0);
+
 	// Q_INVOKABLES
 	Q_INVOKABLE QPoint getPrincipalPoint() { return _principalPoint; };
 	Q_INVOKABLE bool isMouseInside(float mx, float my);
@@ -110,13 +116,6 @@ public:
 	// SUBDIVISIONS
 	bool hasSubdivisionsChanged() { return _subdivisionsChanged; }
 	void setHasSubdivisionsChanged(bool state) { _subdivisionsChanged = state; }
-
-	// GLOBALS
-	Surface(int subdivisions = 12, QObject* parent = nullptr);
-	Surface& operator=(const Surface& other) = default;
-	~Surface();
-
-	bool update(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize, bool updateSfmData, int downscaleLevel = 0);
 
 private:
 

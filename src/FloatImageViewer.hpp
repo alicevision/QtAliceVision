@@ -48,29 +48,30 @@ private:
     */
 class FloatImageViewer : public QQuickItem
 {
-    Q_OBJECT
-        /// Path to image
-        Q_PROPERTY(QUrl source MEMBER _source NOTIFY sourceChanged)
-        /// 
-        Q_PROPERTY(float gamma MEMBER _gamma NOTIFY gammaChanged)
-        /// 
-        Q_PROPERTY(float gain MEMBER _gain NOTIFY gainChanged)
-        ///
-        Q_PROPERTY(QSize textureSize MEMBER _textureSize NOTIFY textureSizeChanged)
-        ///
-        Q_PROPERTY(QSize sourceSize READ sourceSize NOTIFY sourceSizeChanged)
-        /// Whether the image is currently being loaded from file
-        Q_PROPERTY(bool loading READ loading NOTIFY loadingChanged)
-        /// Whether to clear image between two loadings
-        Q_PROPERTY(bool clearBeforeLoad MEMBER _clearBeforeLoad NOTIFY clearBeforeLoadChanged)
+    
+Q_OBJECT
+    // Q_PROPERTIES
+    Q_PROPERTY(QUrl source MEMBER _source NOTIFY sourceChanged)
 
-        Q_PROPERTY(EChannelMode channelMode MEMBER _channelMode NOTIFY channelModeChanged)
+    Q_PROPERTY(float gamma MEMBER _gamma NOTIFY gammaChanged)
 
-        Q_PROPERTY(QVariantMap metadata READ metadata NOTIFY metadataChanged)
+    Q_PROPERTY(float gain MEMBER _gain NOTIFY gainChanged)
 
-        Q_PROPERTY(int downscaleLevel READ getDownscaleLevel WRITE setDownscaleLevel NOTIFY downscaleLevelChanged)
+    Q_PROPERTY(QSize textureSize MEMBER _textureSize NOTIFY textureSizeChanged)
 
-        Q_PROPERTY(Surface* surface READ getSurfacePtr NOTIFY surfaceChanged)
+    Q_PROPERTY(QSize sourceSize READ sourceSize NOTIFY sourceSizeChanged)
+    
+    Q_PROPERTY(bool loading READ loading NOTIFY loadingChanged)
+
+    Q_PROPERTY(bool clearBeforeLoad MEMBER _clearBeforeLoad NOTIFY clearBeforeLoadChanged)
+    
+    Q_PROPERTY(EChannelMode channelMode MEMBER _channelMode NOTIFY channelModeChanged)
+    
+    Q_PROPERTY(QVariantMap metadata READ metadata NOTIFY metadataChanged)
+   
+    Q_PROPERTY(int downscaleLevel READ getDownscaleLevel WRITE setDownscaleLevel NOTIFY downscaleLevelChanged)
+    
+    Q_PROPERTY(Surface* surface READ getSurfacePtr NOTIFY surfaceChanged)
 
 public:
     explicit FloatImageViewer(QQuickItem* parent = nullptr);
@@ -108,7 +109,7 @@ public:
     enum class EChannelMode : quint8 { RGBA, RGB, R, G, B, A };
     Q_ENUM(EChannelMode)
 
-public:
+    //Q_SIGNALS
     Q_SIGNAL void sourceChanged();
     Q_SIGNAL void loadingChanged();
     Q_SIGNAL void clearBeforeLoadChanged();
@@ -123,6 +124,7 @@ public:
     Q_SIGNAL void downscaleLevelChanged();
     Q_SIGNAL void surfaceChanged();
 
+    // Q_INVOKABLE
     Q_INVOKABLE QVector4D pixelValueAt(int x, int y);
     
     Surface* getSurfacePtr() { return &_surface; }
@@ -135,7 +137,6 @@ private:
     /// Custom QSGNode update
     QSGNode* updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePaintNodeData* data) override;
 
-private:
     void updatePaintSurface(QSGGeometryNode* root, QSGSimpleMaterial<ShaderData>* material, QSGGeometry* geometryLine, bool updateSfmData);
 
     QUrl _source;
@@ -162,7 +163,7 @@ private:
     int _downscaleLevel = 0;
 };
 
-}  // ns qtAliceVision
+}
 
 Q_DECLARE_METATYPE(qtAliceVision::FloatImage);
 Q_DECLARE_METATYPE(QSharedPointer<qtAliceVision::FloatImage>);
