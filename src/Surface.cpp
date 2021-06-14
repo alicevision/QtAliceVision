@@ -129,7 +129,7 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
         textureSize *= pow(2.0, downscaleLevel);
         const aliceVision::sfmData::View& view = _sfmData.getView(_idView);
         pose = _sfmData.getPose(view);
-        _deletedColIndex.clear();
+        resetValuesVertexEnabled();
     }
 
     bool fillCoordsSphere = _defaultSphereCoordinates.empty();
@@ -174,30 +174,30 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
                 }
 
                 // Rotate Panorama if some rotation values exist
-                aliceVision::Vec3 coordSphere(_coordsSphereDefault[compteur]);
-                rotatePano(coordSphere);
+                aliceVision::Vec3 sphereCoordinates(_defaultSphereCoordinates[vertexIndex]);
+                rotatePanorama(sphereCoordinates);
 
                 // Compute pixel coordinates in the panorama coordinate system
                 aliceVision::Vec2 panoramaCoordinates = toEquirectangular(sphereCoordinates, _panoramaWidth, _panoramaHeight);
                     
                 // If image is on the seem
-                if (vertexIndex > 0)
+                if (vertexIndex > 0 && j > 0)
                 {
-                    double deltaX = coordPano.x() - vertices[compteur - 1].x;
+                    double deltaX = panoramaCoordinates.x() - vertices[vertexIndex - 1].x;
                     if (abs(deltaX) > 0.7 * _panoramaWidth)
                     {
-                        _deletedColIndex.push_back(std::pair<int, int>(j - 1, i));
+                        _vertexEnabled[i][j - 1] = false;
                     }
                 }
                 if (vertexIndex >= (_subdivisions + 1))
                 {
-                    double deltaY = coordPano.x() - vertices[compteur - (_subdivisions + 1)].x;
-                    if (abs(deltaY) > 0.7 * _panoramaWidth)
+                    double deltaY = panoramaCoordinates.x() - vertices[vertexIndex - (_subdivisions + 1)].x;
+                    if (abs(deltaY) > 0.7 * _panoramaWidth && j > 0)
                     {
-                        _deletedColIndex.push_back(std::pair<int, int>(j - 1, i));
+                        _vertexEnabled[i][j - 1] = false;
                     }
                 }
-                vertices[compteur].set(coordPano.x(), coordPano.y(), u, v);
+                vertices[vertexIndex].set(panoramaCoordinates.x(), panoramaCoordinates.y(), u, v);
             }
 
             // Default 
@@ -212,29 +212,58 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
     Q_EMIT verticesChanged();
 }
 
+bool Surface::isPointValid(int i, int j) const
+{
+    // Check if the point and all its neighbours are enabled
+    // If not, return false
+    if (!_vertexEnabled[i][j]) return false;
+
+    if (i > 0) {
+        if (!_vertexEnabled[i - 1][j]) return false;
+    }
+
+    if (j > 0) {
+        if (!_vertexEnabled[i][j - 1]) return false;
+    }
+
+    if (i > 0 && j > 0) {
+        if (!_vertexEnabled[i - 1][j - 1]) return false;
+    }
+
+    if (i < _subdivisions + 1) {
+        if (!_vertexEnabled[i + 1][j]) return false;
+        if (j > 0 && !_vertexEnabled[i + 1][j - 1]) return false;
+    }
+
+    if (j < _subdivisions + 1) {
+        if (!_vertexEnabled[i][j + 1]) return false;
+        if (i > 0 && !_vertexEnabled[i - 1][j + 1]) return false;
+    }
+
+    if (i < _subdivisions + 1 && j < _subdivisions + 1) {
+        if (!_vertexEnabled[i + 1][j + 1]) return false;
+    }
+
+    return true;
+}
+
+void Surface::resetValuesVertexEnabled()
+{
+    for (size_t i = 0; i <= _subdivisions; i++)
+    {
+        for (size_t j = 0; j <= _subdivisions; j++)
+        {
+            _vertexEnabled[j][i] = true;
+        }
+    }
+}
+
 void Surface::computeIndicesGrid(quint16* indices)
 {
     int index = 0;
     for (int j = 0; j < _subdivisions; j++) {
         for (int i = 0; i < _subdivisions; i++) {
-            int remove = 0;
-            for (const auto it : _deletedColIndex) {
-                if ((j == it.first || (j == it.first + 1 && j != -1) || (j == it.first - 1))
-                    && (it.second == i || (it.second == i + 1) || (it.second == i - 1) ))
-                {
-                    remove++;
-                }
-            }
-            if (remove > 0)
-            {
-                indices[index++] = 0;
-                indices[index++] = 0;
-                indices[index++] = 0;
-                indices[index++] = 0;
-                indices[index++] = 0;
-                indices[index++] = 0;
-            }
-            else
+            if (!isPanoramaViewerEnabled() || (isPanoramaViewerEnabled() && isPointValid(i, j)))
             {
                 int topLeft = (i * (_subdivisions + 1)) + j;
                 int topRight = topLeft + 1;
@@ -246,6 +275,15 @@ void Surface::computeIndicesGrid(quint16* indices)
                 indices[index++] = topRight;
                 indices[index++] = bottomLeft;
                 indices[index++] = bottomRight;
+            }
+            else
+            {
+                indices[index++] = 0;
+                indices[index++] = 0;
+                indices[index++] = 0;
+                indices[index++] = 0;
+                indices[index++] = 0;
+                indices[index++] = 0;
             }
         }
     }
@@ -303,6 +341,10 @@ void Surface::updateSubdivisions(int sub)
 	// Update vertexCount and indexCount according to new subdivision count
 	_vertexCount = (_subdivisions + 1) * (_subdivisions + 1);
 	_indexCount = _subdivisions * _subdivisions * 6;
+
+    _vertexEnabled.resize(_subdivisions + 1);
+    for (size_t i = 0; i < _subdivisions + 1; i++)
+        _vertexEnabled[i].resize(_subdivisions + 1);
 }
 
 void Surface::setSubdivisions(int newSubdivisions)

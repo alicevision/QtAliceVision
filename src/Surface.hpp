@@ -134,6 +134,10 @@ private:
 
 	void updateSubdivisions(int sub);
 
+	bool isPointValid(int i, int j) const;
+
+	void resetValuesVertexEnabled();
+
 private:
 	const int _panoramaWidth = 3000;
 	const int _panoramaHeight = 1500;
@@ -144,7 +148,7 @@ private:
 	int _subdivisions;
 	int _vertexCount;
 	int _indexCount;
-	std::vector<std::pair<int, int> > _deletedColIndex;
+	std::vector<std::vector<bool> > _vertexEnabled;
 
 	// Vertices State
 	bool _verticesChanged = true;
