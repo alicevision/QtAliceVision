@@ -123,18 +123,17 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
 {
     // Retrieve pose if Panorama Viewer is enable
     aliceVision::sfmData::CameraPose pose;
-
     if (isPanoramaViewerEnabled() && intrinsic)
     {
         // Downscale image according to downscale level
         textureSize *= pow(2.0, downscaleLevel);
-        aliceVision::sfmData::View view = _sfmData.getView(_idView);
+        const aliceVision::sfmData::View& view = _sfmData.getView(_idView);
         pose = _sfmData.getPose(view);
         _deletedColIndex.clear();
     }
 
     bool fillCoordsSphere = _defaultSphereCoordinates.empty();
-    int compteur = 0;
+    int vertexIndex = 0;
     for (size_t i = 0; i <= _subdivisions; i++)
     {
         for (size_t j = 0; j <= _subdivisions; j++)
@@ -148,8 +147,8 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
             }
             else
             {
-                x = _vertices[compteur].x();
-                y = _vertices[compteur].y();
+                x = _vertices[vertexIndex].x();
+                y = _vertices[vertexIndex].y();
             }
 
             float u = i / (float)_subdivisions;
@@ -160,7 +159,7 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
             {
                 const aliceVision::Vec2 undisto_pix(x, y);
                 const aliceVision::Vec2 disto_pix = intrinsic->get_d_pixel(undisto_pix);
-                vertices[compteur].set(disto_pix.x(), disto_pix.y(), u, v);
+                vertices[vertexIndex].set(disto_pix.x(), disto_pix.y(), u, v);
             }
 
             // Equirectangular Convertion only if sfmData has been updated
@@ -175,38 +174,38 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
                 }
 
                 // Rotate Panorama if some rotation values exist
-                aliceVision::Vec3 sphereCoordinates(_defaultSphereCoordinates[compteur]);
-                rotatePanorama(sphereCoordinates);
+                aliceVision::Vec3 coordSphere(_coordsSphereDefault[compteur]);
+                rotatePano(coordSphere);
 
                 // Compute pixel coordinates in the panorama coordinate system
                 aliceVision::Vec2 panoramaCoordinates = toEquirectangular(sphereCoordinates, _panoramaWidth, _panoramaHeight);
                     
                 // If image is on the seem
-                if (compteur > 0)
+                if (vertexIndex > 0)
                 {
-                    double deltaX = panoramaCoordinates.x() - vertices[compteur - 1].x;
+                    double deltaX = coordPano.x() - vertices[compteur - 1].x;
                     if (abs(deltaX) > 0.7 * _panoramaWidth)
                     {
                         _deletedColIndex.push_back(std::pair<int, int>(j - 1, i));
                     }
                 }
-                if (compteur >= (_subdivisions + 1))
+                if (vertexIndex >= (_subdivisions + 1))
                 {
-                    double deltaY = panoramaCoordinates.x() - vertices[compteur - (_subdivisions + 1)].x;
+                    double deltaY = coordPano.x() - vertices[compteur - (_subdivisions + 1)].x;
                     if (abs(deltaY) > 0.7 * _panoramaWidth)
                     {
                         _deletedColIndex.push_back(std::pair<int, int>(j - 1, i));
                     }
                 }
-                vertices[compteur].set(panoramaCoordinates.x(), panoramaCoordinates.y(), u, v);
+                vertices[compteur].set(coordPano.x(), coordPano.y(), u, v);
             }
 
             // Default 
             if (!intrinsic)
             {
-                vertices[compteur].set(x, y, u, v);
+                vertices[vertexIndex].set(x, y, u, v);
             }
-            compteur++;
+            vertexIndex++;
         }
     }
     // End for loop
@@ -320,7 +319,8 @@ void Surface::setSubdivisions(int newSubdivisions)
 // SFM FUNCTIONS
 bool Surface::loadSfmData()
 {
-    bool LoadSfm = true;
+    using namespace aliceVision::sfmDataIO;
+
     setHasSubdivisionsChanged(false);
 
     if (_sfmPath.toStdString() != "")
@@ -329,7 +329,7 @@ bool Surface::loadSfmData()
         _sfmData.clear();
 
         // load SfMData files
-        if (!aliceVision::sfmDataIO::Load(_sfmData, _sfmPath.toStdString(), aliceVision::sfmDataIO::ESfMData::ALL))
+        if (!Load(_sfmData, _sfmPath.toStdString(), ESfMData(ESfMData::VIEWS | ESfMData::EXTRINSICS | ESfMData::INTRINSICS)))
         {
             qWarning() << "The input SfMData file '" << _sfmPath << "' cannot be read.\n";
             return false;
@@ -368,7 +368,7 @@ void Surface::computePrincipalPoint(aliceVision::camera::IntrinsicBase* intrinsi
 
     if (aliceVision::camera::isPinhole(intrinsic->getType()))
     {
-        ppCorrection = dynamic_cast<aliceVision::camera::Pinhole&>(*intrinsic).getPrincipalPoint();
+        ppCorrection = dynamic_cast<aliceVision::camera::IntrinsicsScaleOffset&>(*intrinsic).getOffset();
     }
 
     _principalPoint.setX(ppCorrection.x());
