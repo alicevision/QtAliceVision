@@ -101,7 +101,7 @@ public:
 	const QList<QPoint>& vertices() const { return _vertices; }
 	inline bool hasVerticesChanged() const { return _verticesChanged; }
 	void setVerticesChanged(bool change) { _verticesChanged = change; }
-	void clearVertices() { _vertices.clear(); _coordsSphereDefault.clear(); }
+	void clearVertices() { _vertices.clear(); _defaultSphereCoordinates.clear(); }
 	void fillVertices(QSGGeometry::TexturedPoint2D* vertices);
 
 	inline int indexCount() const { return _indexCount; }
@@ -130,7 +130,7 @@ private:
 	
 	void computePrincipalPoint(aliceVision::camera::IntrinsicBase* intrinsic, QSize textureSize);
 
-	void rotatePano(aliceVision::Vec3& coordSphere);
+	void rotatePanorama(aliceVision::Vec3& coordSphere);
 
 	void updateSubdivisions(int sub);
 
@@ -172,7 +172,7 @@ private:
 	double _pitch = 0.0;
 	double _yaw = 0.0;
 	// Coordinates on Unit Sphere without any rotation
-	std::vector<aliceVision::Vec3> _coordsSphereDefault;
+	std::vector<aliceVision::Vec3> _defaultSphereCoordinates;
 	// Mouse Over 
 	bool _mouseOver = false;
 	// If panorama is currently rotating

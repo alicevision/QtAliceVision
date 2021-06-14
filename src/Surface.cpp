@@ -133,7 +133,7 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
         _deletedColIndex.clear();
     }
 
-    bool fillCoordsSphere = _coordsSphereDefault.empty();
+    bool fillCoordsSphere = _defaultSphereCoordinates.empty();
     int compteur = 0;
     for (size_t i = 0; i <= _subdivisions; i++)
     {
@@ -171,20 +171,20 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
                     // Image System Coordinates
                     aliceVision::Vec2 uvCoord(x, y);
                     const auto& transfromPose = pose.getTransform();
-                    _coordsSphereDefault.push_back(aliceVision::camera::applyIntrinsicExtrinsic(transfromPose, intrinsic, uvCoord));
+                    _defaultSphereCoordinates.push_back(aliceVision::camera::applyIntrinsicExtrinsic(transfromPose, intrinsic, uvCoord));
                 }
 
                 // Rotate Panorama if some rotation values exist
-                aliceVision::Vec3 coordSphere(_coordsSphereDefault[compteur]);
-                rotatePano(coordSphere);
+                aliceVision::Vec3 sphereCoordinates(_defaultSphereCoordinates[compteur]);
+                rotatePanorama(sphereCoordinates);
 
                 // Compute pixel coordinates in the panorama coordinate system
-                aliceVision::Vec2 coordPano = toEquirectangular(coordSphere, _panoramaWidth, _panoramaHeight);
+                aliceVision::Vec2 panoramaCoordinates = toEquirectangular(sphereCoordinates, _panoramaWidth, _panoramaHeight);
                     
                 // If image is on the seem
                 if (compteur > 0)
                 {
-                    double deltaX = coordPano.x() - vertices[compteur - 1].x;
+                    double deltaX = panoramaCoordinates.x() - vertices[compteur - 1].x;
                     if (abs(deltaX) > 0.7 * _panoramaWidth)
                     {
                         _deletedColIndex.push_back(std::pair<int, int>(j - 1, i));
@@ -192,13 +192,13 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
                 }
                 if (compteur >= (_subdivisions + 1))
                 {
-                    double deltaY = coordPano.x() - vertices[compteur - (_subdivisions + 1)].x;
+                    double deltaY = panoramaCoordinates.x() - vertices[compteur - (_subdivisions + 1)].x;
                     if (abs(deltaY) > 0.7 * _panoramaWidth)
                     {
                         _deletedColIndex.push_back(std::pair<int, int>(j - 1, i));
                     }
                 }
-                vertices[compteur].set(coordPano.x(), coordPano.y(), u, v);
+                vertices[compteur].set(panoramaCoordinates.x(), panoramaCoordinates.y(), u, v);
             }
 
             // Default 
@@ -393,7 +393,7 @@ void Surface::incrementRotationValues(float yaw, float pitch)
     _isPanoramaRotating = true;
 }
 
-void Surface::rotatePano(aliceVision::Vec3& coordSphere)
+void Surface::rotatePanorama(aliceVision::Vec3& coordSphere)
 {
     Eigen::AngleAxis<double> Myaw(_yaw, Eigen::Vector3d::UnitY());
     Eigen::AngleAxis<double> Mpitch(_pitch, Eigen::Vector3d::UnitX());
