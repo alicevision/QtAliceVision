@@ -5,6 +5,7 @@ project(QtAliceVision LANGUAGES CXX C VERSION 0.1.0)
 find_package(QT NAMES Qt6 Qt5 COMPONENTS Core REQUIRED)
 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 # C++11 for Qt5
 if(${QT_VERSION_MAJOR} EQUAL 5)
     set(CMAKE_CXX_STANDARD 11)
@@ -18,35 +19,11 @@ endif()
 # CMake Find modules
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
-# AliceVision dependency
-find_package(AliceVision REQUIRED)
-
-# OpenImageIO
-find_package(OpenImageIO REQUIRED)
-if(OPENIMAGEIO_FOUND)
-    message(STATUS "OpenImageIO found.")
-else()
-    message(SEND_ERROR "Failed to find OpenImageIO.")
-endif()
-
-# Alembic dependency
-find_package(Alembic 1.7 REQUIRED)
-
-# Add missing include path to IlmBase/OpenEXR include folder
-find_package(IlmBase REQUIRED)
-
 # Qt
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON) # needed for automoc
 
-find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Core REQUIRED) # QtAliceVision, QtOIIO, qmlAlembic
-find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Quick REQUIRED) # QtAliceVision
-find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Qml REQUIRED) # QtAliceVision, qmlAlembic
-find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Charts REQUIRED) # QtAliceVision
-find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets REQUIRED) # QtOIIO
-find_package(Qt${QT_VERSION_MAJOR} COMPONENTS 3DCore REQUIRED) # qmlAlembic
-find_package(Qt${QT_VERSION_MAJOR} COMPONENTS 3DExtras REQUIRED) # qmlAlembic
-find_package(Qt${QT_VERSION_MAJOR} COMPONENTS 3DRender REQUIRED) # qmlAlembic
+find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Core REQUIRED)
 
 if(Qt${QT_VERSION_MAJOR}Core_FOUND)
     message(STATUS "Qt ${QT_VERSION_MAJOR}.${QT_VERSION_MINOR} found.")
@@ -56,18 +33,11 @@ add_definitions(-DQT_PLUGIN)
 add_definitions(-DQT_SHARED)
 add_definitions(-DQT_NO_DEBUG)
 add_definitions(-DQT_NO_KEYWORDS)
-
-# comment to get qDebug outputs
-add_definitions(-DQT_NO_DEBUG_OUTPUT)
-
-# comment to handle all possible file formats
-# by default: jpeg, png and ico are handled by Qt (for performance reasons)
-add_definitions(-DQTOIIO_USE_FORMATS_BLACKLIST)
+add_definitions(-DQT_NO_DEBUG_OUTPUT) # comment to get qDebug outputs
 
 add_subdirectory(src/imageIOHandler)
 add_subdirectory(src/qmlAlembic)
 add_subdirectory(src)
-
 
 # TODO: Make it works for Qt6
 # Add to Qt5 only for the moment since 3dcore
