@@ -707,6 +707,14 @@ void MFeatures::updatePerTrackInformation()
         continue;
 
       const aliceVision::sfmData::View& view = *viewIt->second;
+
+      if (!_msfmData->rawData().isPoseAndIntrinsicDefined(&view))
+      {
+        // view is not reconstructed, can't compute reprojection error
+        featuresPerFramePair.second->setReprojection({ featuresPerFramePair.second->x(), featuresPerFramePair.second->y() });
+        continue;
+      }
+
       const aliceVision::sfmData::CameraPose pose = _msfmData->rawData().getPose(view);
       const aliceVision::geometry::Pose3 camTransform = pose.getTransform();
       const aliceVision::camera::IntrinsicBase* intrinsic = _msfmData->rawData().getIntrinsicPtr(view.getIntrinsicId());
