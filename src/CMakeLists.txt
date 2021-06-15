@@ -30,10 +30,10 @@ target_link_libraries(qtAliceVisionPlugin
     aliceVision_sfm
     aliceVision_system
     aliceVision_image
-    Qt5::Core
-    Qt5::Qml
-    Qt5::Quick
-    Qt5::Charts
+    Qt${QT_VERSION_MAJOR}::Core
+    Qt${QT_VERSION_MAJOR}::Qml
+    Qt${QT_VERSION_MAJOR}::Quick
+    Qt${QT_VERSION_MAJOR}::Charts
 )
 
 set_target_properties(qtAliceVisionPlugin

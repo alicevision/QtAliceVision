@@ -3,17 +3,21 @@
 QtAliceVision is a C++ QML plugin providing classes to load and visualize AliceVision data.
 
 Currently available Viewers:
-  - [X] Features 
-    - Position, scale and orientation 
-    - Status: extracted, matched or reconstructed 
-  - [ ] Matches 
-  - [X] Statistics 
-    - Per view statistics with reprojection error, observations histograms 
-    - Global SfM statistics with number of landmarks/matches, reprojection errors, observations per view 
-  - [X] Images 
-    - Visualize images with floating point precision 
+  - [X] Features
+    - Position, scale and orientation
+    - Status: extracted, matched or reconstructed
+  - [ ] Matches
+  - [X] Statistics
+    - Per view statistics with reprojection error, observations histograms
+    - Global SfM statistics with number of landmarks/matches, reprojection errors, observations per view
+  - [X] Images
+    - Visualize images with floating point precision
     - Dynamically adjust gain and gamma
 
+# QtOIIO - OIIO plugin for Qt
+
+QtOIIO is a C++ plugin providing an [OpenImageIO](http://github.com/OpenImageIO/oiio) backend for image IO in Qt.
+It has been developed to visualize RAW images from DSLRs in [Meshroom](https://github.com/alicevision/meshroom), as well as some intermediate files of the [AliceVision](https://github.com/alicevision/AliceVision) framework stored in EXR format (i.e: depthmaps).
 
 ## License
 
@@ -100,7 +104,17 @@ FloatImageViewer {
   gain: 1.0
   width: textureSize.width || 500
   height: textureSize.height || 500
-  channelMode: "RGB" 
+  channelMode: "RGB"
 }
 ```
 
+This plugin also provides a QML Qt3D Entity to load depthmaps files stored in EXR format:
+
+```js
+import DepthMapEntity 1.0
+
+Scene3D {
+  DepthMapEntity {
+    source: "depthmap.exr"
+  }
+}
