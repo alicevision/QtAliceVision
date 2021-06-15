@@ -19,6 +19,17 @@ Currently available Viewers:
 QtOIIO is a C++ plugin providing an [OpenImageIO](http://github.com/OpenImageIO/oiio) backend for image IO in Qt.
 It has been developed to visualize RAW images from DSLRs in [Meshroom](https://github.com/alicevision/meshroom), as well as some intermediate files of the [AliceVision](https://github.com/alicevision/AliceVision) framework stored in EXR format (i.e: depthmaps).
 
+# qmlAlembic - Alembic QML plugin for Qt3D
+
+qmlAlembic is a C++ QML plugin providing classes to load and visualize Alembic point cloud files in Qt3D.
+It has been developed to load [AliceVision](https://github.com/alicevision/AliceVision) sparse reconstruction results inside [Meshroom](https://github.com/alicevision/meshroom).
+
+![qmlAlembic - Meshroom](docs/img/qmlAlembic.jpg)
+
+For now, it only handles point clouds and cameras.
+
+
+
 ## License
 
 The project is released under MPLv2, see [**COPYING.md**](COPYING.md).
@@ -118,3 +129,15 @@ Scene3D {
     source: "depthmap.exr"
   }
 }
+
+This plugin also provides a QML Qt3D Entity to load Alembic files:
+
+```js
+import AlembicEntity 1.0
+
+Scene3D {
+  AlembicEntity {
+    url: "myfile.abc"
+  }
+}
+```

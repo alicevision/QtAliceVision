@@ -15,6 +15,7 @@ if(${QT_VERSION_MAJOR} EQUAL 6)
     set(CMAKE_CXX_STANDARD 17)
 endif()
 
+# CMake Find modules
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 # AliceVision dependency
@@ -28,17 +29,24 @@ else()
     message(SEND_ERROR "Failed to find OpenImageIO.")
 endif()
 
+# Alembic dependency
+find_package(Alembic 1.7 REQUIRED)
+
+# Add missing include path to IlmBase/OpenEXR include folder
+find_package(IlmBase REQUIRED)
 
 # Qt
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON) # needed for automoc
 
-find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Core REQUIRED) # QtAliceVision, QtOIIO
+find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Core REQUIRED) # QtAliceVision, QtOIIO, qmlAlembic
 find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Quick REQUIRED) # QtAliceVision
-find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Qml REQUIRED) # QtAliceVision
+find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Qml REQUIRED) # QtAliceVision, qmlAlembic
 find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Charts REQUIRED) # QtAliceVision
 find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets REQUIRED) # QtOIIO
-
+find_package(Qt${QT_VERSION_MAJOR} COMPONENTS 3DCore REQUIRED) # qmlAlembic
+find_package(Qt${QT_VERSION_MAJOR} COMPONENTS 3DExtras REQUIRED) # qmlAlembic
+find_package(Qt${QT_VERSION_MAJOR} COMPONENTS 3DRender REQUIRED) # qmlAlembic
 
 if(Qt${QT_VERSION_MAJOR}Core_FOUND)
     message(STATUS "Qt ${QT_VERSION_MAJOR}.${QT_VERSION_MINOR} found.")
@@ -47,6 +55,7 @@ endif()
 add_definitions(-DQT_PLUGIN)
 add_definitions(-DQT_SHARED)
 add_definitions(-DQT_NO_DEBUG)
+add_definitions(-DQT_NO_KEYWORDS)
 
 # comment to get qDebug outputs
 add_definitions(-DQT_NO_DEBUG_OUTPUT)
@@ -56,6 +65,7 @@ add_definitions(-DQT_NO_DEBUG_OUTPUT)
 add_definitions(-DQTOIIO_USE_FORMATS_BLACKLIST)
 
 add_subdirectory(src/imageIOHandler)
+add_subdirectory(src/qmlAlembic)
 add_subdirectory(src)
 
 
