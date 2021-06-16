@@ -466,9 +466,10 @@ namespace qtAliceVision
         // draw reprojection error for landmark
         if (trackHasInliers)
         {
+          const QColor reprojectionColor = color.darker(150);
           const unsigned vIdx = nbLinesDrawn * kTrackLineVertices;
-          setVerticeLine(vIdx, QPointF(feature->x(), feature->y()), color);
-          setVerticeLine(vIdx + 1, QPointF(feature->rx(), feature->ry()), color);
+          setVerticeLine(vIdx, QPointF(feature->x(), feature->y()), reprojectionColor);
+          setVerticeLine(vIdx + 1, QPointF(feature->rx(), feature->ry()), reprojectionColor);
           ++nbLinesDrawn;
         }
       }
@@ -750,20 +751,22 @@ namespace qtAliceVision
     QSGGeometry::ColoredPoint2D* verticesPoints = geometryPoint->vertexDataAsColoredPoint2D();
 
     // utility lambda to register a vertex
-    const auto setVerticeLine = [&](unsigned int index, const QPointF& point)
+    const auto setVerticeLine = [&](unsigned int index, const QPointF& point, const QColor& color)
     {
       verticesLines[index].set(
         point.x(), point.y(),
-        _landmarkColor.red(), _landmarkColor.green(), _landmarkColor.blue(), _landmarkColor.alpha()
+        color.red(), color.green(), color.blue(), color.alpha()
       );
     };
-    const auto setVerticePoint = [&](unsigned int index, const QPointF& point)
+    const auto setVerticePoint = [&](unsigned int index, const QPointF& point, const QColor& color)
     {
       verticesPoints[index].set(
         point.x(), point.y(),
-        _landmarkColor.red(), _landmarkColor.green(), _landmarkColor.blue(), _landmarkColor.alpha()
+        color.red(), color.green(), color.blue(), color.alpha()
       );
     };
+
+    const QColor reprojectionColor = _landmarkColor.darker(150);
 
     // Draw lines between reprojected points and features extracted
     int obsI = 0;
@@ -780,10 +783,10 @@ namespace qtAliceVision
       {
         unsigned int vidx = obsI * kReprojectionVertices;
 
-        setVerticeLine(vidx, QPointF(x, y));
-        setVerticeLine(vidx + 1, QPointF(rx, ry));
+        setVerticeLine(vidx, QPointF(x, y), reprojectionColor);
+        setVerticeLine(vidx + 1, QPointF(rx, ry), reprojectionColor);
 
-        setVerticePoint(obsI, QPointF(rx, ry));
+        setVerticePoint(obsI, QPointF(rx, ry), _landmarkColor);
 
         ++obsI;
       }
