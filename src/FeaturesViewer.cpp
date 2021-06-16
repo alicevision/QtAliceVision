@@ -523,10 +523,13 @@ namespace qtAliceVision
         {
           // The 2 features of the track are contiguous
           const bool contiguous = (previousFrameId == (frameId - 1));
-          // The 2 features of the track are resectioning inliers
-          const bool inliers = ((previousFeature->landmarkId() >= 0) && (feature->landmarkId() >= 0));
           // The previous feature is a resectioning inlier
           const bool previousFeatureInlier = previousFeature->landmarkId() >= 0;
+          // The current feature is a resectioning inlier
+          const bool currentFeatureInlier = feature->landmarkId() >= 0;
+          // The 2 features of the track are resectioning inliers
+          const bool inliers = previousFeatureInlier && currentFeatureInlier;
+
 
           // draw previous point
           const QColor& previousPointColor = getColor(false, contiguous || previousTrackLineContiguous, previousFeatureInlier, trackHasInliers);
@@ -534,7 +537,7 @@ namespace qtAliceVision
 
           // draw track last point
           if (frameId == trackFeatures.maxFrameId)
-            drawFeaturePoint(currentFrameId, frameId, feature, getColor(false, contiguous, previousFeatureInlier, trackHasInliers), nbLinesDrawn, nbHighlightPointsDrawn, nbPointsDrawn, trackHasInliers);
+            drawFeaturePoint(currentFrameId, frameId, feature, getColor(false, contiguous, currentFeatureInlier, trackHasInliers), nbLinesDrawn, nbHighlightPointsDrawn, nbPointsDrawn, trackHasInliers);
 
           // draw track line
           const QColor&  c = getColor(true, contiguous, inliers, trackHasInliers);
