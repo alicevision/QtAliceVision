@@ -228,7 +228,7 @@ namespace qtAliceVision
   {
     qDebug() << "[QtAliceVision] FeaturesViewer: Update paint " << _describerType << " tracks.";
 
-    const unsigned int kTrackLineVertices = 2;
+    const unsigned int kLineVertices = 2;
 
     const bool validFeatures = (_mfeatures != nullptr) && (_mfeatures->haveValidFeatures());
     const bool validTracks = (_mfeatures != nullptr) && _mfeatures->haveValidTracks();
@@ -238,7 +238,8 @@ namespace qtAliceVision
     const aliceVision::IndexT currentFrameId = (trackFeaturesPerTrack != nullptr) ? _mfeatures->getCurrentFrameId() : aliceVision::UndefinedIndexT;
 
     std::size_t nbTracksToDraw = 0;
-    std::size_t nbLinesToDraw = 0;
+    std::size_t nbTrackLinesToDraw = 0;
+    std::size_t nbReprojectionErrorLinesToDraw = 0;
     std::size_t nbPointsToDraw = 0;
     std::size_t nbHighlightPointsToDraw = 0;
 
@@ -262,7 +263,7 @@ namespace qtAliceVision
         }
 
         ++nbTracksToDraw;
-        nbLinesToDraw += (trackFeatures.featuresPerFrame.size() - 1); // number of lines in the track
+        nbTrackLinesToDraw += (trackFeatures.featuresPerFrame.size() - 1); // number of lines in the track
         
         if (_trackDisplayMode == WithCurrentMatches)
         {
@@ -270,7 +271,7 @@ namespace qtAliceVision
           if (it != trackFeatures.featuresPerFrame.end())
           {
             if (trackFeatures.nbLandmarks > 0)
-              ++nbLinesToDraw; // to draw rerojection error
+              ++nbReprojectionErrorLinesToDraw; // to draw rerojection error
             ++nbPointsToDraw;
             ++nbHighlightPointsToDraw;
           }
@@ -282,41 +283,21 @@ namespace qtAliceVision
             ++nbHighlightPointsToDraw; // to draw a highlight point in order to identify the current match
           
           if (trackFeatures.nbLandmarks > 0)
-            nbLinesToDraw += trackFeatures.featuresPerFrame.size(); // one line per matches for rerojection error
+            nbReprojectionErrorLinesToDraw += trackFeatures.featuresPerFrame.size(); // one line per matches for rerojection error
 
           nbPointsToDraw += trackFeatures.featuresPerFrame.size(); // one point per matches
         }
       }
     }
 
-    QSGGeometry* geometryLine = nullptr;
     QSGGeometry* geometryHighlightPoint = nullptr;
+    QSGGeometry* geometryTrackLine = nullptr;
+    QSGGeometry* geometryReprojectionErrorLine = nullptr;
     QSGGeometry* geometryPoint = nullptr;
 
-    if (!oldNode || oldNode->childCount() < 4)
+    if (!oldNode || oldNode->childCount() < 5)
     {
-      {
-        auto root = new QSGGeometryNode;
-
-        // use VertexColorMaterial to later be able to draw selection in another color
-        auto material = new QSGVertexColorMaterial;
-
-        geometryLine = new QSGGeometry(
-          QSGGeometry::defaultAttributes_ColoredPoint2D(),
-          static_cast<int>(nbLinesToDraw * kTrackLineVertices),
-          static_cast<int>(0),
-          QSGGeometry::UnsignedIntType);
-
-        geometryLine->setIndexDataPattern(QSGGeometry::StaticPattern);
-        geometryLine->setVertexDataPattern(QSGGeometry::StaticPattern);
-
-        root->setGeometry(geometryLine);
-        root->setFlags(QSGNode::OwnsGeometry);
-        root->setFlags(QSGNode::OwnsMaterial);
-        root->setMaterial(material);
-
-        node->appendChildNode(root);
-      }
+      // (1) Highlight points
       {
         auto root = new QSGGeometryNode;
         // use VertexColorMaterial to later be able to draw selection in another color
@@ -338,6 +319,53 @@ namespace qtAliceVision
         }
         node->appendChildNode(root);
       }
+      // (2) Track lines
+      {
+        auto root = new QSGGeometryNode;
+
+        // use VertexColorMaterial to later be able to draw selection in another color
+        auto material = new QSGVertexColorMaterial;
+
+        geometryTrackLine = new QSGGeometry(
+          QSGGeometry::defaultAttributes_ColoredPoint2D(),
+          static_cast<int>(nbTrackLinesToDraw * kLineVertices),
+          static_cast<int>(0),
+          QSGGeometry::UnsignedIntType);
+
+        geometryTrackLine->setIndexDataPattern(QSGGeometry::StaticPattern);
+        geometryTrackLine->setVertexDataPattern(QSGGeometry::StaticPattern);
+
+        root->setGeometry(geometryTrackLine);
+        root->setFlags(QSGNode::OwnsGeometry);
+        root->setFlags(QSGNode::OwnsMaterial);
+        root->setMaterial(material);
+
+        node->appendChildNode(root);
+      }
+      // (3) Reprojection Error lines
+      {
+        auto root = new QSGGeometryNode;
+
+        // use VertexColorMaterial to later be able to draw selection in another color
+        auto material = new QSGVertexColorMaterial;
+
+        geometryReprojectionErrorLine = new QSGGeometry(
+          QSGGeometry::defaultAttributes_ColoredPoint2D(),
+          static_cast<int>(nbReprojectionErrorLinesToDraw * kLineVertices),
+          static_cast<int>(0),
+          QSGGeometry::UnsignedIntType);
+
+        geometryReprojectionErrorLine->setIndexDataPattern(QSGGeometry::StaticPattern);
+        geometryReprojectionErrorLine->setVertexDataPattern(QSGGeometry::StaticPattern);
+
+        root->setGeometry(geometryReprojectionErrorLine);
+        root->setFlags(QSGNode::OwnsGeometry);
+        root->setFlags(QSGNode::OwnsMaterial);
+        root->setMaterial(material);
+
+        node->appendChildNode(root);
+      }
+      // (4) Points
       {
         auto root = new QSGGeometryNode;
         // use VertexColorMaterial to later be able to draw selection in another color
@@ -362,30 +390,41 @@ namespace qtAliceVision
     }
     else
     {
-      if (oldNode->childCount() < 4)
+      if (oldNode->childCount() < 5)
         return;
 
-      auto* rootLine = static_cast<QSGGeometryNode*>(oldNode->childAtIndex(1));
-      auto* rootHighlightPoint = static_cast<QSGGeometryNode*>(oldNode->childAtIndex(2));
-      auto* rootPoint = static_cast<QSGGeometryNode*>(oldNode->childAtIndex(3));
+      auto* rootHighlightPoint = static_cast<QSGGeometryNode*>(oldNode->childAtIndex(1));
+      auto* rootTrackLine = static_cast<QSGGeometryNode*>(oldNode->childAtIndex(2));
+      auto* rootReprojectionErrorLine = static_cast<QSGGeometryNode*>(oldNode->childAtIndex(3));
+      auto* rootPoint = static_cast<QSGGeometryNode*>(oldNode->childAtIndex(4));
 
-      if (!rootHighlightPoint || !rootLine || !rootPoint)
+      if (!rootHighlightPoint || !rootTrackLine || !rootReprojectionErrorLine || !rootPoint)
         return;
-
-      rootLine->markDirty(QSGNode::DirtyGeometry);
+      
       rootHighlightPoint->markDirty(QSGNode::DirtyGeometry);
+      rootTrackLine->markDirty(QSGNode::DirtyGeometry);
+      rootReprojectionErrorLine->markDirty(QSGNode::DirtyGeometry);
       rootPoint->markDirty(QSGNode::DirtyGeometry);
 
-      geometryLine = rootLine->geometry();
-      geometryLine->allocate(
-        static_cast<int>(nbLinesToDraw * kTrackLineVertices),
-        static_cast<int>(0)
-      );
+      // (1) Highlight points
       geometryHighlightPoint = rootHighlightPoint->geometry();
       geometryHighlightPoint->allocate(
         static_cast<int>(nbHighlightPointsToDraw),
         static_cast<int>(0)
       );
+      // (2) Tracks lines
+      geometryTrackLine = rootTrackLine->geometry();
+      geometryTrackLine->allocate(
+        static_cast<int>(nbTrackLinesToDraw * kLineVertices),
+        static_cast<int>(0)
+      );
+      // (3) Reprojection Error lines
+      geometryReprojectionErrorLine = rootReprojectionErrorLine->geometry();
+      geometryReprojectionErrorLine->allocate(
+        static_cast<int>(nbReprojectionErrorLinesToDraw * kLineVertices),
+        static_cast<int>(0)
+      );
+      // (4) Points
       geometryPoint = rootPoint->geometry();
       geometryPoint->allocate(
         static_cast<int>(nbPointsToDraw),
@@ -393,17 +432,21 @@ namespace qtAliceVision
       );
     }
 
-    geometryLine->setDrawingMode(QSGGeometry::DrawLines);
-    geometryLine->setLineWidth(2.0f);
-
     geometryHighlightPoint->setDrawingMode(QSGGeometry::DrawPoints);
     geometryHighlightPoint->setLineWidth(6.0f);
+
+    geometryTrackLine->setDrawingMode(QSGGeometry::DrawLines);
+    geometryTrackLine->setLineWidth(2.0f);
+
+    geometryReprojectionErrorLine->setDrawingMode(QSGGeometry::DrawLines);
+    geometryReprojectionErrorLine->setLineWidth(1.0f);
 
     geometryPoint->setDrawingMode(QSGGeometry::DrawPoints);
     geometryPoint->setLineWidth(4.0f);
 
-    QSGGeometry::ColoredPoint2D* verticesLines = geometryLine->vertexDataAsColoredPoint2D();
     QSGGeometry::ColoredPoint2D* verticesHighlightPoints = geometryHighlightPoint->vertexDataAsColoredPoint2D();
+    QSGGeometry::ColoredPoint2D* verticesTrackLines = geometryTrackLine->vertexDataAsColoredPoint2D();
+    QSGGeometry::ColoredPoint2D* verticesReprojectionErrorLines = geometryReprojectionErrorLine->vertexDataAsColoredPoint2D();
     QSGGeometry::ColoredPoint2D* verticesPoints = geometryPoint->vertexDataAsColoredPoint2D();
 
     // utility lambda to get line / point color
@@ -421,18 +464,6 @@ namespace qtAliceVision
       return inliers ? _landmarkColor : _matchColor;
     };
 
-    // utility lambda to register a line vertex
-    const auto setVerticeLine = [&](unsigned int index, const QPointF& point, const QColor& c)
-    {
-      verticesLines[index].set(point.x(), point.y(), c.red(), c.green(), c.blue(), c.alpha());
-    };
-
-    // utility lambda to register a point vertex
-    const auto setVerticePoint = [&](unsigned int index, const QPointF& point, const QColor& c)
-    {
-      verticesPoints[index].set(point.x(), point.y(), c.red(), c.green(), c.blue(), c.alpha());
-    };
-
     // utility lambda to register a highlight point vertex
     const auto setVerticeHighlightPoint = [&](unsigned int index, const QPointF& point, int alpha)
     {
@@ -442,40 +473,62 @@ namespace qtAliceVision
       verticesHighlightPoints[index].set(point.x(), point.y(), c.red(), c.green(), c.blue(), c.alpha());
     };
 
+    // utility lambda to register a track line vertex
+    const auto setVerticeTrackLine = [&](unsigned int index, const QPointF& point, const QColor& c)
+    {
+      verticesTrackLines[index].set(point.x(), point.y(), c.red(), c.green(), c.blue(), c.alpha());
+    };
+
+    // utility lambda to register a reprojection error line vertex
+    const auto setVerticeReprojectionErrorLine = [&](unsigned int index, const QPointF& point, const QColor& c)
+    {
+      const QColor rc = c.darker(150); // darken the color to avoid confusion with track lines
+      verticesReprojectionErrorLines[index].set(point.x(), point.y(), rc.red(), rc.green(), rc.blue(), rc.alpha());
+    };
+
+    // utility lambda to register a point vertex
+    const auto setVerticePoint = [&](unsigned int index, const QPointF& point, const QColor& c)
+    {
+      verticesPoints[index].set(point.x(), point.y(), c.red(), c.green(), c.blue(), c.alpha());
+    };
+
     // utility lambda to register a feature point, to avoid code complexity
     const auto drawFeaturePoint = [&](aliceVision::IndexT currentFrameId, 
                                       aliceVision::IndexT frameId, 
                                       const MFeature* feature, 
                                       const QColor& color,
-                                      unsigned int& nbLinesDrawn, unsigned int& nbHighlightPointsDrawn, unsigned int& nbPointsDrawn, bool trackHasInliers)
+                                      unsigned int& nbReprojectionErrorLinesDrawn, 
+                                      unsigned int& nbHighlightPointsDrawn, 
+                                      unsigned int& nbPointsDrawn,
+                                      bool trackHasInliers)
     {
       if (_trackDisplayMode == WithAllMatches || (frameId == currentFrameId && _trackDisplayMode == WithCurrentMatches))
       {
-        QPointF point = trackHasInliers ? QPointF(feature->rx(), feature->ry()) : QPointF(feature->x(), feature->y());
+        const QPointF point2d = QPointF(feature->x(), feature->y());
+        const QPointF point3d = QPointF(feature->rx(), feature->ry());
        
-        setVerticePoint(nbPointsDrawn, point, color);
+        setVerticePoint(nbPointsDrawn, trackHasInliers ? point3d : point2d, color);
         ++nbPointsDrawn;
 
         // draw a highlight point in order to identify the current match from the others
         if (frameId == currentFrameId) 
         {
-          setVerticeHighlightPoint(nbHighlightPointsDrawn, point, color.alpha());
+          setVerticeHighlightPoint(nbHighlightPointsDrawn, point2d, color.alpha());
           ++nbHighlightPointsDrawn;
         }
 
         // draw reprojection error for landmark
         if (trackHasInliers)
         {
-          const QColor reprojectionColor = color.darker(150);
-          const unsigned vIdx = nbLinesDrawn * kTrackLineVertices;
-          setVerticeLine(vIdx, QPointF(feature->x(), feature->y()), reprojectionColor);
-          setVerticeLine(vIdx + 1, QPointF(feature->rx(), feature->ry()), reprojectionColor);
-          ++nbLinesDrawn;
+          const unsigned vIdx = nbReprojectionErrorLinesDrawn * kLineVertices;
+          setVerticeReprojectionErrorLine(vIdx, point2d, color);
+          setVerticeReprojectionErrorLine(vIdx + 1, point3d, color);
+          ++nbReprojectionErrorLinesDrawn;
         }
       }
     };
 
-    if (nbLinesToDraw == 0)
+    if (nbTrackLinesToDraw == 0)
       return;
 
     if (currentFrameId == aliceVision::UndefinedIndexT)
@@ -484,8 +537,9 @@ namespace qtAliceVision
       return;
     }
 
-    unsigned int nbLinesDrawn = 0;
     unsigned int nbHighlightPointsDrawn = 0;
+    unsigned int nbTrackLinesDrawn = 0;
+    unsigned int nbReprojectionErrorLinesDrawn = 0;
     unsigned int nbPointsDrawn = 0;
 
     for (const auto& trackFeaturesPair : *trackFeaturesPerTrack)
@@ -533,18 +587,18 @@ namespace qtAliceVision
 
           // draw previous point
           const QColor& previousPointColor = getColor(false, contiguous || previousTrackLineContiguous, previousFeatureInlier, trackHasInliers);
-          drawFeaturePoint(currentFrameId, previousFrameId, previousFeature, previousPointColor, nbLinesDrawn, nbHighlightPointsDrawn, nbPointsDrawn, trackHasInliers);
+          drawFeaturePoint(currentFrameId, previousFrameId, previousFeature, previousPointColor, nbReprojectionErrorLinesDrawn, nbHighlightPointsDrawn, nbPointsDrawn, trackHasInliers);
 
           // draw track last point
           if (frameId == trackFeatures.maxFrameId)
-            drawFeaturePoint(currentFrameId, frameId, feature, getColor(false, contiguous, currentFeatureInlier, trackHasInliers), nbLinesDrawn, nbHighlightPointsDrawn, nbPointsDrawn, trackHasInliers);
+            drawFeaturePoint(currentFrameId, frameId, feature, getColor(false, contiguous, currentFeatureInlier, trackHasInliers), nbReprojectionErrorLinesDrawn, nbHighlightPointsDrawn, nbPointsDrawn, trackHasInliers);
 
           // draw track line
           const QColor&  c = getColor(true, contiguous, inliers, trackHasInliers);
-          const unsigned vIdx = nbLinesDrawn * kTrackLineVertices;
-          setVerticeLine(vIdx, QPointF(previousFeature->x(), previousFeature->y()), c);
-          setVerticeLine(vIdx + 1, QPointF(feature->x(), feature->y()), c);
-          ++nbLinesDrawn;
+          const unsigned vIdx = nbTrackLinesDrawn * kLineVertices;
+          setVerticeTrackLine(vIdx, QPointF(previousFeature->x(), previousFeature->y()), c);
+          setVerticeTrackLine(vIdx + 1, QPointF(feature->x(), feature->y()), c);
+          ++nbTrackLinesDrawn;
 
           previousTrackLineContiguous = contiguous;
         }
@@ -569,7 +623,7 @@ namespace qtAliceVision
     const unsigned int kTracksVertices = 1;
 
     QSGGeometry* geometryPoint = nullptr;
-    if (!oldNode || oldNode->childCount() < 5)
+    if (!oldNode || oldNode->childCount() < 6)
     {
       auto root = new QSGGeometryNode;
       {
@@ -593,9 +647,9 @@ namespace qtAliceVision
     }
     else
     {
-      if (oldNode->childCount() < 5)
+      if (oldNode->childCount() < 6)
         return;
-      auto* rootPoint = static_cast<QSGGeometryNode*>(oldNode->childAtIndex(4));
+      auto* rootPoint = static_cast<QSGGeometryNode*>(oldNode->childAtIndex(5));
       if (!rootPoint)
         return;
       rootPoint->markDirty(QSGNode::DirtyGeometry);
@@ -667,7 +721,7 @@ namespace qtAliceVision
     QSGGeometry* geometryLine = nullptr;
     QSGGeometry* geometryPoint = nullptr;
 
-    if (!oldNode || oldNode->childCount() < 7)
+    if (!oldNode || oldNode->childCount() < 8)
     {
       auto root = new QSGGeometryNode;
       {
@@ -714,10 +768,10 @@ namespace qtAliceVision
     }
     else
     {
-      if (oldNode->childCount() < 7)
+      if (oldNode->childCount() < 8)
         return;
-      auto* rootLine = static_cast<QSGGeometryNode*>(oldNode->childAtIndex(5));
-      auto* rootPoint = static_cast<QSGGeometryNode*>(oldNode->childAtIndex(6));
+      auto* rootLine = static_cast<QSGGeometryNode*>(oldNode->childAtIndex(6));
+      auto* rootPoint = static_cast<QSGGeometryNode*>(oldNode->childAtIndex(7));
       if (!rootLine || !rootPoint)
         return;
 
