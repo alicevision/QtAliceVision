@@ -636,6 +636,9 @@ void MFeatures::updatePerTrackInformation()
   {
     const QString& describerType = viewFeaturesPerViewPerDescPair.first;
 
+    if (viewFeaturesPerViewPerDescPair.second.size() < 2) 
+      continue; // to build _trackFeaturesPerTrackPerDesc we need at least 2 views per desc
+
     for (auto& viewFeaturesPerViewPair : viewFeaturesPerViewPerDescPair.second)
     {
       const aliceVision::IndexT viewId = viewFeaturesPerViewPair.first;
@@ -668,6 +671,10 @@ void MFeatures::updatePerTrackInformation()
       }
     }
   }
+
+  // no tracks
+  if (_trackFeaturesPerTrackPerDesc.empty())
+    return;
 
   // compute score based on feature scale
   for (auto& trackFeaturesPerTrackPerDescPair : _trackFeaturesPerTrackPerDesc)
