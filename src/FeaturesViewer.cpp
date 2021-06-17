@@ -25,6 +25,7 @@ namespace qtAliceVision
     connect(this, &FeaturesViewer::featureDisplayModeChanged, this, &FeaturesViewer::update);
     connect(this, &FeaturesViewer::trackDisplayModeChanged, this, &FeaturesViewer::update);
 
+    connect(this, &FeaturesViewer::display3dTracksChanged, this, &FeaturesViewer::update);
     connect(this, &FeaturesViewer::trackContiguousFilterChanged, this, &FeaturesViewer::update);
     connect(this, &FeaturesViewer::trackInliersFilterChanged, this, &FeaturesViewer::update);
 
@@ -513,7 +514,7 @@ namespace qtAliceVision
         // draw a highlight point in order to identify the current match from the others
         if (frameId == currentFrameId) 
         {
-          setVerticeHighlightPoint(nbHighlightPointsDrawn, point2d, color.alpha());
+          setVerticeHighlightPoint(nbHighlightPointsDrawn, (_display3dTracks && trackHasInliers) ? point3d : point2d, color.alpha());
           ++nbHighlightPointsDrawn;
         }
 
@@ -596,8 +597,18 @@ namespace qtAliceVision
           // draw track line
           const QColor&  c = getColor(true, contiguous, inliers, trackHasInliers);
           const unsigned vIdx = nbTrackLinesDrawn * kLineVertices;
-          setVerticeTrackLine(vIdx, QPointF(previousFeature->x(), previousFeature->y()), c);
-          setVerticeTrackLine(vIdx + 1, QPointF(feature->x(), feature->y()), c);
+
+          if (_display3dTracks && trackHasInliers) // 3d track line
+          {
+            setVerticeTrackLine(vIdx, QPointF(previousFeature->rx(), previousFeature->ry()), c);
+            setVerticeTrackLine(vIdx + 1, QPointF(feature->rx(), feature->ry()), c);
+          }
+          else // 2d track line
+          {
+            setVerticeTrackLine(vIdx, QPointF(previousFeature->x(), previousFeature->y()), c);
+            setVerticeTrackLine(vIdx + 1, QPointF(feature->x(), feature->y()), c);
+          }
+
           ++nbTrackLinesDrawn;
 
           previousTrackLineContiguous = contiguous;

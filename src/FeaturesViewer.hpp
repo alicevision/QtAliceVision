@@ -29,6 +29,8 @@ namespace qtAliceVision {
       Q_PROPERTY(FeatureDisplayMode featureDisplayMode MEMBER _featureDisplayMode NOTIFY featureDisplayModeChanged)
       // Track display mode (see TrackDisplayMode enum)
       Q_PROPERTY(TrackDisplayMode trackDisplayMode MEMBER _trackDisplayMode NOTIFY trackDisplayModeChanged)
+      // Display 3d tracks
+      Q_PROPERTY(bool display3dTracks MEMBER _display3dTracks NOTIFY display3dTracksChanged)
       // Display only contiguous tracks
       Q_PROPERTY(bool trackContiguousFilter MEMBER _trackContiguousFilter NOTIFY trackContiguousFilterChanged)
       // Display only tracks with at least one inlier
@@ -79,6 +81,7 @@ namespace qtAliceVision {
     Q_SIGNAL void featureDisplayModeChanged();
     Q_SIGNAL void trackDisplayModeChanged();
 
+    Q_SIGNAL void display3dTracksChanged();
     Q_SIGNAL void trackContiguousFilterChanged();
     Q_SIGNAL void trackInliersFilterChanged();
 
@@ -118,6 +121,7 @@ namespace qtAliceVision {
     FeatureDisplayMode _featureDisplayMode = FeaturesViewer::Points;
     TrackDisplayMode _trackDisplayMode = FeaturesViewer::WithCurrentMatches;
     
+    bool _display3dTracks = false;
     bool _trackContiguousFilter = true;
     bool _trackInliersFilter = false;
 
