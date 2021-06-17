@@ -25,12 +25,12 @@ namespace qtAliceVision
     connect(this, &FeaturesViewer::featureDisplayModeChanged, this, &FeaturesViewer::update);
     connect(this, &FeaturesViewer::trackDisplayModeChanged, this, &FeaturesViewer::update);
 
+    connect(this, &FeaturesViewer::featureMinScaleFilterChanged, this, &FeaturesViewer::update);
+    connect(this, &FeaturesViewer::featureMaxScaleFilterChanged, this, &FeaturesViewer::update);
+
     connect(this, &FeaturesViewer::display3dTracksChanged, this, &FeaturesViewer::update);
     connect(this, &FeaturesViewer::trackContiguousFilterChanged, this, &FeaturesViewer::update);
     connect(this, &FeaturesViewer::trackInliersFilterChanged, this, &FeaturesViewer::update);
-
-    connect(this, &FeaturesViewer::trackMinFeatureScaleFilterChanged, this, &FeaturesViewer::update);
-    connect(this, &FeaturesViewer::trackMaxFeatureScaleFilterChanged, this, &FeaturesViewer::update);
 
     connect(this, &FeaturesViewer::featureColorChanged, this, &FeaturesViewer::update);
     connect(this, &FeaturesViewer::matchColorChanged, this, &FeaturesViewer::update);
@@ -63,14 +63,10 @@ namespace qtAliceVision
     Q_EMIT featuresChanged();
   }
 
-  void FeaturesViewer::updatePaintFeatures(QSGNode* oldNode, QSGNode* node)
+  void FeaturesViewer::updatePaintFeatures(const PaintParams& params, QSGNode* oldNode, QSGNode* node)
   {
     qDebug() << "[QtAliceVision] FeaturesViewer: Update paint " << _describerType << " features.";
 
-    const bool validFeatures = (_mfeatures != nullptr) && (_mfeatures->haveValidFeatures());
-
-    const MFeatures::MViewFeatures* currentViewFeatures = validFeatures ? _mfeatures->getCurrentViewFeatures(_describerType) : nullptr;
-    const std::size_t displayNbFeatures = (_displayFeatures && (currentViewFeatures != nullptr)) ? currentViewFeatures->features.size() : 0;
     QSGGeometry* geometry = nullptr;
 
     unsigned int kFeatVertices = 0;
@@ -98,8 +94,8 @@ namespace qtAliceVision
         auto material = new QSGVertexColorMaterial;
         geometry = new QSGGeometry(
           QSGGeometry::defaultAttributes_ColoredPoint2D(),
-          static_cast<int>(displayNbFeatures * kFeatVertices),
-          static_cast<int>(displayNbFeatures * kFeatIndices),
+          static_cast<int>(params.nbFeaturesToDraw * kFeatVertices),
+          static_cast<int>(params.nbFeaturesToDraw * kFeatIndices),
           QSGGeometry::UnsignedIntType);
 
         geometry->setIndexDataPattern(QSGGeometry::StaticPattern);
@@ -122,18 +118,10 @@ namespace qtAliceVision
       root->markDirty(QSGNode::DirtyGeometry);
       geometry = root->geometry();
       geometry->allocate(
-        static_cast<int>(displayNbFeatures * kFeatVertices),
-        static_cast<int>(displayNbFeatures * kFeatIndices)
+        static_cast<int>(params.nbFeaturesToDraw * kFeatVertices),
+        static_cast<int>(params.nbFeaturesToDraw * kFeatIndices)
       );
     }
-
-    if (displayNbFeatures == 0)
-      return;
-
-    const auto& features = currentViewFeatures->features;
-
-    if (features.empty())
-      return; // nothing to do, no features in the current view
 
     switch (_featureDisplayMode)
     {
@@ -154,28 +142,46 @@ namespace qtAliceVision
     auto* indices = geometry->indexDataAsUInt();
 
     // utility lambda to register a vertex
-    const auto setVertice = [&](unsigned int index, const QPointF& point, bool isReconstructed)
+    const auto setVertice = [&](unsigned int index, const QPointF& point)
     {
-      QColor c = _featureColor; // (isReconstructed ? _colorReproj : _color);
+      QColor c = _featureColor;
       vertices[index].set(
         point.x(), point.y(),
         c.red(), c.green(), c.blue(), c.alpha()
       );
     };
 
-    for (int i = 0; i < features.size(); ++i)
+    if (params.nbFeaturesToDraw == 0) // nothing to draw or something is not ready
+      return;
+
+    unsigned int nbFeaturesDrawn = 0;
+
+    const MFeatures::MViewFeatures* currentViewFeatures = _mfeatures->getCurrentViewFeatures(_describerType);
+
+    for (const auto& feature : currentViewFeatures->features)
     {
-      const auto& f = features.at(i);
-      bool isReconstructed = f->landmarkId() > 0;
-      auto& feat = f->pointFeature();
-      const auto radius = feat.scale();
-      const auto diag = 2.0 * feat.scale();
-      unsigned int vidx = i * kFeatVertices;
-      unsigned int iidx = i * kFeatIndices;
+      // feature scale filter
+      if (feature->scale() > params.maxFeatureScale ||
+          feature->scale() < params.minFeatureScale)
+      {
+        continue;
+      }
+
+      if (nbFeaturesDrawn >= params.nbFeaturesToDraw)
+      {
+        qWarning() << "[QtAliceVision] FeaturesViewer: Update paint " << _describerType << " features, Error on number of features.";
+        break;
+      }
+
+      const auto& feat = feature->pointFeature();
+      const float radius = feat.scale();
+      const double diag = 2.0 * feat.scale();
+      unsigned int vidx = nbFeaturesDrawn * kFeatVertices;
+      unsigned int iidx = nbFeaturesDrawn * kFeatIndices;
 
       if (_featureDisplayMode == FeaturesViewer::Points)
       {
-        setVertice(vidx, QPointF(feat.x(), feat.y()), isReconstructed);
+        setVertice(vidx, QPointF(feat.x(), feat.y()));
       }
       else
       {
@@ -189,10 +195,10 @@ namespace qtAliceVision
         if (_featureDisplayMode == FeaturesViewer::Squares)
         {
           // create 2 triangles
-          setVertice(vidx, tl, isReconstructed);
-          setVertice(vidx + 1, tr, isReconstructed);
-          setVertice(vidx + 2, br, isReconstructed);
-          setVertice(vidx + 3, bl, isReconstructed);
+          setVertice(vidx, tl);
+          setVertice(vidx + 1, tr);
+          setVertice(vidx + 2, br);
+          setVertice(vidx + 3, bl);
           indices[iidx] = vidx;
           indices[iidx + 1] = vidx + 1;
           indices[iidx + 2] = vidx + 2;
@@ -212,30 +218,27 @@ namespace qtAliceVision
           for (unsigned int k = 0; k < points.size(); ++k)
           {
             auto lidx = k * 2; // local index
-            setVertice(vidx + lidx, points[k], isReconstructed);
-            setVertice(vidx + lidx + 1, points[k + 1], isReconstructed);
+            setVertice(vidx + lidx, points[k]);
+            setVertice(vidx + lidx + 1, points[k + 1]);
           }
           // orientation line: up vector (0, 1)
           const auto nbPoints = static_cast<unsigned int>(points.size());
-          setVertice(vidx + nbPoints * 2 - 2, rect.center(), isReconstructed);
+          setVertice(vidx + nbPoints * 2 - 2, rect.center());
           auto o2 = t.map(rect.center() - QPointF(0.0f, radius)); // rotate end point
-          setVertice(vidx + nbPoints * 2 - 1, o2, isReconstructed);
+          setVertice(vidx + nbPoints * 2 - 1, o2);
         }
       }
+      ++nbFeaturesDrawn;
     }
   }
 
-  void FeaturesViewer::updatePaintTracks(QSGNode* oldNode, QSGNode* node)
+  void FeaturesViewer::updatePaintTracks(const PaintParams& params, QSGNode* oldNode, QSGNode* node)
   {
     qDebug() << "[QtAliceVision] FeaturesViewer: Update paint " << _describerType << " tracks.";
 
     const unsigned int kLineVertices = 2;
 
-    const bool validFeatures = (_mfeatures != nullptr) && (_mfeatures->haveValidFeatures());
-    const bool validTracks = (_mfeatures != nullptr) && _mfeatures->haveValidTracks();
-    const bool validLandmarks = (_mfeatures != nullptr) && _mfeatures->haveValidLandmarks(); // TODO: shouldn't be required, should be optionnal but required for now in order to get frameId (SfMData).
-
-    const MFeatures::MTrackFeaturesPerTrack* trackFeaturesPerTrack = (_displayTracks && validFeatures && validTracks && validLandmarks) ? _mfeatures->getTrackFeaturesPerTrack(_describerType) : nullptr;
+    const MFeatures::MTrackFeaturesPerTrack* trackFeaturesPerTrack = (_displayTracks && params.haveValidFeatures && params.haveValidTracks && params.haveValidLandmarks) ? _mfeatures->getTrackFeaturesPerTrack(_describerType) : nullptr;
     const aliceVision::IndexT currentFrameId = (trackFeaturesPerTrack != nullptr) ? _mfeatures->getCurrentFrameId() : aliceVision::UndefinedIndexT;
 
     std::size_t nbTracksToDraw = 0;
@@ -250,9 +253,9 @@ namespace qtAliceVision
       {
         const auto& trackFeatures = trackFeaturesPair.second;
 
-        // feature scale score filter
-        if (trackFeatures.featureScaleScore > _trackMaxFeatureScaleFilter ||
-            trackFeatures.featureScaleScore < _trackMinFeatureScaleFilter)
+        // feature scale filter
+        if (trackFeatures.featureScaleAverage > params.maxFeatureScale ||
+            trackFeatures.featureScaleAverage < params.minFeatureScale)
         {
           continue;
         }
@@ -547,9 +550,9 @@ namespace qtAliceVision
     {
       const auto& trackFeatures = trackFeaturesPair.second;
 
-      // feature scale score filter
-      if (trackFeatures.featureScaleScore > _trackMaxFeatureScaleFilter ||
-        trackFeatures.featureScaleScore < _trackMinFeatureScaleFilter)
+      // feature scale filter
+      if (trackFeatures.featureScaleAverage > params.maxFeatureScale ||
+          trackFeatures.featureScaleAverage < params.minFeatureScale)
       {
         continue;
       }
@@ -621,19 +624,14 @@ namespace qtAliceVision
     }
   }
 
-  void FeaturesViewer::updatePaintMatches(QSGNode* oldNode, QSGNode* node)
+  void FeaturesViewer::updatePaintMatches(const PaintParams& params, QSGNode* oldNode, QSGNode* node)
   {
     qDebug() << "[QtAliceVision] FeaturesViewer: Update paint " << _describerType << " matches.";
 
-    const bool validFeatures = (_mfeatures != nullptr) && (_mfeatures->haveValidFeatures());
-    const bool validTracks = (_mfeatures != nullptr) && _mfeatures->haveValidTracks();
-
-    const MFeatures::MViewFeatures* currentViewFeatures = (validFeatures && validTracks) ? _mfeatures->getCurrentViewFeatures(_describerType) : nullptr;
-    const std::size_t displayNbTracks = (_displayMatches && (currentViewFeatures != nullptr)) ? currentViewFeatures->nbTracks - currentViewFeatures->nbLandmarks : 0;
-
-    const unsigned int kTracksVertices = 1;
+    const unsigned int kMatchesVertices = 1;
 
     QSGGeometry* geometryPoint = nullptr;
+
     if (!oldNode || oldNode->childCount() < 6)
     {
       auto root = new QSGGeometryNode;
@@ -642,7 +640,7 @@ namespace qtAliceVision
         auto material = new QSGVertexColorMaterial;
         geometryPoint = new QSGGeometry(
           QSGGeometry::defaultAttributes_ColoredPoint2D(),
-          static_cast<int>(displayNbTracks * kTracksVertices),
+          static_cast<int>(params.nbMatchesToDraw * kMatchesVertices),
           static_cast<int>(0),
           QSGGeometry::UnsignedIntType);
 
@@ -666,18 +664,10 @@ namespace qtAliceVision
       rootPoint->markDirty(QSGNode::DirtyGeometry);
       geometryPoint = rootPoint->geometry();
       geometryPoint->allocate(
-        static_cast<int>(displayNbTracks * kTracksVertices),
+        static_cast<int>(params.nbMatchesToDraw * kMatchesVertices),
         static_cast<int>(0)
       );
     }
-
-    if (displayNbTracks == 0)
-      return;
-
-    const auto& features = currentViewFeatures->features;
-
-    if (features.empty())
-      return; // nothing to do, no features in the current view
 
     geometryPoint->setDrawingMode(QSGGeometry::DrawPoints);
     geometryPoint->setLineWidth(6.0f);
@@ -692,40 +682,40 @@ namespace qtAliceVision
       );
     };
 
+    if (params.nbMatchesToDraw == 0) // nothing to draw or something is not ready
+      return; 
+
+    unsigned int nbMatchesDrawn = 0;
+
+    const MFeatures::MViewFeatures* currentViewFeatures = _mfeatures->getCurrentViewFeatures(_describerType);
+
     // Draw points in the center of non validated tracks
-    int obsI = 0;
-    for (int i = 0; i < features.size(); ++i)
+    for (const auto& feature : currentViewFeatures->features)
     {
-      const auto& f = features.at(i);
-
-      if (f->trackId() < 0)
-        continue;
-      if (currentViewFeatures->nbLandmarks > 0 && f->landmarkId() >= 0)
-        continue;
-
-      if (obsI >= displayNbTracks)
+      if (feature->trackId() >= 0 && feature->landmarkId() < 0)
       {
-        qWarning() << "[QtAliceVision] FeaturesViewer: Update paint " << _describerType << " matches, Error on number of tracks.";
-        break;
+        // feature scale filter
+        if (feature->scale() > params.maxFeatureScale ||
+            feature->scale() < params.minFeatureScale)
+        {
+          continue;
+        }
+
+        if (nbMatchesDrawn >= params.nbMatchesToDraw)
+        {
+          qWarning() << "[QtAliceVision] FeaturesViewer: Update paint " << _describerType << " matches, Error on number of matches.";
+          break;
+        }
+
+        setVerticePoint(nbMatchesDrawn, QPointF(feature->x(), feature->y()));
+        ++nbMatchesDrawn;
       }
-      float x = f->x();
-      float y = f->y();
-
-      setVerticePoint(obsI, QPointF(x, y));
-
-      ++obsI;
     }
   }
 
-  void FeaturesViewer::updatePaintLandmarks(QSGNode* oldNode, QSGNode* node)
+  void FeaturesViewer::updatePaintLandmarks(const PaintParams& params, QSGNode* oldNode, QSGNode* node)
   {
     qDebug() << "[QtAliceVision] FeaturesViewer: Update paint " << _describerType << " landmarks.";
-
-    const bool validFeatures = (_mfeatures != nullptr) && (_mfeatures->haveValidFeatures());
-    const bool validLandmarks = (_mfeatures != nullptr) && _mfeatures->haveValidLandmarks();
-
-    const MFeatures::MViewFeatures* currentViewFeatures = (validFeatures && validLandmarks) ? _mfeatures->getCurrentViewFeatures(_describerType) : nullptr;
-    const int displayNbLandmarks = (_displayLandmarks && (currentViewFeatures != nullptr)) ? currentViewFeatures->nbLandmarks : 0;
 
     const unsigned int kReprojectionVertices = 2;
 
@@ -741,7 +731,7 @@ namespace qtAliceVision
         {
           geometryLine = new QSGGeometry(
             QSGGeometry::defaultAttributes_ColoredPoint2D(),
-            static_cast<int>(displayNbLandmarks * kReprojectionVertices),
+            static_cast<int>(params.nbLandmarksToDraw * kReprojectionVertices),
             static_cast<int>(0),
             QSGGeometry::UnsignedIntType);
 
@@ -762,7 +752,7 @@ namespace qtAliceVision
         {
           geometryPoint = new QSGGeometry(
             QSGGeometry::defaultAttributes_ColoredPoint2D(),
-            static_cast<int>(displayNbLandmarks),
+            static_cast<int>(params.nbLandmarksToDraw),
             static_cast<int>(0),
             QSGGeometry::UnsignedIntType);
 
@@ -791,23 +781,15 @@ namespace qtAliceVision
 
       geometryLine = rootLine->geometry();
       geometryLine->allocate(
-        static_cast<int>(displayNbLandmarks * kReprojectionVertices),
+        static_cast<int>(params.nbLandmarksToDraw * kReprojectionVertices),
         static_cast<int>(0)
       );
       geometryPoint = rootPoint->geometry();
       geometryPoint->allocate(
-        static_cast<int>(displayNbLandmarks),
+        static_cast<int>(params.nbLandmarksToDraw),
         static_cast<int>(0)
       );
     }
-
-    if (displayNbLandmarks == 0)
-      return;
-
-    const auto& features = currentViewFeatures->features;
-
-    if (features.empty())
-      return; // nothing to do, no features in the current view
 
     geometryLine->setDrawingMode(QSGGeometry::DrawLines);
     geometryLine->setLineWidth(2.0f);
@@ -834,35 +816,97 @@ namespace qtAliceVision
       );
     };
 
+    if (params.nbLandmarksToDraw == 0) // nothing to draw or something is not ready
+      return;
+
+    unsigned int nbLandmarksDrawn = 0;
+
+    const MFeatures::MViewFeatures* currentViewFeatures = _mfeatures->getCurrentViewFeatures(_describerType);
     const QColor reprojectionColor = _landmarkColor.darker(150);
-
+    
     // Draw lines between reprojected points and features extracted
-    int obsI = 0;
-    for (int i = 0; i < features.size(); ++i)
+    for (const auto& feature : currentViewFeatures->features)
     {
-      const auto& f = features.at(i);
-      float x = f->x();
-      float y = f->y();
-      float rx = f->rx();
-      float ry = f->ry();
-
-      bool isReconstructed = f->landmarkId() >= 0;
-      if (isReconstructed)
+      if (feature->landmarkId() >= 0) // isReconstructed
       {
-        unsigned int vidx = obsI * kReprojectionVertices;
+        // feature scale filter
+        if (feature->scale() > params.maxFeatureScale ||
+            feature->scale() < params.minFeatureScale)
+        {
+          continue;
+        }
 
-        setVerticeLine(vidx, QPointF(x, y), reprojectionColor);
-        setVerticeLine(vidx + 1, QPointF(rx, ry), reprojectionColor);
+        if (nbLandmarksDrawn >= params.nbLandmarksToDraw)
+        {
+          qWarning() << "[QtAliceVision] FeaturesViewer: Update paint " << _describerType << " landmarks, Error on number of landmarks.";
+          break;
+        }
 
-        setVerticePoint(obsI, QPointF(rx, ry), _landmarkColor);
-
-        ++obsI;
+        const unsigned int vidx = nbLandmarksDrawn * kReprojectionVertices;
+        setVerticeLine(vidx, QPointF(feature->x(), feature->y()), reprojectionColor);
+        setVerticeLine(vidx + 1, QPointF(feature->rx(), feature->ry()), reprojectionColor);
+        setVerticePoint(nbLandmarksDrawn, QPointF(feature->rx(), feature->ry()), _landmarkColor);
+        ++nbLandmarksDrawn;
       }
     }
   }
 
+  void FeaturesViewer::initializePaintParams(PaintParams& params)
+  {
+    if (_mfeatures == nullptr)
+      return;
+
+    params.haveValidFeatures =_mfeatures->haveValidFeatures();
+
+    if (!params.haveValidFeatures)
+      return;
+
+    params.haveValidTracks = _mfeatures->haveValidTracks();
+    params.haveValidLandmarks = _mfeatures->haveValidLandmarks();
+
+    const float minFeatureScale = _mfeatures->getMinFeatureScale(_describerType);
+    const float difFeatureScale = _mfeatures->getMaxFeatureScale(_describerType) - minFeatureScale;
+    
+    params.minFeatureScale = minFeatureScale + std::max(0.f, std::min(1.f, _featureMinScaleFilter)) * difFeatureScale;
+    params.maxFeatureScale = minFeatureScale + std::max(0.f, std::min(1.f, _featureMaxScaleFilter)) * difFeatureScale;
+
+    const MFeatures::MViewFeatures* currentViewFeatures = _mfeatures->getCurrentViewFeatures(_describerType);
+
+    for (const auto& feature : currentViewFeatures->features)
+    {
+      // feature scale filter
+      if (feature->scale() > params.maxFeatureScale ||
+          feature->scale() < params.minFeatureScale)
+      {
+        continue;
+      }
+
+      if (feature->trackId() >= 0)
+      {
+        if (feature->landmarkId() >= 0)
+          ++params.nbLandmarksToDraw;
+        else
+          ++params.nbMatchesToDraw;
+      }
+
+      ++params.nbFeaturesToDraw;
+    }
+
+    if (!_displayFeatures)
+      params.nbFeaturesToDraw = 0;
+
+    if (!_displayMatches || !params.haveValidTracks || !params.haveValidLandmarks)
+      params.nbMatchesToDraw = 0;
+
+    if (!_displayLandmarks || !params.haveValidLandmarks)
+      params.nbLandmarksToDraw = 0;
+  }
+
   QSGNode* FeaturesViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePaintNodeData* data)
   {
+    PaintParams params;
+    initializePaintParams(params);
+
     // Implementation remarks
     // Only one QSGGeometryNode containing all geometry needed to draw all features
     // is created. This is ATM the only solution that scales well and provides
@@ -879,10 +923,10 @@ namespace qtAliceVision
       node = oldNode;
     }
 
-    updatePaintFeatures(oldNode, node);
-    updatePaintTracks(oldNode, node);
-    updatePaintMatches(oldNode, node);
-    updatePaintLandmarks(oldNode, node);
+    updatePaintFeatures(params, oldNode, node);
+    updatePaintTracks(params, oldNode, node);
+    updatePaintMatches(params, oldNode, node);
+    updatePaintLandmarks(params, oldNode, node);
 
     return node;
   }

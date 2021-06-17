@@ -29,16 +29,16 @@ namespace qtAliceVision {
       Q_PROPERTY(FeatureDisplayMode featureDisplayMode MEMBER _featureDisplayMode NOTIFY featureDisplayModeChanged)
       // Track display mode (see TrackDisplayMode enum)
       Q_PROPERTY(TrackDisplayMode trackDisplayMode MEMBER _trackDisplayMode NOTIFY trackDisplayModeChanged)
+      // Minimum feature scale to display
+      Q_PROPERTY(float featureMinScaleFilter MEMBER _featureMinScaleFilter NOTIFY featureMinScaleFilterChanged)
+      // Minimum feature scale to display
+      Q_PROPERTY(float featureMaxScaleFilter MEMBER _featureMaxScaleFilter NOTIFY featureMaxScaleFilterChanged)
       // Display 3d tracks
       Q_PROPERTY(bool display3dTracks MEMBER _display3dTracks NOTIFY display3dTracksChanged)
       // Display only contiguous tracks
       Q_PROPERTY(bool trackContiguousFilter MEMBER _trackContiguousFilter NOTIFY trackContiguousFilterChanged)
       // Display only tracks with at least one inlier
       Q_PROPERTY(bool trackInliersFilter MEMBER _trackInliersFilter NOTIFY trackInliersFilterChanged)
-      // Minimum track feature scale to display
-      Q_PROPERTY(float trackMinFeatureScaleFilter MEMBER _trackMinFeatureScaleFilter NOTIFY trackMinFeatureScaleFilterChanged)
-      // Minimum track feature scale to display
-      Q_PROPERTY(float trackMaxFeatureScaleFilter MEMBER _trackMaxFeatureScaleFilter NOTIFY trackMaxFeatureScaleFilterChanged)
       // Features color
       Q_PROPERTY(QColor featureColor MEMBER _featureColor NOTIFY featureColorChanged)
       // Matches color
@@ -71,6 +71,20 @@ namespace qtAliceVision {
     };
     Q_ENUM(TrackDisplayMode)
 
+    struct PaintParams {
+
+      bool haveValidFeatures = false;
+      bool haveValidTracks = false;
+      bool haveValidLandmarks = false;
+
+      float minFeatureScale = std::numeric_limits<float>::min();
+      float maxFeatureScale = std::numeric_limits<float>::max();
+
+      std::size_t nbFeaturesToDraw = 0;
+      std::size_t nbMatchesToDraw = 0;
+      std::size_t nbLandmarksToDraw = 0;
+    };
+
     /// Signals
 
     Q_SIGNAL void displayFeaturesChanged();
@@ -81,12 +95,12 @@ namespace qtAliceVision {
     Q_SIGNAL void featureDisplayModeChanged();
     Q_SIGNAL void trackDisplayModeChanged();
 
+    Q_SIGNAL void featureMinScaleFilterChanged();
+    Q_SIGNAL void featureMaxScaleFilterChanged();
+
     Q_SIGNAL void display3dTracksChanged();
     Q_SIGNAL void trackContiguousFilterChanged();
     Q_SIGNAL void trackInliersFilterChanged();
-
-    Q_SIGNAL void trackMinFeatureScaleFilterChanged();
-    Q_SIGNAL void trackMaxFeatureScaleFilterChanged();
 
     Q_SIGNAL void featureColorChanged();
     Q_SIGNAL void matchColorChanged();
@@ -108,10 +122,12 @@ namespace qtAliceVision {
     QSGNode* updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePaintNodeData* data) override;
 
   private:
-    void updatePaintFeatures(QSGNode* oldNode, QSGNode* node);
-    void updatePaintTracks(QSGNode* oldNode, QSGNode* node);
-    void updatePaintMatches(QSGNode* oldNode, QSGNode* node);
-    void updatePaintLandmarks(QSGNode* oldNode, QSGNode* node);
+    void updatePaintFeatures(const PaintParams& params, QSGNode* oldNode, QSGNode* node);
+    void updatePaintTracks(const PaintParams& params, QSGNode* oldNode, QSGNode* node);
+    void updatePaintMatches(const PaintParams& params, QSGNode* oldNode, QSGNode* node);
+    void updatePaintLandmarks(const PaintParams& params, QSGNode* oldNode, QSGNode* node);
+
+    void initializePaintParams(PaintParams& params);
 
     bool _displayFeatures = true;
     bool _displayTracks = true;
@@ -120,13 +136,13 @@ namespace qtAliceVision {
 
     FeatureDisplayMode _featureDisplayMode = FeaturesViewer::Points;
     TrackDisplayMode _trackDisplayMode = FeaturesViewer::WithCurrentMatches;
+
+    float _featureMinScaleFilter = 0.f;
+    float _featureMaxScaleFilter = 1.f;
     
     bool _display3dTracks = false;
     bool _trackContiguousFilter = true;
     bool _trackInliersFilter = false;
-
-    float _trackMinFeatureScaleFilter = 0.f;
-    float _trackMaxFeatureScaleFilter = 1.f;
 
     QColor _featureColor = QColor(20, 220, 80);
     QColor _matchColor = QColor(255, 127, 0);

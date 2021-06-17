@@ -70,6 +70,8 @@ public:
       QList<MFeature*> features;
 
       aliceVision::IndexT frameId = aliceVision::UndefinedIndexT;
+      float maxFeatureScale = std::numeric_limits<float>::min();
+      float minFeatureScale = std::numeric_limits<float>::max();
       int nbLandmarks = 0; // number of features of the view associated to a 3D landmark
       int nbTracks = 0;    // number of tracks unvalidated after resection
     };
@@ -81,8 +83,8 @@ public:
 
       aliceVision::IndexT minFrameId = std::numeric_limits<aliceVision::IndexT>::max();
       aliceVision::IndexT maxFrameId = std::numeric_limits<aliceVision::IndexT>::min();
-      int nbLandmarks = 0;           // number of features of the track associated to a 3D landmark 
-      float featureScaleScore = 0.f; // score based on sum of feature scale
+      int nbLandmarks = 0;             // number of features of the track associated to a 3D landmark 
+      float featureScaleAverage = 0.f; // average feature scale
     };
     using MTrackFeaturesPerTrack = std::map<aliceVision::IndexT, MTrackFeatures>;
     using MTrackFeaturesPerTrackPerDesc = std::map<QString, MTrackFeaturesPerTrack>;
@@ -158,14 +160,28 @@ public:
     aliceVision::IndexT getCurrentFrameId() const;
 
     /**
-    * @brief Get current view feature info for a giver decriber type
+    * @brief Get the minimum feature scale for a given decriber type
+    * @param[in] describerType The given describer type
+    * @return minimum feature scale (or std::numeric_limits<float>::min())
+    */
+    float getMinFeatureScale(const QString& describerType) const;
+
+    /**
+    * @brief Get the maximum feature scale for a given decriber type
+    * @param[in] describerType The given describer type
+    * @return maximum feature scale (or std::numeric_limits<float>::max())
+    */
+    float getMaxFeatureScale(const QString& describerType) const;
+
+    /**
+    * @brief Get current view feature info for a given decriber type
     * @param[in] describerType The given describer type
     * @return MViewFeatures pointer (or nullptr)
     */
     const MViewFeatures* getCurrentViewFeatures(const QString& describerType) const;
 
     /**
-     * @brief Build / Organize feature info per track for a giver decriber type
+     * @brief Build / Organize feature info per track for a given decriber type
      * @param[in] describerType The given describer type
      * @return MTrackFeaturesPerTrack pointer (or nullptr)
      */
@@ -227,6 +243,11 @@ private:
     bool updateFromSfM();
 
     /**
+    * @brief Update min / max feature scale per describer
+    */
+    void updateMinMaxFeatureScale();
+
+    /**
     * @brief Update / Compute per track information:
     *        - Build Per track feature access structure _trackFeaturesPerTrackPerDesc
     *        - Compute per track feature scale score
@@ -257,6 +278,9 @@ private:
     int _timeWindow = 1;            // size of the time window (from current frame - time window to current frame + time window), 0 is disable, -1 is no limit
 
     // internal data
+    std::map<QString, float> _minFeatureScalePerDesc;
+    std::map<QString, float> _maxFeatureScalePerDesc;
+
     MViewFeaturesPerViewPerDesc _viewFeaturesPerViewPerDesc;
     MTrackFeaturesPerTrackPerDesc _trackFeaturesPerTrackPerDesc;
     QVariantMap _featuresInfo;

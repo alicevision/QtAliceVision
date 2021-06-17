@@ -77,11 +77,15 @@ void FeaturesIORunnable::run()
       {
         qDebug() << "[QtAliceVision] Features: Load " << descTypes.at(dIdx).toString() << " from viewId: " << viewIds.at(vIdx) << ".";
 
-        MFeatures::MViewFeatures& featuresPerView = (*viewFeaturesPerViewPerDescPtr)[descTypes.at(dIdx).toString()][viewIds.at(vIdx)];
-        featuresPerView.features.reserve(static_cast<int>(regionsPerView.at(vIdx)->RegionCount()));
+        MFeatures::MViewFeatures& viewFeatures = (*viewFeaturesPerViewPerDescPtr)[descTypes.at(dIdx).toString()][viewIds.at(vIdx)];
+        viewFeatures.features.reserve(static_cast<int>(regionsPerView.at(vIdx)->RegionCount()));
 
         for (const auto& f : regionsPerView.at(vIdx)->Features())
-          featuresPerView.features.append(new MFeature(f));
+        {
+          viewFeatures.features.append(new MFeature(f));
+          viewFeatures.maxFeatureScale = std::max(viewFeatures.maxFeatureScale, f.scale());
+          viewFeatures.minFeatureScale = std::min(viewFeatures.minFeatureScale, f.scale());
+        }
       }
     }
 
@@ -235,6 +239,10 @@ void MFeatures::onFeaturesReady(MViewFeaturesPerViewPerDesc* viewFeaturesPerView
 
   const bool featuresChanged = newFeaturesLoaded || tracksUpdated || sfmUpdated;
 
+  // update min/max feature scale
+  if (featuresChanged || _minFeatureScalePerDesc.empty() || _maxFeatureScalePerDesc.empty())
+    updateMinMaxFeatureScale();
+
   // update per track information
   if (featuresChanged || _trackFeaturesPerTrackPerDesc.empty())
     updatePerTrackInformation();
@@ -272,6 +280,22 @@ aliceVision::IndexT MFeatures::getCurrentFrameId() const
   }
 
   return currentFrameId;
+}
+
+float MFeatures::getMinFeatureScale(const QString& describerType) const
+{
+  const auto it = _minFeatureScalePerDesc.find(describerType);
+  if (it == _minFeatureScalePerDesc.end())
+    return std::numeric_limits<float>::min();
+  return it->second;
+}
+
+float MFeatures::getMaxFeatureScale(const QString& describerType) const
+{
+  const auto it = _maxFeatureScalePerDesc.find(describerType);
+  if (it == _maxFeatureScalePerDesc.end())
+    return std::numeric_limits<float>::max();
+  return it->second;
 }
 
 const MFeatures::MViewFeatures* MFeatures::getCurrentViewFeatures(const QString& describerType) const
@@ -411,8 +435,10 @@ void MFeatures::getViewIdsToLoad(std::vector<aliceVision::IndexT>& viewIdsToLoad
       }
     }
 
-    // trackFeaturesPerTrackPerDesc need to be recomputed (MViewFeatures have been removed)
+    // some internal data need to be recomputed (MViewFeatures have been removed)
     _trackFeaturesPerTrackPerDesc.clear();
+    _minFeatureScalePerDesc.clear();
+    _maxFeatureScalePerDesc.clear();
   }
 
   // Remove view ids kept from view ids to load
@@ -611,6 +637,30 @@ bool MFeatures::updateFromSfM()
   return updated;
 }
 
+void  MFeatures::updateMinMaxFeatureScale()
+{
+  qDebug("[QtAliceVision] Features: Update min/max feature scale.");
+
+  _minFeatureScalePerDesc.clear();
+  _maxFeatureScalePerDesc.clear();
+
+  for (auto& viewFeaturesPerViewPerDescPair : _viewFeaturesPerViewPerDesc)
+  {
+    const QString& describerType = viewFeaturesPerViewPerDescPair.first;
+
+    auto& minFeatureScale = _minFeatureScalePerDesc[describerType];
+    auto& maxFeatureScale = _maxFeatureScalePerDesc[describerType];
+    minFeatureScale = std::numeric_limits<float>::max();
+    maxFeatureScale = std::numeric_limits<float>::min();
+
+    for (auto& viewFeaturesPerViewPair : viewFeaturesPerViewPerDescPair.second)
+    {
+      minFeatureScale = std::min(minFeatureScale, viewFeaturesPerViewPair.second.minFeatureScale);
+      maxFeatureScale = std::max(maxFeatureScale, viewFeaturesPerViewPair.second.maxFeatureScale);
+    }
+  }
+}
+
 void MFeatures::updatePerTrackInformation()
 {
   if (!haveValidTracks() || !haveValidLandmarks())
@@ -626,10 +676,6 @@ void MFeatures::updatePerTrackInformation()
   // these structures are needed because landmarkId is not the same as trackId outside pipeline SfM computation
   std::map<aliceVision::IndexT, aliceVision::IndexT> trackIdPerLandmark;
   std::map <QString, std::map<aliceVision::IndexT, aliceVision::IndexT>> viewIdPerFramePerDesc;
-
-  // min & max feature scale for feature scale score computation
-  float maxFeatureScale = std::numeric_limits<float>::min();
-  float minFeatureScale = std::numeric_limits<float>::max();
 
   // build _trackFeaturesPerTrackPerDesc and temporary structures
   for (auto& viewFeaturesPerViewPerDescPair : _viewFeaturesPerViewPerDesc)
@@ -662,11 +708,10 @@ void MFeatures::updatePerTrackInformation()
             if (trackIdPerLandmark.find(feature->landmarkId()) == trackIdPerLandmark.end())
               trackIdPerLandmark[feature->landmarkId()] = feature->trackId();
           }
-          maxFeatureScale = std::max(maxFeatureScale, feature->scale());
-          minFeatureScale = std::min(minFeatureScale, feature->scale());
+
           trackFreatures.maxFrameId = std::max(trackFreatures.maxFrameId, frameId);
           trackFreatures.minFrameId = std::min(trackFreatures.minFrameId, frameId);
-          trackFreatures.featureScaleScore += feature->scale(); // initialize score with feature scale sum
+          trackFreatures.featureScaleAverage += feature->scale(); // initialize score with feature scale sum
         }
       }
     }
@@ -676,7 +721,7 @@ void MFeatures::updatePerTrackInformation()
   if (_trackFeaturesPerTrackPerDesc.empty())
     return;
 
-  // compute score based on feature scale
+  // compute average feature scale 
   for (auto& trackFeaturesPerTrackPerDescPair : _trackFeaturesPerTrackPerDesc)
   {
     for (auto& trackFeaturesPerTrackPair : trackFeaturesPerTrackPerDescPair.second)
@@ -684,10 +729,7 @@ void MFeatures::updatePerTrackInformation()
       MTrackFeatures& trackFreatures = trackFeaturesPerTrackPair.second;
 
       if (!trackFreatures.featuresPerFrame.empty())
-      {
-        trackFreatures.featureScaleScore /= trackFreatures.featuresPerFrame.size(); // compute average feature scale
-        trackFreatures.featureScaleScore = (trackFreatures.featureScaleScore - minFeatureScale) / (maxFeatureScale - minFeatureScale); // bound to minFeatureScale / maxFeatureScale
-      }
+        trackFreatures.featureScaleAverage /= trackFreatures.featuresPerFrame.size();
     }
   }
 
