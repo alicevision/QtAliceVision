@@ -1,11 +1,11 @@
 # Target srcs
 set(PLUGIN_SOURCES
-    imageIOHandler.cpp
+    QtAliceVisionImageIOHandler.cpp
     plugin.cpp
     )
 
 set(PLUGIN_HEADERS
-    imageIOHandler.hpp
+    QtAliceVisionImageIOHandler.hpp
     plugin.hpp
     )
 
