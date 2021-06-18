@@ -13,7 +13,7 @@ namespace oiio = OIIO;
 
 QtAliceVisionImageIOHandlerPlugin::QtAliceVisionImageIOHandlerPlugin()
 {
-    qDebug() << "[QtOIIO] init supported extensions.";
+    qDebug() << "[QtAliceVisionImageIOHandler] initialize supported extensions.";
 
     std::string extensionsListStr;
     oiio::getattribute("extension_list", extensionsListStr);
@@ -23,19 +23,19 @@ QtAliceVisionImageIOHandlerPlugin::QtAliceVisionImageIOHandlerPlugin()
     QStringList formats = extensionsListQStr.split(';');
     for(auto& format: formats)
     {
-        qDebug() << "[QtOIIO] format: " << format << ".";
+        qDebug() << "[QtAliceVisionImageIOHandler] format: " << format << ".";
         QStringList keyValues = format.split(":");
         if(keyValues.size() != 2)
         {
-            qDebug() << "[QtOIIO] warning: split OIIO keys: " << keyValues.size() << " for " << format << ".";
+            qDebug() << "[QtAliceVisionImageIOHandler] warning: split OIIO keys: " << keyValues.size() << " for " << format << ".";
         }
         else
         {
             _supportedExtensions += keyValues[1].split(",");
         }
     }
-    qDebug() << "[QtOIIO] supported extensions: " << _supportedExtensions.join(", ");
-    qInfo() << "[QtOIIO] Plugin Initialized";
+    qDebug() << "[QtAliceVisionImageIOHandler] supported extensions: " << _supportedExtensions.join(", ");
+    qInfo() << "[QtAliceVisionImageIOHandler] Plugin Initialized";
 }
 
 QtAliceVisionImageIOHandlerPlugin::~QtAliceVisionImageIOHandlerPlugin()
@@ -52,7 +52,7 @@ QImageIOPlugin::Capabilities QtAliceVisionImageIOHandlerPlugin::capabilities(QIO
     if(path.empty() || path[0] == ':')
         return QImageIOPlugin::Capabilities();
 
-#ifdef QTOIIO_USE_FORMATS_BLACKLIST
+#ifdef QTALICEVISION_IMAGEIO_HANDLER_USE_FORMATS_BLACKLIST 
     // For performance sake, let Qt handle natively some formats.
     static const QStringList blacklist{"jpeg", "jpg", "png", "ico"};
     if(blacklist.contains(format, Qt::CaseSensitivity::CaseInsensitive))
@@ -62,7 +62,7 @@ QImageIOPlugin::Capabilities QtAliceVisionImageIOHandlerPlugin::capabilities(QIO
 #endif
     if (_supportedExtensions.contains(format, Qt::CaseSensitivity::CaseInsensitive))
     {
-        qDebug() << "[QtOIIO] Capabilities: extension \"" << QString(format) << "\" supported.";
+        qDebug() << "[QtAliceVisionImageIOHandler] Capabilities: extension \"" << QString(format) << "\" supported.";
 //        oiio::ImageOutput *out = oiio::ImageOutput::create(path); // TODO: when writting will be implemented
         Capabilities capabilities(CanRead);
 //        if(out)
@@ -70,7 +70,7 @@ QImageIOPlugin::Capabilities QtAliceVisionImageIOHandlerPlugin::capabilities(QIO
 //        oiio::ImageOutput::destroy(out);
         return capabilities;
     }
-    qDebug() << "[QtOIIO] Capabilities: extension \"" << QString(format) << "\" not supported";
+    qDebug() << "[QtAliceVisionImageIOHandler] Capabilities: extension \"" << QString(format) << "\" not supported";
     return QImageIOPlugin::Capabilities();
 }
 

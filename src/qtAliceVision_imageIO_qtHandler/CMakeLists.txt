@@ -15,7 +15,7 @@ find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Gui REQUIRED)
 
 # comment to handle all possible file formats
 # by default: jpeg, png and ico are handled by Qt (for performance reasons)
-add_definitions(-DQTOIIO_USE_FORMATS_BLACKLIST)
+add_definitions(-DQTALICEVISION_IMAGEIO_HANDLER_USE_FORMATS_BLACKLIST)
 
 # OpenImageIO dependency
 find_package(OpenImageIO REQUIRED)

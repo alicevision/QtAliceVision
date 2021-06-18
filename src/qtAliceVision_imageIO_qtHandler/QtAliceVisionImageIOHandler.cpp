@@ -30,7 +30,7 @@ inline unsigned short floatToUShort(float v)
 
 QtAliceVisionImageIOHandler::QtAliceVisionImageIOHandler()
 {
-    qDebug() << "[QtOIIO] QtAliceVisionImageIOHandler";
+    qDebug() << "[QtAliceVisionImageIOHandler] QtAliceVisionImageIOHandler";
 }
 
 QtAliceVisionImageIOHandler::~QtAliceVisionImageIOHandler()
@@ -52,10 +52,10 @@ bool QtAliceVisionImageIOHandler::canRead(QIODevice *device)
     QFileDevice* d = dynamic_cast<QFileDevice*>(device);
     if(d)
     {
-        // qDebug() << "[QtOIIO] Can read file: " << d->fileName().toStdString();
+        // qDebug() << "[QtAliceVisionImageIOHandler] Can read file: " << d->fileName().toStdString();
         return true;
     }
-    // qDebug() << "[QtOIIO] Cannot read.";
+    // qDebug() << "[QtAliceVisionImageIOHandler] Cannot read.";
     return false;
 }
 
@@ -63,16 +63,16 @@ bool QtAliceVisionImageIOHandler::read(QImage *image)
 {
     bool convertGrayscaleToJetColorMap = true; // how to expose it as an option?
 
-    // qDebug() << "[QtOIIO] Read Image";
+    // qDebug() << "[QtAliceVisionImageIOHandler] Read Image";
     QFileDevice* d = dynamic_cast<QFileDevice*>(device());
     if(!d)
     {
-        qWarning() << "[QtOIIO] Read image failed (not a FileDevice).";
+        qWarning() << "[QtAliceVisionImageIOHandler] Read image failed (not a FileDevice).";
         return false;
     }
     const std::string path = d->fileName().toStdString();
 
-    qInfo() << "[QtOIIO] Read image: " << path.c_str();
+    qInfo() << "[QtAliceVisionImageIOHandler] Read image: " << path.c_str();
     // check requested channels number
     // assert(nchannels == 1 || nchannels >= 3);
 
@@ -113,7 +113,7 @@ bool QtAliceVisionImageIOHandler::read(QImage *image)
     const oiio::ImageSpec& inSpec = inBuf.spec();
 #endif
 
-    qInfo() << "[QtOIIO] width:" << inSpec.width << ", height:" << inSpec.height << ", nchannels:" << inSpec.nchannels << ", format:" << inSpec.format.c_str();
+    qInfo() << "[QtAliceVisionImageIOHandler] width:" << inSpec.width << ", height:" << inSpec.height << ", nchannels:" << inSpec.nchannels << ", format:" << inSpec.format.c_str();
 
     if(inSpec.nchannels >= 3)
     {
@@ -164,7 +164,7 @@ bool QtAliceVisionImageIOHandler::read(QImage *image)
     }
     else
     {
-        qWarning() << "[QtOIIO] failed to load \"" << path.c_str() << "\", nchannels=" << inSpec.nchannels;
+        qWarning() << "[QtAliceVisionImageIOHandler] failed to load \"" << path.c_str() << "\", nchannels=" << inSpec.nchannels;
         return false;
     }
 
@@ -181,15 +181,15 @@ bool QtAliceVisionImageIOHandler::read(QImage *image)
             default:
                 formatStr = std::string("Unknown QImage Format:") + std::to_string(int(format));
         }
-        qDebug() << "[QtOIIO] QImage Format: " << formatStr.c_str();
+        qDebug() << "[QtAliceVisionImageIOHandler] QImage Format: " << formatStr.c_str();
     }
 
-    qDebug() << "[QtOIIO] nchannels:" << nchannels;
+    qDebug() << "[QtAliceVisionImageIOHandler] nchannels:" << nchannels;
 
     // check picture channels number
     if(inSpec.nchannels < 3 && inSpec.nchannels != 1)
     {
-        qWarning() << "[QtOIIO] Cannot load channels of image file '" << path.c_str() << "' (nchannels=" << inSpec.nchannels << ").";
+        qWarning() << "[QtAliceVisionImageIOHandler] Cannot load channels of image file '" << path.c_str() << "' (nchannels=" << inSpec.nchannels << ").";
         return false;
     }
 
@@ -225,7 +225,7 @@ bool QtAliceVisionImageIOHandler::read(QImage *image)
 //        inBuf.swap(requestedBuf);
 //    }
 
-    // qDebug() << "[QtOIIO] create output QImage";
+    // qDebug() << "[QtAliceVisionImageIOHandler] create output QImage";
     QImage result(inSpec.width, inSpec.height, format);
 
     // if the input is grayscale, we have the option to convert it with a color map
@@ -244,7 +244,7 @@ bool QtAliceVisionImageIOHandler::read(QImage *image)
 
         if(colorMapEnv)
         {
-            qDebug() << "[QtOIIO] compute colormap \"" << colorMapType.c_str() << "\"";
+            qDebug() << "[QtAliceVisionImageIOHandler] compute colormap \"" << colorMapType.c_str() << "\"";
             oiio::ImageBufAlgo::color_map(tmpBuf, inBuf, 0, colorMapType);
         }
         else if(isDepthMap || isNmodMap)
@@ -284,7 +284,7 @@ bool QtAliceVisionImageIOHandler::read(QImage *image)
                 }
             }
         }
-        // qDebug() << "[QtOIIO] compute colormap done";
+        // qDebug() << "[QtAliceVisionImageIOHandler] compute colormap done";
         inBuf.swap(tmpBuf);
 
         {
@@ -292,7 +292,7 @@ bool QtAliceVisionImageIOHandler::read(QImage *image)
             exportROI.chbegin = 0;
             exportROI.chend = nchannels;
 
-            // qDebug() << "[QtOIIO] fill output QImage";
+            // qDebug() << "[QtAliceVisionImageIOHandler] fill output QImage";
             inBuf.get_pixels(exportROI, typeDesc, result.bits());
         }
     }
@@ -304,7 +304,7 @@ bool QtAliceVisionImageIOHandler::read(QImage *image)
 
         if(moreThan8Bits) // same than: format == QImage::Format_RGBA64 || format == QImage::Format_RGBX64
         {
-            qDebug() << "[QtOIIO] Convert '" << inSpec.format.c_str() << "'' OIIO image to 'uint16' Qt image.";
+            qDebug() << "[QtAliceVisionImageIOHandler] Convert '" << inSpec.format.c_str() << "'' OIIO image to 'uint16' Qt image.";
 #pragma omp parallel for
             for(int y = 0; y < inSpec.height; ++y)
             {
@@ -323,7 +323,7 @@ bool QtAliceVisionImageIOHandler::read(QImage *image)
         {
             oiio::ImageSpec requestedSpec(inSpec.width, inSpec.height, nchannels, typeDesc);
             oiio::ImageBuf tmpBuf(requestedSpec);
-            // qDebug() << "[QtOIIO] shuffle channels";
+            // qDebug() << "[QtAliceVisionImageIOHandler] shuffle channels";
 
             std::vector<int> channelOrder = {0, 1, 2, 3};
             float channelValues[] = {1.f, 1.f, 1.f, 1.f};
@@ -343,23 +343,23 @@ bool QtAliceVisionImageIOHandler::read(QImage *image)
             // qWarning() << "channelOrder: " << channelOrder[0] << ", " << channelOrder[1] << ", " << channelOrder[2] << ", " << channelOrder[3];
             oiio::ImageBufAlgo::channels(tmpBuf, inBuf, 4, &channelOrder.front(), channelValues, {}, false);
             inBuf.swap(tmpBuf);
-            // qDebug() << "[QtOIIO] shuffle channels done";
+            // qDebug() << "[QtAliceVisionImageIOHandler] shuffle channels done";
 
             {
                 oiio::ROI exportROI = inBuf.roi();
                 exportROI.chbegin = 0;
                 exportROI.chend = nchannels;
 
-                // qDebug() << "[QtOIIO] fill output QImage";
+                // qDebug() << "[QtAliceVisionImageIOHandler] fill output QImage";
                 inBuf.get_pixels(exportROI, typeDesc, result.bits());
             }
         }
     }
 
-    // qDebug() << "[QtOIIO] Image loaded: \"" << path << "\"";
+    // qDebug() << "[QtAliceVisionImageIOHandler] Image loaded: \"" << path << "\"";
     if (_scaledSize.isValid())
     {
-        qDebug() << "[QTOIIO] _scaledSize: " << _scaledSize.width() << "x" << _scaledSize.height();
+        qDebug() << "[QtAliceVisionImageIOHandler] _scaledSize: " << _scaledSize.width() << "x" << _scaledSize.height();
         *image = result.scaled(_scaledSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
     }
     else
@@ -393,7 +393,7 @@ QVariant QtAliceVisionImageIOHandler::option(ImageOption option) const
         QFileDevice* d = dynamic_cast<QFileDevice*>(device);
         if(!d)
         {
-            qDebug() << "[QtOIIO] Read image failed (not a FileDevice).";
+            qDebug() << "[QtAliceVisionImageIOHandler] Read image failed (not a FileDevice).";
             return std::unique_ptr<oiio::ImageInput>(nullptr);
         }
         std::string path = d->fileName().toStdString();
@@ -438,7 +438,7 @@ void QtAliceVisionImageIOHandler::setOption(ImageOption option, const QVariant &
     if (option == ScaledSize && value.isValid())
     {
         _scaledSize = value.value<QSize>();
-        qDebug() << "[QTOIIO] setOption scaledSize: " << _scaledSize.width() << "x" << _scaledSize.height();
+        qDebug() << "[QtAliceVisionImageIOHandler] setOption scaledSize: " << _scaledSize.width() << "x" << _scaledSize.height();
     }
 }
 
