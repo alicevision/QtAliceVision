@@ -1,5 +1,5 @@
 #include "plugin.hpp"
-#include "imageIOHandler.hpp"
+#include "QtAliceVisionImageIOHandler.hpp"
 
 #include <QImageIOHandler>
 #include <QFileDevice>
