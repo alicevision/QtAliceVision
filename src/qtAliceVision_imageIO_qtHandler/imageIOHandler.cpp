@@ -1,4 +1,4 @@
-#include "QtOIIOHandler.hpp"
+#include "imageIOHandler.hpp"
 
 #include "../jetColorMap.hpp"
 

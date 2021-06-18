@@ -1,5 +1,5 @@
-#include "QtOIIOPlugin.hpp"
-#include "QtOIIOHandler.hpp"
+#include "plugin.hpp"
+#include "imageIOHandler.hpp"
 
 #include <QImageIOHandler>
 #include <QFileDevice>
