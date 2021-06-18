@@ -99,11 +99,13 @@ public:
     {
         if (level == _downscaleLevel) return;
 
+        qWarning() << "UPDATE DOWNSCALE" << level << _downscaleLevel;
+
         // Level [0;3]
-        if (level < 0 && level > 3) level = 2;
+        if (level < 0 && level > 6) level = 4;
         _downscaleLevel = level;
         reload();
-        Q_EMIT downscaleLevelChanged();
+        //Q_EMIT downscaleLevelChanged();
     }
 
     enum class EChannelMode : quint8 { RGBA, RGB, R, G, B, A };

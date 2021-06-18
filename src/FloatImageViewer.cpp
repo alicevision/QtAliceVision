@@ -49,6 +49,7 @@ void FloatImageIORunnable::run()
         }
 
         // ensure it fits in RAM memory
+        qWarning() << "Load FIV " << _downscaleLevel;
         for (size_t i = 0; i < _downscaleLevel; i++)
         {
             FloatImage tmp;
