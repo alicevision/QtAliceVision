@@ -35,7 +35,7 @@ add_definitions(-DQT_NO_DEBUG)
 add_definitions(-DQT_NO_KEYWORDS)
 add_definitions(-DQT_NO_DEBUG_OUTPUT) # comment to get qDebug outputs
 
-add_subdirectory(src/imageIOHandler)
+add_subdirectory(src/qtAliceVision_imageIO_qtHandler)
 add_subdirectory(src/qmlAlembic)
 add_subdirectory(src)
 
@@ -44,6 +44,5 @@ add_subdirectory(src)
 # is not part of the distribution anymore.
 # Source: https://www.kdab.com/qt-3d-changes-in-qt-6/
 if(Qt5_FOUND)
-    add_subdirectory(src/depthMapEntity)
+    add_subdirectory(src/qtAliceVision_imageIO)
 endif()
-# add_subdirectory(src/depthMapEntity)
