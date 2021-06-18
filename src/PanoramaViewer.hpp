@@ -72,7 +72,7 @@ namespace qtAliceVision
 
         QVariantMap _imagesData;
 
-        int _downscale = 0;
+        int _downscale = 4;
     };
 
 }  // ns qtAliceVision

@@ -74,10 +74,14 @@ void PanoramaViewer::computeInputImages()
         totalSizeImages += int(((view.second->getWidth() * view.second->getHeight()) * 4) / std::pow(10, 6));
     }
 
+    // Downscale == 4 by default
+    _downscale = 4;
+    for (size_t i = 0; i < _downscale; i++) 
+        totalSizeImages *= 0.5;
+
     // ensure it fits in RAM memory
     aliceVision::system::MemoryInfo memInfo = aliceVision::system::getMemoryInfo();
     const int freeRam = int(memInfo.freeRam / std::pow(2, 20));
-    _downscale = 0;
     while (totalSizeImages > freeRam * 0.5)
     {
         _downscale++;

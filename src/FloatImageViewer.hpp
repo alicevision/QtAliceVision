@@ -162,7 +162,7 @@ private:
     // Prevent to update surface without the root created
     bool _createRoot = true;
     // Level of downscale for images of a Panorama
-    int _downscaleLevel = 0;
+    int _downscaleLevel = 4;
 };
 
 }
