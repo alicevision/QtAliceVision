@@ -12,7 +12,7 @@ class QtOIIOPlugin : public QImageIOPlugin
 {
 public:
     Q_OBJECT
-    Q_PLUGIN_METADATA(IID "org.qt-project.Qt.QImageIOHandlerFactoryInterface" FILE "QtOIIOPlugin.json")
+    Q_PLUGIN_METADATA(IID "org.qt-project.Qt.QImageIOHandlerFactoryInterface" FILE "pluginMetadata.json")
 
 public:
     QStringList _supportedExtensions;
