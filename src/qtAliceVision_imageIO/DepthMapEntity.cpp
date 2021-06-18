@@ -25,8 +25,8 @@
 namespace oiio = OIIO;
 
 
-namespace depthMapEntity {
-
+namespace qtAliceVision 
+{
 
 struct Vec3f
 {
@@ -479,4 +479,4 @@ void DepthMapEntity::loadDepthMap()
     qDebug() << "DepthMapEntity: Mesh Renderer added.";
 }
 
-} // namespace
+} // namespace qtAliceVision

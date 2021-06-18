@@ -5,12 +5,13 @@
 #include <QtQml/QtQml>
 #include <QtQml/QQmlExtensionPlugin>
 
-namespace depthMapEntity {
+namespace qtAliceVision 
+{
 
-class DepthMapEntityQmlPlugin : public QQmlExtensionPlugin
+class QtAliceVisionImageIOPlugin : public QQmlExtensionPlugin
 {
     Q_OBJECT
-    Q_PLUGIN_METADATA(IID "depthMapEntity.qmlPlugin")
+    Q_PLUGIN_METADATA(IID "qtAliceVisionImageIO.qmlPlugin")
 
 public:
     void initializeEngine(QQmlEngine* engine, const char* uri) override {}
@@ -21,4 +22,4 @@ public:
     }
 };
 
-}
+} // namespace qtAliceVision
