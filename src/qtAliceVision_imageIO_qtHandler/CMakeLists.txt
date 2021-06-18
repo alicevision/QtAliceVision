@@ -1,12 +1,12 @@
 # Target srcs
 set(PLUGIN_SOURCES
-    QtOIIOHandler.cpp
-    QtOIIOPlugin.cpp
+    imageIOHandler.cpp
+    plugin.cpp
     )
 
 set(PLUGIN_HEADERS
-    QtOIIOHandler.hpp
-    QtOIIOPlugin.hpp
+    imageIOHandler.hpp
+    plugin.hpp
     )
 
 # Qt module dependencies
