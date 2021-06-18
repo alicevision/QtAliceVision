@@ -6,9 +6,9 @@
 #include <iostream>
 
 // QImageIOHandlerFactoryInterface_iid
-
 // QT_DECL_EXPORT
-class QtOIIOPlugin : public QImageIOPlugin
+
+class QtAliceVisionImageIOHandlerPlugin : public QImageIOPlugin
 {
 public:
     Q_OBJECT
@@ -18,8 +18,8 @@ public:
     QStringList _supportedExtensions;
 
 public:
-    QtOIIOPlugin();
-    ~QtOIIOPlugin();
+    QtAliceVisionImageIOHandlerPlugin();
+    ~QtAliceVisionImageIOHandlerPlugin();
 
     Capabilities capabilities(QIODevice *device, const QByteArray &format) const;
     QImageIOHandler *create(QIODevice *device, const QByteArray &format = QByteArray()) const;

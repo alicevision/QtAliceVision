@@ -11,7 +11,7 @@
 
 namespace oiio = OIIO;
 
-QtOIIOPlugin::QtOIIOPlugin()
+QtAliceVisionImageIOHandlerPlugin::QtAliceVisionImageIOHandlerPlugin()
 {
     qDebug() << "[QtOIIO] init supported extensions.";
 
@@ -38,11 +38,11 @@ QtOIIOPlugin::QtOIIOPlugin()
     qInfo() << "[QtOIIO] Plugin Initialized";
 }
 
-QtOIIOPlugin::~QtOIIOPlugin()
+QtAliceVisionImageIOHandlerPlugin::~QtAliceVisionImageIOHandlerPlugin()
 {
 }
 
-QImageIOPlugin::Capabilities QtOIIOPlugin::capabilities(QIODevice *device, const QByteArray &format) const
+QImageIOPlugin::Capabilities QtAliceVisionImageIOHandlerPlugin::capabilities(QIODevice *device, const QByteArray &format) const
 {
     QFileDevice* d = dynamic_cast<QFileDevice*>(device);
     if(!d)
@@ -74,9 +74,9 @@ QImageIOPlugin::Capabilities QtOIIOPlugin::capabilities(QIODevice *device, const
     return QImageIOPlugin::Capabilities();
 }
 
-QImageIOHandler *QtOIIOPlugin::create(QIODevice *device, const QByteArray &format) const
+QImageIOHandler *QtAliceVisionImageIOHandlerPlugin::create(QIODevice *device, const QByteArray &format) const
 {
-    QtOIIOHandler *handler = new QtOIIOHandler;
+    QtAliceVisionImageIOHandler* handler = new QtAliceVisionImageIOHandler;
     handler->setDevice(device);
     handler->setFormat(format);
     return handler;

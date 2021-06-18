@@ -29,16 +29,16 @@ inline unsigned short floatToUShort(float v)
     return clamp(v, 0.0f, 1.0f) * 65535;
 }
 
-QtOIIOHandler::QtOIIOHandler()
+QtAliceVisionImageIOHandler::QtAliceVisionImageIOHandler()
 {
-    qDebug() << "[QtOIIO] QtOIIOHandler";
+    qDebug() << "[QtOIIO] QtAliceVisionImageIOHandler";
 }
 
-QtOIIOHandler::~QtOIIOHandler()
+QtAliceVisionImageIOHandler::~QtAliceVisionImageIOHandler()
 {
 }
 
-bool QtOIIOHandler::canRead() const
+bool QtAliceVisionImageIOHandler::canRead() const
 {
     if(canRead(device()))
     {
@@ -48,7 +48,7 @@ bool QtOIIOHandler::canRead() const
     return false;
 }
 
-bool QtOIIOHandler::canRead(QIODevice *device)
+bool QtAliceVisionImageIOHandler::canRead(QIODevice *device)
 {
     QFileDevice* d = dynamic_cast<QFileDevice*>(device);
     if(d)
@@ -60,7 +60,7 @@ bool QtOIIOHandler::canRead(QIODevice *device)
     return false;
 }
 
-bool QtOIIOHandler::read(QImage *image)
+bool QtAliceVisionImageIOHandler::read(QImage *image)
 {
     bool convertGrayscaleToJetColorMap = true; // how to expose it as an option?
 
@@ -370,13 +370,13 @@ bool QtOIIOHandler::read(QImage *image)
     return true;
 }
 
-bool QtOIIOHandler::write(const QImage &image)
+bool QtAliceVisionImageIOHandler::write(const QImage &image)
 {
     // TODO
     return false;
 }
 
-bool QtOIIOHandler::supportsOption(ImageOption option) const
+bool QtAliceVisionImageIOHandler::supportsOption(ImageOption option) const
 {
     if(option == Size)
         return true;
@@ -388,7 +388,7 @@ bool QtOIIOHandler::supportsOption(ImageOption option) const
     return false;
 }
 
-QVariant QtOIIOHandler::option(ImageOption option) const
+QVariant QtAliceVisionImageIOHandler::option(ImageOption option) const
 {
     const auto getImageInput = [](QIODevice* device) -> std::unique_ptr<oiio::ImageInput> {
         QFileDevice* d = dynamic_cast<QFileDevice*>(device);
@@ -432,7 +432,7 @@ QVariant QtOIIOHandler::option(ImageOption option) const
     return QImageIOHandler::option(option);
 }
 
-void QtOIIOHandler::setOption(ImageOption option, const QVariant &value)
+void QtAliceVisionImageIOHandler::setOption(ImageOption option, const QVariant &value)
 {
     Q_UNUSED(option);
     Q_UNUSED(value);
@@ -443,7 +443,7 @@ void QtOIIOHandler::setOption(ImageOption option, const QVariant &value)
     }
 }
 
-QByteArray QtOIIOHandler::name() const
+QByteArray QtAliceVisionImageIOHandler::name() const
 {
     return "OpenImageIO";
 }

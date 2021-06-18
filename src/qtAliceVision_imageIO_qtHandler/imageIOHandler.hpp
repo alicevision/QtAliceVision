@@ -1,12 +1,13 @@
 #pragma once
+
 #include <QImageIOHandler>
 #include <QImage>
 
-class QtOIIOHandler : public QImageIOHandler
+class QtAliceVisionImageIOHandler : public QImageIOHandler
 {
 public:
-    QtOIIOHandler();
-    ~QtOIIOHandler();
+    QtAliceVisionImageIOHandler();
+    ~QtAliceVisionImageIOHandler();
 
     bool canRead() const;
     bool read(QImage *image);
