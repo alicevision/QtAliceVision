@@ -1,6 +1,24 @@
-# QtAliceVision - AliceVision QML plugin
+# QtAliceVision - AliceVision QML plugins
 
-QtAliceVision is a C++ QML plugin providing classes to load and visualize AliceVision data.
+QtAliceVision is a collection of C++ QML plugins:
+  - [x] qtAliceVision_imageIO_qtHandler
+  - [ ] qtAliceVision_imageIO
+  - [ ] qtAliceVision_sfm
+  - [ ] qtAliceVision_sfmDataIO
+
+
+# qtAliceVision_imageIO_qtHandler
+
+qtAliceVision_imageIO_qtHandler is a C++ plugin providing an [OpenImageIO](http://github.com/OpenImageIO/oiio) backend for image IO in Qt.
+It has been developed to visualize RAW images from DSLRs in [Meshroom](https://github.com/alicevision/meshroom), as well as some intermediate files of the [AliceVision](https://github.com/alicevision/AliceVision) framework stored in EXR format (i.e: depthmaps).
+
+# qtAliceVision_imageIO
+
+qtAliceVision_imageIO has been developed to visualize depthmaps images in a 3d viewer.
+
+# qtAliceVision
+
+ qtAliceVision provides classes to load and visualize AliceVision data.
 
 Currently available Viewers:
   - [X] Features
@@ -14,11 +32,6 @@ Currently available Viewers:
     - Visualize images with floating point precision
     - Dynamically adjust gain and gamma
 
-# QtOIIO - OIIO plugin for Qt
-
-QtOIIO is a C++ plugin providing an [OpenImageIO](http://github.com/OpenImageIO/oiio) backend for image IO in Qt.
-It has been developed to visualize RAW images from DSLRs in [Meshroom](https://github.com/alicevision/meshroom), as well as some intermediate files of the [AliceVision](https://github.com/alicevision/AliceVision) framework stored in EXR format (i.e: depthmaps).
-
 # qmlAlembic - Alembic QML plugin for Qt3D
 
 qmlAlembic is a C++ QML plugin providing classes to load and visualize Alembic point cloud files in Qt3D.
@@ -27,8 +40,6 @@ It has been developed to load [AliceVision](https://github.com/alicevision/Alice
 ![qmlAlembic - Meshroom](docs/img/qmlAlembic.jpg)
 
 For now, it only handles point clouds and cameras.
-
-
 
 ## License
 
@@ -129,6 +140,7 @@ Scene3D {
     source: "depthmap.exr"
   }
 }
+```
 
 This plugin also provides a QML Qt3D Entity to load Alembic files:
 
