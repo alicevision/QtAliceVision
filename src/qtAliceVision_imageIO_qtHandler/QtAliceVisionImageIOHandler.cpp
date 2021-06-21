@@ -17,6 +17,9 @@
 
 namespace oiio = OIIO;
 
+namespace qtAliceVisionImageIOHandler
+{
+
 inline const float& clamp( const float& v, const float& lo, const float& hi )
 {
     assert( !(hi < lo) );
@@ -446,3 +449,5 @@ QByteArray QtAliceVisionImageIOHandler::name() const
 {
     return "OpenImageIO";
 }
+
+} // namespace qtAliceVisionImageIOHandler

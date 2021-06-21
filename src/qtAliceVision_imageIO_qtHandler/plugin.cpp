@@ -11,6 +11,9 @@
 
 namespace oiio = OIIO;
 
+namespace qtAliceVisionImageIOHandler
+{
+
 QtAliceVisionImageIOHandlerPlugin::QtAliceVisionImageIOHandlerPlugin()
 {
     qDebug() << "[QtAliceVisionImageIOHandler] initialize supported extensions.";
@@ -81,3 +84,5 @@ QImageIOHandler *QtAliceVisionImageIOHandlerPlugin::create(QIODevice *device, co
     handler->setFormat(format);
     return handler;
 }
+
+} // namespace qtAliceVisionImageIOHandler

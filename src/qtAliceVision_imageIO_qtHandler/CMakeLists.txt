@@ -25,23 +25,24 @@ else()
     message(SEND_ERROR "Failed to find OpenImageIO.")
 endif()
 
-add_library(QtOIIOPlugin SHARED ${PLUGIN_SOURCES} ${PLUGIN_HEADERS})
+add_library(qtAliceVisionImageIOHandlerPlugin SHARED ${PLUGIN_SOURCES} ${PLUGIN_HEADERS})
 
-target_include_directories(QtOIIOPlugin
+target_include_directories(qtAliceVisionImageIOHandlerPlugin
   PUBLIC
     ${OPENIMAGEIO_INCLUDE_DIRS}
     ${OPENEXR_INCLUDE_DIR}
     ${ILMBASE_INCLUDE_DIR}
 )
-target_link_libraries(QtOIIOPlugin
+
+target_link_libraries(qtAliceVisionImageIOHandlerPlugin
   PUBLIC
     ${OPENIMAGEIO_LIBRARIES}
 )
 
-target_link_libraries(QtOIIOPlugin
+target_link_libraries(qtAliceVisionImageIOHandlerPlugin
   PUBLIC
     Qt${QT_VERSION_MAJOR}::Core
     Qt${QT_VERSION_MAJOR}::Gui
 )
 
-install(TARGETS QtOIIOPlugin DESTINATION imageformats)
+install(TARGETS qtAliceVisionImageIOHandlerPlugin DESTINATION imageformats)

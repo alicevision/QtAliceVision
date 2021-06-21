@@ -3,6 +3,9 @@
 #include <QImageIOHandler>
 #include <QImage>
 
+namespace qtAliceVisionImageIOHandler
+{
+
 class QtAliceVisionImageIOHandler : public QImageIOHandler
 {
 public:
@@ -23,3 +26,5 @@ public:
 
     QSize _scaledSize;
 };
+
+} // namespace qtAliceVisionImageIOHandler
