@@ -11,7 +11,7 @@
 #include <QGeometryRenderer>
 
 
-namespace qtAliceVision 
+namespace qtAliceVisionImageIO
 {
 
 class DepthMapEntity : public Qt3DCore::QEntity
@@ -93,4 +93,4 @@ private:
     Qt3DRender::QGeometryRenderer* _meshRenderer = nullptr;
 };
 
-} // namespace qtAliceVision
+} // namespace qtAliceVisionImageIO

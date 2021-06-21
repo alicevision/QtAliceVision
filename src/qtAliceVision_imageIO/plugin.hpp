@@ -2,10 +2,10 @@
 
 #include "DepthMapEntity.hpp"
 
-#include <QtQml/QtQml>
-#include <QtQml/QQmlExtensionPlugin>
+#include <QtQml>
+#include <QQmlExtensionPlugin>
 
-namespace qtAliceVision 
+namespace qtAliceVisionImageIO
 {
 
 class QtAliceVisionImageIOPlugin : public QQmlExtensionPlugin
@@ -17,8 +17,10 @@ public:
     void initializeEngine(QQmlEngine* engine, const char* uri) override {}
     void registerTypes(const char* uri) override
     {
-        Q_ASSERT(uri == QLatin1String("DepthMapEntity"));
-        qmlRegisterType<DepthMapEntity>(uri, 2, 1, "DepthMapEntity");
+        qInfo() << "[qtAliceVisionImageIO] Plugin Initialized";
+        Q_ASSERT(uri == QLatin1String("AliceVisionImageIO"));
+
+        qmlRegisterType<DepthMapEntity>(uri, 1, 0, "DepthMapEntity");
     }
 };
 

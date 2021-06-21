@@ -29,7 +29,7 @@ set(PLUGIN_MOCS
     MViewStats.hpp
     MTracks.hpp
     MSfMDataStats.hpp
-  )
+    )
 
 # Qt module dependencies
 find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Core REQUIRED)

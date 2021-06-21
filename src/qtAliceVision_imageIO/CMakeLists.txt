@@ -1,3 +1,6 @@
+set(PLUGIN_VERSION_MAJOR 1)
+set(PLUGIN_VERSION_MINOR 0)
+
 # Target srcs
 set(PLUGIN_SOURCES
     DepthMapEntity.cpp
@@ -29,20 +32,20 @@ else()
 endif()
 
 # Target properties
-add_library(depthMapEntityQmlPlugin SHARED ${PLUGIN_SOURCES} ${PLUGIN_HEADERS})
+add_library(qtAliceVisionImageIOPlugin SHARED ${PLUGIN_SOURCES} ${PLUGIN_HEADERS})
 
-target_include_directories(depthMapEntityQmlPlugin
+target_include_directories(qtAliceVisionImageIOPlugin
   PUBLIC
     ${OPENIMAGEIO_INCLUDE_DIRS}
     ${OPENEXR_INCLUDE_DIR}
     ${ILMBASE_INCLUDE_DIR}
 )
-target_link_libraries(depthMapEntityQmlPlugin
+target_link_libraries(qtAliceVisionImageIOPlugin
   PUBLIC
     ${OPENIMAGEIO_LIBRARIES}
 )
 
-target_link_libraries(depthMapEntityQmlPlugin
+target_link_libraries(qtAliceVisionImageIOPlugin
   PUBLIC
     Qt${QT_VERSION_MAJOR}::Core
     Qt${QT_VERSION_MAJOR}::Gui
@@ -53,8 +56,16 @@ target_link_libraries(depthMapEntityQmlPlugin
     Qt${QT_VERSION_MAJOR}::3DExtras
 )
 
+set_target_properties(qtAliceVisionImageIOPlugin
+  PROPERTIES
+  DEBUG_POSTFIX "d"
+  FOLDER "qtAliceVisionImageIOPlugin"
+  SOVERSION ${PLUGIN_VERSION_MAJOR}
+  VERSION "${PLUGIN_VERSION_MAJOR}.${PLUGIN_VERSION_MINOR}"
+)
+
 # Install settings
 install(FILES "qmldir"
-        DESTINATION ${CMAKE_INSTALL_PREFIX}/qml/DepthMapEntity)
-install(TARGETS depthMapEntityQmlPlugin
-        DESTINATION "${CMAKE_INSTALL_PREFIX}/qml/DepthMapEntity")
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/qml/AliceVisionImageIO)
+install(TARGETS qtAliceVisionImageIOPlugin
+        DESTINATION "${CMAKE_INSTALL_PREFIX}/qml/AliceVisionImageIO")

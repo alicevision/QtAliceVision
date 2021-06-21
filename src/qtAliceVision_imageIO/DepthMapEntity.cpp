@@ -24,8 +24,7 @@
 
 namespace oiio = OIIO;
 
-
-namespace qtAliceVision 
+namespace qtAliceVisionImageIO 
 {
 
 struct Vec3f
