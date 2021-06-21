@@ -1,14 +1,18 @@
 # Development
-This guide will help you build and install QtAliceVision plugin.
+This guide will help you build and install QtAliceVision plugins.
 
 ## Requirements
-QtAliceVision requires:
-* [Qt5](https://www.qt.io/) (>= 5.13, make sure to use the **same version** as the target application)
-* [AliceVision](https://github.com/aliceVision/AliceVision)
-* [OpenImageIO](https://github.com/https://github.com/OpenImageIO/oiio) (>= 1.8.7) - with OpenEXR support for depthmaps visualization
-* [Alembic](https://github.com/alembic/alembic) (>= 1.7)
+`QtAliceVision` requires at least:
 * [CMake](https://cmake.org/) (>= 3.4)
+* [AliceVision](https://github.com/aliceVision/AliceVision)
+* [Qt5](https://www.qt.io/) (>= 5.13, make sure to use the **same version** as the target application)
 * On Windows platform: Microsoft Visual Studio (>= 2015.3)
+
+`qtAliceVision_imageIO_qtHandler` and `qtAliceVision_imageIO` plugins requires:
+* [OpenImageIO](https://github.com/https://github.com/OpenImageIO/oiio) (>= 1.8.7) - with OpenEXR support for depthmaps visualization
+
+`qmlAlembic` plugin requires:
+* [Alembic](https://github.com/alembic/alembic) (>= 1.7)
 
 > **Note for Windows**:
 We recommend using [VCPKG](https://github.com/Microsoft/vcpkg) to get OpenImageIO / Alembic. Qt version there is too old at the moment though, using official installer is necessary.
@@ -16,7 +20,6 @@ We recommend using [VCPKG](https://github.com/Microsoft/vcpkg) to get OpenImageI
 ## Build instructions
 
 In the following steps, replace <INSTALL_PATH> with the installation path of your choice.
-
 
 #### Windows
 > We will use "NMake Makefiles" generators here to have one-line build/installation,
@@ -40,15 +43,34 @@ cmake .. -DAliceVision_DIR=$AV_DIR -DAlembic_DIR=$ALEMBIC_DIR -DCMAKE_PREFIX_PAT
 make install
 ```
 
+#### CMake Options
+
+* `BUILD_IMAGEIO_QTHANDLER` (default `ON`)
+  Build qtAliceVision_imageIO_qtHandler plugin.
+
+* `BUILD_IMAGEIO` (default `ON`)
+  Build qtAliceVision_imageIO plugin.
+
+* `BUILD_SFM` (default `ON`)
+  Build qtAliceVision plugin.
+
+* `BUILD_ALEMBIC` (default `ON`)
+  Build alembicEntityQml plugin.
+
 ## Usage
+
 Once built, setup those environment variables before launching your application:
 
+#### Windows
+
 ```bash
-# Windows:
 set QML2_IMPORT_PATH=<INSTALL_PATH>/qml;%QML2_IMPORT_PATH%
 set QT_PLUGIN_PATH=<INSTALL_PATH>;%QT_PLUGIN_PATH%
+```
 
-# Linux:
+#### Linux
+
+```bash
 export QML2_IMPORT_PATH=<INSTALL_PATH>/qml:$QML2_IMPORT_PATH
 export QT_PLUGIN_PATH=<INSTALL_PATH>:$QT_PLUGIN_PATH
 ```
