@@ -130,7 +130,7 @@ void FloatImageViewer::reload()
     }
     _outdated = false;
 
-    if (!_source.isValid())
+    if (!_source.isValid() || _surface.isHDRViewerEnabled())
     {
         _image.reset();
         _imageChanged = true;

@@ -94,6 +94,7 @@ public:
 	void setViewerType(EViewerType type);
 	bool isPanoramaViewerEnabled() const;
 	bool isDistortionViewerEnabled() const;
+	bool isHDRViewerEnabled() const;
 
 	Q_SIGNAL void viewerTypeChanged();
 

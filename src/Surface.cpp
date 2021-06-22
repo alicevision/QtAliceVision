@@ -573,5 +573,9 @@ bool Surface::isDistortionViewerEnabled() const
 {
     return _viewerType == EViewerType::DISTORTION;
 }
+bool Surface::isHDRViewerEnabled() const
+{
+    return _viewerType == EViewerType::HDR;
+}
 
 }
