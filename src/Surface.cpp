@@ -527,7 +527,11 @@ bool Surface::isMouseInside(float mx, float my)
         float dot12 = QPoint::dotProduct(v1, v2);
 
         // Compute barycentric coordinates
-        float invDenom = 1 / (dot00 * dot11 - dot01 * dot01);
+        const float dots = (dot00 * dot11 - dot01 * dot01);
+        if (dots == 0)
+            return false;
+
+        float invDenom = 1 / dots;
         float u = (dot11 * dot02 - dot01 * dot12) * invDenom;
         float v = (dot00 * dot12 - dot01 * dot02) * invDenom;
 
