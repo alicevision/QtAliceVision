@@ -172,6 +172,7 @@ void FloatImageViewer::onResultReady(QSharedPointer<FloatImage> image, QSize sou
         return;
     }
 
+    _surface.setVerticesChanged(true);
     _image = image;
     _imageChanged = true;
     Q_EMIT imageChanged();
