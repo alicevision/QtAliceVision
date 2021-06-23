@@ -133,10 +133,7 @@ void FloatImageViewer::reload()
     if (_surface.isHDRViewerEnabled())
     {
         _surface.clearVertices();
-        _surface.setSubdivisions(1);
-
         _surface.verticesChanged();
-        _surface.subdivisionsChanged();
     }
 
     if (!_source.isValid())

@@ -99,8 +99,6 @@ public:
     {
         if (level == _downscaleLevel) return;
 
-        qWarning() << "UPDATE DOWNSCALE" << level << _downscaleLevel;
-
         // Level [0;3]
         if (level < 0 && level > 6) level = 4;
         _downscaleLevel = level;
