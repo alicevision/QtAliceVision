@@ -130,8 +130,18 @@ void FloatImageViewer::reload()
     }
     _outdated = false;
 
-    if (!_source.isValid() || _surface.isHDRViewerEnabled())
+    if (_surface.isHDRViewerEnabled())
     {
+        _surface.clearVertices();
+        _surface.setSubdivisions(1);
+
+        _surface.verticesChanged();
+        _surface.subdivisionsChanged();
+    }
+
+    if (!_source.isValid())
+    {
+        if (_loading) _outdated = true;
         _image.reset();
         _imageChanged = true;
         Q_EMIT imageChanged();
@@ -204,7 +214,6 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
 
     QSGGeometry* geometryLine = nullptr;
     bool updateSfmData = false;
-
 
     if (!root)
     {
