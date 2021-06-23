@@ -69,7 +69,7 @@ public:
 	Q_SIGNAL void gridOpacityChanged(int);
 
 	// DISPLAY GRID
-	bool getDisplayGrid() const { return _displayGrid; }
+	bool getDisplayGrid() const { return _displayGrid && isDistortionViewerEnabled(); }
 	void setDisplayGrid(bool display);
 	Q_SIGNAL void displayGridChanged();
 

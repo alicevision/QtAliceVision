@@ -365,8 +365,8 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
 
 void FloatImageViewer::updatePaintSurface(QSGGeometryNode* root, QSGSimpleMaterial<ShaderData>* material, QSGGeometry* geometryLine, bool updateSfmData)
 {
-    // Highlight image if Panorama enable and user hovers the image
-    if (_surface.isPanoramaViewerEnabled())
+    // Highlight
+    if (_canBeHovered)
     {
         if(_surface.getMouseOver()){
             material->state()->gamma += 1.0f;
@@ -401,14 +401,7 @@ void FloatImageViewer::updatePaintSurface(QSGGeometryNode* root, QSGSimpleMateri
     }
 
     // Draw the grid if Distortion Viewer is enabled and Grid Mode is enabled
-    if (_surface.isDistortionViewerEnabled())
-    {
-        _surface.getDisplayGrid() ? _surface.computeGrid(geometryLine) : _surface.removeGrid(geometryLine);
-    }
-    else
-    {
-        _surface.removeGrid(geometryLine);
-    }
+    _surface.getDisplayGrid() ? _surface.computeGrid(geometryLine) : _surface.removeGrid(geometryLine);
 
     root->childAtIndex(0)->markDirty(QSGNode::DirtyGeometry | QSGNode::DirtyMaterial);
 }
