@@ -1,21 +1,33 @@
 # Target srcs
 set(PLUGIN_SOURCES
-    FeaturesViewer.cpp MFeature.cpp
-    MSfMData.cpp MViewStats.cpp
+    FeaturesViewer.cpp 
+    MFeature.cpp
+    MFeatures.cpp
+    MSfMData.cpp 
+    MViewStats.cpp
     MTracks.cpp
-    FloatImageViewer.cpp FloatTexture.cpp
+    FloatImageViewer.cpp 
+    FloatTexture.cpp
     MSfMDataStats.cpp)
+
 set(PLUGIN_HEADERS
     FeaturesViewer.hpp
     plugin.hpp
-    MFeature.hpp MSfMData.hpp
+    MFeature.hpp 
+    MFeatures.hpp 
+    MSfMData.hpp
     MTracks.hpp
     MViewStats.hpp
-    FloatImageViewer.hpp FloatTexture.hpp
+    FloatImageViewer.hpp 
+    FloatTexture.hpp
     MSfMDataStats.hpp)
+
 set(PLUGIN_MOCS
-    FeaturesViewer.hpp MFeature.hpp
-    MSfMData.hpp MViewStats.hpp
+    FeaturesViewer.hpp 
+    MFeature.hpp
+    MFeatures.hpp
+    MSfMData.hpp 
+    MViewStats.hpp
     MTracks.hpp
     MSfMDataStats.hpp)
 
