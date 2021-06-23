@@ -130,17 +130,13 @@ void FloatImageViewer::reload()
     }
     _outdated = false;
 
-    if (_surface.isHDRViewerEnabled())
-    {
-        _surface.clearVertices();
-        _surface.verticesChanged();
-    }
-
     if (!_source.isValid())
     {
         if (_loading) _outdated = true;
         _image.reset();
         _imageChanged = true;
+        _surface.clearVertices();
+        _surface.verticesChanged();
         Q_EMIT imageChanged();
         return;
     }
