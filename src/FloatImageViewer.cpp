@@ -150,7 +150,7 @@ void FloatImageViewer::reload()
         setLoading(true);
 
         // async load from file
-        auto ioRunnable = new FloatImageIORunnable(_source, _surface.isPanoramaViewerEnabled() ? _downscaleLevel : 0);
+        auto ioRunnable = new FloatImageIORunnable(_source, _downscaleLevel);
         connect(ioRunnable, &FloatImageIORunnable::resultReady, this, &FloatImageViewer::onResultReady);
         QThreadPool::globalInstance()->start(ioRunnable);
     }
