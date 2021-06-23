@@ -300,7 +300,7 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
 
     if (_imageChanged)
     {
-        if (_surface.isDistortionViewerEnabled() || _surface.isPanoramaViewerEnabled())
+        if (_sfmRequired)
         {
             updateSfmData = true;
         }

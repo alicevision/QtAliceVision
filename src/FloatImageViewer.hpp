@@ -59,6 +59,8 @@ Q_OBJECT
 
     Q_PROPERTY(bool canBeHovered MEMBER _canBeHovered NOTIFY canBeHoveredChanged)
 
+    Q_PROPERTY(bool sfmRequired MEMBER _sfmRequired NOTIFY sfmRequiredChanged)
+    
     Q_PROPERTY(QSize textureSize MEMBER _textureSize NOTIFY textureSizeChanged)
 
     Q_PROPERTY(QSize sourceSize READ sourceSize NOTIFY sourceSizeChanged)
@@ -126,6 +128,7 @@ public:
     Q_SIGNAL void downscaleLevelChanged();
     Q_SIGNAL void surfaceChanged();
     Q_SIGNAL void canBeHoveredChanged();
+    Q_SIGNAL void sfmRequiredChanged();
 
     // Q_INVOKABLE
     Q_INVOKABLE QVector4D pixelValueAt(int x, int y);
@@ -166,6 +169,8 @@ private:
     int _downscaleLevel = 0;
 
     bool _canBeHovered = false;
+
+    bool _sfmRequired = false;
 };
 
 }
