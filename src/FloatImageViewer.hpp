@@ -57,6 +57,8 @@ Q_OBJECT
 
     Q_PROPERTY(float gain MEMBER _gain NOTIFY gainChanged)
 
+    Q_PROPERTY(bool canBeHovered MEMBER _canBeHovered NOTIFY canBeHoveredChanged)
+
     Q_PROPERTY(QSize textureSize MEMBER _textureSize NOTIFY textureSizeChanged)
 
     Q_PROPERTY(QSize sourceSize READ sourceSize NOTIFY sourceSizeChanged)
@@ -123,6 +125,7 @@ public:
     Q_SIGNAL void sfmChanged();
     Q_SIGNAL void downscaleLevelChanged();
     Q_SIGNAL void surfaceChanged();
+    Q_SIGNAL void canBeHoveredChanged();
 
     // Q_INVOKABLE
     Q_INVOKABLE QVector4D pixelValueAt(int x, int y);
@@ -161,6 +164,8 @@ private:
     bool _createRoot = true;
     // Level of downscale for images of a Panorama
     int _downscaleLevel = 4;
+
+    bool _canBeHovered = false;
 };
 
 }
