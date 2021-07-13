@@ -6,6 +6,7 @@
 #include <QVariant>
 #include <string>
 #include <vector>
+#include <MSfMData.hpp>
 
 #include <aliceVision/camera/IntrinsicBase.hpp>
 #include <aliceVision/sfmData/SfMData.hpp>
@@ -30,7 +31,8 @@ Q_OBJECT
 
 	Q_PROPERTY(bool mouseOver READ getMouseOver WRITE setMouseOver NOTIFY mouseOverChanged);
 
-	Q_PROPERTY(QString sfmPath WRITE setSfmPath NOTIFY sfmPathChanged);
+	//Q_PROPERTY(QString sfmPath WRITE setSfmPath NOTIFY sfmPathChanged);
+	Q_PROPERTY(qtAliceVision::MSfMData* msfmData READ getMSfmData WRITE setMSfmData NOTIFY sfmDataChanged)
 
 	Q_PROPERTY(EViewerType viewerType WRITE setViewerType NOTIFY viewerTypeChanged);
 
@@ -84,8 +86,13 @@ public:
 	Q_SIGNAL void subdivisionsChanged();
 
 	// SFM PATH
-	void setSfmPath(const QString& path);
-	Q_SIGNAL void sfmPathChanged();
+	//void setSfmPath(const QString& path);
+	//Q_SIGNAL void sfmPathChanged();
+
+	// MSfmData
+	MSfMData* getMSfmData() { return _msfmData; }
+	void setMSfmData(MSfMData* sfmData);
+	Q_SIGNAL void sfmDataChanged();
 
 	// VIEWER TYPE
 	enum class EViewerType : quint8 { DEFAULT = 0, HDR, DISTORTION, PANORAMA };
@@ -161,8 +168,9 @@ private:
 	bool _subdivisionsChanged = false;
 
 	// Sfm Data
-	aliceVision::sfmData::SfMData _sfmData;
-	QString _sfmPath = "";
+	/*aliceVision::sfmData::SfMData _sfmData;
+	QString _sfmPath = "";*/
+	MSfMData* _msfmData = nullptr;
 
 	// Principal Point Coord
 	QPoint _principalPoint = QPoint(0, 0);
@@ -182,6 +190,10 @@ private:
 	bool _mouseOver = false;
 	// If panorama is currently rotating
 	bool _isPanoramaRotating = false;
+
+
+	bool _sfmLoaded = false;
+	bool _needToUpdateIntrinsic = true;
 };
 
 }

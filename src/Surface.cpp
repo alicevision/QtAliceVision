@@ -27,6 +27,7 @@ Surface::Surface(int subdivisions, QObject* parent)
     : QObject(parent)
 {
     updateSubdivisions(subdivisions);
+    //connect(this, &Surface::sfmDataChanged, this, &Surface::loadSfmData);
 }
 
 Surface::~Surface()
@@ -36,11 +37,12 @@ Surface::~Surface()
 bool Surface::update(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize, bool updateSfmData, int downscaleLevel)
 {
     // Load Sfm Data File only if needed
-    if ( (isDistortionViewerEnabled() || isPanoramaViewerEnabled()) 
-        && (updateSfmData || hasSubdivisionsChanged() || _vertices.empty()) )
-    {
-        updateSfmData = loadSfmData();
-    }
+    //if ( (isDistortionViewerEnabled() || isPanoramaViewerEnabled()) 
+    //    && (updateSfmData || hasSubdivisionsChanged() || _vertices.empty()) )
+    //{
+    //    //updateSfmData = loadSfmData();
+    //}
+
 
     // Compute Vertices coordinates and Indices order
     computeGrid(vertices, indices, textureSize, updateSfmData, downscaleLevel);
@@ -58,23 +60,45 @@ bool Surface::update(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, Q
 // GRID METHODS
 void Surface::computeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize, bool updateSfmData, int downscaleLevel)
 {
-    /* Retrieve intrisics only if:
-    * sfmData has been updated
-    * or User rotate panorama
-    */
     aliceVision::camera::IntrinsicBase* intrinsic = nullptr;
-    if (updateSfmData || _isPanoramaRotating)
+    bool computeWIthIntrinsics = false;
+    if (_sfmLoaded && (_isPanoramaRotating || _needToUpdateIntrinsic))
     {
-        std::set<aliceVision::IndexT> intrinsicsIndices = _sfmData.getReconstructedIntrinsics();
-        intrinsic = _sfmData.getIntrinsicPtr(*intrinsicsIndices.begin());
+        // Load Intrinsic with 2 ways whether we are in the Panorama or Distorsion Viewer
+        if (isPanoramaViewerEnabled())
+        {
+            const auto viewIt = _msfmData->rawData().getViews().find(_idView);
+            const aliceVision::sfmData::View& view = *viewIt->second;
+            qWarning() << "HELP 1";
+            intrinsic = _msfmData->rawData().getIntrinsicPtr(view.getIntrinsicId());
+            qWarning() << "HELP 2";
+        }
+        else if (isDistortionViewerEnabled())
+        {
+            std::set<aliceVision::IndexT> intrinsicsIndices = _msfmData->rawData().getReconstructedIntrinsics();
+            intrinsic = _msfmData->rawData().getIntrinsicPtr(*intrinsicsIndices.begin());
+        }
+            
+        qWarning() << "HELP 3";
+
         if (intrinsic)
         {
+            computeWIthIntrinsics = true;
             computePrincipalPoint(intrinsic, textureSize);
             computeVerticesGrid(vertices, textureSize, intrinsic, downscaleLevel);
+            setVerticesChanged(true);
+            Q_EMIT verticesChanged();
+            _needToUpdateIntrinsic = false;
         }
+        else 
+        {
+            computeWIthIntrinsics = false;
+        }
+        
+        qWarning() << "HELP 4";
     }
     // If there is no sfm data update or intrinsics are invalid, keep the same vertices
-    if ((!updateSfmData && !_isPanoramaRotating) || !intrinsic)
+    if (!computeWIthIntrinsics)
     {
         computeVerticesGrid(vertices, textureSize, nullptr);
     }
@@ -122,14 +146,21 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
     aliceVision::camera::IntrinsicBase* intrinsic, int downscaleLevel)
 {
     // Retrieve pose if Panorama Viewer is enable
-    aliceVision::sfmData::CameraPose pose;
+    //aliceVision::sfmData::CameraPose pose;
     if (isPanoramaViewerEnabled() && intrinsic)
     {
         // Downscale image according to downscale level
         textureSize *= pow(2.0, downscaleLevel);
-        const aliceVision::sfmData::View& view = _sfmData.getView(_idView);
-        pose = _sfmData.getPose(view);
         resetValuesVertexEnabled();
+    }
+
+    // Retrieve pose
+    aliceVision::sfmData::CameraPose pose;
+    if (isPanoramaViewerEnabled())
+    {
+        const auto viewIt = _msfmData->rawData().getViews().find(_idView);
+        const aliceVision::sfmData::View& view = *viewIt->second;
+        pose = _msfmData->rawData().getPose(view);
     }
 
     bool fillCoordsSphere = _defaultSphereCoordinates.empty();
@@ -330,7 +361,6 @@ void Surface::fillVertices(QSGGeometry::TexturedPoint2D* vertices)
         QPoint p(vertices[i].x, vertices[i].y);
         _vertices.append(p);
     }
-    setVerticesChanged(false);
 }
 
 // SUBDIVISIONS FUNCTIONS
@@ -358,49 +388,8 @@ void Surface::setSubdivisions(int newSubdivisions)
 }
 
 
-// SFM FUNCTIONS
-bool Surface::loadSfmData()
-{
-    using namespace aliceVision::sfmDataIO;
 
-    setHasSubdivisionsChanged(false);
 
-    if (_sfmPath.toStdString() != "")
-    {
-        // Clear sfmData
-        _sfmData.clear();
-
-        // load SfMData files
-        if (!Load(_sfmData, _sfmPath.toStdString(), ESfMData(ESfMData::VIEWS | ESfMData::EXTRINSICS | ESfMData::INTRINSICS)))
-        {
-            qWarning() << "The input SfMData file '" << _sfmPath << "' cannot be read.\n";
-            return false;
-        }
-        if (_sfmData.getViews().empty())
-        {
-            qWarning() << "The input SfMData file '" << _sfmPath << "' is empty.\n";
-            return false;
-        }
-        // Make sure there is only one kind of image in dataset
-        if (_sfmData.getIntrinsics().size() > 1)
-        {
-            qWarning() << "Only one intrinsic allowed (" << _sfmData.getIntrinsics().size() << " found)";
-            return false;
-        }
-    }
-    else
-    {
-        return false;
-    }
-
-    return true;
-}
-
-void Surface::setSfmPath(const QString& path)
-{
-    _sfmPath = path;
-    Q_EMIT sfmPathChanged();
-}
 
 // PRINCIPAL POINT FUNCTION
 void Surface::computePrincipalPoint(aliceVision::camera::IntrinsicBase* intrinsic, QSize textureSize)
@@ -580,6 +569,47 @@ bool Surface::isDistortionViewerEnabled() const
 bool Surface::isHDRViewerEnabled() const
 {
     return _viewerType == EViewerType::HDR;
+}
+
+void Surface::setMSfmData(MSfMData* sfmData)
+{
+    qWarning() << "[QtAliceVision] setMSfmData: BEGIN " << sfmData;
+
+    _sfmLoaded = false;
+
+    if (sfmData == nullptr)
+        return;
+
+    if (_msfmData == sfmData)
+        return;
+
+    if (_msfmData != nullptr)
+    {
+        disconnect(_msfmData, SIGNAL(sfmDataChanged()), this, SIGNAL(sfmDataChanged()));
+    }
+    _msfmData = sfmData;
+    if (_msfmData != nullptr)
+    {
+        connect(_msfmData, SIGNAL(sfmDataChanged()), this, SIGNAL(sfmDataChanged()));
+    }
+
+
+    if (_msfmData->status() != MSfMData::Ready)
+    {
+        qWarning() << "[QtAliceVision] setMSfmData: SfMData is not ready: " << _msfmData->status();
+        return;
+    }
+    if (_msfmData->rawData().getViews().empty())
+    {
+        qWarning() << "[QtAliceVision] setMSfmData: SfMData is empty";
+        return;
+    }
+
+    qWarning() << "[QtAliceVision] setMSfmData: DONE " <<_msfmData->getSfmDataPath().toString();
+    _sfmLoaded = true;
+    _needToUpdateIntrinsic = true;
+
+    Q_EMIT sfmDataChanged();
 }
 
 }

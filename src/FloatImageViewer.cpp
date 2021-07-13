@@ -378,7 +378,7 @@ void FloatImageViewer::updatePaintSurface(QSGGeometryNode* root, QSGSimpleMateri
         quint16* indices = root->geometry()->indexDataAsUShort();
 
         // Update surface
-        bool updateSurface = _surface.update(vertices, indices, _textureSize, updateSfmData, _downscaleLevel);
+        _surface.update(vertices, indices, _textureSize, updateSfmData, _downscaleLevel);
 
         root->geometry()->markIndexDataDirty();
         root->geometry()->markVertexDataDirty();
@@ -386,14 +386,13 @@ void FloatImageViewer::updatePaintSurface(QSGGeometryNode* root, QSGSimpleMateri
 
         // Fill the Surface vertices array
         _surface.fillVertices(vertices);
-        Q_EMIT _surface.verticesChanged();
 
         // Force to re update the surface in order to see changes
-        if (updateSurface)
+        /*if (updateSurface)
         {
             _surface.setVerticesChanged(true);
             Q_EMIT sfmChanged();
-        }
+        }*/
     }
 
     // Draw the grid if Distortion Viewer is enabled and Grid Mode is enabled
