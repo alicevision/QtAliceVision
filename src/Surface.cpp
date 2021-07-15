@@ -386,11 +386,9 @@ void Surface::setSubdivisions(int newSubdivisions)
     
     clearVertices();
     setVerticesChanged(true);
+    _needToUpdateIntrinsic = true;
     Q_EMIT subdivisionsChanged();
 }
-
-
-
 
 
 // PRINCIPAL POINT FUNCTION

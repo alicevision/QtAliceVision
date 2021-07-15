@@ -129,8 +129,6 @@ public:
 
 private:
 
-	bool loadSfmData();
-
 	void computeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize, bool updateSfm, int downscaleLevel = 0);
 
 	void computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize textureSize,
