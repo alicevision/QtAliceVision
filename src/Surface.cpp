@@ -70,9 +70,7 @@ void Surface::computeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indic
         {
             const auto viewIt = _msfmData->rawData().getViews().find(_idView);
             const aliceVision::sfmData::View& view = *viewIt->second;
-            qWarning() << "HELP 1";
             intrinsic = _msfmData->rawData().getIntrinsicPtr(view.getIntrinsicId());
-            qWarning() << "HELP 2";
         }
         else if (isDistortionViewerEnabled())
         {
@@ -80,8 +78,6 @@ void Surface::computeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indic
             intrinsic = _msfmData->rawData().getIntrinsicPtr(*intrinsicsIndices.begin());
         }
             
-        qWarning() << "HELP 3";
-
         if (intrinsic)
         {
             computeWIthIntrinsics = true;
@@ -95,8 +91,6 @@ void Surface::computeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indic
         {
             computeWIthIntrinsics = false;
         }
-        
-        qWarning() << "HELP 4";
     }
     // If there is no sfm data update or intrinsics are invalid, keep the same vertices
     if (!computeWIthIntrinsics)
@@ -158,7 +152,7 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
 
     // Retrieve pose
     aliceVision::sfmData::CameraPose pose;
-    if (isPanoramaViewerEnabled())
+    if (isPanoramaViewerEnabled() && intrinsic)
     {
         const auto viewIt = _msfmData->rawData().getViews().find(_idView);
         const aliceVision::sfmData::View& view = *viewIt->second;
