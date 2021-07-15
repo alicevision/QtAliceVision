@@ -66,7 +66,7 @@ void Surface::computeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indic
         if (intrinsic)
         {
             computeWIthIntrinsics = true;
-            computePrincipalPoint(intrinsic, textureSize);
+            computePrincipalPoint(intrinsic);
             computeVerticesGrid(vertices, textureSize, intrinsic, downscaleLevel);
             setVerticesChanged(true);
             Q_EMIT verticesChanged();
@@ -127,7 +127,6 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
     aliceVision::camera::IntrinsicBase* intrinsic, int downscaleLevel)
 {
     // Retrieve pose if Panorama Viewer is enable
-    //aliceVision::sfmData::CameraPose pose;
     if (isPanoramaViewerEnabled() && intrinsic)
     {
         // Downscale image according to downscale level
@@ -371,9 +370,8 @@ void Surface::setSubdivisions(int newSubdivisions)
 
 
 // PRINCIPAL POINT FUNCTION
-void Surface::computePrincipalPoint(aliceVision::camera::IntrinsicBase* intrinsic, QSize textureSize)
+void Surface::computePrincipalPoint(aliceVision::camera::IntrinsicBase* intrinsic)
 {
-    const aliceVision::Vec2 center(textureSize.width() * 0.5, textureSize.height() * 0.5);
     aliceVision::Vec2 ppCorrection(0.0, 0.0);
 
     if (aliceVision::camera::isPinhole(intrinsic->getType()))

@@ -90,8 +90,6 @@ FloatImageViewer::FloatImageViewer(QQuickItem* parent)
     
     connect(this, &FloatImageViewer::channelModeChanged, this, &FloatImageViewer::update);
  
-    connect(this, &FloatImageViewer::sfmChanged, this, &FloatImageViewer::update);
-
     connect(this, &FloatImageViewer::downscaleLevelChanged, this, &FloatImageViewer::reload);
 
     connect(&_surface, &Surface::gridColorChanged, this, &FloatImageViewer::update);

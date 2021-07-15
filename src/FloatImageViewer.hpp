@@ -122,7 +122,6 @@ public:
     Q_SIGNAL void channelModeChanged();
     Q_SIGNAL void imageChanged();
     Q_SIGNAL void metadataChanged();
-    Q_SIGNAL void sfmChanged();
     Q_SIGNAL void downscaleLevelChanged();
     Q_SIGNAL void surfaceChanged();
     Q_SIGNAL void canBeHoveredChanged();

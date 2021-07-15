@@ -133,7 +133,7 @@ private:
 		
 	void computeIndicesGrid(quint16* indices);
 	
-	void computePrincipalPoint(aliceVision::camera::IntrinsicBase* intrinsic, QSize textureSize);
+	void computePrincipalPoint(aliceVision::camera::IntrinsicBase* intrinsic);
 
 	void rotatePanorama(aliceVision::Vec3& coordSphere);
 
