@@ -169,6 +169,7 @@ void FloatImageViewer::onResultReady(QSharedPointer<FloatImage> image, QSize sou
     }
 
     _surface.setVerticesChanged(true);
+    _surface.setNeedToUpdateIntrinsic(true);
     _image = image;
     _imageChanged = true;
     Q_EMIT imageChanged();
@@ -351,7 +352,7 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
     /*
     * Surface
     */
-    if (root && !_createRoot)
+    if (root && !_createRoot && _image)
     {
         updatePaintSurface(root, material, geometryLine, updateSfmData);
     }

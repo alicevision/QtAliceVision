@@ -125,6 +125,8 @@ public:
 	bool hasSubdivisionsChanged() { return _subdivisionsChanged; }
 	void setHasSubdivisionsChanged(bool state) { _subdivisionsChanged = state; }
 
+	void setNeedToUpdateIntrinsic(bool state) { _needToUpdateIntrinsic = state; }
+
 private:
 
 	bool loadSfmData();

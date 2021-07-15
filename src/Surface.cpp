@@ -27,7 +27,8 @@ Surface::Surface(int subdivisions, QObject* parent)
     : QObject(parent)
 {
     updateSubdivisions(subdivisions);
-    //connect(this, &Surface::sfmDataChanged, this, &Surface::loadSfmData);
+
+    connect(this, &Surface::sfmDataChanged, this, &Surface::verticesChanged);
 }
 
 Surface::~Surface()
@@ -101,6 +102,7 @@ void Surface::computeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indic
     if (!computeWIthIntrinsics)
     {
         computeVerticesGrid(vertices, textureSize, nullptr);
+        setVerticesChanged(false);
     }
         
     computeIndicesGrid(indices);
@@ -578,7 +580,10 @@ void Surface::setMSfmData(MSfMData* sfmData)
     _sfmLoaded = false;
 
     if (sfmData == nullptr)
+    {
+        _msfmData = sfmData;
         return;
+    }
 
     if (_msfmData == sfmData)
         return;
@@ -592,7 +597,6 @@ void Surface::setMSfmData(MSfMData* sfmData)
     {
         connect(_msfmData, SIGNAL(sfmDataChanged()), this, SIGNAL(sfmDataChanged()));
     }
-
 
     if (_msfmData->status() != MSfMData::Ready)
     {
@@ -608,7 +612,7 @@ void Surface::setMSfmData(MSfMData* sfmData)
     qWarning() << "[QtAliceVision] setMSfmData: DONE " <<_msfmData->getSfmDataPath().toString();
     _sfmLoaded = true;
     _needToUpdateIntrinsic = true;
-
+    setVerticesChanged(true);
     Q_EMIT sfmDataChanged();
 }
 
