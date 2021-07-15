@@ -297,11 +297,6 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
 
     if (_imageChanged)
     {
-        if (_sfmRequired)
-        {
-            updateSfmData = true;
-        }
-            
         QSize newTextureSize;
         auto texture = std::make_unique<FloatTexture>();
         if (_image)
@@ -354,18 +349,18 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
     */
     if (root && !_createRoot && _image)
     {
-        updatePaintSurface(root, material, geometryLine, updateSfmData);
+        updatePaintSurface(root, material, geometryLine);
     }
 
     return root;
 }
 
-void FloatImageViewer::updatePaintSurface(QSGGeometryNode* root, QSGSimpleMaterial<ShaderData>* material, QSGGeometry* geometryLine, bool updateSfmData)
+void FloatImageViewer::updatePaintSurface(QSGGeometryNode* root, QSGSimpleMaterial<ShaderData>* material, QSGGeometry* geometryLine)
 {
     // Highlight
     if (_canBeHovered)
     {
-        if(_surface.getMouseOver()){
+        if(_surface.getMouseOver()) {
             material->state()->gamma += 1.0f;
         }
         root->markDirty(QSGNode::DirtyMaterial);
@@ -379,7 +374,7 @@ void FloatImageViewer::updatePaintSurface(QSGGeometryNode* root, QSGSimpleMateri
         quint16* indices = root->geometry()->indexDataAsUShort();
 
         // Update surface
-        _surface.update(vertices, indices, _textureSize, updateSfmData, _downscaleLevel);
+        _surface.update(vertices, indices, _textureSize, _downscaleLevel);
 
         root->geometry()->markIndexDataDirty();
         root->geometry()->markVertexDataDirty();
@@ -387,13 +382,6 @@ void FloatImageViewer::updatePaintSurface(QSGGeometryNode* root, QSGSimpleMateri
 
         // Fill the Surface vertices array
         _surface.fillVertices(vertices);
-
-        // Force to re update the surface in order to see changes
-        /*if (updateSurface)
-        {
-            _surface.setVerticesChanged(true);
-            Q_EMIT sfmChanged();
-        }*/
     }
 
     // Draw the grid if Distortion Viewer is enabled and Grid Mode is enabled

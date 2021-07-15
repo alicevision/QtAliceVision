@@ -27,7 +27,6 @@ Surface::Surface(int subdivisions, QObject* parent)
     : QObject(parent)
 {
     updateSubdivisions(subdivisions);
-
     connect(this, &Surface::sfmDataChanged, this, &Surface::verticesChanged);
 }
 
@@ -35,31 +34,17 @@ Surface::~Surface()
 {
 }
 
-bool Surface::update(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize, bool updateSfmData, int downscaleLevel)
+void Surface::update(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize, int downscaleLevel)
 {
-    // Load Sfm Data File only if needed
-    //if ( (isDistortionViewerEnabled() || isPanoramaViewerEnabled()) 
-    //    && (updateSfmData || hasSubdivisionsChanged() || _vertices.empty()) )
-    //{
-    //    //updateSfmData = loadSfmData();
-    //}
-
-
     // Compute Vertices coordinates and Indices order
-    computeGrid(vertices, indices, textureSize, updateSfmData, downscaleLevel);
+    computeGrid(vertices, indices, textureSize, downscaleLevel);
 
     // If Panorama has been rotated, reset values and return true
-    if (_isPanoramaRotating)
-    {
-        _isPanoramaRotating = false;
-        return true;
-    }
-
-    return updateSfmData;
+    if (_isPanoramaRotating) _isPanoramaRotating = false;
 }
 
 // GRID METHODS
-void Surface::computeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize, bool updateSfmData, int downscaleLevel)
+void Surface::computeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize, int downscaleLevel)
 {
     aliceVision::camera::IntrinsicBase* intrinsic = nullptr;
     bool computeWIthIntrinsics = false;
@@ -567,8 +552,6 @@ bool Surface::isHDRViewerEnabled() const
 
 void Surface::setMSfmData(MSfMData* sfmData)
 {
-    qWarning() << "[QtAliceVision] setMSfmData: BEGIN " << sfmData;
-
     _sfmLoaded = false;
 
     if (sfmData == nullptr)
@@ -601,9 +584,9 @@ void Surface::setMSfmData(MSfMData* sfmData)
         return;
     }
 
-    qWarning() << "[QtAliceVision] setMSfmData: DONE " <<_msfmData->getSfmDataPath().toString();
     _sfmLoaded = true;
     _needToUpdateIntrinsic = true;
+    clearVertices();
     setVerticesChanged(true);
     Q_EMIT sfmDataChanged();
 }

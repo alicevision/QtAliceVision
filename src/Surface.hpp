@@ -45,7 +45,7 @@ public:
 	Surface& operator=(const Surface& other) = default;
 	~Surface();
 
-	bool update(QSGGeometry::TexturedPoint2D * vertices, quint16 * indices, QSize textureSize, bool updateSfmData, int downscaleLevel = 0);
+	void update(QSGGeometry::TexturedPoint2D * vertices, quint16 * indices, QSize textureSize, int downscaleLevel = 0);
 
 	// Q_INVOKABLES
 	Q_INVOKABLE QPoint getPrincipalPoint() { return _principalPoint; };
@@ -85,10 +85,6 @@ public:
 	void setSubdivisions(int newSubdivisions);
 	Q_SIGNAL void subdivisionsChanged();
 
-	// SFM PATH
-	//void setSfmPath(const QString& path);
-	//Q_SIGNAL void sfmPathChanged();
-
 	// MSfmData
 	MSfMData* getMSfmData() { return _msfmData; }
 	void setMSfmData(MSfMData* sfmData);
@@ -110,7 +106,6 @@ public:
 	inline bool hasVerticesChanged() const { return _verticesChanged; }
 	void setVerticesChanged(bool change) { _verticesChanged = change; }
 	void clearVertices() { _vertices.clear(); _defaultSphereCoordinates.clear(); }
-	void fillVertices(QSGGeometry::TexturedPoint2D* vertices);
 
 	inline int indexCount() const { return _indexCount; }
 	inline int vertexCount() const { return _vertexCount; }
@@ -127,9 +122,11 @@ public:
 
 	void setNeedToUpdateIntrinsic(bool state) { _needToUpdateIntrinsic = state; }
 
+	void fillVertices(QSGGeometry::TexturedPoint2D* vertices);
+
 private:
 
-	void computeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize, bool updateSfm, int downscaleLevel = 0);
+	void computeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize, int downscaleLevel = 0);
 
 	void computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize textureSize,
 		aliceVision::camera::IntrinsicBase* intrinsic, int downscaleLevel = 0);
@@ -145,6 +142,7 @@ private:
 	bool isPointValid(int i, int j) const;
 
 	void resetValuesVertexEnabled();
+
 
 private:
 	const int _panoramaWidth = 3000;
@@ -167,10 +165,10 @@ private:
 	int _gridOpacity = 255;
 	bool _subdivisionsChanged = false;
 
-	// Sfm Data
-	/*aliceVision::sfmData::SfMData _sfmData;
-	QString _sfmPath = "";*/
+	// SfmData
 	MSfMData* _msfmData = nullptr;
+	bool _sfmLoaded = false;
+	bool _needToUpdateIntrinsic = true;
 
 	// Principal Point Coord
 	QPoint _principalPoint = QPoint(0, 0);
@@ -190,10 +188,6 @@ private:
 	bool _mouseOver = false;
 	// If panorama is currently rotating
 	bool _isPanoramaRotating = false;
-
-
-	bool _sfmLoaded = false;
-	bool _needToUpdateIntrinsic = true;
 };
 
 }

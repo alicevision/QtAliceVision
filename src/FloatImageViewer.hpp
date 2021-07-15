@@ -59,8 +59,6 @@ Q_OBJECT
 
     Q_PROPERTY(bool canBeHovered MEMBER _canBeHovered NOTIFY canBeHoveredChanged)
 
-    Q_PROPERTY(bool sfmRequired MEMBER _sfmRequired NOTIFY sfmRequiredChanged)
-    
     Q_PROPERTY(QSize textureSize MEMBER _textureSize NOTIFY textureSizeChanged)
 
     Q_PROPERTY(QSize sourceSize READ sourceSize NOTIFY sourceSizeChanged)
@@ -143,7 +141,7 @@ private:
     /// Custom QSGNode update
     QSGNode* updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePaintNodeData* data) override;
 
-    void updatePaintSurface(QSGGeometryNode* root, QSGSimpleMaterial<ShaderData>* material, QSGGeometry* geometryLine, bool updateSfmData);
+    void updatePaintSurface(QSGGeometryNode* root, QSGSimpleMaterial<ShaderData>* material, QSGGeometry* geometryLine);
 
     QUrl _source;
     float _gamma = 1.f;
@@ -169,8 +167,6 @@ private:
     int _downscaleLevel = 0;
 
     bool _canBeHovered = false;
-
-    bool _sfmRequired = false;
 };
 
 }
