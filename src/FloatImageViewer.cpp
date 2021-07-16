@@ -167,7 +167,7 @@ void FloatImageViewer::onResultReady(QSharedPointer<FloatImage> image, QSize sou
     }
 
     _surface.setVerticesChanged(true);
-    _surface.setNeedToUpdateIntrinsic(true);
+    _surface.setNeedToUseIntrinsic(true);
     _image = image;
     _imageChanged = true;
     Q_EMIT imageChanged();

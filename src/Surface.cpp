@@ -47,8 +47,8 @@ void Surface::update(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, Q
 void Surface::computeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize, int downscaleLevel)
 {
     aliceVision::camera::IntrinsicBase* intrinsic = nullptr;
-    bool computeWIthIntrinsics = false;
-    if (_sfmLoaded && (_isPanoramaRotating || _needToUpdateIntrinsic))
+    bool verticesComputed = false;
+    if (_sfmLoaded && (_isPanoramaRotating || _needToUseIntrinsic))
     {
         // Load Intrinsic with 2 ways whether we are in the Panorama or Distorsion Viewer
         if (isPanoramaViewerEnabled())
@@ -65,20 +65,20 @@ void Surface::computeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indic
             
         if (intrinsic)
         {
-            computeWIthIntrinsics = true;
             computePrincipalPoint(intrinsic);
             computeVerticesGrid(vertices, textureSize, intrinsic, downscaleLevel);
+            verticesComputed = true;
             setVerticesChanged(true);
             Q_EMIT verticesChanged();
-            _needToUpdateIntrinsic = false;
+            _needToUseIntrinsic = false;
         }
         else 
         {
-            computeWIthIntrinsics = false;
+            verticesComputed = false;
         }
     }
     // If there is no sfm data update or intrinsics are invalid, keep the same vertices
-    if (!computeWIthIntrinsics)
+    if (!verticesComputed)
     {
         computeVerticesGrid(vertices, textureSize, nullptr);
         setVerticesChanged(false);
@@ -364,7 +364,7 @@ void Surface::setSubdivisions(int newSubdivisions)
     
     clearVertices();
     setVerticesChanged(true);
-    _needToUpdateIntrinsic = true;
+    _needToUseIntrinsic = true;
     Q_EMIT subdivisionsChanged();
 }
 
@@ -583,7 +583,7 @@ void Surface::setMSfmData(MSfMData* sfmData)
     }
 
     _sfmLoaded = true;
-    _needToUpdateIntrinsic = true;
+    _needToUseIntrinsic = true;
     clearVertices();
     setVerticesChanged(true);
     Q_EMIT sfmDataChanged();

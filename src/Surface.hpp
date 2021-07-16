@@ -31,7 +31,6 @@ Q_OBJECT
 
 	Q_PROPERTY(bool mouseOver READ getMouseOver WRITE setMouseOver NOTIFY mouseOverChanged);
 
-	//Q_PROPERTY(QString sfmPath WRITE setSfmPath NOTIFY sfmPathChanged);
 	Q_PROPERTY(qtAliceVision::MSfMData* msfmData READ getMSfmData WRITE setMSfmData NOTIFY sfmDataChanged)
 
 	Q_PROPERTY(EViewerType viewerType WRITE setViewerType NOTIFY viewerTypeChanged);
@@ -120,7 +119,7 @@ public:
 	bool hasSubdivisionsChanged() { return _subdivisionsChanged; }
 	void setHasSubdivisionsChanged(bool state) { _subdivisionsChanged = state; }
 
-	void setNeedToUpdateIntrinsic(bool state) { _needToUpdateIntrinsic = state; }
+	void setNeedToUseIntrinsic(bool state) { _needToUseIntrinsic = state; }
 
 	void fillVertices(QSGGeometry::TexturedPoint2D* vertices);
 
@@ -167,8 +166,10 @@ private:
 
 	// SfmData
 	MSfMData* _msfmData = nullptr;
+	// sfmData is ready to use
 	bool _sfmLoaded = false;
-	bool _needToUpdateIntrinsic = true;
+	// Compute vertices grid with intrinsic
+	bool _needToUseIntrinsic = true;
 
 	// Principal Point Coord
 	QPoint _principalPoint = QPoint(0, 0);
@@ -179,7 +180,7 @@ private:
 	// Viewer
 	EViewerType _viewerType = EViewerType::DEFAULT;
 
-	/* Euler angle in radians */
+	// Euler angle in radians
 	double _pitch = 0.0;
 	double _yaw = 0.0;
 	// Coordinates on Unit Sphere without any rotation
