@@ -313,12 +313,18 @@ void Surface::removeGrid(QSGGeometry* geometryLine)
 
 void Surface::setGridColor(const QColor& color)
 {
+    if (_gridColor == color)
+        return;
+
     _gridColor = color;
     _gridColor.setAlpha(_gridOpacity);
     Q_EMIT gridColorChanged(color);
 }
 void Surface::setGridOpacity(const int& opacity)
 {
+    if (_gridOpacity == opacity)
+        return;
+
     if (_gridOpacity == int((opacity / 100.0) * 255)) return;
     _gridOpacity = int((opacity / 100.0) * 255);
     _gridColor.setAlpha(_gridOpacity);
@@ -327,6 +333,9 @@ void Surface::setGridOpacity(const int& opacity)
 
 void Surface::setDisplayGrid(bool display)
 {
+    if (_displayGrid == display)
+        return;
+
     _displayGrid = display;
     Q_EMIT displayGridChanged();
 }
@@ -359,6 +368,9 @@ void Surface::updateSubdivisions(int sub)
 
 void Surface::setSubdivisions(int newSubdivisions)
 {
+    if (newSubdivisions == _subdivisions)
+        return;
+
     setHasSubdivisionsChanged(true);
     updateSubdivisions(newSubdivisions);
     
@@ -513,25 +525,24 @@ bool Surface::isMouseInside(float mx, float my)
 
 void Surface::setMouseOver(bool state)
 {
-    if (state != _mouseOver)
-    {
-        _mouseOver = state;
-        Q_EMIT mouseOverChanged();
-    }
+    if (state == _mouseOver)
+        return;
+
+    _mouseOver = state;
+    Q_EMIT mouseOverChanged();
 }
 
 // VIEWER TYPE FUNCTIONS
 
 void Surface::setViewerType(EViewerType type)
 {
-    if (_viewerType != type)
-    {
-        _viewerType = type;
+    if (_viewerType == type)
+        return;
 
-        clearVertices();
-        setVerticesChanged(true);
-        Q_EMIT viewerTypeChanged();
-    }
+    _viewerType = type;
+    clearVertices();
+    setVerticesChanged(true);
+    Q_EMIT viewerTypeChanged();
 }
 
 bool Surface::isPanoramaViewerEnabled() const
