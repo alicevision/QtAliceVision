@@ -406,7 +406,7 @@ void Surface::setRotationValues(float yaw, float pitch)
 void Surface::incrementRotationValues(float yaw, float pitch)
 {
     _yaw += yaw;
-    if (aliceVision::radianToDegree(_pitch + pitch) <= 90 && aliceVision::radianToDegree(_pitch + pitch) >= -90)
+    if (aliceVision::radianToDegree(_pitch + pitch) <= 180 && aliceVision::radianToDegree(_pitch + pitch) >= -180)
     {
         _pitch += pitch;
     }
@@ -447,12 +447,12 @@ double Surface::getPitch()
 
     // Radians
     double pitch = _pitch;
-    int power = pitch / M_PI_2;
-    pitch = fmod(pitch, M_PI_2) * pow(-1, power);
+    int power = pitch / M_PI;
+    pitch = fmod(pitch, M_PI) * pow(-1, power);
 
     // Degres
     pitch *= (180.0f / M_PI);
-    if (power % 2 != 0) pitch = -90.0 - pitch;
+    if (power % 2 != 0) pitch = -180.0 - pitch;
 
     return pitch;
 }
