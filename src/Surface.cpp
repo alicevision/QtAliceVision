@@ -396,10 +396,11 @@ void Surface::computePrincipalPoint(aliceVision::camera::IntrinsicBase* intrinsi
 }
 
 // ROTATION FUNCTIONS
-void Surface::setRotationValues(float yaw, float pitch)
+void Surface::setRotationValues(double yaw, double pitch, double roll)
 {
     _yaw = yaw;
     _pitch = pitch;
+    _roll = roll;
     _isPanoramaRotating = true;
 }
 
@@ -417,8 +418,10 @@ void Surface::rotatePanorama(aliceVision::Vec3& coordSphere)
 {
     Eigen::AngleAxis<double> Myaw(_yaw, Eigen::Vector3d::UnitY());
     Eigen::AngleAxis<double> Mpitch(_pitch, Eigen::Vector3d::UnitX());
+    Eigen::AngleAxis<double> Mroll(_roll, Eigen::Vector3d::UnitZ());
 
-    Eigen::Matrix3d cRo = Myaw.toRotationMatrix() * Mpitch.toRotationMatrix();
+
+    Eigen::Matrix3d cRo =  Myaw.toRotationMatrix() * Mpitch.toRotationMatrix() * Mroll.toRotationMatrix();
 
     coordSphere = cRo * coordSphere;
 }
@@ -430,13 +433,14 @@ void Surface::rotateSurfaceRadians(float yawRadians, float pitchRadians)
     Q_EMIT subdivisionsChanged();
 }
 
-void Surface::rotateSurfaceDegrees(float yawDegrees, float pitchDegrees)
+void Surface::rotateSurfaceDegrees(float yawDegrees, float pitchDegrees, float rollDegrees)
 {
     // To degrees conversion
     double yawRadians = yawDegrees * (M_PI / 180.0f);
     double pitchRadians = pitchDegrees * (M_PI / 180.0f);
+    double rollRadians = rollDegrees * (M_PI / 180.0f);
 
-    setRotationValues(yawRadians, pitchRadians);
+    setRotationValues(yawRadians, pitchRadians, rollRadians);
     setVerticesChanged(true);
     Q_EMIT subdivisionsChanged();
 }

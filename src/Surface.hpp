@@ -53,7 +53,7 @@ public:
 	Q_INVOKABLE double getPitch();
 	Q_INVOKABLE double getYaw();
 	Q_INVOKABLE void rotateSurfaceRadians(float yawRadians, float pitchRadians);
-	Q_INVOKABLE void rotateSurfaceDegrees(float yawDegrees, float pitchDegrees);
+	Q_INVOKABLE void rotateSurfaceDegrees(float yawDegrees, float pitchDegrees, float rollDegrees);
 
 	// GRID
 	void computeGrid(QSGGeometry* geometryLine);
@@ -112,7 +112,7 @@ public:
 	Q_SIGNAL void verticesChanged();
 
 	// ROTATION
-	void setRotationValues(float yaw, float pitch);
+	void setRotationValues(double yaw, double pitch, double roll);
 	void incrementRotationValues(float yaw, float pitch);
 
 	// SUBDIVISIONS
@@ -183,6 +183,7 @@ private:
 	// Euler angle in radians
 	double _pitch = 0.0;
 	double _yaw = 0.0;
+	double _roll = 0.0;
 	// Coordinates on Unit Sphere without any rotation
 	std::vector<aliceVision::Vec3> _defaultSphereCoordinates;
 	// Mouse Over 
