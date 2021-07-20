@@ -53,8 +53,11 @@ public:
 	Q_INVOKABLE double getPitch();
 	Q_INVOKABLE double getYaw();
 	Q_INVOKABLE double getRoll();
-	Q_INVOKABLE void rotateSurfaceRadians(float yawRadians, float pitchRadians);
-	Q_INVOKABLE void rotateSurfaceDegrees(float yawDegrees, float pitchDegrees, float rollDegrees);
+
+	// Pass angles in radians
+	Q_INVOKABLE void incrementEulerAngles(float yawRadians, float pitchRadians);
+	// Pass angles in degrees
+	Q_INVOKABLE void setEulerAngles(float yawDegrees, float pitchDegrees, float rollDegrees);
 
 	// GRID
 	void computeGrid(QSGGeometry* geometryLine);
@@ -111,10 +114,6 @@ public:
 	inline int vertexCount() const { return _vertexCount; }
 
 	Q_SIGNAL void verticesChanged();
-
-	// ROTATION
-	void setRotationValues(double yaw, double pitch, double roll);
-	void incrementRotationValues(float yaw, float pitch);
 
 	// SUBDIVISIONS
 	bool hasSubdivisionsChanged() { return _subdivisionsChanged; }

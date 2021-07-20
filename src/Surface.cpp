@@ -395,39 +395,6 @@ void Surface::computePrincipalPoint(aliceVision::camera::IntrinsicBase* intrinsi
     _principalPoint.setY(ppCorrection.y());
 }
 
-// ROTATION FUNCTIONS
-void Surface::setRotationValues(double yaw, double pitch, double roll)
-{
-    _yaw = yaw;
-
-    // Pitch value must remain between [-180, 180]
-    const double pitchDegrees = aliceVision::radianToDegree(pitch);
-    if (pitchDegrees > 180)
-    {
-        _pitch = aliceVision::degreeToRadian(-180.0 + (pitchDegrees - 180.0));
-    }
-    else if (pitchDegrees < -180)
-    {
-        _pitch = aliceVision::degreeToRadian(180 + (pitchDegrees + 180));
-    }
-    else
-    {
-        _pitch = pitch;
-    }
-
-    _roll = roll;
-    _isPanoramaRotating = true;
-}
-
-void Surface::incrementRotationValues(float yaw, float pitch)
-{
-    _yaw += yaw;
-    if (aliceVision::radianToDegree(_pitch + pitch) <= 180 && aliceVision::radianToDegree(_pitch + pitch) >= -180)
-    {
-        _pitch += pitch;
-    }
-    _isPanoramaRotating = true;
-}
 
 void Surface::rotatePanorama(aliceVision::Vec3& coordSphere)
 {
@@ -441,23 +408,44 @@ void Surface::rotatePanorama(aliceVision::Vec3& coordSphere)
     coordSphere = cRo * coordSphere;
 }
 
-void Surface::rotateSurfaceRadians(float yawRadians, float pitchRadians)
+// Pass angles in radians
+void Surface::incrementEulerAngles(float yawRadians, float pitchRadians)
 {
-    incrementRotationValues(yawRadians, pitchRadians);
+    _yaw += yawRadians;
+    // Limit pitch rotation between [-180, 180]
+    if (aliceVision::radianToDegree(_pitch + pitchRadians) <= 180 && aliceVision::radianToDegree(_pitch + pitchRadians) >= -180)
+    {
+        _pitch += pitchRadians;
+    }
+
+    _isPanoramaRotating = true;
     setVerticesChanged(true);
-    Q_EMIT subdivisionsChanged();
+    Q_EMIT verticesChanged();
 }
 
-void Surface::rotateSurfaceDegrees(float yawDegrees, float pitchDegrees, float rollDegrees)
+// Pass angles in degrees
+void Surface::setEulerAngles(float yawDegrees, float pitchDegrees, float rollDegrees)
 {
-    // To radians conversion
-    double yawRadians = yawDegrees * (M_PI / 180.0f);
-    double pitchRadians = pitchDegrees * (M_PI / 180.0f);
-    double rollRadians = rollDegrees * (M_PI / 180.0f);
+    _yaw = aliceVision::degreeToRadian(yawDegrees);
+    _roll = aliceVision::degreeToRadian(rollDegrees);
+    
+    // Pitch value must remain between [-180, 180]
+    if (pitchDegrees > 180)
+    {
+        _pitch = aliceVision::degreeToRadian(-180.0 + (pitchDegrees - 180.0));
+    }
+    else if (pitchDegrees < -180)
+    {
+        _pitch = aliceVision::degreeToRadian(180 + (pitchDegrees + 180));
+    }
+    else
+    {
+        _pitch = aliceVision::degreeToRadian(pitchDegrees);
+    }
 
-    setRotationValues(yawRadians, pitchRadians, rollRadians);
+    _isPanoramaRotating = true;
     setVerticesChanged(true);
-    Q_EMIT subdivisionsChanged();
+    Q_EMIT verticesChanged();
 }
 
 double Surface::getPitch()
