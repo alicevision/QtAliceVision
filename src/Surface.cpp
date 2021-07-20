@@ -355,11 +355,11 @@ void Surface::fillVertices(QSGGeometry::TexturedPoint2D* vertices)
 // SUBDIVISIONS FUNCTIONS
 void Surface::updateSubdivisions(int sub)
 {
-	_subdivisions = sub;
-	
-	// Update vertexCount and indexCount according to new subdivision count
-	_vertexCount = (_subdivisions + 1) * (_subdivisions + 1);
-	_indexCount = _subdivisions * _subdivisions * 6;
+    _subdivisions = sub;
+
+    // Update vertexCount and indexCount according to new subdivision count
+    _vertexCount = (_subdivisions + 1) * (_subdivisions + 1);
+    _indexCount = _subdivisions * _subdivisions * 6;
 
     _vertexEnabled.resize(_subdivisions + 1);
     for (size_t i = 0; i < _subdivisions + 1; i++)
@@ -373,7 +373,7 @@ void Surface::setSubdivisions(int newSubdivisions)
 
     setHasSubdivisionsChanged(true);
     updateSubdivisions(newSubdivisions);
-    
+
     clearVertices();
     setVerticesChanged(true);
     _needToUseIntrinsic = true;
@@ -399,7 +399,22 @@ void Surface::computePrincipalPoint(aliceVision::camera::IntrinsicBase* intrinsi
 void Surface::setRotationValues(double yaw, double pitch, double roll)
 {
     _yaw = yaw;
-    _pitch = pitch;
+
+    // Pitch value must remain between [-180, 180]
+    const double pitchDegrees = aliceVision::radianToDegree(pitch);
+    if (pitchDegrees > 180)
+    {
+        _pitch = aliceVision::degreeToRadian(-180.0 + (pitchDegrees - 180.0));
+    }
+    else if (pitchDegrees < -180)
+    {
+        _pitch = aliceVision::degreeToRadian(180 + (pitchDegrees + 180));
+    }
+    else
+    {
+        _pitch = pitch;
+    }
+
     _roll = roll;
     _isPanoramaRotating = true;
 }
@@ -435,7 +450,7 @@ void Surface::rotateSurfaceRadians(float yawRadians, float pitchRadians)
 
 void Surface::rotateSurfaceDegrees(float yawDegrees, float pitchDegrees, float rollDegrees)
 {
-    // To degrees conversion
+    // To radians conversion
     double yawRadians = yawDegrees * (M_PI / 180.0f);
     double pitchRadians = pitchDegrees * (M_PI / 180.0f);
     double rollRadians = rollDegrees * (M_PI / 180.0f);
