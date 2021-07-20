@@ -55,7 +55,7 @@ public:
 	Q_INVOKABLE double getRoll();
 
 	// Pass angles in radians
-	Q_INVOKABLE void incrementEulerAngles(float yawRadians, float pitchRadians);
+	Q_INVOKABLE void incrementEulerAngles(float yawRadians, float pitchRadians, float rollRadians);
 	// Pass angles in degrees
 	Q_INVOKABLE void setEulerAngles(float yawDegrees, float pitchDegrees, float rollDegrees);
 

@@ -409,7 +409,7 @@ void Surface::rotatePanorama(aliceVision::Vec3& coordSphere)
 }
 
 // Pass angles in radians
-void Surface::incrementEulerAngles(float yawRadians, float pitchRadians)
+void Surface::incrementEulerAngles(float yawRadians, float pitchRadians, float rollRadians)
 {
     _yaw += yawRadians;
     // Limit pitch rotation between [-180, 180]
@@ -417,6 +417,7 @@ void Surface::incrementEulerAngles(float yawRadians, float pitchRadians)
     {
         _pitch += pitchRadians;
     }
+    _roll += rollRadians;
 
     _isPanoramaRotating = true;
     setVerticesChanged(true);
