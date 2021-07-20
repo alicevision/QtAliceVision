@@ -463,49 +463,32 @@ void Surface::rotateSurfaceDegrees(float yawDegrees, float pitchDegrees, float r
 double Surface::getPitch()
 {
     // Get pitch in degrees
-
-    // Radians
-    double pitch = _pitch;
-    int power = pitch / M_PI;
-    pitch = fmod(pitch, M_PI) * pow(-1, power);
-
-    // Degres
-    pitch *= (180.0f / M_PI);
-    if (power % 2 != 0) pitch = -180.0 - pitch;
-
-    return pitch;
+    return getEulerAngleDegrees(_pitch);
 }
 
 double Surface::getYaw()
 {
     // Get yaw in degrees
-
-    // Radians
-    double yaw = _yaw;
-    int power = yaw / M_PI;
-    yaw = fmod(yaw, M_PI) * pow(-1, power);
-
-    // Degres
-    yaw *= (180.0f / M_PI);
-    if (power % 2 != 0) yaw = -180.0 - yaw;
-
-    return yaw;
+    return getEulerAngleDegrees(_yaw);
 }
 
 double Surface::getRoll()
 {
-    // Get yaw in degrees
+    // Get roll in degrees
+    return getEulerAngleDegrees(_roll);
+}
 
-    // Radians
-    double roll = _roll;
-    int power = roll / M_PI;
-    roll = fmod(roll, M_PI) * pow(-1, power);
+double Surface::getEulerAngleDegrees(double angleRadians)
+{
+    double angleDegrees = angleRadians;
+    int power = angleDegrees / M_PI;
+    angleDegrees = fmod(angleDegrees, M_PI) * pow(-1, power);
 
-    // Degres
-    roll *= (180.0f / M_PI);
-    if (power % 2 != 0) roll = -180.0 - roll;
+    // Radians to Degrees
+    angleDegrees *= (180.0f / M_PI);
+    if (power % 2 != 0) angleDegrees = -180.0 - angleDegrees;
 
-    return roll;
+    return angleDegrees;
 }
 
 

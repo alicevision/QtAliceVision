@@ -143,6 +143,9 @@ private:
 
 	void resetValuesVertexEnabled();
 
+	// Get pitch / yaw / roll in radians and return degrees angle in the correct interval
+	double getEulerAngleDegrees(double angleRadians);
+
 
 private:
 	const int _panoramaWidth = 3000;
