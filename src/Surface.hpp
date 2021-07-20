@@ -52,6 +52,7 @@ public:
 	Q_INVOKABLE void setIdView(int id);
 	Q_INVOKABLE double getPitch();
 	Q_INVOKABLE double getYaw();
+	Q_INVOKABLE double getRoll();
 	Q_INVOKABLE void rotateSurfaceRadians(float yawRadians, float pitchRadians);
 	Q_INVOKABLE void rotateSurfaceDegrees(float yawDegrees, float pitchDegrees, float rollDegrees);
 

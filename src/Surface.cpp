@@ -492,6 +492,22 @@ double Surface::getYaw()
     return yaw;
 }
 
+double Surface::getRoll()
+{
+    // Get yaw in degrees
+
+    // Radians
+    double roll = _roll;
+    int power = roll / M_PI;
+    roll = fmod(roll, M_PI) * pow(-1, power);
+
+    // Degres
+    roll *= (180.0f / M_PI);
+    if (power % 2 != 0) roll = -180.0 - roll;
+
+    return roll;
+}
+
 
 // ID VIEW FUNCTION
 void Surface::setIdView(int id)
