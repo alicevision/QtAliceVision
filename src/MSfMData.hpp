@@ -20,7 +20,7 @@ class MSfMData : public QObject
 
     Q_PROPERTY(QUrl sfmDataPath READ getSfmDataPath WRITE setSfmDataPath NOTIFY sfmDataPathChanged)
     Q_PROPERTY(Status status READ status NOTIFY statusChanged)
-    Q_PROPERTY(int nbCameras READ nbCameras CONSTANT)
+    Q_PROPERTY(int nbCameras READ nbCameras NOTIFY statusChanged)
 
 public:
     enum Status {
