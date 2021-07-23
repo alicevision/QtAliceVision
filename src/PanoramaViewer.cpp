@@ -28,9 +28,10 @@ PanoramaViewer::PanoramaViewer(QQuickItem* parent)
 {
     setFlag(QQuickItem::ItemHasContents, true);
     connect(this, &PanoramaViewer::sourceSizeChanged, this, &PanoramaViewer::update);
-    connect(this, &PanoramaViewer::sfmPathChanged, this, &PanoramaViewer::update);
     connect(this, &PanoramaViewer::imagesDataChanged, this, &PanoramaViewer::update);
     connect(this, &PanoramaViewer::downscaleChanged, this, &PanoramaViewer::update);
+    
+    connect(this, &PanoramaViewer::sfmDataChanged, this, &PanoramaViewer::computeInputImages);
 }
 
 PanoramaViewer::~PanoramaViewer()
@@ -39,33 +40,9 @@ PanoramaViewer::~PanoramaViewer()
 
 void PanoramaViewer::computeInputImages()
 {
-    // Load Sfm Data
-    std::string sfmDataFilename;
-    aliceVision::sfmData::SfMData sfmData;
-    if (_sfmPath.toStdString() != "")
-    {
-        // Retrieve Sfm Data Path
-        sfmDataFilename = _sfmPath.toStdString();
-
-        // load SfMData files
-        if (!aliceVision::sfmDataIO::Load(sfmData, sfmDataFilename, aliceVision::sfmDataIO::ESfMData::ALL))
-        {
-            qWarning() << "The input SfMData file '" << QString::fromUtf8(sfmDataFilename.c_str()) << "' cannot be read.\n";
-        }
-        if (sfmData.getViews().empty())
-        {
-            qWarning() << "The input SfMData file '" << QString::fromUtf8(sfmDataFilename.c_str()) << "' is empty.\n";
-        }
-        // Make sure there is only one kind of image in dataset
-        if (sfmData.getIntrinsics().size() > 1)
-        {
-            qWarning() << "Only one intrinsic allowed (" << sfmData.getIntrinsics().size() << " found)";
-        }
-    }
-
     // Loop on Views and insert (path, id)
     int totalSizeImages = 0;
-    for (const auto& view : sfmData.getViews())
+    for (const auto& view : _msfmData->rawData().getViews())
     {
         QString path = QString::fromUtf8(view.second->getImagePath().c_str());
         QVariant id = view.second->getViewId();
@@ -97,10 +74,42 @@ QSGNode* PanoramaViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePai
     return root;
 }
 
-void PanoramaViewer::setSfmPath(const QString& path)
+void PanoramaViewer::setMSfmData(MSfMData* sfmData)
 {
-    _sfmPath = path;
-    computeInputImages();
+    _sfmLoaded = false;
+
+    if (sfmData == nullptr)
+    {
+        _msfmData = sfmData;
+        return;
+    }
+
+    if (_msfmData == sfmData)
+        return;
+
+    if (_msfmData != nullptr)
+    {
+        disconnect(_msfmData, SIGNAL(sfmDataChanged()), this, SIGNAL(sfmDataChanged()));
+    }
+    _msfmData = sfmData;
+    if (_msfmData != nullptr)
+    {
+        connect(_msfmData, SIGNAL(sfmDataChanged()), this, SIGNAL(sfmDataChanged()));
+    }
+
+    if (_msfmData->status() != MSfMData::Ready)
+    {
+        qWarning() << "[QtAliceVision] setMSfmData: SfMData is not ready: " << _msfmData->status();
+        return;
+    }
+    if (_msfmData->rawData().getViews().empty())
+    {
+        qWarning() << "[QtAliceVision] setMSfmData: SfMData is empty";
+        return;
+    }
+
+    _sfmLoaded = true;
+    Q_EMIT sfmDataChanged();
 }
 
 }  // qtAliceVision
