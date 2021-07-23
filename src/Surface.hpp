@@ -56,11 +56,6 @@ public:
 	Q_INVOKABLE bool isMouseInside(float mx, float my);
 	Q_INVOKABLE void setIdView(int id);
 
-	// Pass angles in radians
-	Q_INVOKABLE void incrementEulerAngles(float yawRadians, float pitchRadians, float rollRadians);
-	// Pass angles in degrees
-	Q_INVOKABLE void setEulerAngles(float yawDegrees, float pitchDegrees, float rollDegrees);
-
 	// GRID
 	void computeGrid(QSGGeometry* geometryLine);
 	void removeGrid(QSGGeometry* geometryLine);

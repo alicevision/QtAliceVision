@@ -409,46 +409,6 @@ void Surface::rotatePanorama(aliceVision::Vec3& coordSphere)
     coordSphere = cRo * coordSphere;
 }
 
-// Pass angles in radians
-void Surface::incrementEulerAngles(float yawRadians, float pitchRadians, float rollRadians)
-{
-    _yaw += yawRadians;
-    // Limit pitch rotation between [-180, 180]
-    if (aliceVision::radianToDegree(_pitch + pitchRadians) <= 180 && aliceVision::radianToDegree(_pitch + pitchRadians) >= -180)
-    {
-        _pitch += pitchRadians;
-    }
-    _roll += rollRadians;
-
-    _isPanoramaRotating = true;
-    setVerticesChanged(true);
-    Q_EMIT verticesChanged();
-}
-
-// Pass angles in degrees
-void Surface::setEulerAngles(float yawDegrees, float pitchDegrees, float rollDegrees)
-{
-    _yaw = aliceVision::degreeToRadian(yawDegrees);
-    _roll = aliceVision::degreeToRadian(rollDegrees);
-    
-    // Pitch value must remain between [-180, 180]
-    if (pitchDegrees > 180)
-    {
-        _pitch = aliceVision::degreeToRadian(-180.0 + (pitchDegrees - 180.0));
-    }
-    else if (pitchDegrees < -180)
-    {
-        _pitch = aliceVision::degreeToRadian(180 + (pitchDegrees + 180));
-    }
-    else
-    {
-        _pitch = aliceVision::degreeToRadian(pitchDegrees);
-    }
-
-    _isPanoramaRotating = true;
-    setVerticesChanged(true);
-    Q_EMIT verticesChanged();
-}
 
 double Surface::getPitch()
 {
