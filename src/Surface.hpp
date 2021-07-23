@@ -39,6 +39,8 @@ Q_OBJECT
 
 	Q_PROPERTY(int subdivisions READ getSubdivisions WRITE setSubdivisions NOTIFY subdivisionsChanged);
 
+	Q_PROPERTY(double yaw READ getYaw WRITE setYaw NOTIFY anglesChanged);
+
 public:
 	Surface(int subdivisions = 12, QObject* parent = nullptr);
 	Surface& operator=(const Surface& other) = default;
@@ -51,7 +53,7 @@ public:
 	Q_INVOKABLE bool isMouseInside(float mx, float my);
 	Q_INVOKABLE void setIdView(int id);
 	Q_INVOKABLE double getPitch();
-	Q_INVOKABLE double getYaw();
+	//Q_INVOKABLE double getYaw();
 	Q_INVOKABLE double getRoll();
 
 	// Pass angles in radians
@@ -86,6 +88,8 @@ public:
 	// SUBDIVISION
 	int getSubdivisions() const { return _subdivisions; }
 	void setSubdivisions(int newSubdivisions);
+	bool hasSubdivisionsChanged() { return _subdivisionsChanged; }
+	void setHasSubdivisionsChanged(bool state) { _subdivisionsChanged = state; }
 	Q_SIGNAL void subdivisionsChanged();
 
 	// MSfmData
@@ -115,13 +119,15 @@ public:
 
 	Q_SIGNAL void verticesChanged();
 
-	// SUBDIVISIONS
-	bool hasSubdivisionsChanged() { return _subdivisionsChanged; }
-	void setHasSubdivisionsChanged(bool state) { _subdivisionsChanged = state; }
-
 	void setNeedToUseIntrinsic(bool state) { _needToUseIntrinsic = state; }
 
 	void fillVertices(QSGGeometry::TexturedPoint2D* vertices);
+
+	//Yaw
+	double getYaw();
+	void setYaw(double yawInDegrees);
+
+	Q_SIGNAL void anglesChanged();
 
 private:
 
@@ -183,10 +189,10 @@ private:
 	// Viewer
 	EViewerType _viewerType = EViewerType::DEFAULT;
 
-	// Euler angle in radians
 	double _pitch = 0.0;
 	double _yaw = 0.0;
 	double _roll = 0.0;
+
 	// Coordinates on Unit Sphere without any rotation
 	std::vector<aliceVision::Vec3> _defaultSphereCoordinates;
 	// Mouse Over 

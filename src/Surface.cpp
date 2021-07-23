@@ -28,6 +28,7 @@ Surface::Surface(int subdivisions, QObject* parent)
 {
     updateSubdivisions(subdivisions);
     connect(this, &Surface::sfmDataChanged, this, &Surface::verticesChanged);
+    connect(this, &Surface::anglesChanged, this, &Surface::verticesChanged);
 }
 
 Surface::~Surface()
@@ -457,8 +458,20 @@ double Surface::getPitch()
 
 double Surface::getYaw()
 {
+    //qWarning() << "Get yaw c++";
     // Get yaw in degrees
     return getEulerAngleDegrees(_yaw);
+}
+
+void Surface::setYaw(double yawInDegrees)
+{
+    //qWarning() << "Set yaw c++";
+
+    _yaw = aliceVision::degreeToRadian(yawInDegrees);
+    _isPanoramaRotating = true;
+    setVerticesChanged(true);
+
+    Q_EMIT anglesChanged();
 }
 
 double Surface::getRoll()
@@ -469,6 +482,7 @@ double Surface::getRoll()
 
 double Surface::getEulerAngleDegrees(double angleRadians)
 {
+    qWarning() << "Get euler angle degrees";
     double angleDegrees = angleRadians;
     int power = angleDegrees / M_PI;
     angleDegrees = fmod(angleDegrees, M_PI) * pow(-1, power);
