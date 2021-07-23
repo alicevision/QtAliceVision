@@ -40,6 +40,9 @@ Q_OBJECT
 	Q_PROPERTY(int subdivisions READ getSubdivisions WRITE setSubdivisions NOTIFY subdivisionsChanged);
 
 	Q_PROPERTY(double yaw READ getYaw WRITE setYaw NOTIFY anglesChanged);
+	Q_PROPERTY(double pitch READ getPitch WRITE setPitch NOTIFY anglesChanged);
+	Q_PROPERTY(double roll READ getRoll WRITE setRoll NOTIFY anglesChanged);
+
 
 public:
 	Surface(int subdivisions = 12, QObject* parent = nullptr);
@@ -52,9 +55,6 @@ public:
 	Q_INVOKABLE QPoint getPrincipalPoint() { return _principalPoint; };
 	Q_INVOKABLE bool isMouseInside(float mx, float my);
 	Q_INVOKABLE void setIdView(int id);
-	Q_INVOKABLE double getPitch();
-	//Q_INVOKABLE double getYaw();
-	Q_INVOKABLE double getRoll();
 
 	// Pass angles in radians
 	Q_INVOKABLE void incrementEulerAngles(float yawRadians, float pitchRadians, float rollRadians);
@@ -126,6 +126,12 @@ public:
 	//Yaw
 	double getYaw();
 	void setYaw(double yawInDegrees);
+	//Pitch
+	double getPitch();
+	void setPitch(double pitchInDegrees);
+	//Roll
+	double getRoll();
+	void setRoll(double rollInDegrees);
 
 	Q_SIGNAL void anglesChanged();
 

@@ -396,7 +396,7 @@ void Surface::computePrincipalPoint(aliceVision::camera::IntrinsicBase* intrinsi
     _principalPoint.setY(ppCorrection.y());
 }
 
-
+// PANORAMA
 void Surface::rotatePanorama(aliceVision::Vec3& coordSphere)
 {
     Eigen::AngleAxis<double> Myaw(_yaw, Eigen::Vector3d::UnitY());
@@ -456,17 +456,23 @@ double Surface::getPitch()
     return getEulerAngleDegrees(_pitch);
 }
 
+void Surface::setPitch(double pitchInDegrees)
+{
+    _pitch = aliceVision::degreeToRadian(pitchInDegrees);
+    _isPanoramaRotating = true;
+    setVerticesChanged(true);
+
+    Q_EMIT anglesChanged();
+}
+
 double Surface::getYaw()
 {
-    //qWarning() << "Get yaw c++";
     // Get yaw in degrees
     return getEulerAngleDegrees(_yaw);
 }
 
 void Surface::setYaw(double yawInDegrees)
 {
-    //qWarning() << "Set yaw c++";
-
     _yaw = aliceVision::degreeToRadian(yawInDegrees);
     _isPanoramaRotating = true;
     setVerticesChanged(true);
@@ -479,10 +485,17 @@ double Surface::getRoll()
     // Get roll in degrees
     return getEulerAngleDegrees(_roll);
 }
+void Surface::setRoll(double rollInDegrees)
+{
+    _roll = aliceVision::degreeToRadian(rollInDegrees);
+    _isPanoramaRotating = true;
+    setVerticesChanged(true);
+
+    Q_EMIT anglesChanged();
+}
 
 double Surface::getEulerAngleDegrees(double angleRadians)
 {
-    qWarning() << "Get euler angle degrees";
     double angleDegrees = angleRadians;
     int power = angleDegrees / M_PI;
     angleDegrees = fmod(angleDegrees, M_PI) * pow(-1, power);
