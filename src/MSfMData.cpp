@@ -101,6 +101,10 @@ void MSfMData::load()
     QThreadPool::globalInstance()->start(ioRunnable);
 }
 
+QUrl MSfMData::getUrlFromViewId(int viewId){
+    return QUrl(_sfmData->getView(aliceVision::IndexT (viewId)).getImagePath().c_str());
+}
+
 void MSfMData::onSfmDataReady()
 {
     if(!_loadingSfmData)

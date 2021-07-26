@@ -21,6 +21,7 @@ class MSfMData : public QObject
     Q_PROPERTY(QUrl sfmDataPath READ getSfmDataPath WRITE setSfmDataPath NOTIFY sfmDataPathChanged)
     Q_PROPERTY(Status status READ status NOTIFY statusChanged)
     Q_PROPERTY(int nbCameras READ nbCameras NOTIFY statusChanged)
+    Q_PROPERTY(QVariantList viewsIds READ getViewsIds NOTIFY viewsIdsChanged)
 
 public:
     enum Status {
@@ -41,11 +42,13 @@ private:
 public:
     Q_SLOT void load();
     Q_SLOT void onSfmDataReady();
+    Q_INVOKABLE QUrl getUrlFromViewId(int viewId);
 
 public:
     Q_SIGNAL void sfmDataPathChanged();
     Q_SIGNAL void sfmDataChanged();
     Q_SIGNAL void statusChanged(Status status);
+    Q_SIGNAL void viewsIdsChanged();
 
 private:
     void clear();
@@ -89,6 +92,15 @@ public:
         if(!_sfmData || _status != Ready)
             return 0;
         return _sfmData->getValidViews().size();
+    }
+
+    QVariantList getViewsIds() const{
+        QVariantList viewsIds;
+        for(const auto& id: _sfmData->getValidViews())
+        {
+            viewsIds.append(id);
+        }
+        return viewsIds;
     }
 
 private:
