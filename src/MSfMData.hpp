@@ -42,7 +42,7 @@ private:
 public:
     Q_SLOT void load();
     Q_SLOT void onSfmDataReady();
-    Q_INVOKABLE QUrl getUrlFromViewId(int viewId);
+    Q_INVOKABLE QString getUrlFromViewId(int viewId);
 
 public:
     Q_SIGNAL void sfmDataPathChanged();
