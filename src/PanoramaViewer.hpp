@@ -28,8 +28,6 @@ namespace qtAliceVision
         Q_OBJECT
             Q_PROPERTY(QSize sourceSize READ sourceSize NOTIFY sourceSizeChanged)
 
-            Q_PROPERTY(QVariantMap imagesData READ imagesData NOTIFY imagesDataChanged)
-
             Q_PROPERTY(qtAliceVision::MSfMData* msfmData READ getMSfmData WRITE setMSfmData NOTIFY sfmDataChanged)
 
             Q_PROPERTY(int downscale MEMBER _downscale NOTIFY downscaleChanged)
@@ -43,11 +41,6 @@ namespace qtAliceVision
             return _sourceSize;
         }
 
-        const QVariantMap& imagesData() const
-        {
-            return _imagesData;
-        }
-
         MSfMData* getMSfmData() { return _msfmData; }
         void setMSfmData(MSfMData* sfmData);
 
@@ -58,13 +51,13 @@ namespace qtAliceVision
 
         Q_SIGNAL void downscaleChanged();
 
-        Q_SIGNAL void imagesDataChanged(const QVariantMap& imagesData);
-        
+        Q_SIGNAL void downscaleReady();
+
     private:
         /// Custom QSGNode update
         QSGNode* updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePaintNodeData* data) override;
 
-        void computeInputImages();
+        void computeDownscale();
 
     private:
         QSize _sourceSize = QSize(3000, 1500);
@@ -72,8 +65,6 @@ namespace qtAliceVision
         MSfMData* _msfmData = nullptr;
 
         bool _sfmLoaded = false;
-
-        QVariantMap _imagesData;
 
         int _downscale = 4;
     };

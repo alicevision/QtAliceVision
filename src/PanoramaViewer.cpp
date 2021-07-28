@@ -25,33 +25,24 @@ PanoramaViewer::PanoramaViewer(QQuickItem* parent)
 {
     setFlag(QQuickItem::ItemHasContents, true);
     connect(this, &PanoramaViewer::sourceSizeChanged, this, &PanoramaViewer::update);
-    connect(this, &PanoramaViewer::imagesDataChanged, this, &PanoramaViewer::update);
     connect(this, &PanoramaViewer::downscaleChanged, this, &PanoramaViewer::update);
-    
-    connect(this, &PanoramaViewer::sfmDataChanged, this, &PanoramaViewer::computeInputImages);
+    connect(this, &PanoramaViewer::sfmDataChanged, this, &PanoramaViewer::computeDownscale);
 }
 
 PanoramaViewer::~PanoramaViewer()
 {
 }
 
-void PanoramaViewer::computeInputImages()
+void PanoramaViewer::computeDownscale()
 {
     if (!_msfmData || !_sfmLoaded)
         return;
 
-    // Loop on Views and insert (path, id)
     int totalSizeImages = 0;
     for (const auto& view : _msfmData->rawData().getViews())
-    {
-        QString path = QString::fromUtf8(view.second->getImagePath().c_str());
-        QVariant id = view.second->getViewId();
-        _imagesData.insert(path, id);
-
         totalSizeImages += int(((view.second->getWidth() * view.second->getHeight()) * 4) / std::pow(10, 6));
-    }
 
-    // Downscale == 4 by default
+    // Downscale = 4 by default
     _downscale = 4;
     for (size_t i = 0; i < _downscale; i++) 
         totalSizeImages *= 0.5;
@@ -65,7 +56,7 @@ void PanoramaViewer::computeInputImages()
         totalSizeImages *= 0.5;
     }
 
-    Q_EMIT imagesDataChanged(_imagesData);
+    Q_EMIT downscaleReady();
 }
 
 QSGNode* PanoramaViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePaintNodeData* data)
@@ -80,7 +71,6 @@ void PanoramaViewer::setMSfmData(MSfMData* sfmData)
 
     if (_msfmData == sfmData || sfmData == nullptr)
         return;
-
 
     if (_msfmData != nullptr)
     {

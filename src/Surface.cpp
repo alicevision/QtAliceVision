@@ -27,7 +27,7 @@ Surface::Surface(int subdivisions, QObject* parent)
     : QObject(parent)
 {
     updateSubdivisions(subdivisions);
-    connect(this, &Surface::sfmDataChanged, this, &Surface::verticesChanged);
+    connect(this, &Surface::sfmDataChanged, this, &Surface::msfmDataUpdate);
     connect(this, &Surface::anglesChanged, this, &Surface::verticesChanged);
 }
 
@@ -557,23 +557,18 @@ void Surface::setMSfmData(MSfMData* sfmData)
 {
     _sfmLoaded = false;
 
-    if (sfmData == nullptr)
-    {
-        _msfmData = sfmData;
+    if (_msfmData == sfmData || sfmData == nullptr)
         return;
-    }
 
-    if (_msfmData == sfmData)
-        return;
 
     if (_msfmData != nullptr)
     {
-        //disconnect(_msfmData, SIGNAL(sfmDataChanged()), this, SIGNAL(sfmDataChanged()));
+        disconnect(_msfmData, SIGNAL(sfmDataChanged()), this, SIGNAL(sfmDataChanged()));
     }
     _msfmData = sfmData;
     if (_msfmData != nullptr)
     {
-        //connect(_msfmData, SIGNAL(sfmDataChanged()), this, SIGNAL(sfmDataChanged()));
+        connect(_msfmData, SIGNAL(sfmDataChanged()), this, SIGNAL(sfmDataChanged()));
     }
 
     if (_msfmData->status() != MSfMData::Ready)
@@ -587,10 +582,6 @@ void Surface::setMSfmData(MSfMData* sfmData)
         return;
     }
 
-    _sfmLoaded = true;
-    _needToUseIntrinsic = true;
-    clearVertices();
-    setVerticesChanged(true);
     Q_EMIT sfmDataChanged();
 }
 

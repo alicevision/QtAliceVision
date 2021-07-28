@@ -130,6 +130,16 @@ public:
 
 	Q_SIGNAL void anglesChanged();
 
+	void msfmDataUpdate()
+	{
+		_sfmLoaded = true;
+		_needToUseIntrinsic = true;
+		clearVertices();
+		setVerticesChanged(true);
+
+		Q_EMIT verticesChanged();
+	}
+
 private:
 
 	void computeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize, int downscaleLevel = 0);
