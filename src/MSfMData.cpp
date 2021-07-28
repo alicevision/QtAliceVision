@@ -74,13 +74,16 @@ void MSfMData::clear()
 
 void MSfMData::load()
 {
-    if (status() == Loading)
-    {
-        qWarning("Failed to load, a load event is already running.");
-        return;
-    }
+    //if (status() == Loading)
+    //{
+    //    qWarning("Failed to load, a load event is already running.");
+    //    return;
+    //}
+    _outdated = false;
+    qWarning() << "LOAD START";
     if(_sfmDataPath.isEmpty())
     {
+        if (status() == Loading) _outdated = true;
         setStatus(None);
         clear();
         return;
@@ -91,14 +94,21 @@ void MSfMData::load()
         clear();
         return;
     }
+    if (!(status() == Loading))
+    {
 
-    setStatus(Loading);
+        setStatus(Loading);
 
-    _loadingSfmData->clear();
-    // load features from file in a seperate thread
-    SfmDataIORunnable* ioRunnable = new SfmDataIORunnable(_sfmDataPath, _loadingSfmData.get());
-    connect(ioRunnable, &SfmDataIORunnable::resultReady, this, &MSfMData::onSfmDataReady);
-    QThreadPool::globalInstance()->start(ioRunnable);
+        _loadingSfmData->clear();
+        // load features from file in a seperate thread
+        SfmDataIORunnable* ioRunnable = new SfmDataIORunnable(_sfmDataPath, _loadingSfmData.get());
+        connect(ioRunnable, &SfmDataIORunnable::resultReady, this, &MSfMData::onSfmDataReady);
+        QThreadPool::globalInstance()->start(ioRunnable);
+        qWarning() << "LOADING";
+    }
+    else {
+        _outdated = true;
+    }
 }
 
 QString MSfMData::getUrlFromViewId(int viewId){
@@ -107,12 +117,20 @@ QString MSfMData::getUrlFromViewId(int viewId){
 
 void MSfMData::onSfmDataReady()
 {
+
     if(!_loadingSfmData)
         return;
     setStatus(Loading);
     _sfmData.swap(_loadingSfmData);
     _loadingSfmData->clear();
+    qWarning() << "LOAD END";
     setStatus(Ready);
+
+    if (_outdated) {
+        clear();
+        load();
+        qWarning() << "Is outdated";
+    }
 }
 
 }

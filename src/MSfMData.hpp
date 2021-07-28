@@ -69,6 +69,7 @@ public:
 
     QUrl getSfmDataPath() const { return _sfmDataPath; }
     void setSfmDataPath(const QUrl& sfmDataPath) {
+        qWarning() << sfmDataPath;
         if(sfmDataPath == _sfmDataPath)
             return;
        _sfmDataPath = sfmDataPath;
@@ -108,6 +109,7 @@ private:
     std::unique_ptr<aliceVision::sfmData::SfMData> _loadingSfmData;
     std::unique_ptr<aliceVision::sfmData::SfMData> _sfmData;
     Status _status = MSfMData::None;
+    bool _outdated = false;
 };
 
 }
