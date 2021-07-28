@@ -9,15 +9,12 @@
 #include <QSGSimpleMaterialShader>
 #include <QSGTexture>
 #include <QThreadPool>
-#include <QSGFlatColorMaterial>
 
 #include <aliceVision/image/Image.hpp>
 #include <aliceVision/image/resampling.hpp>
 #include <aliceVision/image/io.hpp>
 #include <aliceVision/camera/cameraUndistortImage.hpp>
 
-#include <aliceVision/sfmData/SfMData.hpp>
-#include <aliceVision/sfmDataIO/sfmDataIO.hpp>
 #include <aliceVision/system/MemoryInfo.hpp>
 
 
@@ -40,6 +37,9 @@ PanoramaViewer::~PanoramaViewer()
 
 void PanoramaViewer::computeInputImages()
 {
+    if (!_msfmData || !_sfmLoaded)
+        return;
+
     // Loop on Views and insert (path, id)
     int totalSizeImages = 0;
     for (const auto& view : _msfmData->rawData().getViews())
@@ -78,35 +78,32 @@ void PanoramaViewer::setMSfmData(MSfMData* sfmData)
 {
     _sfmLoaded = false;
 
-    if (sfmData == nullptr)
-    {
-        _msfmData = sfmData;
+    if (_msfmData == sfmData || sfmData == nullptr)
         return;
-    }
 
-    if (_msfmData == sfmData)
-        return;
 
     if (_msfmData != nullptr)
     {
-        disconnect(_msfmData, SIGNAL(sfmDataChanged()), this, SIGNAL(sfmDataChanged()));
+        //disconnect(_msfmData, SIGNAL(sfmDataChanged()), this, SIGNAL(sfmDataChanged()));
     }
     _msfmData = sfmData;
     if (_msfmData != nullptr)
     {
-        connect(_msfmData, SIGNAL(sfmDataChanged()), this, SIGNAL(sfmDataChanged()));
+        //connect(_msfmData, SIGNAL(sfmDataChanged()), this, SIGNAL(sfmDataChanged()));
     }
 
     if (_msfmData->status() != MSfMData::Ready)
     {
-        qWarning() << "[QtAliceVision] setMSfmData: SfMData is not ready: " << _msfmData->status();
+        qWarning() << "[QtAliceVision] PANORAMA setMSfmData: SfMData is not ready: " << _msfmData->status();
         return;
     }
     if (_msfmData->rawData().getViews().empty())
     {
-        qWarning() << "[QtAliceVision] setMSfmData: SfMData is empty";
+        qWarning() << "[QtAliceVision] PANORAMA setMSfmData: SfMData is empty";
         return;
     }
+
+    qWarning() << "PANO SET SFM" << sfmData->getSfmDataPath();
 
     _sfmLoaded = true;
     Q_EMIT sfmDataChanged();

@@ -52,13 +52,13 @@ void Surface::computeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indic
     if (_sfmLoaded && (_isPanoramaRotating || _needToUseIntrinsic))
     {
         // Load Intrinsic with 2 ways whether we are in the Panorama or Distorsion Viewer
-        if (isPanoramaViewerEnabled())
+        if (isPanoramaViewerEnabled() && _msfmData)
         {
             const auto viewIt = _msfmData->rawData().getViews().find(_idView);
             const aliceVision::sfmData::View& view = *viewIt->second;
             intrinsic = _msfmData->rawData().getIntrinsicPtr(view.getIntrinsicId());
         }
-        else if (isDistortionViewerEnabled())
+        else if (isDistortionViewerEnabled() && _msfmData)
         {
             std::set<aliceVision::IndexT> intrinsicsIndices = _msfmData->rawData().getReconstructedIntrinsics();
             intrinsic = _msfmData->rawData().getIntrinsicPtr(*intrinsicsIndices.begin());
@@ -137,7 +137,7 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
 
     // Retrieve pose
     aliceVision::sfmData::CameraPose pose;
-    if (isPanoramaViewerEnabled() && intrinsic)
+    if (isPanoramaViewerEnabled() && intrinsic && _msfmData)
     {
         const auto viewIt = _msfmData->rawData().getViews().find(_idView);
         const aliceVision::sfmData::View& view = *viewIt->second;
@@ -568,22 +568,22 @@ void Surface::setMSfmData(MSfMData* sfmData)
 
     if (_msfmData != nullptr)
     {
-        disconnect(_msfmData, SIGNAL(sfmDataChanged()), this, SIGNAL(sfmDataChanged()));
+        //disconnect(_msfmData, SIGNAL(sfmDataChanged()), this, SIGNAL(sfmDataChanged()));
     }
     _msfmData = sfmData;
     if (_msfmData != nullptr)
     {
-        connect(_msfmData, SIGNAL(sfmDataChanged()), this, SIGNAL(sfmDataChanged()));
+        //connect(_msfmData, SIGNAL(sfmDataChanged()), this, SIGNAL(sfmDataChanged()));
     }
 
     if (_msfmData->status() != MSfMData::Ready)
     {
-        qWarning() << "[QtAliceVision] setMSfmData: SfMData is not ready: " << _msfmData->status();
+        qWarning() << "[QtAliceVision] SURFACE setMSfmData: SfMData is not ready: " << _msfmData->status();
         return;
     }
     if (_msfmData->rawData().getViews().empty())
     {
-        qWarning() << "[QtAliceVision] setMSfmData: SfMData is empty";
+        qWarning() << "[QtAliceVision] SURFACE setMSfmData: SfMData is empty";
         return;
     }
 

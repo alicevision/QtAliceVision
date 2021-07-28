@@ -38,12 +38,15 @@ void SfmDataIORunnable::run()
     using namespace aliceVision;
 
     // std::unique_ptr<sfmData::SfMData> sfmData(new sfmData::SfMData());
+    qWarning() << "TRY TO LOAD " << _sfmDataPath;
+
     try
     {
         if(!sfmDataIO::Load(*_sfmData, _sfmDataPath.toLocalFile().toStdString(), sfmDataIO::ESfMData::ALL))
         {
             qDebug() << "[QtAliceVision] Failed to load sfmData: " << _sfmDataPath << ".";
         }
+        qWarning() << "SFM LOADED" << _sfmDataPath;
     }
     catch(std::exception& e)
     {
@@ -74,13 +77,9 @@ void MSfMData::clear()
 
 void MSfMData::load()
 {
-    //if (status() == Loading)
-    //{
-    //    qWarning("Failed to load, a load event is already running.");
-    //    return;
-    //}
     _outdated = false;
     qWarning() << "LOAD START";
+
     if(_sfmDataPath.isEmpty())
     {
         if (status() == Loading) _outdated = true;
@@ -117,20 +116,23 @@ QString MSfMData::getUrlFromViewId(int viewId){
 
 void MSfMData::onSfmDataReady()
 {
-
     if(!_loadingSfmData)
         return;
+
+    if (_outdated) 
+    {
+        clear();
+        setStatus(None);
+        load();
+        qWarning() << "Is outdated";
+        return;
+    }
+
     setStatus(Loading);
     _sfmData.swap(_loadingSfmData);
     _loadingSfmData->clear();
     qWarning() << "LOAD END";
     setStatus(Ready);
-
-    if (_outdated) {
-        clear();
-        load();
-        qWarning() << "Is outdated";
-    }
 }
 
 }
