@@ -44,6 +44,12 @@ namespace qtAliceVision
         MSfMData* getMSfmData() { return _msfmData; }
         void setMSfmData(MSfMData* sfmData);
 
+        void msfmDataUpdate()
+        {
+            _sfmLoaded = true;
+            computeDownscale();
+        }
+
     public:
         Q_SIGNAL void sourceSizeChanged();
 

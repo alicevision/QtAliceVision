@@ -26,7 +26,7 @@ PanoramaViewer::PanoramaViewer(QQuickItem* parent)
     setFlag(QQuickItem::ItemHasContents, true);
     connect(this, &PanoramaViewer::sourceSizeChanged, this, &PanoramaViewer::update);
     connect(this, &PanoramaViewer::downscaleChanged, this, &PanoramaViewer::update);
-    connect(this, &PanoramaViewer::sfmDataChanged, this, &PanoramaViewer::computeDownscale);
+    connect(this, &PanoramaViewer::sfmDataChanged, this, &PanoramaViewer::msfmDataUpdate);
 }
 
 PanoramaViewer::~PanoramaViewer()
@@ -74,12 +74,12 @@ void PanoramaViewer::setMSfmData(MSfMData* sfmData)
 
     if (_msfmData != nullptr)
     {
-        //disconnect(_msfmData, SIGNAL(sfmDataChanged()), this, SIGNAL(sfmDataChanged()));
+        disconnect(_msfmData, SIGNAL(sfmDataChanged()), this, SIGNAL(sfmDataChanged()));
     }
     _msfmData = sfmData;
     if (_msfmData != nullptr)
     {
-        //connect(_msfmData, SIGNAL(sfmDataChanged()), this, SIGNAL(sfmDataChanged()));
+        connect(_msfmData, SIGNAL(sfmDataChanged()), this, SIGNAL(sfmDataChanged()));
     }
 
     if (_msfmData->status() != MSfMData::Ready)
