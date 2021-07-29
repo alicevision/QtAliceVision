@@ -92,11 +92,6 @@ void PanoramaViewer::setMSfmData(MSfMData* sfmData)
         qWarning() << "[QtAliceVision] PANORAMA setMSfmData: SfMData is empty";
         return;
     }
-
-    qWarning() << "PANO SET SFM" << sfmData->getSfmDataPath();
-
-    //_sfmLoaded = true;
-    //Q_EMIT sfmDataChanged();
 }
 
 }  // qtAliceVision
