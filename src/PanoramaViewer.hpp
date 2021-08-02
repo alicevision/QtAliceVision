@@ -46,7 +46,6 @@ namespace qtAliceVision
 
         void msfmDataUpdate()
         {
-            _sfmLoaded = true;
             computeDownscale();
         }
 
@@ -69,8 +68,6 @@ namespace qtAliceVision
         QSize _sourceSize = QSize(3000, 1500);
         
         MSfMData* _msfmData = nullptr;
-
-        bool _sfmLoaded = false;
 
         int _downscale = 4;
     };

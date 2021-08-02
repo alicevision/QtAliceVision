@@ -35,7 +35,7 @@ PanoramaViewer::~PanoramaViewer()
 
 void PanoramaViewer::computeDownscale()
 {
-    if (!_msfmData || !_sfmLoaded)
+    if (!_msfmData || _msfmData->status() != MSfMData::Status::Ready)
         return;
 
     int totalSizeImages = 0;
@@ -67,7 +67,6 @@ QSGNode* PanoramaViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePai
 
 void PanoramaViewer::setMSfmData(MSfMData* sfmData)
 {
-    _sfmLoaded = false;
 
     if (_msfmData == sfmData || sfmData == nullptr)
         return;
