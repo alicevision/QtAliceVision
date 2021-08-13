@@ -17,6 +17,9 @@ namespace qtAliceVision
         {
             float gamma = 1.f;
             float gain = 0.f;
+            QVector2D fisheyeCircleCoord = QVector2D(0, 0);
+            float fisheyeCircleRadius = 0.f;
+            float aspectRatio = 0.f;
             QVector4D channelOrder = QVector4D(0, 1, 2, 3);
             std::unique_ptr<QSGTexture> texture;
         };
@@ -29,13 +32,13 @@ namespace qtAliceVision
             const char* vertexShader() const override
             {
                 return
-                    "attribute highp vec4 vertex;              \n"
-                    "attribute highp vec2 texCoord;            \n"
+                    "attribute highp vec4 vertex;               \n"
+                    "attribute highp vec2 texCoord;             \n"
                     "uniform highp mat4 qt_Matrix;              \n"
                     "varying highp vec2 vTexCoord;              \n"
                     "void main() {                              \n"
                     "    gl_Position = qt_Matrix * vertex;      \n"
-                    "    vTexCoord = texCoord;      \n"
+                    "    vTexCoord = texCoord;                  \n"
                     "}";
             }
 
@@ -46,6 +49,9 @@ namespace qtAliceVision
                     "uniform highp sampler2D texture;                                                \n"
                     "uniform lowp float gamma;                                                       \n"
                     "uniform lowp float gain;                                                        \n"
+                    "uniform vec2 fisheyeCircleCoord;                                                \n"
+                    "uniform float fisheyeCircleRadius;                                              \n"
+                    "uniform float aspectRatio;                                                      \n"
                     "uniform vec4 channelOrder;                                                      \n"
                     "varying highp vec2 vTexCoord;                                                   \n"
                     "void main() {                                                                   \n"
@@ -56,7 +62,10 @@ namespace qtAliceVision
                     "    gl_FragColor.b = color[int(channelOrder[2])];                               \n"
                     "    gl_FragColor.a = int(channelOrder[3]) == -1 ? 1.0 : color[int(channelOrder[3])]; \n"
                     "    gl_FragColor.a *= qt_Opacity; \n"
-                    "    gl_FragColor.rgb *= gl_FragColor.a; \n"
+                    "    if(distance(vec2(vTexCoord.x * aspectRatio ,vTexCoord.y), vec2(fisheyeCircleCoord.x * aspectRatio , fisheyeCircleCoord.y)) > fisheyeCircleRadius && fisheyeCircleRadius > 0) {    \n"
+                    "       gl_FragColor.a *= 0.001;                                                  \n"
+                    "    }                                                                            \n"
+                    "    gl_FragColor.rgb *= gl_FragColor.a;                                          \n"
                     "}";
             }
 
@@ -71,6 +80,10 @@ namespace qtAliceVision
                 program()->setUniformValue(_gainId, data->gain);
                 program()->setUniformValue(_channelOrder, data->channelOrder);
 
+                program()->setUniformValue(_fisheyeCircleCoordId, data->fisheyeCircleCoord);
+                program()->setUniformValue(_fisheyeCircleRadiusId, data->fisheyeCircleRadius);
+                program()->setUniformValue(_aspectRatio, data->aspectRatio);
+
                 if (data->texture)
                 {
                     data->texture->bind();
@@ -82,6 +95,9 @@ namespace qtAliceVision
                 _textureId = program()->uniformLocation("texture");
                 _gammaId = program()->uniformLocation("gamma");
                 _gainId = program()->uniformLocation("gain");
+                _fisheyeCircleCoordId = program()->uniformLocation("fisheyeCircleCoord");
+                _fisheyeCircleRadiusId = program()->uniformLocation("fisheyeCircleRadius");
+                _aspectRatio = program()->uniformLocation("aspectRatio");
                 _channelOrder = program()->uniformLocation("channelOrder");
 
                 // We will only use texture unit 0, so set it only once.
@@ -93,6 +109,9 @@ namespace qtAliceVision
             int _gammaId = -1;
             int _gainId = -1;
             int _channelOrder = -1;
+            int _fisheyeCircleCoordId = -1;
+            int _fisheyeCircleRadiusId = -1;
+            int _aspectRatio = -1;
         };
 
     }

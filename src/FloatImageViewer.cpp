@@ -293,6 +293,22 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
     material->state()->gain = _gain;
     material->state()->channelOrder = channelOrder;
 
+    if (_surface.getIsFisheye()) {
+        if (_image) {
+            float width = _image->Width() * pow(2.0, _downscaleLevel);
+            float height = _image->Height() * pow(2.0, _downscaleLevel);
+            float aspectRatio = (width > height) ? width / height : height / width; 
+
+            //Radius is converted in uv coordinates (0, 0.5)
+            float radius = 0.5 * (_fisheyeCircleParameters.z() * 0.01);
+
+            material->state()->fisheyeCircleCoord = QVector2D(0.5 + (_fisheyeCircleParameters.x() / width) * 0.5, 0.5 + (_fisheyeCircleParameters.y() / height) * 0.5);
+            material->state()->fisheyeCircleRadius = radius;
+            material->state()->aspectRatio = aspectRatio;
+        }
+    }
+
+
     if (_imageChanged)
     {
         QSize newTextureSize;

@@ -43,6 +43,8 @@ Q_OBJECT
 	Q_PROPERTY(double pitch READ getPitch WRITE setPitch NOTIFY anglesChanged);
 	Q_PROPERTY(double roll READ getRoll WRITE setRoll NOTIFY anglesChanged);
 
+	Q_PROPERTY(bool isFisheye READ getIsFisheye WRITE setIsFisheye NOTIFY isFisheyeChanged)
+
 
 public:
 	Surface(int subdivisions = 12, QObject* parent = nullptr);
@@ -130,6 +132,13 @@ public:
 
 	Q_SIGNAL void anglesChanged();
 
+	bool getIsFisheye() const { return _isFisheye; }
+	void setIsFisheye(bool isFisheye) {
+		_isFisheye = isFisheye;
+	}
+
+	Q_SIGNAL void isFisheyeChanged();
+
 	void msfmDataUpdate()
 	{
 		_sfmLoaded = true;
@@ -203,6 +212,8 @@ private:
 	double _pitch = 0.0;
 	double _yaw = 0.0;
 	double _roll = 0.0;
+
+	bool _isFisheye = false;
 
 	// Coordinates on Unit Sphere without any rotation
 	std::vector<aliceVision::Vec3> _defaultSphereCoordinates;
