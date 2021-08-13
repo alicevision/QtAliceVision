@@ -557,15 +557,20 @@ void Surface::setMSfmData(MSfMData* sfmData)
 {
     _sfmLoaded = false;
 
-    if (_msfmData == sfmData || sfmData == nullptr)
+    if (_msfmData == sfmData)
+    {
+        _sfmLoaded = true;
         return;
-
+    }
 
     if (_msfmData != nullptr)
     {
         disconnect(_msfmData, SIGNAL(sfmDataChanged()), this, SIGNAL(sfmDataChanged()));
     }
     _msfmData = sfmData;
+
+    if (!_msfmData) return;
+
     if (_msfmData != nullptr)
     {
         connect(_msfmData, SIGNAL(sfmDataChanged()), this, SIGNAL(sfmDataChanged()));
