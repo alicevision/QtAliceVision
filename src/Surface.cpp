@@ -501,7 +501,7 @@ bool Surface::isMouseInside(float mx, float my)
         // Compute barycentric coordinates
         const float dots = (dot00 * dot11 - dot01 * dot01);
         if (dots == 0)
-            return false;
+            continue;
 
         float invDenom = 1 / dots;
         float u = (dot11 * dot02 - dot01 * dot12) * invDenom;
