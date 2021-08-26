@@ -54,7 +54,7 @@ public:
 	void update(QSGGeometry::TexturedPoint2D * vertices, quint16 * indices, QSize textureSize, int downscaleLevel = 0);
 
 	// Q_INVOKABLES
-	Q_INVOKABLE QPoint getPrincipalPoint() { return _principalPoint; };
+	Q_INVOKABLE QPointF getPrincipalPoint();
 	Q_INVOKABLE bool isMouseInside(float mx, float my);
 	Q_INVOKABLE void setIdView(int id);
 
@@ -151,14 +151,14 @@ public:
 
 private:
 
+	aliceVision::camera::IntrinsicBase* getIntrinsicFromViewId(int viewId);
+
 	void computeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize, int downscaleLevel = 0);
 
 	void computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize textureSize,
 		aliceVision::camera::IntrinsicBase* intrinsic, int downscaleLevel = 0);
 		
 	void computeIndicesGrid(quint16* indices);
-	
-	void computePrincipalPoint(aliceVision::camera::IntrinsicBase* intrinsic);
 
 	void rotatePanorama(aliceVision::Vec3& coordSphere);
 
@@ -199,9 +199,6 @@ private:
 	bool _sfmLoaded = false;
 	// Compute vertices grid with intrinsic
 	bool _needToUseIntrinsic = true;
-
-	// Principal Point Coord
-	QPoint _principalPoint = QPoint(0, 0);
 
 	// Id View
 	aliceVision::IndexT _idView;

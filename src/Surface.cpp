@@ -44,6 +44,19 @@ void Surface::update(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, Q
     if (_isPanoramaRotating) _isPanoramaRotating = false;
 }
 
+aliceVision::camera::IntrinsicBase* Surface::getIntrinsicFromViewId(int viewId){
+    aliceVision::camera::IntrinsicBase* intrinsic = nullptr;
+    const auto viewIt = _msfmData->rawData().getViews().find(viewId);
+    if(viewIt == _msfmData->rawData().getViews().end())
+    {
+        return nullptr;
+    }
+    const aliceVision::sfmData::View& view = *viewIt->second;
+    intrinsic = _msfmData->rawData().getIntrinsicPtr(view.getIntrinsicId());
+
+    return intrinsic;
+}
+
 // GRID METHODS
 void Surface::computeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize, int downscaleLevel)
 {
@@ -52,21 +65,13 @@ void Surface::computeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indic
     if (_sfmLoaded && (_isPanoramaRotating || _needToUseIntrinsic))
     {
         // Load Intrinsic with 2 ways whether we are in the Panorama or Distorsion Viewer
-        if (isPanoramaViewerEnabled() && _msfmData)
+        if (_msfmData && _idView >= 0)
         {
-            const auto viewIt = _msfmData->rawData().getViews().find(_idView);
-            const aliceVision::sfmData::View& view = *viewIt->second;
-            intrinsic = _msfmData->rawData().getIntrinsicPtr(view.getIntrinsicId());
+            intrinsic = getIntrinsicFromViewId(_idView);
         }
-        else if (isDistortionViewerEnabled() && _msfmData)
-        {
-            std::set<aliceVision::IndexT> intrinsicsIndices = _msfmData->rawData().getReconstructedIntrinsics();
-            intrinsic = _msfmData->rawData().getIntrinsicPtr(*intrinsicsIndices.begin());
-        }
-            
+
         if (intrinsic)
         {
-            computePrincipalPoint(intrinsic);
             computeVerticesGrid(vertices, textureSize, intrinsic, downscaleLevel);
             verticesComputed = true;
             setVerticesChanged(true);
@@ -341,6 +346,24 @@ void Surface::setDisplayGrid(bool display)
     Q_EMIT displayGridChanged();
 }
 
+QPointF Surface::getPrincipalPoint() {     
+    aliceVision::Vec2 ppCorrection(0.0, 0.0);
+
+    aliceVision::camera::IntrinsicBase* intrinsic = nullptr;
+
+    if (_msfmData && _idView >= 0)
+    {
+        intrinsic = getIntrinsicFromViewId(_idView);
+    }
+
+    if (intrinsic && aliceVision::camera::isPinhole(intrinsic->getType()))
+    {
+        ppCorrection = dynamic_cast<aliceVision::camera::IntrinsicsScaleOffset&>(*intrinsic).getOffset();
+    }
+
+    return {ppCorrection.x(), ppCorrection.y()};
+};
+
 
 // VERTICES FUNCTION
 void Surface::fillVertices(QSGGeometry::TexturedPoint2D* vertices)
@@ -379,21 +402,6 @@ void Surface::setSubdivisions(int newSubdivisions)
     setVerticesChanged(true);
     _needToUseIntrinsic = true;
     Q_EMIT subdivisionsChanged();
-}
-
-
-// PRINCIPAL POINT FUNCTION
-void Surface::computePrincipalPoint(aliceVision::camera::IntrinsicBase* intrinsic)
-{
-    aliceVision::Vec2 ppCorrection(0.0, 0.0);
-
-    if (aliceVision::camera::isPinhole(intrinsic->getType()))
-    {
-        ppCorrection = dynamic_cast<aliceVision::camera::IntrinsicsScaleOffset&>(*intrinsic).getOffset();
-    }
-
-    _principalPoint.setX(ppCorrection.x());
-    _principalPoint.setY(ppCorrection.y());
 }
 
 // PANORAMA
