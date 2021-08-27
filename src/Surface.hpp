@@ -43,8 +43,6 @@ Q_OBJECT
 	Q_PROPERTY(double pitch READ getPitch WRITE setPitch NOTIFY anglesChanged);
 	Q_PROPERTY(double roll READ getRoll WRITE setRoll NOTIFY anglesChanged);
 
-	Q_PROPERTY(bool isFisheye READ getIsFisheye WRITE setIsFisheye NOTIFY isFisheyeChanged)
-
 
 public:
 	Surface(int subdivisions = 12, QObject* parent = nullptr);
@@ -132,13 +130,6 @@ public:
 
 	Q_SIGNAL void anglesChanged();
 
-	bool getIsFisheye() const { return _isFisheye; }
-	void setIsFisheye(bool isFisheye) {
-		_isFisheye = isFisheye;
-	}
-
-	Q_SIGNAL void isFisheyeChanged();
-
 	void msfmDataUpdate()
 	{
 		_sfmLoaded = true;
@@ -149,9 +140,11 @@ public:
 		Q_EMIT verticesChanged();
 	}
 
+	const aliceVision::camera::EquiDistant* getIntrinsicEquiDistant() const;
+
 private:
 
-	aliceVision::camera::IntrinsicBase* getIntrinsicFromViewId(int viewId);
+	aliceVision::camera::IntrinsicBase* getIntrinsicFromViewId(int viewId) const;
 
 	void computeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize, int downscaleLevel = 0);
 
@@ -170,6 +163,8 @@ private:
 
 	// Get pitch / yaw / roll in radians and return degrees angle in the correct interval
 	double getEulerAngleDegrees(double angleRadians);
+
+
 
 
 private:

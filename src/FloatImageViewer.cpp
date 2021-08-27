@@ -293,22 +293,6 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
     material->state()->gain = _gain;
     material->state()->channelOrder = channelOrder;
 
-    if (_surface.getIsFisheye()) {
-        if (_image) {
-            float width = _image->Width() * pow(2.0, _downscaleLevel);
-            float height = _image->Height() * pow(2.0, _downscaleLevel);
-            float aspectRatio = (width > height) ? width / height : height / width; 
-
-            //Radius is converted in uv coordinates (0, 0.5)
-            float radius = 0.5 * (_fisheyeCircleParameters.z() * 0.01);
-
-            material->state()->fisheyeCircleCoord = QVector2D(0.5 + (_fisheyeCircleParameters.x() / width) * 0.5, 0.5 + (_fisheyeCircleParameters.y() / height) * 0.5);
-            material->state()->fisheyeCircleRadius = radius;
-            material->state()->aspectRatio = aspectRatio;
-        }
-    }
-
-
     if (_imageChanged)
     {
         QSize newTextureSize;
@@ -320,6 +304,29 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
             texture->setHorizontalWrapMode(QSGTexture::Repeat);
             texture->setVerticalWrapMode(QSGTexture::Repeat);
             newTextureSize = texture->textureSize();
+
+            const aliceVision::camera::EquiDistant* intrinsicEquiDistant = _surface.getIntrinsicEquiDistant();
+            if(_cropFisheye && intrinsicEquiDistant)
+            {
+                const aliceVision::Vec3 fisheyeCircleParams(intrinsicEquiDistant->getCircleCenterX(), intrinsicEquiDistant->getCircleCenterY(), intrinsicEquiDistant->getCircleRadius());
+
+                const double width = _image->Width() * pow(2.0, _downscaleLevel);
+                const double height = _image->Height() * pow(2.0, _downscaleLevel);
+                const double aspectRatio = (width > height) ? width / height : height / width;
+
+                const double radiusInPercentage = (fisheyeCircleParams.z() / ((width > height) ? height : width)) * 2.0;
+
+                //Radius is converted in uv coordinates (0, 0.5)
+                const double radius = 0.5 * (radiusInPercentage);
+
+                material->state()->fisheyeCircleCoord = QVector2D(fisheyeCircleParams.x() / width, fisheyeCircleParams.y() / height);
+                material->state()->fisheyeCircleRadius = radius;
+                material->state()->aspectRatio = aspectRatio;
+            }
+            else
+            {
+                material->state()->fisheyeCircleRadius = 0.0;
+            }
         }
         material->state()->texture = std::move(texture);
 

@@ -44,7 +44,12 @@ void Surface::update(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, Q
     if (_isPanoramaRotating) _isPanoramaRotating = false;
 }
 
-aliceVision::camera::IntrinsicBase* Surface::getIntrinsicFromViewId(int viewId){
+aliceVision::camera::IntrinsicBase* Surface::getIntrinsicFromViewId(int viewId) const
+{
+    if(!_msfmData)
+    {
+        return nullptr;
+    }
     aliceVision::camera::IntrinsicBase* intrinsic = nullptr;
     const auto viewIt = _msfmData->rawData().getViews().find(viewId);
     if(viewIt == _msfmData->rawData().getViews().end())
@@ -596,6 +601,20 @@ void Surface::setMSfmData(MSfMData* sfmData)
     }
 
     Q_EMIT sfmDataChanged();
+}
+
+const aliceVision::camera::EquiDistant* Surface::getIntrinsicEquiDistant() const
+{
+    const aliceVision::camera::IntrinsicBase* intrinsic = getIntrinsicFromViewId(_idView);
+    if(!intrinsic)
+    {
+        return nullptr;
+    }
+
+    // Load EquiDistant params
+    const aliceVision::camera::EquiDistant* intrinsicEquiDistant = dynamic_cast<const aliceVision::camera::EquiDistant*>(intrinsic);
+
+    return intrinsicEquiDistant;
 }
 
 }

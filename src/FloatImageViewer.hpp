@@ -75,7 +75,8 @@ Q_OBJECT
     
     Q_PROPERTY(Surface* surface READ getSurfacePtr NOTIFY surfaceChanged)
 
-    Q_PROPERTY(QVector3D fisheyeCircleParameters READ getFisheyeCircleParameters WRITE setFisheyeCircleParameters NOTIFY fisheyeCircleParametersChanged)
+    Q_PROPERTY(bool cropFisheye READ getCropFisheye WRITE setCropFisheye NOTIFY isCropFisheyeChanged)
+
 public:
     explicit FloatImageViewer(QQuickItem* parent = nullptr);
     ~FloatImageViewer() override;
@@ -112,11 +113,12 @@ public:
     enum class EChannelMode : quint8 { RGBA, RGB, R, G, B, A };
     Q_ENUM(EChannelMode)
 
-    QVector3D getFisheyeCircleParameters() { return _fisheyeCircleParameters; }
-    void setFisheyeCircleParameters(const QVector3D& fisheyeParams) {
-        qWarning() << "SET fisheyeparam";
-        _fisheyeCircleParameters = fisheyeParams; 
+    bool getCropFisheye() const { return _cropFisheye; }
+    void setCropFisheye(bool cropFisheye) {
+        _cropFisheye = cropFisheye;
     }
+
+    Q_SIGNAL void isCropFisheyeChanged();
 
     //Q_SIGNALS
     Q_SIGNAL void sourceChanged();
@@ -175,7 +177,7 @@ private:
 
     bool _canBeHovered = false;
 
-    QVector3D _fisheyeCircleParameters = QVector3D();
+    bool _cropFisheye = false;
 };
 
 }
