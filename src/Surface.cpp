@@ -44,24 +44,6 @@ void Surface::update(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, Q
     if (_isPanoramaRotating) _isPanoramaRotating = false;
 }
 
-aliceVision::camera::IntrinsicBase* Surface::getIntrinsicFromViewId(int viewId) const
-{
-    if(!_msfmData)
-    {
-        return nullptr;
-    }
-    aliceVision::camera::IntrinsicBase* intrinsic = nullptr;
-    const auto viewIt = _msfmData->rawData().getViews().find(viewId);
-    if(viewIt == _msfmData->rawData().getViews().end())
-    {
-        return nullptr;
-    }
-    const aliceVision::sfmData::View& view = *viewIt->second;
-    intrinsic = _msfmData->rawData().getIntrinsicPtr(view.getIntrinsicId());
-
-    return intrinsic;
-}
-
 // GRID METHODS
 void Surface::computeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize, int downscaleLevel)
 {
@@ -603,6 +585,24 @@ void Surface::setMSfmData(MSfMData* sfmData)
     Q_EMIT sfmDataChanged();
 }
 
+aliceVision::camera::IntrinsicBase* Surface::getIntrinsicFromViewId(int viewId) const
+{
+    if(!_msfmData)
+    {
+        return nullptr;
+    }
+    aliceVision::camera::IntrinsicBase* intrinsic = nullptr;
+    const auto viewIt = _msfmData->rawData().getViews().find(viewId);
+    if(viewIt == _msfmData->rawData().getViews().end())
+    {
+        return nullptr;
+    }
+    const aliceVision::sfmData::View& view = *viewIt->second;
+    intrinsic = _msfmData->rawData().getIntrinsicPtr(view.getIntrinsicId());
+
+    return intrinsic;
+}
+
 const aliceVision::camera::EquiDistant* Surface::getIntrinsicEquiDistant() const
 {
     const aliceVision::camera::IntrinsicBase* intrinsic = getIntrinsicFromViewId(_idView);
@@ -611,7 +611,7 @@ const aliceVision::camera::EquiDistant* Surface::getIntrinsicEquiDistant() const
         return nullptr;
     }
 
-    // Load EquiDistant params
+    // Load equidistant intrinsic (the intrinsic for full circle fisheye cameras)
     const aliceVision::camera::EquiDistant* intrinsicEquiDistant = dynamic_cast<const aliceVision::camera::EquiDistant*>(intrinsic);
 
     return intrinsicEquiDistant;

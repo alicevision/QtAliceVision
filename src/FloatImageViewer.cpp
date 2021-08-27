@@ -305,6 +305,7 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
             texture->setVerticalWrapMode(QSGTexture::Repeat);
             newTextureSize = texture->textureSize();
 
+            //Crop the image to only display what is inside the fisheye circle
             const aliceVision::camera::EquiDistant* intrinsicEquiDistant = _surface.getIntrinsicEquiDistant();
             if(_cropFisheye && intrinsicEquiDistant)
             {
