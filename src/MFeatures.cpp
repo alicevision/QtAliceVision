@@ -617,7 +617,7 @@ bool MFeatures::updateFromSfM()
         if (itObs != landmark.second.observations.end())
         {
           // setup landmark id and landmark 2d reprojection in the current view
-          aliceVision::Vec2 r = intrinsic->project(camTransform, landmark.second.X);
+          aliceVision::Vec2 r = intrinsic->project(camTransform, landmark.second.X.homogeneous());
 
           if (itObs->second.id_feat >= 0 && itObs->second.id_feat < viewFeatures.features.size())
           {
@@ -768,7 +768,7 @@ void MFeatures::updatePerTrackInformation()
       const aliceVision::geometry::Pose3 camTransform = pose.getTransform();
       const aliceVision::camera::IntrinsicBase* intrinsic = _msfmData->rawData().getIntrinsicPtr(view.getIntrinsicId());
 
-      const aliceVision::Vec2 r = intrinsic->project(camTransform, landmark.second.X);
+      const aliceVision::Vec2 r = intrinsic->project(camTransform, landmark.second.X.homogeneous());
       featuresPerFramePair.second->setReprojection(r.cast<float>());
     }
   }
