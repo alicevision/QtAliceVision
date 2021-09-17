@@ -38,6 +38,7 @@ void SfmDataIORunnable::run()
     using namespace aliceVision;
 
     // std::unique_ptr<sfmData::SfMData> sfmData(new sfmData::SfMData());
+
     try
     {
         if(!sfmDataIO::Load(*_sfmData, _sfmDataPath.toLocalFile().toStdString(), sfmDataIO::ESfMData::ALL))
@@ -74,13 +75,11 @@ void MSfMData::clear()
 
 void MSfMData::load()
 {
-    if (status() == Loading)
-    {
-        qWarning("Failed to load, a load event is already running.");
-        return;
-    }
+    _outdated = false;
+
     if(_sfmDataPath.isEmpty())
     {
+        if (status() == Loading) _outdated = true;
         setStatus(None);
         clear();
         return;
@@ -91,20 +90,39 @@ void MSfMData::load()
         clear();
         return;
     }
+    if (!(status() == Loading))
+    {
 
-    setStatus(Loading);
+        setStatus(Loading);
 
-    _loadingSfmData->clear();
-    // load features from file in a seperate thread
-    SfmDataIORunnable* ioRunnable = new SfmDataIORunnable(_sfmDataPath, _loadingSfmData.get());
-    connect(ioRunnable, &SfmDataIORunnable::resultReady, this, &MSfMData::onSfmDataReady);
-    QThreadPool::globalInstance()->start(ioRunnable);
+        _loadingSfmData->clear();
+        // load features from file in a seperate thread
+        SfmDataIORunnable* ioRunnable = new SfmDataIORunnable(_sfmDataPath, _loadingSfmData.get());
+        connect(ioRunnable, &SfmDataIORunnable::resultReady, this, &MSfMData::onSfmDataReady);
+        QThreadPool::globalInstance()->start(ioRunnable);
+    }
+    else {
+        _outdated = true;
+    }
+}
+
+QString MSfMData::getUrlFromViewId(int viewId){
+    return QString::fromUtf8(_sfmData->getView(aliceVision::IndexT (viewId)).getImagePath().c_str());
 }
 
 void MSfMData::onSfmDataReady()
 {
     if(!_loadingSfmData)
         return;
+
+    if (_outdated) 
+    {
+        clear();
+        setStatus(None);
+        load();
+        return;
+    }
+
     setStatus(Loading);
     _sfmData.swap(_loadingSfmData);
     _loadingSfmData->clear();
