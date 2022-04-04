@@ -62,7 +62,7 @@ namespace qtAliceVision
                     "    gl_FragColor.b = color[int(channelOrder[2])];                               \n"
                     "    gl_FragColor.a = int(channelOrder[3]) == -1 ? 1.0 : color[int(channelOrder[3])]; \n"
                     "    gl_FragColor.a *= qt_Opacity; \n"
-                    "    if(distance(vec2(vTexCoord.x * aspectRatio ,vTexCoord.y), vec2(fisheyeCircleCoord.x * aspectRatio , fisheyeCircleCoord.y)) > fisheyeCircleRadius && fisheyeCircleRadius > 0) {    \n"
+                    "    if(distance(vec2(vTexCoord.x * aspectRatio ,vTexCoord.y), vec2(fisheyeCircleCoord.x * aspectRatio , fisheyeCircleCoord.y)) > fisheyeCircleRadius && fisheyeCircleRadius > 0.0) {    \n"
                     "       gl_FragColor.a *= 0.001;                                                  \n"
                     "    }                                                                            \n"
                     "    gl_FragColor.rgb *= gl_FragColor.a;                                          \n"
