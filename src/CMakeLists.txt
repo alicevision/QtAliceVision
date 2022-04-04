@@ -24,7 +24,8 @@ set(PLUGIN_HEADERS
     FloatTexture.hpp
     MSfMDataStats.hpp
     PanoramaViewer.hpp
-    Surface.hpp)
+    Surface.hpp
+    ShaderImageViewer.hpp)
 
 set(PLUGIN_MOCS
     FeaturesViewer.hpp
