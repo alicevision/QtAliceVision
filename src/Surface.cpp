@@ -2,6 +2,7 @@
 
 #include <aliceVision/camera/IntrinsicBase.hpp>
 #include <aliceVision/camera/Pinhole.hpp>
+#include <aliceVision/camera/Equidistant.hpp>
 
 #include <aliceVision/sfmData/SfMData.hpp>
 #include <aliceVision/sfmDataIO/sfmDataIO.hpp>
@@ -136,6 +137,19 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
         pose = _msfmData->rawData().getPose(view);
     }
 
+
+    aliceVision::camera::EquiDistant* eqcam = dynamic_cast<aliceVision::camera::EquiDistant*>(intrinsic);
+    aliceVision::Vec2 center = {0, 0};
+    double radius = std::numeric_limits<double>::max();
+    
+    if (eqcam)
+    {
+        center = { eqcam->getCircleCenterX(), eqcam->getCircleCenterY() };
+        radius = eqcam->getCircleRadius();
+    }
+    
+    
+
     bool fillCoordsSphere = _defaultSphereCoordinates.empty();
     int vertexIndex = 0;
     for (size_t i = 0; i <= _subdivisions; i++)
@@ -154,6 +168,18 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
                 x = _vertices[vertexIndex].x();
                 y = _vertices[vertexIndex].y();
             }
+
+            double cx = x - center(0);
+            double cy = y - center(1);
+            double dist = sqrt(cx * cx + cy * cy);
+            const double maxradius = 0.99 * radius;
+
+            if (dist > maxradius)
+            {
+                x = center(0) + maxradius * cx / dist;
+                y = center(1) + maxradius * cy / dist;
+            }
+
 
             float u = i / (float)_subdivisions;
             float v = j / (float)_subdivisions;
