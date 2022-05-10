@@ -503,6 +503,8 @@ bool Surface::isMouseInside(float mx, float my)
 
     for (size_t i = 0; i < indexCount(); i += 3)
     {
+        if (i + 2 >= _indices.size()) continue;
+
         QPoint A = _vertices[_indices[i]];
         QPoint B = _vertices[_indices[i + 1]];
         QPoint C = _vertices[_indices[i + 2]];
