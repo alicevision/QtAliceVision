@@ -49,6 +49,15 @@ find_package(Qt5 COMPONENTS Charts REQUIRED)
 # Target properties
 add_library(qtAliceVisionPlugin SHARED ${PLUGIN_SOURCES} ${PLUGIN_HEADERS} ${PLUGIN_MOCS})
 
+find_package(Qt6 COMPONENTS ShaderTools)
+qt6_add_shaders(qtAliceVisionPlugin "qtAliceVisionPlugin_shaders"
+    BATCHABLE
+    PRECOMPILE
+    OPTIMIZED
+    PREFIX "/shaders"
+    FILES FloatImageViewer.vert FloatImageViewer.frag
+    )
+
 target_link_libraries(qtAliceVisionPlugin
   PUBLIC
     aliceVision_feature
@@ -56,10 +65,11 @@ target_link_libraries(qtAliceVisionPlugin
     aliceVision_sfm
     aliceVision_system
     aliceVision_image
-    Qt5::Core
-    Qt5::Qml
-    Qt5::Quick
-    Qt5::Charts
+    Qt6::Core
+    Qt6::GuiPrivate
+    Qt6::Qml
+    Qt6::Quick
+    Qt6::Charts
 )
 
 set_target_properties(qtAliceVisionPlugin

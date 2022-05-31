@@ -23,7 +23,9 @@ public:
     FloatTexture();
     ~FloatTexture() override;
 
-    int textureId() const override;
+    virtual qint64 comparisonKey() const override;
+    virtual QRhiTexture* rhiTexture() const override;
+    virtual void commitTextureOperations(QRhi* rhi, QRhiResourceUpdateBatch* resourceUpdates) override;
 
     QSize textureSize() const override
     {
@@ -36,8 +38,6 @@ public:
 
     void setImage(QSharedPointer<FloatImage>& image);
     const FloatImage &image() { return *_srcImage; }
-
-    void bind() override;
 
     /**
      * @brief Get the maximum dimension of a texture.
@@ -57,11 +57,10 @@ private:
 private:
     QSharedPointer<FloatImage> _srcImage;
 
-    uint _textureId = 0;
+    QRhiTexture* _rhiTexture = nullptr;
     QSize _textureSize;
 
     bool _dirty = false;
-    bool _dirtyBindOptions = false;
     bool _mipmapsGenerated = false;
 
     static int _maxTextureSize;
