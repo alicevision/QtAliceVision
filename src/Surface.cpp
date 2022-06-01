@@ -169,9 +169,9 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
                 y = _vertices[vertexIndex].y();
             }
 
-            double cx = x - center(0);
-            double cy = y - center(1);
-            double dist = sqrt(cx * cx + cy * cy);
+            const double cx = x - center(0);
+            const double cy = y - center(1);
+            const double dist = std::hypot(cx, cy);
             const double maxradius = 0.99 * radius;
 
             if (dist > maxradius)
@@ -503,7 +503,7 @@ bool Surface::isMouseInside(float mx, float my)
 
     for (size_t i = 0; i < indexCount(); i += 3)
     {
-        if (i + 2 >= _indices.size()) continue;
+        if (i + 2 >= _indices.size()) break;
 
         QPoint A = _vertices[_indices[i]];
         QPoint B = _vertices[_indices[i + 1]];
