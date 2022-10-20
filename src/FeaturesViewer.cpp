@@ -462,8 +462,8 @@ namespace qtAliceVision
     QSGGeometry::ColoredPoint2D* verticesReprojectionErrorLines = geometryReprojectionErrorLine->vertexDataAsColoredPoint2D();
     QSGGeometry::ColoredPoint2D* verticesPoints = geometryPoint->vertexDataAsColoredPoint2D();
 
-    // utility lambda to get line / point color
-    const auto getColor = [&](bool colorizeNonContiguous, bool contiguous, bool inliers, bool trackHasInliers) -> QColor
+    // utility lambda to get point color
+    const auto getPointColor = [&](bool contiguous, bool inliers, bool trackHasInliers) -> QColor
     {
       if (_trackContiguousFilter && !contiguous)
         return QColor(0, 0, 0, 0);
@@ -471,10 +471,22 @@ namespace qtAliceVision
       if (_trackInliersFilter && !trackHasInliers)
         return QColor(0, 0, 0, 0);
 
-      if (colorizeNonContiguous & !contiguous)
+      return inliers ? _landmarkColor : _matchColor;
+    };
+
+    // utility lambda to get line color
+    const auto getLineColor = [&](bool contiguous, int trackReconstructionState) -> QColor
+    {
+      if (_trackContiguousFilter && !contiguous)
+        return QColor(0, 0, 0, 0);
+
+      if (_trackInliersFilter && trackReconstructionState == 0)
+        return QColor(0, 0, 0, 0);
+
+      if (!contiguous)
         return QColor(50, 50, 50);
 
-      return inliers ? _landmarkColor : _matchColor;
+      return _trackReconstructionColors[trackReconstructionState];
     };
 
     // utility lambda to register a highlight point vertex
@@ -615,21 +627,16 @@ namespace qtAliceVision
           // The 2 features of the track are resectioning inliers
           const bool inliers = previousFeatureInlier && currentFeatureInlier;
 
-
           // draw previous point
-          const QColor& previousPointColor = getColor(false, contiguous || previousTrackLineContiguous,
-            previousFeatureInlier, trackHasInliers);
-          drawFeaturePoint(currentFrameId, previousFrameId, previousFeature, previousPointColor,
-            nbReprojectionErrorLinesDrawn, nbHighlightPointsDrawn, nbPointsDrawn, trackHasInliers);
+          const QColor& previousPointColor = getPointColor(contiguous || previousTrackLineContiguous, previousFeatureInlier, trackHasInliers);
+          drawFeaturePoint(currentFrameId, previousFrameId, previousFeature, previousPointColor, nbReprojectionErrorLinesDrawn, nbHighlightPointsDrawn, nbPointsDrawn, trackHasInliers);
 
           // draw track last point
           if (frameId == trackFeatures.maxFrameId)
-            drawFeaturePoint(currentFrameId, frameId, feature,
-              getColor(false, contiguous, currentFeatureInlier, trackHasInliers),
-              nbReprojectionErrorLinesDrawn, nbHighlightPointsDrawn, nbPointsDrawn, trackHasInliers);
+            drawFeaturePoint(currentFrameId, frameId, feature, getPointColor(contiguous, currentFeatureInlier, trackHasInliers), nbReprojectionErrorLinesDrawn, nbHighlightPointsDrawn, nbPointsDrawn, trackHasInliers);
 
           // draw track line
-          const QColor&  c = getColor(true, contiguous, inliers, trackHasInliers);
+          const QColor&  c = getLineColor(contiguous, trackFeatures.reconstructionState);
           const unsigned vIdx = nbTrackLinesDrawn * kLineVertices;
 
           if (_display3dTracks && trackHasInliers) // 3d track line

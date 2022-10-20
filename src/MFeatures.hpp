@@ -85,6 +85,7 @@ public:
       aliceVision::IndexT maxFrameId = std::numeric_limits<aliceVision::IndexT>::min();
       int nbLandmarks = 0;             // number of features of the track associated to a 3D landmark
       float featureScaleAverage = 0.f; // average feature scale
+      int reconstructionState = 0; // 0: not reconstructed, 1: partially reconstructed, 2: fully reconstructed
     };
     using MTrackFeaturesPerTrack = std::map<aliceVision::IndexT, MTrackFeatures>;
     using MTrackFeaturesPerTrackPerDesc = std::map<QString, MTrackFeaturesPerTrack>;

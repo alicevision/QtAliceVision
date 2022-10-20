@@ -145,6 +145,9 @@ namespace qtAliceVision {
     QColor _featureColor = QColor(20, 220, 80);
     QColor _matchColor = QColor(255, 127, 0);
     QColor _landmarkColor = QColor(255, 0, 0);
+    QColor _trackReconstructionColors[3] = {
+      QColor(0,0,255), QColor(0,255,0), QColor(255,0,0)
+    };
 
     QString _describerType = "sift";
     MFeatures* _mfeatures = nullptr;

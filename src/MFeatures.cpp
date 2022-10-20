@@ -7,6 +7,8 @@
 #include <aliceVision/feature/ImageDescriber.hpp>
 #include <aliceVision/sfm/pipeline/regionsIO.hpp>
 
+#include <algorithm>
+
 namespace qtAliceVision
 {
 
@@ -776,6 +778,34 @@ void MFeatures::updatePerTrackInformation()
 
       const aliceVision::Vec2 r = intrinsic->project(camTransform, landmark.second.X.homogeneous());
       featuresPerFramePair.second->setReprojection(r.cast<float>());
+    }
+  }
+
+  // compute tracks reconstruction stage
+  for (auto& trackFeaturesPerTrackPerDescPair : _trackFeaturesPerTrackPerDesc)
+  {
+    for (auto& trackFeaturesPerTrackPair : trackFeaturesPerTrackPerDescPair.second)
+    {
+      MTrackFeatures& trackFeatures = trackFeaturesPerTrackPair.second;
+      trackFeatures.reconstructionState = 0;
+
+      bool isPartiallyReconstructed = std::any_of(
+        trackFeatures.featuresPerFrame.begin(), trackFeatures.featuresPerFrame.end(), 
+        [](auto& pair){return pair.second->landmarkId() != -1;}
+      );
+      if (isPartiallyReconstructed) {
+        trackFeatures.reconstructionState = 1;
+      } else {
+        continue;
+      }
+
+      bool isFullyReconstructed = std::all_of(
+        trackFeatures.featuresPerFrame.begin(), trackFeatures.featuresPerFrame.end(), 
+        [](auto& pair){return pair.second->landmarkId() != -1;}
+      );
+      if (isFullyReconstructed) {
+        trackFeatures.reconstructionState = 2;
+      }
     }
   }
 }
