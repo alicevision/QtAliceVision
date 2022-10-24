@@ -156,6 +156,8 @@ private:
     float _gain = 1.f;
     bool _gainChanged = false;
 
+    bool _mouseOverChanged = false;
+
     bool _loading = false;
     bool _outdated = false;
     bool _clearBeforeLoad = true;

@@ -114,6 +114,7 @@ namespace
         } uniforms;
 
         bool dirtyUniforms;
+        bool appliedHoveringGamma = false;
         std::unique_ptr<FloatTexture> texture;
     };
 
@@ -213,15 +214,27 @@ namespace
             _gridNode->markDirty(QSGNode::DirtyGeometry);
         }
 
-        void updatePaintSurface(Surface & surface, QSize textureSize, int downscaleLevel, bool canBeHovered)
+        void updatePaintSurface(Surface & surface, QSize textureSize, int downscaleLevel, bool canBeHovered, bool wasHovered)
         {
             // Highlight
             if (canBeHovered)
             {
-                if (surface.getMouseOver())
+                if (surface.getMouseOver() && !wasHovered)
                 {
                     auto* m = static_cast<FloatImageViewerMaterial*>(material());
-                    setGamma(m->uniforms.gamma + 1.f);
+                    if (!m->appliedHoveringGamma) {
+                        setGamma(m->uniforms.gamma + 1.f);
+                        m->appliedHoveringGamma = true;
+                    }
+                }
+
+                else if (!surface.getMouseOver() && wasHovered)
+                {
+                    auto *m = static_cast<FloatImageViewerMaterial*>(material());
+                    if (m->appliedHoveringGamma) {
+                        setGamma(m->uniforms.gamma - 1.f);
+                        m->appliedHoveringGamma = false;
+                    }
                 }
                 markDirty(QSGNode::DirtyMaterial);
             }
@@ -344,7 +357,7 @@ FloatImageViewer::FloatImageViewer(QQuickItem* parent)
     connect(&_surface, &Surface::gridOpacityChanged, this, &FloatImageViewer::update);
     connect(&_surface, &Surface::displayGridChanged, this, &FloatImageViewer::update);
    
-    connect(&_surface, &Surface::mouseOverChanged, this, &FloatImageViewer::update);
+    connect(&_surface, &Surface::mouseOverChanged, this, [this] { _mouseOverChanged = true; update(); });
     connect(&_surface, &Surface::viewerTypeChanged, this, &FloatImageViewer::update);
 
     connect(&_surface, &Surface::subdivisionsChanged, this, &FloatImageViewer::update);
@@ -575,8 +588,9 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
 
     if (!isNewNode && _image)
     {
-        node->updatePaintSurface(_surface, _textureSize, _downscaleLevel, _canBeHovered);
+        node->updatePaintSurface(_surface, _textureSize, _downscaleLevel, _canBeHovered, !_surface.getMouseOver() && _mouseOverChanged);
     }
+    _mouseOverChanged = false;
     return node;
 }
 
