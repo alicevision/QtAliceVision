@@ -251,7 +251,7 @@ namespace qtAliceVision
         ? _mfeatures->getCurrentFrameId() : aliceVision::UndefinedIndexT;
 
     std::size_t nbTracksToDraw = 0;
-    std::size_t nbTrackLinesToDraw = 0;
+    std::size_t nbTrackLinesToDraw[3] = {0, 0, 0};
     std::size_t nbReprojectionErrorLinesToDraw = 0;
     std::size_t nbPointsToDraw = 0;
     std::size_t nbHighlightPointsToDraw = 0;
@@ -276,8 +276,8 @@ namespace qtAliceVision
         }
 
         ++nbTracksToDraw;
-        nbTrackLinesToDraw += (trackFeatures.featuresPerFrame.size() - 1); // number of lines in the track
-
+        nbTrackLinesToDraw[trackFeatures.reconstructionState] += (trackFeatures.featuresPerFrame.size() - 1); // number of lines in the track
+        
         if (_trackDisplayMode == WithCurrentMatches)
         {
           const auto it = trackFeatures.featuresPerFrame.find(currentFrameId);
@@ -303,153 +303,93 @@ namespace qtAliceVision
       }
     }
 
+    // utility lambda to create a QSGGeometry
+    const auto createGeometry = [&](int vertexCount) -> QSGGeometry* 
+    {
+      auto root = new QSGGeometryNode;
+      // use VertexColorMaterial to later be able to draw selection in another color
+      auto material = new QSGVertexColorMaterial;
+
+      QSGGeometry* geometry = new QSGGeometry(
+        QSGGeometry::defaultAttributes_ColoredPoint2D(),
+        static_cast<int>(vertexCount),
+        static_cast<int>(0),
+        QSGGeometry::UnsignedIntType);
+
+      geometry->setIndexDataPattern(QSGGeometry::StaticPattern);
+      geometry->setVertexDataPattern(QSGGeometry::StaticPattern);
+
+      root->setGeometry(geometry);
+      root->setFlags(QSGNode::OwnsGeometry);
+      root->setFlags(QSGNode::OwnsMaterial);
+      root->setMaterial(material);
+
+      node->appendChildNode(root);
+
+      return geometry;
+    };
+
+    // utility lambda to find and clear an existing QSGGeometry in oldNode
+    const auto getCleanGeometry = [&](int idx, int vertexCount) -> QSGGeometry* 
+    {
+      auto* root = static_cast<QSGGeometryNode*>(oldNode->childAtIndex(idx));
+      if (!root) 
+        return nullptr;
+      
+      root->markDirty(QSGNode::DirtyGeometry);
+
+      QSGGeometry* geometry = root->geometry();
+      geometry->allocate(
+        static_cast<int>(vertexCount),
+        static_cast<int>(0)
+      );
+
+      return geometry;
+    };
+
     QSGGeometry* geometryHighlightPoint = nullptr;
-    QSGGeometry* geometryTrackLine = nullptr;
+    QSGGeometry* geometryTrackLine[3] = {nullptr, nullptr, nullptr};
     QSGGeometry* geometryReprojectionErrorLine = nullptr;
     QSGGeometry* geometryPoint = nullptr;
 
-    if (!oldNode || oldNode->childCount() < 5)
+    if (!oldNode || oldNode->childCount() < 7)
     {
       // (1) Highlight points
-      {
-        auto root = new QSGGeometryNode;
-        // use VertexColorMaterial to later be able to draw selection in another color
-        auto material = new QSGVertexColorMaterial;
-        {
-          geometryHighlightPoint = new QSGGeometry(
-            QSGGeometry::defaultAttributes_ColoredPoint2D(),
-            static_cast<int>(nbHighlightPointsToDraw),
-            static_cast<int>(0),
-            QSGGeometry::UnsignedIntType);
-
-          geometryHighlightPoint->setIndexDataPattern(QSGGeometry::StaticPattern);
-          geometryHighlightPoint->setVertexDataPattern(QSGGeometry::StaticPattern);
-
-          root->setGeometry(geometryHighlightPoint);
-          root->setFlags(QSGNode::OwnsGeometry);
-          root->setFlags(QSGNode::OwnsMaterial);
-          root->setMaterial(material);
-        }
-        node->appendChildNode(root);
-      }
+      geometryHighlightPoint = createGeometry(nbHighlightPointsToDraw);
       // (2) Track lines
-      {
-        auto root = new QSGGeometryNode;
-
-        // use VertexColorMaterial to later be able to draw selection in another color
-        auto material = new QSGVertexColorMaterial;
-
-        geometryTrackLine = new QSGGeometry(
-          QSGGeometry::defaultAttributes_ColoredPoint2D(),
-          static_cast<int>(nbTrackLinesToDraw * kLineVertices),
-          static_cast<int>(0),
-          QSGGeometry::UnsignedIntType);
-
-        geometryTrackLine->setIndexDataPattern(QSGGeometry::StaticPattern);
-        geometryTrackLine->setVertexDataPattern(QSGGeometry::StaticPattern);
-
-        root->setGeometry(geometryTrackLine);
-        root->setFlags(QSGNode::OwnsGeometry);
-        root->setFlags(QSGNode::OwnsMaterial);
-        root->setMaterial(material);
-
-        node->appendChildNode(root);
-      }
+      for (std::size_t idx = 0; idx < 3; idx++)
+        geometryTrackLine[idx] = createGeometry(nbTrackLinesToDraw[idx] * kLineVertices);
       // (3) Reprojection Error lines
-      {
-        auto root = new QSGGeometryNode;
-
-        // use VertexColorMaterial to later be able to draw selection in another color
-        auto material = new QSGVertexColorMaterial;
-
-        geometryReprojectionErrorLine = new QSGGeometry(
-          QSGGeometry::defaultAttributes_ColoredPoint2D(),
-          static_cast<int>(nbReprojectionErrorLinesToDraw * kLineVertices),
-          static_cast<int>(0),
-          QSGGeometry::UnsignedIntType);
-
-        geometryReprojectionErrorLine->setIndexDataPattern(QSGGeometry::StaticPattern);
-        geometryReprojectionErrorLine->setVertexDataPattern(QSGGeometry::StaticPattern);
-
-        root->setGeometry(geometryReprojectionErrorLine);
-        root->setFlags(QSGNode::OwnsGeometry);
-        root->setFlags(QSGNode::OwnsMaterial);
-        root->setMaterial(material);
-
-        node->appendChildNode(root);
-      }
+      geometryReprojectionErrorLine = createGeometry(nbReprojectionErrorLinesToDraw * kLineVertices);
       // (4) Points
-      {
-        auto root = new QSGGeometryNode;
-        // use VertexColorMaterial to later be able to draw selection in another color
-        auto material = new QSGVertexColorMaterial;
-        {
-          geometryPoint = new QSGGeometry(
-            QSGGeometry::defaultAttributes_ColoredPoint2D(),
-            static_cast<int>(nbPointsToDraw),
-            static_cast<int>(0),
-            QSGGeometry::UnsignedIntType);
-
-          geometryPoint->setIndexDataPattern(QSGGeometry::StaticPattern);
-          geometryPoint->setVertexDataPattern(QSGGeometry::StaticPattern);
-
-          root->setGeometry(geometryPoint);
-          root->setFlags(QSGNode::OwnsGeometry);
-          root->setFlags(QSGNode::OwnsMaterial);
-          root->setMaterial(material);
-        }
-        node->appendChildNode(root);
-      }
+      geometryPoint = createGeometry(nbPointsToDraw);
     }
     else
     {
-      if (oldNode->childCount() < 5)
+      if (oldNode->childCount() < 7)
         return;
-
-      auto* rootHighlightPoint = static_cast<QSGGeometryNode*>(oldNode->childAtIndex(1));
-      auto* rootTrackLine = static_cast<QSGGeometryNode*>(oldNode->childAtIndex(2));
-      auto* rootReprojectionErrorLine = static_cast<QSGGeometryNode*>(oldNode->childAtIndex(3));
-      auto* rootPoint = static_cast<QSGGeometryNode*>(oldNode->childAtIndex(4));
-
-      if (!rootHighlightPoint || !rootTrackLine || !rootReprojectionErrorLine || !rootPoint)
-        return;
-
-      rootHighlightPoint->markDirty(QSGNode::DirtyGeometry);
-      rootTrackLine->markDirty(QSGNode::DirtyGeometry);
-      rootReprojectionErrorLine->markDirty(QSGNode::DirtyGeometry);
-      rootPoint->markDirty(QSGNode::DirtyGeometry);
-
       // (1) Highlight points
-      geometryHighlightPoint = rootHighlightPoint->geometry();
-      geometryHighlightPoint->allocate(
-        static_cast<int>(nbHighlightPointsToDraw),
-        static_cast<int>(0)
-      );
+      geometryHighlightPoint = getCleanGeometry(1, nbHighlightPointsToDraw);
       // (2) Tracks lines
-      geometryTrackLine = rootTrackLine->geometry();
-      geometryTrackLine->allocate(
-        static_cast<int>(nbTrackLinesToDraw * kLineVertices),
-        static_cast<int>(0)
-      );
+      for (std::size_t idx = 0; idx < 3; idx++) 
+        geometryTrackLine[idx] = getCleanGeometry(idx+2, nbTrackLinesToDraw[idx] * kLineVertices);
       // (3) Reprojection Error lines
-      geometryReprojectionErrorLine = rootReprojectionErrorLine->geometry();
-      geometryReprojectionErrorLine->allocate(
-        static_cast<int>(nbReprojectionErrorLinesToDraw * kLineVertices),
-        static_cast<int>(0)
-      );
+      geometryReprojectionErrorLine = getCleanGeometry(5, nbReprojectionErrorLinesToDraw * kLineVertices);
       // (4) Points
-      geometryPoint = rootPoint->geometry();
-      geometryPoint->allocate(
-        static_cast<int>(nbPointsToDraw),
-        static_cast<int>(0)
-      );
+      geometryPoint = getCleanGeometry(6, nbPointsToDraw);
     }
 
     geometryHighlightPoint->setDrawingMode(QSGGeometry::DrawPoints);
     geometryHighlightPoint->setLineWidth(6.0f);
 
-    geometryTrackLine->setDrawingMode(QSGGeometry::DrawLines);
-    geometryTrackLine->setLineWidth(2.0f);
+    geometryTrackLine[0]->setDrawingMode(QSGGeometry::DrawLines);
+    geometryTrackLine[0]->setLineWidth(2.0f);
+
+    geometryTrackLine[1]->setDrawingMode(QSGGeometry::DrawLines);
+    geometryTrackLine[1]->setLineWidth(2.0f);
+
+    geometryTrackLine[2]->setDrawingMode(QSGGeometry::DrawLines);
+    geometryTrackLine[2]->setLineWidth(4.0f);
 
     geometryReprojectionErrorLine->setDrawingMode(QSGGeometry::DrawLines);
     geometryReprojectionErrorLine->setLineWidth(1.0f);
@@ -458,7 +398,11 @@ namespace qtAliceVision
     geometryPoint->setLineWidth(4.0f);
 
     QSGGeometry::ColoredPoint2D* verticesHighlightPoints = geometryHighlightPoint->vertexDataAsColoredPoint2D();
-    QSGGeometry::ColoredPoint2D* verticesTrackLines = geometryTrackLine->vertexDataAsColoredPoint2D();
+    QSGGeometry::ColoredPoint2D* verticesTrackLines[3] = {
+      geometryTrackLine[0]->vertexDataAsColoredPoint2D(), 
+      geometryTrackLine[1]->vertexDataAsColoredPoint2D(), 
+      geometryTrackLine[2]->vertexDataAsColoredPoint2D()
+    };
     QSGGeometry::ColoredPoint2D* verticesReprojectionErrorLines = geometryReprojectionErrorLine->vertexDataAsColoredPoint2D();
     QSGGeometry::ColoredPoint2D* verticesPoints = geometryPoint->vertexDataAsColoredPoint2D();
 
@@ -475,18 +419,21 @@ namespace qtAliceVision
     };
 
     // utility lambda to get line color
-    const auto getLineColor = [&](bool contiguous, int trackReconstructionState) -> QColor
+    const auto getLineColor = [&](bool contiguous, bool inliers, bool trackHasInliers) -> QColor
     {
       if (_trackContiguousFilter && !contiguous)
         return QColor(0, 0, 0, 0);
 
-      if (_trackInliersFilter && trackReconstructionState == 0)
+      if (_trackInliersFilter && !trackHasInliers)
         return QColor(0, 0, 0, 0);
 
       if (!contiguous)
         return QColor(50, 50, 50);
+      
+      if (!trackHasInliers)
+        return _featureColor;
 
-      return _trackReconstructionColors[trackReconstructionState];
+      return inliers ? _landmarkColor : _matchColor;
     };
 
     // utility lambda to register a highlight point vertex
@@ -503,13 +450,9 @@ namespace qtAliceVision
     };
 
     // utility lambda to register a track line vertex
-    const auto setVerticeTrackLine = [&](unsigned int index, const QPointF& point, const QColor& c)
+    const auto setVerticeTrackLine = [&](std::size_t state, unsigned int index, const QPointF& point, const QColor& c)
     {
-      verticesTrackLines[index].set(
-        static_cast<float>(point.x()), static_cast<float>(point.y()),
-        static_cast<uchar>(c.red()), static_cast<uchar>(c.green()), static_cast<uchar>(c.blue()),
-        static_cast<uchar>(c.alpha())
-      );
+      verticesTrackLines[state][index].set(point.x(), point.y(), c.red(), c.green(), c.blue(), c.alpha());
     };
 
     // utility lambda to register a reprojection error line vertex
@@ -570,7 +513,7 @@ namespace qtAliceVision
       }
     };
 
-    if (nbTrackLinesToDraw == 0)
+    if (nbTrackLinesToDraw[0] + nbTrackLinesToDraw[1] + nbTrackLinesToDraw[2] == 0)
       return;
 
     if (currentFrameId == aliceVision::UndefinedIndexT)
@@ -581,7 +524,7 @@ namespace qtAliceVision
     }
 
     unsigned int nbHighlightPointsDrawn = 0;
-    unsigned int nbTrackLinesDrawn = 0;
+    unsigned int nbTrackLinesDrawn[3] = {0, 0, 0};
     unsigned int nbReprojectionErrorLinesDrawn = 0;
     unsigned int nbPointsDrawn = 0;
 
@@ -602,7 +545,8 @@ namespace qtAliceVision
         continue;
       }
 
-      const bool trackHasInliers = (trackFeatures.nbLandmarks > 0);
+      const int state = trackFeatures.reconstructionState;
+      const bool trackHasInliers = (state != 0);
 
       const MFeature* previousFeature = nullptr;
       aliceVision::IndexT previousFrameId = aliceVision::UndefinedIndexT;
@@ -636,21 +580,21 @@ namespace qtAliceVision
             drawFeaturePoint(currentFrameId, frameId, feature, getPointColor(contiguous, currentFeatureInlier, trackHasInliers), nbReprojectionErrorLinesDrawn, nbHighlightPointsDrawn, nbPointsDrawn, trackHasInliers);
 
           // draw track line
-          const QColor&  c = getLineColor(contiguous, trackFeatures.reconstructionState);
-          const unsigned vIdx = nbTrackLinesDrawn * kLineVertices;
+          const QColor&  c = getLineColor(contiguous, inliers, trackHasInliers);
+          const unsigned vIdx = nbTrackLinesDrawn[state] * kLineVertices;
 
           if (_display3dTracks && trackHasInliers) // 3d track line
           {
-            setVerticeTrackLine(vIdx, QPointF(previousFeature->rx(), previousFeature->ry()), c);
-            setVerticeTrackLine(vIdx + 1, QPointF(feature->rx(), feature->ry()), c);
+            setVerticeTrackLine(state, vIdx, QPointF(previousFeature->rx(), previousFeature->ry()), c);
+            setVerticeTrackLine(state, vIdx + 1, QPointF(feature->rx(), feature->ry()), c);
           }
           else // 2d track line
           {
-            setVerticeTrackLine(vIdx, QPointF(previousFeature->x(), previousFeature->y()), c);
-            setVerticeTrackLine(vIdx + 1, QPointF(feature->x(), feature->y()), c);
+            setVerticeTrackLine(state, vIdx, QPointF(previousFeature->x(), previousFeature->y()), c);
+            setVerticeTrackLine(state, vIdx + 1, QPointF(feature->x(), feature->y()), c);
           }
 
-          ++nbTrackLinesDrawn;
+          ++nbTrackLinesDrawn[state];
 
           previousTrackLineContiguous = contiguous;
         }
