@@ -85,7 +85,6 @@ public:
       aliceVision::IndexT maxFrameId = std::numeric_limits<aliceVision::IndexT>::min();
       int nbLandmarks = 0;             // number of features of the track associated to a 3D landmark
       float featureScaleAverage = 0.f; // average feature scale
-      int reconstructionState = 0; // 0: not reconstructed, 1: partially reconstructed, 2: fully reconstructed
     };
     using MTrackFeaturesPerTrack = std::map<aliceVision::IndexT, MTrackFeatures>;
     using MTrackFeaturesPerTrackPerDesc = std::map<QString, MTrackFeaturesPerTrack>;
@@ -94,6 +93,7 @@ public:
 
     Q_SLOT void load();
     Q_SLOT void clearAndLoad();
+    Q_SLOT void updateTrackReconstructionStates();
     Q_SLOT void onFeaturesReady(MViewFeaturesPerViewPerDesc* viewFeaturesPerViewPerDesc);
 
     /// Signals
@@ -219,9 +219,17 @@ public:
         Q_EMIT featuresChanged();
     }
 
+    int trackReconstructionState(aliceVision::IndexT trackId) 
+    {
+      return _trackReconstructionStates[trackId];
+    }
+
 private:
 
     /// Private methods (to use with Loading status)
+
+    // tmp
+    void getAllViewIds(std::vector<aliceVision::IndexT>& viewIds);
 
     /**
     * @brief Get the list of view ids to load in memory
@@ -235,13 +243,13 @@ private:
     * @brief Update MViewFeatures information with Tracks information
     * @return true if MViewFeatures information have been updated
     */
-    bool updateFromTracks();
+    bool updateFromTracks(MViewFeaturesPerViewPerDesc* viewFeaturesPerViewPerDesc);
 
     /**
     * @brief Update MViewFeatures information with SfMData information
     * @return true if MViewFeatures information have been updated
     */
-    bool updateFromSfM();
+    bool updateFromSfM(MViewFeaturesPerViewPerDesc* viewFeaturesPerViewPerDesc);
 
     /**
     * @brief Update min / max feature scale per describer
@@ -285,6 +293,8 @@ private:
     MViewFeaturesPerViewPerDesc _viewFeaturesPerViewPerDesc;
     MTrackFeaturesPerTrackPerDesc _trackFeaturesPerTrackPerDesc;
     QVariantMap _featuresInfo;
+
+    std::map<aliceVision::IndexT, int> _trackReconstructionStates;
 
     /// external data
     MSfMData* _msfmData = nullptr;

@@ -106,6 +106,7 @@ MFeatures::MFeatures()
   connect(this, &MFeatures::timeWindowChanged, this, &MFeatures::load);
   connect(this, &MFeatures::tracksChanged, this, &MFeatures::clearAndLoad);
   connect(this, &MFeatures::sfmDataChanged, this, &MFeatures::clearAndLoad);
+  connect(this, &MFeatures::sfmDataChanged, this, &MFeatures::updateTrackReconstructionStates);
 }
 
 MFeatures::~MFeatures()
@@ -150,6 +151,62 @@ void MFeatures::setMSfmData(MSfMData* sfmData)
     connect(_msfmData, SIGNAL(sfmDataChanged()), this, SIGNAL(sfmDataChanged()));
   }
   Q_EMIT sfmDataChanged();
+}
+
+void MFeatures::updateTrackReconstructionStates()
+{
+  // get all viewIds from sfmData
+  std::vector<aliceVision::IndexT> viewIds;
+  getAllViewIds(viewIds);
+  if (viewIds.empty())
+    return;
+  
+  // load features from file in a seperate thread
+  qDebug("[QtAliceVision] Track reconstruction states: Load features from file in a seperate thread.");
+  FeaturesIORunnable* ioRunnable = new FeaturesIORunnable(FeaturesIORunnable::IOParams(_featureFolder, viewIds, _describerTypes));
+  connect(ioRunnable, &FeaturesIORunnable::resultReady, this, [this](MViewFeaturesPerViewPerDesc* viewFeaturesPerViewPerDesc){
+    bool updated = updateFromTracks(viewFeaturesPerViewPerDesc) && updateFromSfM(viewFeaturesPerViewPerDesc);
+    if (!updated) 
+      return;
+    // temporary structures
+    std::map<aliceVision::IndexT, int> nbFeaturesPerTrack;
+    std::map<aliceVision::IndexT, int> nbReconstructedFeaturesPerTrack;
+    // count all features and all reconstructed features per track
+    for (auto& p1 : *viewFeaturesPerViewPerDesc) {
+      auto& viewFeaturesPerView = p1.second;
+      for (auto& p2 : viewFeaturesPerView) {
+        auto& viewFeatures = p2.second;
+        for (auto* feature : viewFeatures.features) {
+          const int trackId = feature->trackId();
+          const bool reconstructed = (feature->landmarkId() != -1);
+          if (nbFeaturesPerTrack.find(trackId) == nbFeaturesPerTrack.end()) {
+            nbFeaturesPerTrack[trackId] = 0;
+            nbReconstructedFeaturesPerTrack[trackId] = 0;
+          }
+          nbFeaturesPerTrack[trackId]++;
+          if (reconstructed) 
+            nbReconstructedFeaturesPerTrack[trackId]++;
+        }
+      }
+    }
+    // update track reconstruction states
+    _trackReconstructionStates.clear();
+    for (auto& p : nbFeaturesPerTrack) {
+      auto& trackId = p.first;
+      auto& nbFeatures = p.second;
+      auto& nbReconstructedFeatures = nbReconstructedFeaturesPerTrack[trackId];
+      if (nbReconstructedFeatures == 0) {
+        _trackReconstructionStates[trackId] = 0;
+      } else if (nbReconstructedFeatures < nbFeatures) {
+        _trackReconstructionStates[trackId] = 1;
+      } else {
+        _trackReconstructionStates[trackId] = 2;
+      }
+    }
+    // clear loaded features
+    delete viewFeaturesPerViewPerDesc;
+  });
+  QThreadPool::globalInstance()->start(ioRunnable);
 }
 
 void MFeatures::load()
@@ -238,8 +295,8 @@ void MFeatures::onFeaturesReady(MViewFeaturesPerViewPerDesc* viewFeaturesPerView
   }
 
   // update features with Tracks and SfMData information
-  const bool tracksUpdated = updateFromTracks();
-  const bool sfmUpdated = updateFromSfM();
+  const bool tracksUpdated = updateFromTracks(&_viewFeaturesPerViewPerDesc);
+  const bool sfmUpdated = updateFromSfM(&_viewFeaturesPerViewPerDesc);
 
   const bool featuresChanged = newFeaturesLoaded || tracksUpdated || sfmUpdated;
 
@@ -328,6 +385,16 @@ const MFeatures::MTrackFeaturesPerTrack* MFeatures::getTrackFeaturesPerTrack(con
     return nullptr;
 
   return &(itrDesc->second);
+}
+
+void MFeatures::getAllViewIds(std::vector<aliceVision::IndexT>& viewIdsToLoad)
+{
+  const aliceVision::sfmData::SfMData& sfmData = _msfmData->rawData();
+  for (const auto& viewPair : sfmData.getViews())
+  {
+    const aliceVision::sfmData::View& view = *(viewPair.second);
+    viewIdsToLoad.emplace_back(view.getViewId());
+  }
 }
 
 void MFeatures::getViewIdsToLoad(std::vector<aliceVision::IndexT>& viewIdsToLoad)
@@ -458,11 +525,11 @@ void MFeatures::getViewIdsToLoad(std::vector<aliceVision::IndexT>& viewIdsToLoad
                                                     << viewIdsToLoad.size() << " frame(s) requested.";
 }
 
-bool MFeatures::updateFromTracks()
+bool MFeatures::updateFromTracks(MViewFeaturesPerViewPerDesc* viewFeaturesPerViewPerDesc)
 {
   bool updated = false;
 
-  if (_viewFeaturesPerViewPerDesc.empty())
+  if (viewFeaturesPerViewPerDesc->empty())
   {
     qDebug("[QtAliceVision] Features: Unable to update from tracks, no features loaded.");
     return updated;
@@ -489,7 +556,7 @@ bool MFeatures::updateFromTracks()
   qDebug("[QtAliceVision] Features: Update from tracks.");
 
   // Update newly loaded features with information from the sfmData
-  for (auto& viewFeaturesPerViewPerDescPair : _viewFeaturesPerViewPerDesc)
+  for (auto& viewFeaturesPerViewPerDescPair : *viewFeaturesPerViewPerDesc)
   {
     const aliceVision::feature::EImageDescriberType descType = aliceVision::feature::EImageDescriberType_stringToEnum(viewFeaturesPerViewPerDescPair.first.toStdString());
 
@@ -548,11 +615,11 @@ bool MFeatures::updateFromTracks()
   return updated;
 }
 
-bool MFeatures::updateFromSfM()
+bool MFeatures::updateFromSfM(MViewFeaturesPerViewPerDesc* viewFeaturesPerViewPerDesc)
 {
   bool updated = false;
 
-  if (_viewFeaturesPerViewPerDesc.empty())
+  if (viewFeaturesPerViewPerDesc->empty())
   {
     qDebug("[QtAliceVision] Features: Unable to update from SfM, no features loaded.");
     return updated;
@@ -578,7 +645,7 @@ bool MFeatures::updateFromSfM()
 
   qDebug("[QtAliceVision] Features: Update from SfM.");
 
-  for (auto& viewFeaturesPerViewPerDescPair : _viewFeaturesPerViewPerDesc)
+  for (auto& viewFeaturesPerViewPerDescPair : *viewFeaturesPerViewPerDesc)
   {
     const aliceVision::feature::EImageDescriberType descType = aliceVision::feature::EImageDescriberType_stringToEnum(viewFeaturesPerViewPerDescPair.first.toStdString());
 
@@ -778,34 +845,6 @@ void MFeatures::updatePerTrackInformation()
 
       const aliceVision::Vec2 r = intrinsic->project(camTransform, landmark.second.X.homogeneous());
       featuresPerFramePair.second->setReprojection(r.cast<float>());
-    }
-  }
-
-  // compute tracks reconstruction stage
-  for (auto& trackFeaturesPerTrackPerDescPair : _trackFeaturesPerTrackPerDesc)
-  {
-    for (auto& trackFeaturesPerTrackPair : trackFeaturesPerTrackPerDescPair.second)
-    {
-      MTrackFeatures& trackFeatures = trackFeaturesPerTrackPair.second;
-      trackFeatures.reconstructionState = 0;
-
-      bool isPartiallyReconstructed = std::any_of(
-        trackFeatures.featuresPerFrame.begin(), trackFeatures.featuresPerFrame.end(), 
-        [](auto& pair){return pair.second->landmarkId() != -1;}
-      );
-      if (isPartiallyReconstructed) {
-        trackFeatures.reconstructionState = 1;
-      } else {
-        continue;
-      }
-
-      bool isFullyReconstructed = std::all_of(
-        trackFeatures.featuresPerFrame.begin(), trackFeatures.featuresPerFrame.end(), 
-        [](auto& pair){return pair.second->landmarkId() != -1;}
-      );
-      if (isFullyReconstructed) {
-        trackFeatures.reconstructionState = 2;
-      }
     }
   }
 }

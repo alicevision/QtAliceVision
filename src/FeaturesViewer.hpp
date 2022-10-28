@@ -5,6 +5,7 @@
 #include <MTracks.hpp>
 
 #include <QQuickItem>
+#include <QSGGeometry>
 
 namespace qtAliceVision {
 
@@ -120,12 +121,16 @@ namespace qtAliceVision {
     QSGNode* updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePaintNodeData* data) override;
 
   private:
-    void updatePaintFeatures(const PaintParams& params, QSGNode* oldNode, QSGNode* node);
-    void updatePaintTracks(const PaintParams& params, QSGNode* oldNode, QSGNode* node);
-    void updatePaintMatches(const PaintParams& params, QSGNode* oldNode, QSGNode* node);
-    void updatePaintLandmarks(const PaintParams& params, QSGNode* oldNode, QSGNode* node);
+    void updatePaintFeatures(const PaintParams& params, QSGNode* node);
+    void updatePaintTracks(const PaintParams& params, QSGNode* node);
+    void updatePaintMatches(const PaintParams& params, QSGNode* node);
+    void updatePaintLandmarks(const PaintParams& params, QSGNode* node);
 
     void initializePaintParams(PaintParams& params);
+
+    QSGGeometry* getCleanChildGeometry(QSGNode* node, int childIdx, int vertexCount, int indexCount = 0);
+    QSGGeometry* appendChildGeometry(QSGNode* node, int vertexCount, int indexCount = 0);
+    void setVertex(QSGGeometry::ColoredPoint2D* vertices, unsigned int idx, const QPointF& point, const QColor& c);
 
     bool _displayFeatures = true;
     bool _displayTracks = true;
