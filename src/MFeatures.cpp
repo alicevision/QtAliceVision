@@ -106,6 +106,7 @@ MFeatures::MFeatures()
   connect(this, &MFeatures::timeWindowChanged, this, &MFeatures::load);
   connect(this, &MFeatures::tracksChanged, this, &MFeatures::clearAndLoad);
   connect(this, &MFeatures::sfmDataChanged, this, &MFeatures::clearAndLoad);
+  connect(this, &MFeatures::tracksChanged, this, &MFeatures::updateTrackReconstructionStates);
   connect(this, &MFeatures::sfmDataChanged, this, &MFeatures::updateTrackReconstructionStates);
 }
 
@@ -155,6 +156,13 @@ void MFeatures::setMSfmData(MSfMData* sfmData)
 
 void MFeatures::updateTrackReconstructionStates()
 {
+  // safety check
+  if (_mtracks == nullptr || _mtracks->status() != MTracks::Ready) {
+    return;
+  }
+  if (_msfmData == nullptr || _msfmData->status() != MSfMData::Ready) {
+    return;
+  }
   // get all viewIds from sfmData
   std::vector<aliceVision::IndexT> viewIds;
   getAllViewIds(viewIds);
@@ -163,6 +171,7 @@ void MFeatures::updateTrackReconstructionStates()
   
   // load features from file in a seperate thread
   qDebug("[QtAliceVision] Track reconstruction states: Load features from file in a seperate thread.");
+  _trackReconstructionStatesReady = false;
   FeaturesIORunnable* ioRunnable = new FeaturesIORunnable(FeaturesIORunnable::IOParams(_featureFolder, viewIds, _describerTypes));
   connect(ioRunnable, &FeaturesIORunnable::resultReady, this, [this](MViewFeaturesPerViewPerDesc* viewFeaturesPerViewPerDesc){
     bool updated = updateFromTracks(viewFeaturesPerViewPerDesc) && updateFromSfM(viewFeaturesPerViewPerDesc);
@@ -205,6 +214,11 @@ void MFeatures::updateTrackReconstructionStates()
     }
     // clear loaded features
     delete viewFeaturesPerViewPerDesc;
+    // done
+    _trackReconstructionStatesReady = true;
+    if (_featuresReady) {
+      setStatus(Ready);
+    }
   });
   QThreadPool::globalInstance()->start(ioRunnable);
 }
@@ -257,6 +271,7 @@ void MFeatures::load()
   qDebug("[QtAliceVision] Features: Load features from file in a seperate thread.");
 
   // load features from file in a seperate thread
+  _featuresReady = false;
   FeaturesIORunnable* ioRunnable = new FeaturesIORunnable(FeaturesIORunnable::IOParams(_featureFolder, viewIds, _describerTypes));
   connect(ioRunnable, &FeaturesIORunnable::resultReady, this, &MFeatures::onFeaturesReady);
   QThreadPool::globalInstance()->start(ioRunnable);
@@ -321,7 +336,10 @@ void MFeatures::onFeaturesReady(MViewFeaturesPerViewPerDesc* viewFeaturesPerView
   }
 
   // done
-  setStatus(Ready);
+  _featuresReady = true;
+  if (_trackReconstructionStatesReady) {
+    setStatus(Ready);
+  }
 }
 
 aliceVision::IndexT MFeatures::getCurrentFrameId() const

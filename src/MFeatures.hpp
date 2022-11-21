@@ -286,6 +286,9 @@ private:
     bool _enableTimeWindow = false; // set to true if the user request multiple frames (e.g. display tracks)
     int _timeWindow = 1;            // size of the time window (from current frame - time window to current frame + time window), 0 is disable, -1 is no limit
 
+    bool _featuresReady = false;
+    bool _trackReconstructionStatesReady = false;
+
     // internal data
     std::map<QString, float> _minFeatureScalePerDesc;
     std::map<QString, float> _maxFeatureScalePerDesc;
