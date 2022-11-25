@@ -259,7 +259,7 @@ void DepthMapEntity::loadDepthMap()
 
     const std::string path = _source.toLocalFile().toStdString();
     aliceVision::image::Image<float> depthMap;
-    aliceVision::image::readImage(path, depthMap, aliceVision::image::EImageColorSpace::LINEAR);
+    aliceVision::image::readImage(path, depthMap, aliceVision::image::EImageColorSpace::SRGB);
 
     oiio::ImageBuf inBuf;
     aliceVision::image::getBufferFromImage(depthMap, inBuf);
@@ -309,7 +309,7 @@ void DepthMapEntity::loadDepthMap()
     qDebug() << "[DepthMapEntity] Load Sim Map: " << simPath.toLocalFile();
 
     aliceVision::image::Image<float> simMap;
-    aliceVision::image::readImage(simPath.toLocalFile().toStdString(), simMap, aliceVision::image::EImageColorSpace::LINEAR);
+    aliceVision::image::readImage(simPath.toLocalFile().toStdString(), simMap, aliceVision::image::EImageColorSpace::SRGB);
     const bool validSimMap = (simMap.Width() == depthMap.Width()) && (simMap.Height() == depthMap.Height());
 
     // 3D points position and color (using jetColorMap)

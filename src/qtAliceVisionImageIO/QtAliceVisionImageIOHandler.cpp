@@ -78,7 +78,7 @@ bool QtAliceVisionImageIOHandler::read(QImage *image)
     qDebug() << "[QtAliceVisionImageIO] Read image: " << path.c_str();
 
     aliceVision::image::Image<aliceVision::image::RGBColor> img;
-    aliceVision::image::readImage(path, img, aliceVision::image::EImageColorSpace::LINEAR);
+    aliceVision::image::readImage(path, img, aliceVision::image::EImageColorSpace::SRGB);
 
     oiio::ImageBuf inBuf;
     aliceVision::image::getBufferFromImage(img, inBuf);
