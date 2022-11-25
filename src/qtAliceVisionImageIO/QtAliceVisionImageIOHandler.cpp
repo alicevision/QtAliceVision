@@ -1,7 +1,5 @@
 #include "QtAliceVisionImageIOHandler.hpp"
 
-#include "../utils/jetColorMap.hpp"
-
 #include <QImage>
 #include <QIODevice>
 #include <QFileDevice>
@@ -76,13 +74,12 @@ bool QtAliceVisionImageIOHandler::read(QImage *image)
     const std::string path = d->fileName().toStdString();
 
     qDebug() << "[QtAliceVisionImageIO] Read image: " << path.c_str();
-
     aliceVision::image::Image<aliceVision::image::RGBColor> img;
     aliceVision::image::readImage(path, img, aliceVision::image::EImageColorSpace::SRGB);
 
     oiio::ImageBuf inBuf;
     aliceVision::image::getBufferFromImage(img, inBuf);
-
+    
     oiio::ImageSpec inSpec = aliceVision::image::readImageSpec(path);
     float pixelAspectRatio = inSpec.get_float_attribute("PixelAspectRatio", 1.0f);
 
@@ -94,84 +91,20 @@ bool QtAliceVisionImageIOHandler::read(QImage *image)
     qDebug() << "[QtAliceVisionImageIO] create output QImage";
     QImage result(inSpec.width, inSpec.height, QImage::Format_RGB32);
 
+    qDebug() << "[QtAliceVisionImageIO] shuffle channels";
     const int nchannels = 4;
     const oiio::TypeDesc typeDesc = oiio::TypeDesc::UINT8;
     oiio::ImageSpec requestedSpec(inSpec.width, inSpec.height, nchannels, typeDesc);
     oiio::ImageBuf tmpBuf(requestedSpec);
+    int channelOrder[] = {2, 1, 0, -1};
+    float channelValues[] = {1.f, 1.f, 1.f, 1.f};
+    oiio::ImageBufAlgo::channels(tmpBuf, inBuf, 4, channelOrder, channelValues, {}, false);
+    inBuf.swap(tmpBuf);
+    
+    qDebug() << "[QtAliceVisionImageIO] fill output QImage";
     oiio::ROI exportROI = inBuf.roi();
     exportROI.chbegin = 0;
     exportROI.chend = nchannels;
-
-    // if the input is grayscale, we have the option to convert it with a color map
-    if(convertGrayscaleToJetColorMap && inSpec.nchannels == 1)
-    {
-        qDebug() << "[QtAliceVisionImageIO] applying colormap to greyscale image";
-
-        // perceptually uniform: "inferno", "viridis", "magma", "plasma" -- others: "blue-red", "spectrum", "heat"
-        const char* colorMapEnv = std::getenv("QT_ALICEVISIONIMAGEIO_COLORMAP");
-        const std::string colorMapType = colorMapEnv ? colorMapEnv : "plasma";
-
-        // detect AliceVision special files that require a jetColorMap based conversion
-        const bool isDepthMap = d->fileName().contains("depthMap");
-        const bool isNmodMap = d->fileName().contains("nmodMap");
-
-        if(colorMapEnv)
-        {
-            qDebug() << "[QtAliceVisionImageIO] colormap \"" << colorMapType.c_str() << "\"";
-            oiio::ImageBufAlgo::color_map(tmpBuf, inBuf, 0, colorMapType);
-        }
-        else if(isDepthMap || isNmodMap)
-        {
-            qDebug() << "[QtAliceVisionImageIO] using jetColorMap";
-            oiio::ImageBufAlgo::PixelStats stats;
-            oiio::ImageBufAlgo::computePixelStats(stats, inBuf);
-            const float range = stats.max[0] - stats.min[0];
-#pragma omp parallel for
-            for(int y = 0; y < inSpec.height; ++y)
-            {
-                for(int x = 0; x < inSpec.width; ++x)
-                {
-                    float depthValue = 0.0f;
-                    inBuf.getpixel(x, y, &depthValue, 1);
-                    const float normalizedDepthValue = range != 0.0f ? (depthValue - stats.min[0]) / range : 1.0f;
-                    Color32f color;
-                    if(isDepthMap)
-                        color = getColor32fFromJetColorMap(normalizedDepthValue);
-                    else if(isNmodMap)
-                        color = getColor32fFromJetColorMapClamp(normalizedDepthValue);
-                    tmpBuf.setpixel(x, y, color.m, 3); // set only 3 channels (RGB)
-                }
-            }
-        }
-        else
-        {
-#pragma omp parallel for
-            for(int y = 0; y < inSpec.height; ++y)
-            {
-                for(int x = 0; x < inSpec.width; ++x)
-                {
-                    float depthValue = 0.0f;
-                    inBuf.getpixel(x, y, &depthValue, 1);
-                    Color32f color = getColor32fFromJetColorMap(depthValue);
-                    tmpBuf.setpixel(x, y, color.m, 3); // set only 3 channels (RGB)
-                }
-            }
-        }
-        qDebug() << "[QtAliceVisionImageIO] compute colormap done";
-        inBuf.swap(tmpBuf);
-    }
-    // Shuffle channels to convert from OIIO to Qt
-    else
-    {
-        qDebug() << "[QtAliceVisionImageIO] shuffle channels";
-
-        int channelOrder[] = {2, 1, 0, -1};
-        float channelValues[] = {1.f, 1.f, 1.f, 1.f};
-        oiio::ImageBufAlgo::channels(tmpBuf, inBuf, 4, channelOrder, channelValues, {}, false);
-        inBuf.swap(tmpBuf);
-    }
-    
-    qDebug() << "[QtAliceVisionImageIO] fill output QImage";
     inBuf.get_pixels(exportROI, typeDesc, result.bits());
 
     if (pixelAspectRatio != 1.0f)
