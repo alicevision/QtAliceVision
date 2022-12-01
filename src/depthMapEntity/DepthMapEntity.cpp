@@ -1,10 +1,5 @@
 #include "DepthMapEntity.hpp"
 
-#include "../utils/mv_point3d.hpp"
-#include "../utils/mv_point2d.hpp"
-#include "../utils/mv_matrix3x3.hpp"
-#include "../utils/jetColorMap.hpp"
-
 #include <Qt3DRender/QEffect>
 #include <Qt3DRender/QTechnique>
 #include <Qt3DRender/QRenderPass>
@@ -20,9 +15,15 @@
 
 #include <aliceVision/image/io.hpp>
 #include <aliceVision/image/Image.hpp>
+#include <aliceVision/mvsData/jetColorMap.hpp>
+#include <aliceVision/mvsData/Point2d.hpp>
+#include <aliceVision/mvsData/Point3d.hpp>
+#include <aliceVision/mvsData/Matrix3x3.hpp>
 
 #include <cmath>
 #include <iostream>
+
+using namespace aliceVision;
 
 
 namespace depthMapEntity {
@@ -258,17 +259,17 @@ void DepthMapEntity::loadDepthMap()
     qDebug() << "[DepthMapEntity] Load Depth Map: " << _source.toLocalFile();
 
     const std::string path = _source.toLocalFile().toStdString();
-    aliceVision::image::Image<float> depthMap;
-    aliceVision::image::readImage(path, depthMap, aliceVision::image::EImageColorSpace::SRGB);
+    image::Image<float> depthMap;
+    image::readImage(path, depthMap, image::EImageColorSpace::LINEAR);
 
     oiio::ImageBuf inBuf;
-    aliceVision::image::getBufferFromImage(depthMap, inBuf);
+    image::getBufferFromImage(depthMap, inBuf);
 
-    oiio::ImageSpec inSpec = aliceVision::image::readImageSpec(path);
+    oiio::ImageSpec inSpec = image::readImageSpec(path);
 
     qDebug() << "[DepthMapEntity] Image Size: " << depthMap.Width() << "x" << depthMap.Height();
 
-    point3d CArr;
+    Point3d CArr;
     const oiio::ParamValue* cParam = inSpec.find_attribute("AliceVision:CArr");
     if(cParam)
     {
@@ -282,7 +283,7 @@ void DepthMapEntity::loadDepthMap()
         return;
     }
 
-    matrix3x3 iCamArr;
+    Matrix3x3 iCamArr;
     const oiio::ParamValue * icParam = inSpec.find_attribute("AliceVision:iCamArr", oiio::TypeDesc(oiio::TypeDesc::DOUBLE, oiio::TypeDesc::MATRIX33));
     if(icParam)
     {
@@ -308,8 +309,8 @@ void DepthMapEntity::loadDepthMap()
 
     qDebug() << "[DepthMapEntity] Load Sim Map: " << simPath.toLocalFile();
 
-    aliceVision::image::Image<float> simMap;
-    aliceVision::image::readImage(simPath.toLocalFile().toStdString(), simMap, aliceVision::image::EImageColorSpace::SRGB);
+    image::Image<float> simMap;
+    image::readImage(simPath.toLocalFile().toStdString(), simMap, image::EImageColorSpace::LINEAR);
     const bool validSimMap = (simMap.Width() == depthMap.Width()) && (simMap.Height() == depthMap.Height());
 
     // 3D points position and color (using jetColorMap)
@@ -318,7 +319,7 @@ void DepthMapEntity::loadDepthMap()
 
     std::vector<int> indexPerPixel(depthMap.Width() * depthMap.Height(), -1);
     std::vector<Vec3f> positions;
-    std::vector<Color32f> colors;
+    std::vector<image::RGBfColor> colors;
 
     oiio::ImageBufAlgo::PixelStats stats;
     oiio::ImageBufAlgo::computePixelStats(stats, inBuf);
@@ -331,7 +332,7 @@ void DepthMapEntity::loadDepthMap()
             if(!isfinite(depthValue) || depthValue <= 0.f)
                 continue;
 
-            point3d p = CArr + (iCamArr * point2d((double)x, (double)y)).normalize() * depthValue;
+            Point3d p = CArr + (iCamArr * Point2d((double)x, (double)y)).normalize() * depthValue;
             Vec3f position(p.x, -p.y, -p.z);
 
             indexPerPixel[y * depthMap.Width() + x] = positions.size();
@@ -340,14 +341,14 @@ void DepthMapEntity::loadDepthMap()
             if(validSimMap)
             {
                 float simValue = simMap(y, x);
-                Color32f color = getColor32fFromJetColorMapClamp(simValue);
+                image::RGBfColor color = getColorFromJetColorMap(simValue);
                 colors.push_back(color);
             }
             else
             {
                 const float range = stats.max[0] - stats.min[0];
                 float normalizedDepthValue = range != 0.0f ? (depthValue - stats.min[0]) / range : 1.0f;
-                Color32f color = getColor32fFromJetColorMapClamp(normalizedDepthValue);
+                image::RGBfColor color = getColorFromJetColorMap(normalizedDepthValue);
                 colors.push_back(color);
             }
         }
@@ -440,7 +441,7 @@ void DepthMapEntity::loadDepthMap()
     // customGeometry->setBoundingVolumePositionAttribute(positionAttribute);
         
     // Duplicate colors as we cannot use indexes!
-    std::vector<Color32f> colorsFlat;
+    std::vector<image::RGBfColor> colorsFlat;
     colorsFlat.reserve(trianglesIndexes.size());
     for(int i = 0; i < trianglesIndexes.size(); ++i)
     {
@@ -449,7 +450,7 @@ void DepthMapEntity::loadDepthMap()
 
     // read color data
     QBuffer* colorDataBuffer = new QBuffer(QBuffer::VertexBuffer);
-    QByteArray colorData((const char*)colorsFlat[0].m, colorsFlat.size() * 3 * sizeof(float));
+    QByteArray colorData((const char*)colorsFlat[0].data(), colorsFlat.size() * 3 * sizeof(float));
     colorDataBuffer->setData(colorData);
 
     QAttribute* colorAttribute = new QAttribute;

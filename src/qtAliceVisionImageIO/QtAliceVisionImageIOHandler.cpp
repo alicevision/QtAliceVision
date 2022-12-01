@@ -63,8 +63,6 @@ bool QtAliceVisionImageIOHandler::canRead(QIODevice *device)
 
 bool QtAliceVisionImageIOHandler::read(QImage *image)
 {
-    bool convertGrayscaleToJetColorMap = true; // how to expose it as an option?
-
     QFileDevice* d = dynamic_cast<QFileDevice*>(device());
     if(!d)
     {
