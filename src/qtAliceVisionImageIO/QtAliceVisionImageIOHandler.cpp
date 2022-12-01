@@ -43,7 +43,7 @@ bool QtAliceVisionImageIOHandler::canRead() const
 {
     if(canRead(device()))
     {
-        setFormat("AliceVisionImageIO");
+        setFormat(name());
         return true;
     }
     return false;
@@ -52,13 +52,28 @@ bool QtAliceVisionImageIOHandler::canRead() const
 bool QtAliceVisionImageIOHandler::canRead(QIODevice *device)
 {
     QFileDevice* d = dynamic_cast<QFileDevice*>(device);
-    if(d)
+    if(!d)
     {
-        qDebug() << "[QtAliceVisionImageIO] Can read file: " << d->fileName();
-        return true;
+        qDebug() << "[QtAliceVisionImageIO] Cannot read: invalid device";
+        return false;
     }
-    qDebug() << "[QtAliceVisionImageIO] Cannot read.";
-    return false;
+
+    const std::string path = d->fileName().toStdString();
+    auto input = oiio::ImageInput::create(path);
+    if (!input)
+    {
+        qDebug() << "[QtAliceVisionImageIO] Cannot read: failed to create image input";
+        return false;
+    }
+
+    if (!(input->valid_file(path))) 
+    {
+        qDebug() << "[QtAliceVisionImageIO] Cannot read: invalid file";
+        return false;
+    }
+
+    qDebug() << "[QtAliceVisionImageIO] Can read file: " << d->fileName();
+    return true;
 }
 
 bool QtAliceVisionImageIOHandler::read(QImage *image)
