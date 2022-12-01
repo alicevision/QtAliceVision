@@ -35,6 +35,7 @@ target_link_libraries(depthMapEntityPlugin
       ${OPENIMAGEIO_LIBRARIES}
       aliceVision_image
       aliceVision_mvsData
+      aliceVision_numeric
       Qt5::Core
       Qt5::Gui
       Qt5::Qml

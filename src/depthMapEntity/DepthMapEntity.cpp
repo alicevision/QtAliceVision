@@ -19,6 +19,7 @@
 #include <aliceVision/mvsData/Point2d.hpp>
 #include <aliceVision/mvsData/Point3d.hpp>
 #include <aliceVision/mvsData/Matrix3x3.hpp>
+#include <aliceVision/numeric/numeric.hpp>
 
 #include <cmath>
 #include <iostream>
@@ -27,49 +28,6 @@ using namespace aliceVision;
 
 
 namespace depthMapEntity {
-
-struct Vec3f
-{
-    Vec3f() {}
-    Vec3f(float x_, float y_, float z_)
-      : x(x_)
-      , y(y_)
-      , z(z_)
-    {}
-    union {
-        struct
-        {
-            float x, y, z;
-        };
-        float m[3];
-    };
-
-    inline Vec3f operator-(const Vec3f& p) const
-    {
-        return Vec3f(x - p.x, y - p.y, z - p.z);
-    }
-
-    inline double size() const
-    {
-        double d = x * x + y * y + z * z;
-        if(d == 0.0)
-        {
-            return 0.0;
-        }
-
-        return sqrt(d);
-    }
-};
-
-inline Vec3f cross(const Vec3f& a, const Vec3f& b)
-{
-    Vec3f vc;
-    vc.x = a.y * b.z - a.z * b.y;
-    vc.y = a.z * b.x - a.x * b.z;
-    vc.z = a.x * b.y - a.y * b.x;
-
-    return vc;
-}
 
 DepthMapEntity::DepthMapEntity(Qt3DCore::QNode* parent)
     : Qt3DCore::QEntity(parent)
@@ -403,7 +361,7 @@ void DepthMapEntity::loadDepthMap()
     normals.resize(triangles.size());
     for(int i = 0; i < trianglesIndexes.size(); i+=3)
     {
-        Vec3f normal = cross(triangles[i+1]-triangles[i], triangles[i+2]-triangles[i]);
+        Vec3f normal = (triangles[i+1]-triangles[i]).cross(triangles[i+2]-triangles[i]);
         for(int t = 0; t < 3; ++t)
             normals[i+t] = normal;
     }
