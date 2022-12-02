@@ -106,8 +106,8 @@ MFeatures::MFeatures()
   connect(this, &MFeatures::timeWindowChanged, this, &MFeatures::load);
   connect(this, &MFeatures::tracksChanged, this, &MFeatures::clearAndLoad);
   connect(this, &MFeatures::sfmDataChanged, this, &MFeatures::clearAndLoad);
-  connect(this, &MFeatures::tracksChanged, this, &MFeatures::updateTrackReconstructionStates);
-  connect(this, &MFeatures::sfmDataChanged, this, &MFeatures::updateTrackReconstructionStates);
+  connect(this, &MFeatures::tracksChanged, this, &MFeatures::loadGlobalInfo);
+  connect(this, &MFeatures::sfmDataChanged, this, &MFeatures::loadGlobalInfo);
 }
 
 MFeatures::~MFeatures()
@@ -154,7 +154,7 @@ void MFeatures::setMSfmData(MSfMData* sfmData)
   Q_EMIT sfmDataChanged();
 }
 
-void MFeatures::updateTrackReconstructionStates()
+void MFeatures::loadGlobalInfo()
 {
   // safety check
   if (_mtracks == nullptr || _mtracks->status() != MTracks::Ready) {
@@ -171,56 +171,55 @@ void MFeatures::updateTrackReconstructionStates()
   
   // load features from file in a seperate thread
   qDebug("[QtAliceVision] Track reconstruction states: Load features from file in a seperate thread.");
-  _trackReconstructionStatesReady = false;
+  _globalInfoReady = false;
   FeaturesIORunnable* ioRunnable = new FeaturesIORunnable(FeaturesIORunnable::IOParams(_featureFolder, viewIds, _describerTypes));
-  connect(ioRunnable, &FeaturesIORunnable::resultReady, this, [this](MViewFeaturesPerViewPerDesc* viewFeaturesPerViewPerDesc){
-    bool updated = updateFromTracks(viewFeaturesPerViewPerDesc) && updateFromSfM(viewFeaturesPerViewPerDesc);
-    if (!updated) 
-      return;
-    // temporary structures
-    std::map<aliceVision::IndexT, int> nbFeaturesPerTrack;
-    std::map<aliceVision::IndexT, int> nbReconstructedFeaturesPerTrack;
-    // count all features and all reconstructed features per track
-    for (auto& p1 : *viewFeaturesPerViewPerDesc) {
-      auto& viewFeaturesPerView = p1.second;
-      for (auto& p2 : viewFeaturesPerView) {
-        auto& viewFeatures = p2.second;
-        for (auto* feature : viewFeatures.features) {
-          const int trackId = feature->trackId();
-          const bool reconstructed = (feature->landmarkId() != -1);
-          if (nbFeaturesPerTrack.find(trackId) == nbFeaturesPerTrack.end()) {
-            nbFeaturesPerTrack[trackId] = 0;
-            nbReconstructedFeaturesPerTrack[trackId] = 0;
-          }
-          nbFeaturesPerTrack[trackId]++;
-          if (reconstructed) 
-            nbReconstructedFeaturesPerTrack[trackId]++;
-        }
-      }
-    }
-    // update track reconstruction states
-    _trackReconstructionStates.clear();
-    for (auto& p : nbFeaturesPerTrack) {
-      auto& trackId = p.first;
-      auto& nbFeatures = p.second;
-      auto& nbReconstructedFeatures = nbReconstructedFeaturesPerTrack[trackId];
-      if (nbReconstructedFeatures == 0) {
-        _trackReconstructionStates[trackId] = 0;
-      } else if (nbReconstructedFeatures < nbFeatures) {
-        _trackReconstructionStates[trackId] = 1;
-      } else {
-        _trackReconstructionStates[trackId] = 2;
-      }
-    }
-    // clear loaded features
-    delete viewFeaturesPerViewPerDesc;
-    // done
-    _trackReconstructionStatesReady = true;
-    if (_featuresReady) {
-      setStatus(Ready);
-    }
-  });
+  connect(ioRunnable, &FeaturesIORunnable::resultReady, this, &MFeatures::updateGlobalTrackInfo);
   QThreadPool::globalInstance()->start(ioRunnable);
+}
+
+void MFeatures::updateGlobalTrackInfo(MViewFeaturesPerViewPerDesc* viewFeaturesPerViewPerDesc)
+{
+  bool updated = updateFromTracks(viewFeaturesPerViewPerDesc) && updateFromSfM(viewFeaturesPerViewPerDesc);
+  if (!updated) 
+    return;
+  
+  // clear previous global track info
+  _globalTrackInfoPerTrack.clear();
+
+  // count all features and all reconstructed features per track
+  for (auto& p1 : *viewFeaturesPerViewPerDesc) 
+  {
+    auto& viewFeaturesPerView = p1.second;
+    for (auto& p2 : viewFeaturesPerView) 
+    {
+      auto& viewFeatures = p2.second;
+      const aliceVision::IndexT frameId = viewFeatures.frameId;
+      for (auto* feature : viewFeatures.features) 
+      {
+        const int trackId = feature->trackId();
+        MGlobalTrackInfo& info = _globalTrackInfoPerTrack[trackId];
+
+        info.nbFeatures++;
+
+        if (feature->landmarkId() != -1)
+          info.nbLandmarks++;
+        
+        if (frameId < info.startFrameId)
+          info.startFrameId = frameId;
+        
+        if (frameId > info.endFrameId)
+          info.endFrameId = frameId;
+      }
+    }
+  }
+
+  // clear loaded features
+  delete viewFeaturesPerViewPerDesc;
+
+  // done
+  _globalInfoReady = true;
+  if (_localInfoReady) 
+    setStatus(Ready);
 }
 
 void MFeatures::load()
@@ -271,7 +270,7 @@ void MFeatures::load()
   qDebug("[QtAliceVision] Features: Load features from file in a seperate thread.");
 
   // load features from file in a seperate thread
-  _featuresReady = false;
+  _localInfoReady = false;
   FeaturesIORunnable* ioRunnable = new FeaturesIORunnable(FeaturesIORunnable::IOParams(_featureFolder, viewIds, _describerTypes));
   connect(ioRunnable, &FeaturesIORunnable::resultReady, this, &MFeatures::onFeaturesReady);
   QThreadPool::globalInstance()->start(ioRunnable);
@@ -336,8 +335,8 @@ void MFeatures::onFeaturesReady(MViewFeaturesPerViewPerDesc* viewFeaturesPerView
   }
 
   // done
-  _featuresReady = true;
-  if (_trackReconstructionStatesReady) {
+  _localInfoReady = true;
+  if (_globalInfoReady) {
     setStatus(Ready);
   }
 }

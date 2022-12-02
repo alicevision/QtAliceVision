@@ -239,7 +239,8 @@ namespace qtAliceVision
 
         ++nbTracksToDraw;
 
-        int state = _mfeatures->trackReconstructionState(trackFeaturesPair.first);
+        const auto& globalTrackInfo = _mfeatures->globalTrackInfo(trackFeaturesPair.first);
+        const int state = globalTrackInfo.reconstructionState();
         nbTrackLinesToDraw[state] += (trackFeatures.featuresPerFrame.size() - 1); // number of lines in the track
         
         if (_trackDisplayMode == WithCurrentMatches)
@@ -424,7 +425,8 @@ namespace qtAliceVision
         continue;
       }
 
-      const int state = _mfeatures->trackReconstructionState(trackFeaturesPair.first);
+      const auto& globalTrackInfo = _mfeatures->globalTrackInfo(trackFeaturesPair.first);
+      const int state = globalTrackInfo.reconstructionState();
       const bool trackHasInliers = (state != 0);
 
       const MFeature* previousFeature = nullptr;

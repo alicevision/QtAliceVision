@@ -89,12 +89,28 @@ public:
     using MTrackFeaturesPerTrack = std::map<aliceVision::IndexT, MTrackFeatures>;
     using MTrackFeaturesPerTrackPerDesc = std::map<QString, MTrackFeaturesPerTrack>;
 
+    struct MGlobalTrackInfo {
+      int nbFeatures = 0;
+      int nbLandmarks = 0;
+      aliceVision::IndexT startFrameId = std::numeric_limits<aliceVision::IndexT>::max();
+      aliceVision::IndexT endFrameId = std::numeric_limits<aliceVision::IndexT>::min();
+
+      int reconstructionState() const 
+      {
+        if (nbLandmarks == 0) return 0;
+        if (nbLandmarks < nbFeatures) return 1;
+        return 2;
+      }
+    };
+    using MGlobalTrackInfoPerTrack = std::map<aliceVision::IndexT, MGlobalTrackInfo>;
+
     /// Slots
 
     Q_SLOT void load();
     Q_SLOT void clearAndLoad();
-    Q_SLOT void updateTrackReconstructionStates();
     Q_SLOT void onFeaturesReady(MViewFeaturesPerViewPerDesc* viewFeaturesPerViewPerDesc);
+    Q_SLOT void loadGlobalInfo();
+    Q_SLOT void updateGlobalTrackInfo(MViewFeaturesPerViewPerDesc* viewFeaturesPerViewPerDesc);
 
     /// Signals
 
@@ -198,6 +214,16 @@ public:
     }
 
     /**
+     * @brief Provides access to global track information (i.e not only limited to the current time window)
+     * @param trackId the ID of the track
+     * @return struct containing global information on the track 
+     */
+    MGlobalTrackInfo& globalTrackInfo(aliceVision::IndexT trackId)
+    {
+      return _globalTrackInfoPerTrack[trackId];
+    }
+
+    /**
      * @brief Get MFeatures status 
      * @see MFeatures status enum
      * @return MFeatures status enum
@@ -219,16 +245,14 @@ public:
         Q_EMIT featuresChanged();
     }
 
-    int trackReconstructionState(aliceVision::IndexT trackId) 
-    {
-      return _trackReconstructionStates[trackId];
-    }
-
 private:
 
     /// Private methods (to use with Loading status)
 
-    // tmp
+    /**
+     * @brief Get the list of all viewIds in the current SfM data
+     * @param[in,out] viewIds The list of viewIds to load in memory
+     */
     void getAllViewIds(std::vector<aliceVision::IndexT>& viewIds);
 
     /**
@@ -286,8 +310,8 @@ private:
     bool _enableTimeWindow = false; // set to true if the user request multiple frames (e.g. display tracks)
     int _timeWindow = 1;            // size of the time window (from current frame - time window to current frame + time window), 0 is disable, -1 is no limit
 
-    bool _featuresReady = false;
-    bool _trackReconstructionStatesReady = false;
+    bool _localInfoReady = false;
+    bool _globalInfoReady = false;
 
     // internal data
     std::map<QString, float> _minFeatureScalePerDesc;
@@ -296,8 +320,7 @@ private:
     MViewFeaturesPerViewPerDesc _viewFeaturesPerViewPerDesc;
     MTrackFeaturesPerTrackPerDesc _trackFeaturesPerTrackPerDesc;
     QVariantMap _featuresInfo;
-
-    std::map<aliceVision::IndexT, int> _trackReconstructionStates;
+    MGlobalTrackInfoPerTrack _globalTrackInfoPerTrack;
 
     /// external data
     MSfMData* _msfmData = nullptr;
