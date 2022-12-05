@@ -30,6 +30,7 @@ namespace qtAliceVision
     connect(this, &FeaturesViewer::display3dTracksChanged, this, &FeaturesViewer::update);
     connect(this, &FeaturesViewer::trackContiguousFilterChanged, this, &FeaturesViewer::update);
     connect(this, &FeaturesViewer::trackInliersFilterChanged, this, &FeaturesViewer::update);
+    connect(this, &FeaturesViewer::displayTrackEndpointsChanged, this, &FeaturesViewer::update);
 
     connect(this, &FeaturesViewer::featureColorChanged, this, &FeaturesViewer::update);
     connect(this, &FeaturesViewer::matchColorChanged, this, &FeaturesViewer::update);
@@ -205,6 +206,7 @@ namespace qtAliceVision
     qDebug() << "[QtAliceVision] FeaturesViewer: Update paint " << _describerType << " tracks.";
 
     const unsigned int kLineVertices = 2;
+    const unsigned int kTriangleVertices = 3;
 
     const MFeatures::MTrackFeaturesPerTrack* trackFeaturesPerTrack =
         (_displayTracks && params.haveValidFeatures && params.haveValidTracks && params.haveValidLandmarks)
@@ -217,6 +219,7 @@ namespace qtAliceVision
     std::size_t nbReprojectionErrorLinesToDraw = 0;
     std::size_t nbPointsToDraw = 0;
     std::size_t nbHighlightPointsToDraw = 0;
+    std::size_t nbEndpointsToDraw = 0;
 
     if (trackFeaturesPerTrack != nullptr)
     {
@@ -265,6 +268,15 @@ namespace qtAliceVision
 
           nbPointsToDraw += trackFeatures.featuresPerFrame.size(); // one point per matches
         }
+
+        if (_displayTrackEndpoints)
+        {
+          if (trackFeatures.minFrameId == globalTrackInfo.startFrameId)
+            ++nbEndpointsToDraw;
+          
+          if (trackFeatures.maxFrameId == globalTrackInfo.endFrameId)
+            ++nbEndpointsToDraw;
+        }
       }
     }
 
@@ -272,8 +284,9 @@ namespace qtAliceVision
     QSGGeometry* geometryTrackLine[3] = {nullptr, nullptr, nullptr};
     QSGGeometry* geometryReprojectionErrorLine = nullptr;
     QSGGeometry* geometryPoint = nullptr;
+    QSGGeometry* geometryEndpoint = nullptr;
 
-    if (node->childCount() < 7)
+    if (node->childCount() < 8)
     {
       // (1) Highlight points
       geometryHighlightPoint = appendChildGeometry(node, nbHighlightPointsToDraw);
@@ -284,6 +297,8 @@ namespace qtAliceVision
       geometryReprojectionErrorLine = appendChildGeometry(node, nbReprojectionErrorLinesToDraw * kLineVertices);
       // (4) Points
       geometryPoint = appendChildGeometry(node, nbPointsToDraw);
+      // (5) Endpoints
+      geometryEndpoint = appendChildGeometry(node, nbEndpointsToDraw);
     }
     else
     {
@@ -296,6 +311,8 @@ namespace qtAliceVision
       geometryReprojectionErrorLine = getCleanChildGeometry(node, 5, nbReprojectionErrorLinesToDraw * kLineVertices);
       // (4) Points
       geometryPoint = getCleanChildGeometry(node, 6, nbPointsToDraw);
+      // (5) Endpoints
+      geometryEndpoint = getCleanChildGeometry(node, 7, nbEndpointsToDraw * kTriangleVertices);
     }
 
     geometryHighlightPoint->setDrawingMode(QSGGeometry::DrawPoints);
@@ -316,6 +333,8 @@ namespace qtAliceVision
     geometryPoint->setDrawingMode(QSGGeometry::DrawPoints);
     geometryPoint->setLineWidth(4.0f);
 
+    geometryEndpoint->setDrawingMode(QSGGeometry::DrawTriangles);
+
     QSGGeometry::ColoredPoint2D* verticesHighlightPoints = geometryHighlightPoint->vertexDataAsColoredPoint2D();
     QSGGeometry::ColoredPoint2D* verticesTrackLines[3] = {
       geometryTrackLine[0]->vertexDataAsColoredPoint2D(), 
@@ -324,6 +343,7 @@ namespace qtAliceVision
     };
     QSGGeometry::ColoredPoint2D* verticesReprojectionErrorLines = geometryReprojectionErrorLine->vertexDataAsColoredPoint2D();
     QSGGeometry::ColoredPoint2D* verticesPoints = geometryPoint->vertexDataAsColoredPoint2D();
+    QSGGeometry::ColoredPoint2D* verticesEndpoints = geometryEndpoint->vertexDataAsColoredPoint2D();
 
     // utility lambda to get point color
     const auto getPointColor = [&](bool contiguous, bool inliers, bool trackHasInliers) -> QColor
@@ -407,6 +427,7 @@ namespace qtAliceVision
     unsigned int nbTrackLinesDrawn[3] = {0, 0, 0};
     unsigned int nbReprojectionErrorLinesDrawn = 0;
     unsigned int nbPointsDrawn = 0;
+    unsigned int nbEndpointsDrawn = 0;
 
     for (const auto& trackFeaturesPair : *trackFeaturesPerTrack)
     {
@@ -462,22 +483,56 @@ namespace qtAliceVision
 
           // draw track line
           const QColor&  c = getLineColor(contiguous, inliers, trackHasInliers);
-          const unsigned vIdx = nbTrackLinesDrawn[state] * kLineVertices;
+          unsigned int vIdx = nbTrackLinesDrawn[state] * kLineVertices;
 
+          QPointF prevPoint;
+          QPointF curPoint;
           if (_display3dTracks && trackHasInliers) // 3d track line
           {
-            setVertex(verticesTrackLines[state], vIdx, QPointF(previousFeature->rx(), previousFeature->ry()), c);
-            setVertex(verticesTrackLines[state], vIdx + 1, QPointF(feature->rx(), feature->ry()), c);
+            prevPoint = QPointF(previousFeature->rx(), previousFeature->ry());
+            curPoint = QPointF(feature->rx(), feature->ry());
           }
           else // 2d track line
           {
-            setVertex(verticesTrackLines[state], vIdx, QPointF(previousFeature->x(), previousFeature->y()), c);
-            setVertex(verticesTrackLines[state], vIdx + 1, QPointF(feature->x(), feature->y()), c);
+            prevPoint = QPointF(previousFeature->x(), previousFeature->y());
+            curPoint = QPointF(feature->x(), feature->y());
           }
+
+          setVertex(verticesTrackLines[state], vIdx, prevPoint, c);
+          setVertex(verticesTrackLines[state], vIdx + 1, curPoint, c);
 
           ++nbTrackLinesDrawn[state];
 
           previousTrackLineContiguous = contiguous;
+
+          if (_displayTrackEndpoints)
+          {
+            // draw global start point
+            if (previousFrameId == globalTrackInfo.startFrameId)
+            {
+              vIdx = nbEndpointsDrawn * kTriangleVertices;
+              QPointF triangle[] = {QPointF(1, 0), QPointF(-1, 1), QPointF(-1, -1)};
+              float angle = QLineF(curPoint, prevPoint).angle() - rotation();
+              float size = 10.f;
+              auto tr = QTransform().rotate(180 - angle).scale(size, size);
+              for (int i = 0; i < kTriangleVertices; i++) 
+                setVertex(verticesEndpoints, vIdx + i, prevPoint + tr.map(triangle[i]), _endpointColor);
+              nbEndpointsDrawn++;
+            }
+
+            // draw global end point
+            if (frameId == globalTrackInfo.endFrameId)
+            {
+              vIdx = nbEndpointsDrawn * kTriangleVertices;
+              QPointF triangle[] = {QPointF(1, 0), QPointF(-1, 1), QPointF(-1, -1)};
+              float angle = QLineF(curPoint, prevPoint).angle() - rotation();
+              float size = 10.f;
+              auto tr = QTransform().rotate(-angle).scale(size, size);
+              for (int i = 0; i < kTriangleVertices; i++) 
+                setVertex(verticesEndpoints, vIdx + i, curPoint + tr.map(triangle[i]), _endpointColor);
+              nbEndpointsDrawn++;
+            }
+          }
         }
 
         // frame id is now previous frame id
@@ -493,13 +548,13 @@ namespace qtAliceVision
 
     QSGGeometry* geometryPoint = nullptr;
 
-    if (node->childCount() < 8)
+    if (node->childCount() < 9)
     {
       geometryPoint = appendChildGeometry(node, params.nbMatchesToDraw);
     }
     else
     {
-      geometryPoint = getCleanChildGeometry(node, 7, params.nbMatchesToDraw);
+      geometryPoint = getCleanChildGeometry(node, 8, params.nbMatchesToDraw);
     }
 
     geometryPoint->setDrawingMode(QSGGeometry::DrawPoints);
@@ -548,15 +603,15 @@ namespace qtAliceVision
     QSGGeometry* geometryLine = nullptr;
     QSGGeometry* geometryPoint = nullptr;
 
-    if (node->childCount() < 10)
+    if (node->childCount() < 11)
     {
       geometryLine = appendChildGeometry(node, params.nbLandmarksToDraw * kReprojectionVertices);
       geometryPoint = appendChildGeometry(node, params.nbLandmarksToDraw);
     }
     else
     {
-      geometryLine = getCleanChildGeometry(node, 8, params.nbLandmarksToDraw * kReprojectionVertices);
-      geometryPoint = getCleanChildGeometry(node, 9, params.nbLandmarksToDraw);
+      geometryLine = getCleanChildGeometry(node, 9, params.nbLandmarksToDraw * kReprojectionVertices);
+      geometryPoint = getCleanChildGeometry(node, 10, params.nbLandmarksToDraw);
     }
 
     geometryLine->setDrawingMode(QSGGeometry::DrawLines);

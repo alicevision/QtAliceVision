@@ -40,6 +40,8 @@ namespace qtAliceVision {
       Q_PROPERTY(bool trackContiguousFilter MEMBER _trackContiguousFilter NOTIFY trackContiguousFilterChanged)
       // Display only tracks with at least one inlier
       Q_PROPERTY(bool trackInliersFilter MEMBER _trackInliersFilter NOTIFY trackInliersFilterChanged)
+      // Display track endpoints
+      Q_PROPERTY(bool displayTrackEndpoints MEMBER _displayTrackEndpoints NOTIFY displayTrackEndpointsChanged)
       // Features color
       Q_PROPERTY(QColor featureColor MEMBER _featureColor NOTIFY featureColorChanged)
       // Matches color
@@ -100,6 +102,7 @@ namespace qtAliceVision {
     Q_SIGNAL void display3dTracksChanged();
     Q_SIGNAL void trackContiguousFilterChanged();
     Q_SIGNAL void trackInliersFilterChanged();
+    Q_SIGNAL void displayTrackEndpointsChanged();
 
     Q_SIGNAL void featureColorChanged();
     Q_SIGNAL void matchColorChanged();
@@ -146,10 +149,12 @@ namespace qtAliceVision {
     bool _display3dTracks = false;
     bool _trackContiguousFilter = true;
     bool _trackInliersFilter = false;
+    bool _displayTrackEndpoints = true;
 
     QColor _featureColor = QColor(20, 220, 80);
     QColor _matchColor = QColor(255, 127, 0);
     QColor _landmarkColor = QColor(255, 0, 0);
+    QColor _endpointColor = QColor(80, 80, 80);
 
     QString _describerType = "sift";
     MFeatures* _mfeatures = nullptr;
