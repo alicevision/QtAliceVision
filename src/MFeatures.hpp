@@ -299,6 +299,9 @@ private:
     void clearAllFeatureReprojection();
     void clearAll();
 
+    void setLocalInfoStatus(Status status);
+    void setGlobalInfoStatus(Status status);
+    
     /// Private members
 
     // inputs
@@ -310,8 +313,8 @@ private:
     bool _enableTimeWindow = false; // set to true if the user request multiple frames (e.g. display tracks)
     int _timeWindow = 1;            // size of the time window (from current frame - time window to current frame + time window), 0 is disable, -1 is no limit
 
-    bool _localInfoReady = false;
-    bool _globalInfoReady = false;
+    Status _localInfoStatus = MFeatures::None;
+    Status _globalInfoStatus = MFeatures::None;
 
     // internal data
     std::map<QString, float> _minFeatureScalePerDesc;
