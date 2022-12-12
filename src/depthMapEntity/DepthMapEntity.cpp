@@ -179,9 +179,9 @@ void DepthMapEntity::createMaterials()
 bool validTriangleRatio(const Vec3f& a, const Vec3f& b, const Vec3f& c)
 {
     std::vector<double> distances = {
-        (a - b).size(),
-        (b - c).size(),
-        (c - a).size()
+        DistanceL2(a, b),
+        DistanceL2(b, c),
+        DistanceL2(c, a)
     };
     double mi = std::min({distances[0], distances[1], distances[2]});
     double ma = std::max({distances[0], distances[1], distances[2]});
