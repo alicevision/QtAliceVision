@@ -7,6 +7,8 @@
 #include <Qt3DRender/QAttribute>
 #include <Qt3DRender/QBuffer>
 #include <Qt3DCore/QTransform>
+#include <QtCore/QFileInfo>
+#include <QtCore/QDir>
 #include <QDebug>
 
 #include <OpenImageIO/imageio.h>
@@ -257,7 +259,9 @@ void DepthMapEntity::loadDepthMap()
 
     // Load sim map
 
-    const QUrl simPath = QUrl::fromLocalFile(_source.path().replace("depthMap", "simMap"));
+    const QFileInfo depthMapFile = QFileInfo(_source.path());
+    const QFileInfo simMapFile = QFileInfo(depthMapFile.dir(), depthMapFile.fileName().replace("depthMap", "simMap"));
+    const QUrl simPath = QUrl::fromLocalFile(simMapFile.filePath());
     if(!simPath.isValid())
     {
         qDebug() << "[DepthMapEntity] invalid filepath for sim map";
