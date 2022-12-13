@@ -31,6 +31,9 @@ add_definitions(-DQT_SHARED)
 add_definitions(-DQT_NO_DEBUG)
 add_definitions(-DQT_NO_KEYWORDS)
 
+# comment to get qDebug outputs
+add_definitions(-DQT_NO_DEBUG_OUTPUT)
+
 # for performance reasons let Qt handle jpeg, png and ico formats
 add_definitions(-DQT_ALICEVISIONIMAGEIO_USE_FORMATS_BLACKLIST)
 
