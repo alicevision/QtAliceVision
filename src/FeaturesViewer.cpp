@@ -382,6 +382,15 @@ namespace qtAliceVision
       return inliers ? _landmarkColor : _matchColor;
     };
 
+    // utility lambda to get endpoint color
+    const auto getEndpointColor = [&](bool trackHasInliers) -> QColor
+    {
+        if (_trackInliersFilter && !trackHasInliers)
+            return QColor(0, 0, 0, 0);
+        
+        return _endpointColor;
+    };
+
     // utility lambda to register a feature point, to avoid code complexity
     const auto drawFeaturePoint = [&](aliceVision::IndexT curFrameId,
                                       aliceVision::IndexT frameId,
@@ -423,6 +432,7 @@ namespace qtAliceVision
     // utility lambda to register an oriented triangle corresponding to an endpoint
     const auto drawEndpoint = [&](const QPointF& pointFrom, 
                                   const QPointF& pointTo, 
+                                  const QColor& color, 
                                   unsigned int& nbEndpointsDrawn, 
                                   float size = 10.f)
     {
@@ -431,7 +441,7 @@ namespace qtAliceVision
         auto tr = QTransform().rotate(-angle).scale(size, size);
         const int vIdx = nbEndpointsDrawn * kTriangleVertices;
         for (int i = 0; i < kTriangleVertices; i++) 
-            setVertex(verticesEndpoints, vIdx + i, pointFrom + tr.map(triangle[i]), _endpointColor);
+            setVertex(verticesEndpoints, vIdx + i, pointFrom + tr.map(triangle[i]), color);
         nbEndpointsDrawn++;
     };
 
@@ -503,7 +513,7 @@ namespace qtAliceVision
           const bool inliers = previousFeatureInlier && currentFeatureInlier;
 
           // draw previous point
-          const QColor& previousPointColor = getPointColor(contiguous || previousTrackLineContiguous, previousFeatureInlier, trackHasInliers);
+          const QColor previousPointColor = getPointColor(contiguous || previousTrackLineContiguous, previousFeatureInlier, trackHasInliers);
           drawFeaturePoint(currentFrameId, previousFrameId, previousFeature, previousPointColor, nbReprojectionErrorLinesDrawn, nbHighlightPointsDrawn, nbPointsDrawn, trackFeatures.nbLandmarks > 0);
 
           // draw track last point
@@ -511,7 +521,7 @@ namespace qtAliceVision
             drawFeaturePoint(currentFrameId, frameId, feature, getPointColor(contiguous, currentFeatureInlier, trackHasInliers), nbReprojectionErrorLinesDrawn, nbHighlightPointsDrawn, nbPointsDrawn, trackFeatures.nbLandmarks > 0);
 
           // draw track line
-          const QColor&  c = getLineColor(contiguous, inliers, trackHasInliers);
+          const QColor  lineColor = getLineColor(contiguous, inliers, trackHasInliers);
           unsigned int vIdx = nbTrackLinesDrawn[stateIdx] * kLineVertices;
 
           QPointF prevPoint;
@@ -527,8 +537,8 @@ namespace qtAliceVision
             curPoint = QPointF(feature->x(), feature->y());
           }
 
-          setVertex(verticesTrackLines[stateIdx], vIdx, prevPoint, c);
-          setVertex(verticesTrackLines[stateIdx], vIdx + 1, curPoint, c);
+          setVertex(verticesTrackLines[stateIdx], vIdx, prevPoint, lineColor);
+          setVertex(verticesTrackLines[stateIdx], vIdx + 1, curPoint, lineColor);
 
           ++nbTrackLinesDrawn[stateIdx];
 
@@ -536,13 +546,15 @@ namespace qtAliceVision
 
           if (_displayTrackEndpoints)
           {
+            const QColor endpointColor = getEndpointColor(trackHasInliers);
+
             // draw global start point
             if (previousFrameId == globalTrackInfo.startFrameId)
-                drawEndpoint(prevPoint, curPoint, nbEndpointsDrawn);
+                drawEndpoint(prevPoint, curPoint, endpointColor, nbEndpointsDrawn);
 
             // draw global end point
             if (frameId == globalTrackInfo.endFrameId)
-                drawEndpoint(curPoint, prevPoint, nbEndpointsDrawn);
+                drawEndpoint(curPoint, prevPoint, endpointColor, nbEndpointsDrawn);
           }
         }
 
