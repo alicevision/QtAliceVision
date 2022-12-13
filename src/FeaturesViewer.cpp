@@ -249,8 +249,9 @@ namespace qtAliceVision
 
         ++nbTracksToDraw;
 
-        const int state = globalTrackInfo.reconstructionState();
-        nbTrackLinesToDraw[state] += (trackFeatures.featuresPerFrame.size() - 1); // number of lines in the track
+        const MFeatures::ReconstructionState state = globalTrackInfo.reconstructionState();
+        const int stateIdx = static_cast<int>(state);
+        nbTrackLinesToDraw[stateIdx] += (trackFeatures.featuresPerFrame.size() - 1);  // number of lines in the track
         
         if (_trackDisplayMode == WithCurrentMatches)
         {
@@ -258,7 +259,7 @@ namespace qtAliceVision
           if (it != trackFeatures.featuresPerFrame.end())
           {
             if (trackFeatures.nbLandmarks > 0)
-              ++nbReprojectionErrorLinesToDraw; // to draw rerojection error
+              ++nbReprojectionErrorLinesToDraw;  // to draw reprojection error
             ++nbPointsToDraw;
             ++nbHighlightPointsToDraw;
           }
@@ -268,7 +269,7 @@ namespace qtAliceVision
           const auto it = trackFeatures.featuresPerFrame.find(currentFrameId);
           if (it != trackFeatures.featuresPerFrame.end())
             ++nbHighlightPointsToDraw; // to draw a highlight point in order to identify the current match
-
+          
           if (trackFeatures.nbLandmarks > 0)
             nbReprojectionErrorLinesToDraw += trackFeatures.featuresPerFrame.size(); // one line per matches for rerojection error
 
@@ -474,8 +475,9 @@ namespace qtAliceVision
           continue;
       }
 
-      const int state = globalTrackInfo.reconstructionState();
-      const bool trackHasInliers = (state != 0);
+      const MFeatures::ReconstructionState state = globalTrackInfo.reconstructionState();
+      const int stateIdx = static_cast<int>(state);
+      const bool trackHasInliers = (state != MFeatures::ReconstructionState::None);
 
       const MFeature* previousFeature = nullptr;
       aliceVision::IndexT previousFrameId = aliceVision::UndefinedIndexT;
@@ -510,7 +512,7 @@ namespace qtAliceVision
 
           // draw track line
           const QColor&  c = getLineColor(contiguous, inliers, trackHasInliers);
-          unsigned int vIdx = nbTrackLinesDrawn[state] * kLineVertices;
+          unsigned int vIdx = nbTrackLinesDrawn[stateIdx] * kLineVertices;
 
           QPointF prevPoint;
           QPointF curPoint;
@@ -525,10 +527,10 @@ namespace qtAliceVision
             curPoint = QPointF(feature->x(), feature->y());
           }
 
-          setVertex(verticesTrackLines[state], vIdx, prevPoint, c);
-          setVertex(verticesTrackLines[state], vIdx + 1, curPoint, c);
+          setVertex(verticesTrackLines[stateIdx], vIdx, prevPoint, c);
+          setVertex(verticesTrackLines[stateIdx], vIdx + 1, curPoint, c);
 
-          ++nbTrackLinesDrawn[state];
+          ++nbTrackLinesDrawn[stateIdx];
 
           previousTrackLineContiguous = contiguous;
 

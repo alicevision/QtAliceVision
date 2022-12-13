@@ -89,17 +89,23 @@ public:
     using MTrackFeaturesPerTrack = std::map<aliceVision::IndexT, MTrackFeatures>;
     using MTrackFeaturesPerTrackPerDesc = std::map<QString, MTrackFeaturesPerTrack>;
 
+    enum class ReconstructionState {
+        None = 0,
+        Partial = 1,
+        Complete = 2
+    };
+
     struct MGlobalTrackInfo {
       int nbFeatures = 0;
       int nbLandmarks = 0;
       aliceVision::IndexT startFrameId = std::numeric_limits<aliceVision::IndexT>::max();
       aliceVision::IndexT endFrameId = std::numeric_limits<aliceVision::IndexT>::min();
 
-      int reconstructionState() const 
+      ReconstructionState reconstructionState() const
       {
-        if (nbLandmarks == 0) return 0;
-        if (nbLandmarks < nbFeatures) return 1;
-        return 2;
+        if (nbLandmarks == 0) return ReconstructionState::None;
+        if (nbLandmarks < nbFeatures) return ReconstructionState::Partial;
+        return ReconstructionState::Complete;
       }
     };
     using MGlobalTrackInfoPerTrack = std::map<aliceVision::IndexT, MGlobalTrackInfo>;
