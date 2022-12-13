@@ -712,7 +712,7 @@ namespace qtAliceVision
     if (!_displayFeatures)
       params.nbFeaturesToDraw = 0;
 
-    if (!_displayMatches || !params.haveValidTracks || !params.haveValidLandmarks)
+    if (!_displayMatches || !params.haveValidTracks)
       params.nbMatchesToDraw = 0;
 
     if (!_displayLandmarks || !params.haveValidLandmarks)
