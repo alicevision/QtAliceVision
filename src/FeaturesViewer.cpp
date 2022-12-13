@@ -226,6 +226,7 @@ namespace qtAliceVision
       for (const auto& trackFeaturesPair : *trackFeaturesPerTrack)
       {
         const auto& trackFeatures = trackFeaturesPair.second;
+        const auto& globalTrackInfo = _mfeatures->globalTrackInfo(trackFeaturesPair.first);
 
         // feature scale filter
         if (trackFeatures.featureScaleAverage > params.maxFeatureScale ||
@@ -240,9 +241,14 @@ namespace qtAliceVision
           continue;
         }
 
+        // track frame interval contains current frame
+        if (currentFrameId < globalTrackInfo.startFrameId || currentFrameId > globalTrackInfo.endFrameId)
+        {
+            continue;
+        }
+
         ++nbTracksToDraw;
 
-        const auto& globalTrackInfo = _mfeatures->globalTrackInfo(trackFeaturesPair.first);
         const int state = globalTrackInfo.reconstructionState();
         nbTrackLinesToDraw[state] += (trackFeatures.featuresPerFrame.size() - 1); // number of lines in the track
         
@@ -447,6 +453,7 @@ namespace qtAliceVision
     for (const auto& trackFeaturesPair : *trackFeaturesPerTrack)
     {
       const auto& trackFeatures = trackFeaturesPair.second;
+      const auto& globalTrackInfo = _mfeatures->globalTrackInfo(trackFeaturesPair.first);
 
       // feature scale filter
       if (trackFeatures.featureScaleAverage > params.maxFeatureScale ||
@@ -461,7 +468,12 @@ namespace qtAliceVision
         continue;
       }
 
-      const auto& globalTrackInfo = _mfeatures->globalTrackInfo(trackFeaturesPair.first);
+      // track frame interval contains current frame
+      if (currentFrameId < globalTrackInfo.startFrameId || currentFrameId > globalTrackInfo.endFrameId)
+      {
+          continue;
+      }
+
       const int state = globalTrackInfo.reconstructionState();
       const bool trackHasInliers = (state != 0);
 
