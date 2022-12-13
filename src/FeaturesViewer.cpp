@@ -288,31 +288,31 @@ namespace qtAliceVision
 
     if (node->childCount() < 8)
     {
-      // (1) Highlight points
+      // (1) Endpoints
+      geometryEndpoint = appendChildGeometry(node, nbEndpointsToDraw);
+      // (2) Highlight points
       geometryHighlightPoint = appendChildGeometry(node, nbHighlightPointsToDraw);
-      // (2) Track lines
+      // (3) Track lines
       for (std::size_t idx = 0; idx < 3; idx++)
         geometryTrackLine[idx] = appendChildGeometry(node, nbTrackLinesToDraw[idx] * kLineVertices);
-      // (3) Reprojection Error lines
+      // (4) Reprojection Error lines
       geometryReprojectionErrorLine = appendChildGeometry(node, nbReprojectionErrorLinesToDraw * kLineVertices);
-      // (4) Points
+      // (5) Points
       geometryPoint = appendChildGeometry(node, nbPointsToDraw);
-      // (5) Endpoints
-      geometryEndpoint = appendChildGeometry(node, nbEndpointsToDraw);
     }
     else
     {
-      // (1) Highlight points
-      geometryHighlightPoint = getCleanChildGeometry(node, 1, nbHighlightPointsToDraw);
-      // (2) Tracks lines
+      // (1) Endpoints
+      geometryEndpoint = getCleanChildGeometry(node, 1, nbEndpointsToDraw * kTriangleVertices);
+      // (2) Highlight points
+      geometryHighlightPoint = getCleanChildGeometry(node, 2, nbHighlightPointsToDraw);
+      // (3) Tracks lines
       for (std::size_t idx = 0; idx < 3; idx++) 
-        geometryTrackLine[idx] = getCleanChildGeometry(node, idx+2, nbTrackLinesToDraw[idx] * kLineVertices);
-      // (3) Reprojection Error lines
-      geometryReprojectionErrorLine = getCleanChildGeometry(node, 5, nbReprojectionErrorLinesToDraw * kLineVertices);
-      // (4) Points
-      geometryPoint = getCleanChildGeometry(node, 6, nbPointsToDraw);
-      // (5) Endpoints
-      geometryEndpoint = getCleanChildGeometry(node, 7, nbEndpointsToDraw * kTriangleVertices);
+        geometryTrackLine[idx] = getCleanChildGeometry(node, idx+3, nbTrackLinesToDraw[idx] * kLineVertices);
+      // (4) Reprojection Error lines
+      geometryReprojectionErrorLine = getCleanChildGeometry(node, 6, nbReprojectionErrorLinesToDraw * kLineVertices);
+      // (5) Points
+      geometryPoint = getCleanChildGeometry(node, 7, nbPointsToDraw);
     }
 
     geometryHighlightPoint->setDrawingMode(QSGGeometry::DrawPoints);
