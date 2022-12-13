@@ -413,6 +413,21 @@ namespace qtAliceVision
       }
     };
 
+    // utility lambda to register an oriented triangle corresponding to an endpoint
+    const auto drawEndpoint = [&](const QPointF& pointFrom, 
+                                  const QPointF& pointTo, 
+                                  unsigned int& nbEndpointsDrawn, 
+                                  float size = 10.f)
+    {
+        QPointF triangle[] = {QPointF(0, 0), QPointF(-2, 1), QPointF(-2, -1)};
+        float angle = QLineF(pointFrom, pointTo).angle() - rotation();
+        auto tr = QTransform().rotate(-angle).scale(size, size);
+        const int vIdx = nbEndpointsDrawn * kTriangleVertices;
+        for (int i = 0; i < kTriangleVertices; i++) 
+            setVertex(verticesEndpoints, vIdx + i, pointFrom + tr.map(triangle[i]), _endpointColor);
+        nbEndpointsDrawn++;
+    };
+
     if (nbTracksToDraw == 0)
       return;
 
@@ -509,29 +524,11 @@ namespace qtAliceVision
           {
             // draw global start point
             if (previousFrameId == globalTrackInfo.startFrameId)
-            {
-              vIdx = nbEndpointsDrawn * kTriangleVertices;
-              QPointF triangle[] = {QPointF(1, 0), QPointF(-1, 1), QPointF(-1, -1)};
-              float angle = QLineF(curPoint, prevPoint).angle() - rotation();
-              float size = 10.f;
-              auto tr = QTransform().rotate(180 - angle).scale(size, size);
-              for (int i = 0; i < kTriangleVertices; i++) 
-                setVertex(verticesEndpoints, vIdx + i, prevPoint + tr.map(triangle[i]), _endpointColor);
-              nbEndpointsDrawn++;
-            }
+                drawEndpoint(prevPoint, curPoint, nbEndpointsDrawn);
 
             // draw global end point
             if (frameId == globalTrackInfo.endFrameId)
-            {
-              vIdx = nbEndpointsDrawn * kTriangleVertices;
-              QPointF triangle[] = {QPointF(1, 0), QPointF(-1, 1), QPointF(-1, -1)};
-              float angle = QLineF(curPoint, prevPoint).angle() - rotation();
-              float size = 10.f;
-              auto tr = QTransform().rotate(-angle).scale(size, size);
-              for (int i = 0; i < kTriangleVertices; i++) 
-                setVertex(verticesEndpoints, vIdx + i, curPoint + tr.map(triangle[i]), _endpointColor);
-              nbEndpointsDrawn++;
-            }
+                drawEndpoint(curPoint, prevPoint, nbEndpointsDrawn);
           }
         }
 
