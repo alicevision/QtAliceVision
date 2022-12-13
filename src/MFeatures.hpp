@@ -314,7 +314,7 @@ private:
     int _timeWindow = 1;            // size of the time window (from current frame - time window to current frame + time window), 0 is disable, -1 is no limit
 
     Status _localInfoStatus = MFeatures::None;
-    Status _globalInfoStatus = MFeatures::None;
+    Status _globalInfoStatus = MFeatures::Ready;
 
     // internal data
     std::map<QString, float> _minFeatureScalePerDesc;

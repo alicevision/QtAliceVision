@@ -158,18 +158,15 @@ void MFeatures::loadGlobalInfo()
 {
   // safety check
   if (_mtracks == nullptr || _mtracks->status() != MTracks::Ready) {
-    setGlobalInfoStatus(None);
     return;
   }
   if (_msfmData == nullptr || _msfmData->status() != MSfMData::Ready) {
-    setGlobalInfoStatus(None);
     return;
   }
   // get all viewIds from sfmData
   std::vector<aliceVision::IndexT> viewIds;
   getAllViewIds(viewIds);
   if (viewIds.empty()) {
-    setGlobalInfoStatus(None);
     return;
   }
   
@@ -183,49 +180,47 @@ void MFeatures::loadGlobalInfo()
 
 void MFeatures::updateGlobalTrackInfo(MViewFeaturesPerViewPerDesc* viewFeaturesPerViewPerDesc)
 {
-  if (!viewFeaturesPerViewPerDesc) {
-    setGlobalInfoStatus(None);
-    return;
-  }
+  const bool newFeaturesLoaded = (viewFeaturesPerViewPerDesc != nullptr);
 
-  bool updated = updateFromTracks(viewFeaturesPerViewPerDesc) && updateFromSfM(viewFeaturesPerViewPerDesc);
-  if (!updated) {
-    setGlobalInfoStatus(None);
-    return;
-  }
-  
-  // clear previous global track info
-  _globalTrackInfoPerTrack.clear();
+  const bool tracksUpdated = updateFromTracks(viewFeaturesPerViewPerDesc);
+  const bool sfmUpdated = updateFromSfM(viewFeaturesPerViewPerDesc);
 
-  // count all features and all reconstructed features per track
-  for (auto& p1 : *viewFeaturesPerViewPerDesc) 
+  const bool updated = newFeaturesLoaded && tracksUpdated && sfmUpdated;
+  if (updated)
   {
-    auto& viewFeaturesPerView = p1.second;
-    for (auto& p2 : viewFeaturesPerView) 
+    // clear previous global track info
+    _globalTrackInfoPerTrack.clear();
+
+    // update global information for each track
+    for (auto& p1 : *viewFeaturesPerViewPerDesc)
     {
-      auto& viewFeatures = p2.second;
-      const aliceVision::IndexT frameId = viewFeatures.frameId;
-      for (auto* feature : viewFeatures.features) 
+      auto& viewFeaturesPerView = p1.second;
+      for (auto& p2 : viewFeaturesPerView)
       {
+        auto& viewFeatures = p2.second;
+        const aliceVision::IndexT frameId = viewFeatures.frameId;
+        for (auto* feature : viewFeatures.features)
+        {
         const int trackId = feature->trackId();
         MGlobalTrackInfo& info = _globalTrackInfoPerTrack[trackId];
 
         info.nbFeatures++;
 
         if (feature->landmarkId() != -1)
-          info.nbLandmarks++;
-        
+            info.nbLandmarks++;
+
         if (frameId < info.startFrameId)
-          info.startFrameId = frameId;
-        
+            info.startFrameId = frameId;
+
         if (frameId > info.endFrameId)
-          info.endFrameId = frameId;
+            info.endFrameId = frameId;
+        }
       }
     }
-  }
 
-  // clear loaded features
-  delete viewFeaturesPerViewPerDesc;
+    // clear loaded features
+    delete viewFeaturesPerViewPerDesc;
+  }
 
   // done
   setGlobalInfoStatus(Ready);
