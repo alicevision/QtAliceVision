@@ -291,7 +291,7 @@ void DepthMapEntity::loadDepthMap()
         for(int x = 0; x < depthMap.Width(); ++x)
         {
             float depthValue = depthMap(y, x);
-            if(!isfinite(depthValue) || depthValue <= 0.f)
+            if(!std::isfinite(depthValue) || depthValue <= 0.f)
                 continue;
 
             Point3d p = CArr + (iCamArr * Point2d((double)x, (double)y)).normalize() * depthValue;
