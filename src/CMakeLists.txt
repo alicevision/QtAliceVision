@@ -10,11 +10,12 @@ set(PLUGIN_SOURCES
     FloatTexture.cpp
     Surface.cpp
     MSfMDataStats.cpp
-    PanoramaViewer.cpp)
+    PanoramaViewer.cpp
+    )
 
 set(PLUGIN_HEADERS
-    FeaturesViewer.hpp
     plugin.hpp
+    FeaturesViewer.hpp
     MFeature.hpp
     MFeatures.hpp
     MSfMData.hpp
@@ -25,7 +26,8 @@ set(PLUGIN_HEADERS
     MSfMDataStats.hpp
     PanoramaViewer.hpp
     Surface.hpp
-    ShaderImageViewer.hpp)
+    ShaderImageViewer.hpp
+    )
 
 set(PLUGIN_MOCS
     FeaturesViewer.hpp
@@ -34,11 +36,18 @@ set(PLUGIN_MOCS
     MSfMData.hpp
     MViewStats.hpp
     MTracks.hpp
-    MSfMDataStats.hpp)
+    MSfMDataStats.hpp
+    )
+
+
+# Qt module dependency
+find_package(Qt5 COMPONENTS Quick REQUIRED)
+find_package(Qt5 COMPONENTS Qml REQUIRED)
+find_package(Qt5 COMPONENTS Charts REQUIRED)
+
 
 # Target properties
-add_library(qtAliceVisionPlugin SHARED
-    ${PLUGIN_SOURCES} ${PLUGIN_HEADERS} ${PLUGIN_MOCS})
+add_library(qtAliceVisionPlugin SHARED ${PLUGIN_SOURCES} ${PLUGIN_HEADERS} ${PLUGIN_MOCS})
 
 target_link_libraries(qtAliceVisionPlugin
   PUBLIC
@@ -60,6 +69,7 @@ set_target_properties(qtAliceVisionPlugin
         SOVERSION ${PROJECT_VERSION_MAJOR}
         VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}"
         )
+
 
 # Install settings
 install(FILES "qmldir"

@@ -7,7 +7,6 @@
 #include <QSGTexture>
 #include <QThreadPool>
 
-#include <aliceVision/image/Image.hpp>
 #include <aliceVision/image/resampling.hpp>
 #include <aliceVision/image/io.hpp>
 #include <aliceVision/image/Image.hpp>
