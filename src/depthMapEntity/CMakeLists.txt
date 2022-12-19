@@ -10,12 +10,12 @@ set(PLUGIN_HEADERS
 
 
 # Qt module dependency
-find_package(Qt5 COMPONENTS Gui REQUIRED)
-find_package(Qt5 COMPONENTS Qml REQUIRED)
-find_package(Qt5 COMPONENTS Quick REQUIRED)
-find_package(Qt5 COMPONENTS 3DCore REQUIRED)
-find_package(Qt5 COMPONENTS 3DRender REQUIRED)
-find_package(Qt5 COMPONENTS 3DExtras REQUIRED)
+find_package(Qt6 COMPONENTS Gui REQUIRED)
+find_package(Qt6 COMPONENTS Qml REQUIRED)
+find_package(Qt6 COMPONENTS Quick REQUIRED)
+find_package(Qt6 COMPONENTS 3DCore REQUIRED)
+find_package(Qt6 COMPONENTS 3DRender REQUIRED)
+find_package(Qt6 COMPONENTS 3DExtras REQUIRED)
 
 
 # OpenImageIO dependency
@@ -36,13 +36,13 @@ target_link_libraries(depthMapEntityPlugin
       aliceVision_image
       aliceVision_mvsData
       aliceVision_numeric
-      Qt5::Core
-      Qt5::Gui
-      Qt5::Qml
-      Qt5::Quick
-      Qt5::3DCore
-      Qt5::3DRender
-      Qt5::3DExtras
+      Qt6::Core
+      Qt6::Gui
+      Qt6::Qml
+      Qt6::Quick
+      Qt6::3DCore
+      Qt6::3DRender
+      Qt6::3DExtras
       )
 
 set_target_properties(depthMapEntityPlugin

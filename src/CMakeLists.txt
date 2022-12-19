@@ -39,9 +39,9 @@ set(PLUGIN_MOCS
 
 
 # Qt module dependency
-find_package(Qt5 COMPONENTS Quick REQUIRED)
-find_package(Qt5 COMPONENTS Qml REQUIRED)
-find_package(Qt5 COMPONENTS Charts REQUIRED)
+find_package(Qt6 COMPONENTS Quick REQUIRED)
+find_package(Qt6 COMPONENTS Qml REQUIRED)
+find_package(Qt6 COMPONENTS Charts REQUIRED)
 
 
 # Target properties
