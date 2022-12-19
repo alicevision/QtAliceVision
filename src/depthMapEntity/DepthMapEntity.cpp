@@ -44,7 +44,39 @@ void DepthMapEntity::setSource(const QUrl& value)
 {
     if(_source == value)
         return;
+    
+    if(!value.isValid())
+    {
+        qDebug() << "[DepthMapEntity] invalid source";
+        _status = DepthMapEntity::Error;
+        return;
+    }
+    
     _source = value;
+
+    QFileInfo fileInfo = QFileInfo(_source.path());
+    QString filename = fileInfo.fileName();
+    if(filename.contains("depthMap"))
+    {
+        _depthMapSource = _source;
+        _simMapSource = QUrl::fromLocalFile(
+            QFileInfo(fileInfo.dir(), filename.replace("depthMap", "simMap")).filePath()
+        );
+    }
+    else if(filename.contains("simMap"))
+    {
+        _simMapSource = _source;
+        _depthMapSource = QUrl::fromLocalFile(
+            QFileInfo(fileInfo.dir(), filename.replace("simMap", "depthMap")).filePath()
+        );
+    }
+    else
+    {
+        qDebug() << "[DepthMapEntity] source filename must contain depthMap or simMap";
+        _status = DepthMapEntity::Error;
+        return;
+    }
+
     loadDepthMap();
     Q_EMIT sourceChanged();
 }
@@ -209,25 +241,17 @@ void DepthMapEntity::loadDepthMap()
 
     // Load depth map and metadata
 
-    if(!_source.isValid())
-    {
-        qDebug() << "[DepthMapEntity] invalid filepath for depth map";
-        _status = DepthMapEntity::Error;
-        return;
-    }
-
-    qDebug() << "[DepthMapEntity] Load Depth Map: " << _source.toLocalFile();
-
-    const std::string path = _source.toLocalFile().toStdString();
+    const std::string depthMapPath = _depthMapSource.toLocalFile().toStdString();
+    qDebug() << "[DepthMapEntity] load depth map: " << _depthMapSource.toLocalFile();
     image::Image<float> depthMap;
-    image::readImage(path, depthMap, image::EImageColorSpace::LINEAR);
+    image::readImage(depthMapPath, depthMap, image::EImageColorSpace::LINEAR);
 
     oiio::ImageBuf inBuf;
     image::getBufferFromImage(depthMap, inBuf);
 
-    oiio::ImageSpec inSpec = image::readImageSpec(path);
-
     qDebug() << "[DepthMapEntity] Image Size: " << depthMap.Width() << "x" << depthMap.Height();
+
+    oiio::ImageSpec inSpec = image::readImageSpec(depthMapPath);
 
     Point3d CArr;
     const oiio::ParamValue* cParam = inSpec.find_attribute("AliceVision:CArr");
@@ -259,25 +283,23 @@ void DepthMapEntity::loadDepthMap()
 
     // Load sim map
 
-    const QFileInfo depthMapFile = QFileInfo(_source.path());
-    const QFileInfo simMapFile = QFileInfo(depthMapFile.dir(), depthMapFile.fileName().replace("depthMap", "simMap"));
-    const QUrl simPath = QUrl::fromLocalFile(simMapFile.filePath());
-    if(!simPath.isValid())
+    image::Image<float> simMap;
+    if(_simMapSource.isValid())
     {
-        qDebug() << "[DepthMapEntity] invalid filepath for sim map";
-        _status = DepthMapEntity::Error;
-        return;
+        const std::string simMapPath = _simMapSource.toLocalFile().toStdString();
+        qDebug() << "[DepthMapEntity] load sim map: " << _simMapSource.toLocalFile();
+        image::readImage(simMapPath, simMap, image::EImageColorSpace::LINEAR);
+    }
+    else 
+    {
+        qDebug() << "[DepthMapEntity] failed to find associated sim map";
     }
 
-    qDebug() << "[DepthMapEntity] Load Sim Map: " << simPath.toLocalFile();
-
-    image::Image<float> simMap;
-    image::readImage(simPath.toLocalFile().toStdString(), simMap, image::EImageColorSpace::LINEAR);
     const bool validSimMap = (simMap.Width() == depthMap.Width()) && (simMap.Height() == depthMap.Height());
 
     // 3D points position and color (using jetColorMap)
 
-    qDebug() << "[DepthMapEntity] computing positions and colors with depth/sim map";
+    qDebug() << "[DepthMapEntity] computing positions and colors for point cloud";
 
     std::vector<int> indexPerPixel(depthMap.Width() * depthMap.Height(), -1);
     std::vector<Vec3f> positions;
