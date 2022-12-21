@@ -156,18 +156,8 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
     {
         for (size_t j = 0; j <= _subdivisions; j++)
         {
-            float x = 0.0f;
-            float y = 0.0f;
-            if (_vertices.empty())
-            {
-                x = i * textureSize.width() / (float)_subdivisions;
-                y = j * textureSize.height() / (float)_subdivisions;
-            }
-            else
-            {
-                x = _vertices[vertexIndex].x();
-                y = _vertices[vertexIndex].y();
-            }
+            float x = i * textureSize.width() / (float)_subdivisions;
+            float y = j * textureSize.height() / (float)_subdivisions;
 
             const double cx = x - center(0);
             const double cy = y - center(1);
@@ -185,7 +175,7 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
             float v = j / (float)_subdivisions;
 
             // Remove Distortion only if sfmData has been updated
-            if (intrinsic && intrinsic->hasDistortion())
+            if (isDistortionViewerEnabled() && intrinsic && intrinsic->hasDistortion())
             {
                 const aliceVision::Vec2 undisto_pix(x, y);
                 const aliceVision::Vec2 disto_pix = intrinsic->get_d_pixel(undisto_pix);
