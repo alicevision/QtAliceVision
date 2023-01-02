@@ -81,6 +81,8 @@ public:
 private:
     Status _status = DepthMapEntity::None;
     QUrl _source;
+    QUrl _depthMapSource;
+    QUrl _simMapSource;
     DisplayMode _displayMode = DisplayMode::Triangles;
     bool _displayColor = true;
     float _pointSize = 0.5f;
