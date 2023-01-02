@@ -301,12 +301,11 @@ void DepthMapEntity::loadDepthMap()
 
     qDebug() << "[DepthMapEntity] computing positions and colors for point cloud";
 
-    std::vector<int> indexPerPixel(depthMap.Width() * depthMap.Height(), -1);
+    std::vector<int> indexPerPixel((std::size_t)(depthMap.Width() * depthMap.Height()), -1);
     std::vector<Vec3f> positions;
     std::vector<image::RGBfColor> colors;
 
-    oiio::ImageBufAlgo::PixelStats stats;
-    oiio::ImageBufAlgo::computePixelStats(stats, inBuf);
+    oiio::ImageBufAlgo::PixelStats stats = oiio::ImageBufAlgo::computePixelStats(inBuf);
 
     for(int y = 0; y < depthMap.Height(); ++y)
     {
@@ -317,9 +316,9 @@ void DepthMapEntity::loadDepthMap()
                 continue;
 
             Point3d p = CArr + (iCamArr * Point2d((double)x, (double)y)).normalize() * depthValue;
-            Vec3f position(p.x, -p.y, -p.z);
+            Vec3f position((float)p.x, (float)-p.y, (float)-p.z);
 
-            indexPerPixel[y * depthMap.Width() + x] = (int)positions.size();
+            indexPerPixel[(std::size_t)(y * depthMap.Width() + x)] = (int)positions.size();
             positions.push_back(position);
 
             if(validSimMap)
@@ -345,33 +344,37 @@ void DepthMapEntity::loadDepthMap()
     QGeometry* customGeometry = new QGeometry;
 
     // vertices buffer
-    std::vector<int> trianglesIndexes;
+    std::vector<std::size_t> trianglesIndexes;
     trianglesIndexes.reserve(2*3*positions.size());
     for(int y = 0; y < depthMap.Height()-1; ++y)
     {
         for(int x = 0; x < depthMap.Width()-1; ++x)
         {
-            int pixelIndexA = indexPerPixel[y * depthMap.Width() + x];
-            int pixelIndexB = indexPerPixel[(y + 1) * depthMap.Width() + x];
-            int pixelIndexC = indexPerPixel[(y + 1) * depthMap.Width() + x + 1];
-            int pixelIndexD = indexPerPixel[y * depthMap.Width() + x + 1];
+            int pixelIndexA = indexPerPixel[(std::size_t)(y * depthMap.Width() + x)];
+            int pixelIndexB = indexPerPixel[(std::size_t)((y + 1) * depthMap.Width() + x)];
+            int pixelIndexC = indexPerPixel[(std::size_t)((y + 1) * depthMap.Width() + x + 1)];
+            int pixelIndexD = indexPerPixel[(std::size_t)(y * depthMap.Width() + x + 1)];
             if(pixelIndexA != -1 &&
                 pixelIndexB != -1 &&
                 pixelIndexC != -1 &&
-                validTriangleRatio(positions[pixelIndexA], positions[pixelIndexB], positions[pixelIndexC]))
+                validTriangleRatio(positions[(std::size_t)pixelIndexA],
+                                    positions[(std::size_t)pixelIndexB],
+                                    positions[(std::size_t)pixelIndexC]))
             {
-                trianglesIndexes.push_back(pixelIndexA);
-                trianglesIndexes.push_back(pixelIndexB);
-                trianglesIndexes.push_back(pixelIndexC);
+                trianglesIndexes.push_back((std::size_t)pixelIndexA);
+                trianglesIndexes.push_back((std::size_t)pixelIndexB);
+                trianglesIndexes.push_back((std::size_t)pixelIndexC);
             }
             if(pixelIndexC != -1 &&
                 pixelIndexD != -1 &&
                 pixelIndexA != -1 &&
-                validTriangleRatio(positions[pixelIndexC], positions[pixelIndexD], positions[pixelIndexA]))
+                validTriangleRatio(positions[(std::size_t)pixelIndexC],
+                                    positions[(std::size_t)pixelIndexD],
+                                    positions[(std::size_t)pixelIndexA]))
             {
-                trianglesIndexes.push_back(pixelIndexC);
-                trianglesIndexes.push_back(pixelIndexD);
-                trianglesIndexes.push_back(pixelIndexA);
+                trianglesIndexes.push_back((std::size_t)pixelIndexC);
+                trianglesIndexes.push_back((std::size_t)pixelIndexD);
+                trianglesIndexes.push_back((std::size_t)pixelIndexA);
             }
         }
     }
@@ -379,33 +382,33 @@ void DepthMapEntity::loadDepthMap()
 
     std::vector<Vec3f> triangles;
     triangles.resize(trianglesIndexes.size());
-    for(int i = 0; i < trianglesIndexes.size(); ++i)
+    for(std::size_t i = 0; i < trianglesIndexes.size(); ++i)
     {
         triangles[i] = positions[trianglesIndexes[i]];
     }
     std::vector<Vec3f> normals;
     normals.resize(triangles.size());
-    for(int i = 0; i < trianglesIndexes.size(); i+=3)
+    for(std::size_t i = 0; i < trianglesIndexes.size(); i+=3)
     {
         Vec3f normal = (triangles[i+1]-triangles[i]).cross(triangles[i+2]-triangles[i]);
-        for(int t = 0; t < 3; ++t)
+        for(std::size_t t = 0; t < 3; ++t)
             normals[i+t] = normal;
     }
 
-    QBuffer* vertexBuffer = new QBuffer(QBuffer::VertexBuffer);
-    QByteArray trianglesData((const char*)&triangles[0], (int)triangles.size() * sizeof(Vec3f));
+    QBuffer* vertexBuffer = new QBuffer;
+    QByteArray trianglesData((const char*)&triangles[0], (int)(triangles.size() * sizeof(Vec3f)));
     vertexBuffer->setData(trianglesData);
 
-    QBuffer* normalBuffer = new QBuffer(QBuffer::VertexBuffer);
-    QByteArray normalsData((const char*)&normals[0], (int)normals.size() * sizeof(Vec3f));
+    QBuffer* normalBuffer = new QBuffer;
+    QByteArray normalsData((const char*)&normals[0], (int)(normals.size() * sizeof(Vec3f)));
     normalBuffer->setData(normalsData);
 
     QAttribute* positionAttribute = new QAttribute(this);
     positionAttribute->setName(QAttribute::defaultPositionAttributeName());
     positionAttribute->setAttributeType(QAttribute::VertexAttribute);
     positionAttribute->setBuffer(vertexBuffer);
-    positionAttribute->setDataType(QAttribute::Float);
-    positionAttribute->setDataSize(3);
+    positionAttribute->setVertexBaseType(QAttribute::Float);
+    positionAttribute->setVertexSize(3);
     positionAttribute->setByteOffset(0);
     positionAttribute->setByteStride(sizeof(Vec3f));
     positionAttribute->setCount((uint)triangles.size());
@@ -414,8 +417,8 @@ void DepthMapEntity::loadDepthMap()
     normalAttribute->setName(QAttribute::defaultNormalAttributeName());
     normalAttribute->setAttributeType(Qt3DRender::QAttribute::VertexAttribute);
     normalAttribute->setBuffer(normalBuffer);
-    normalAttribute->setDataType(QAttribute::Float);
-    normalAttribute->setDataSize(3);
+    normalAttribute->setVertexBaseType(QAttribute::Float);
+    normalAttribute->setVertexSize(3);
     normalAttribute->setByteOffset(0);
     normalAttribute->setByteStride(sizeof(Vec3f));
     normalAttribute->setCount((uint)normals.size());
@@ -427,14 +430,14 @@ void DepthMapEntity::loadDepthMap()
     // Duplicate colors as we cannot use indexes!
     std::vector<image::RGBfColor> colorsFlat;
     colorsFlat.reserve(trianglesIndexes.size());
-    for(int i = 0; i < trianglesIndexes.size(); ++i)
+    for(std::size_t i = 0; i < trianglesIndexes.size(); ++i)
     {
         colorsFlat.push_back(colors[trianglesIndexes[i]]);
     }
 
     // read color data
-    QBuffer* colorDataBuffer = new QBuffer(QBuffer::VertexBuffer);
-    QByteArray colorData((const char*)colorsFlat[0].data(), (int)colorsFlat.size() * 3 * sizeof(float));
+    QBuffer* colorDataBuffer = new QBuffer;
+    QByteArray colorData((const char*)colorsFlat[0].data(), (int)(colorsFlat.size() * 3 * sizeof(float)));
     colorDataBuffer->setData(colorData);
 
     QAttribute* colorAttribute = new QAttribute;
@@ -442,8 +445,8 @@ void DepthMapEntity::loadDepthMap()
     colorAttribute->setName(Qt3DRender::QAttribute::defaultColorAttributeName());
     colorAttribute->setAttributeType(QAttribute::VertexAttribute);
     colorAttribute->setBuffer(colorDataBuffer);
-    colorAttribute->setDataType(QAttribute::Float);
-    colorAttribute->setDataSize(3);
+    colorAttribute->setVertexBaseType(QAttribute::Float);
+    colorAttribute->setVertexSize(3);
     colorAttribute->setByteOffset(0);
     colorAttribute->setByteStride(3 * sizeof(float));
     colorAttribute->setCount((uint)colorsFlat.size());
