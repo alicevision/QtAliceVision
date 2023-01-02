@@ -1,12 +1,9 @@
 #include "PanoramaViewer.hpp"
 #include "FloatImageViewer.hpp"
 #include "FloatTexture.hpp"
-#include "ShaderImageViewer.hpp"
 
 #include <QSGGeometryNode>
 #include <QSGGeometry>
-#include <QSGSimpleMaterial>
-#include <QSGSimpleMaterialShader>
 #include <QSGTexture>
 #include <QThreadPool>
 

@@ -11,7 +11,7 @@ set(PLUGIN_HEADERS
 
 
 # Qt module dependencies
-find_package(Qt5 COMPONENTS Gui REQUIRED)
+find_package(Qt6 COMPONENTS Gui REQUIRED)
 
 
 # OpenImageIO dependency
@@ -30,8 +30,8 @@ target_link_libraries(qtAliceVisionImageIOPlugin
     PUBLIC
     ${OPENIMAGEIO_LIBRARIES}
     aliceVision_image
-    Qt5::Core
-    Qt5::Gui
+    Qt6::Core
+    Qt6::Gui
     )
 
 

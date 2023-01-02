@@ -16,8 +16,6 @@
 
 namespace qtAliceVision {
 
-QT_CHARTS_USE_NAMESPACE
-
 class MSfMDataStats: public QObject
 {
     Q_OBJECT

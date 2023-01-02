@@ -2,13 +2,11 @@
 
 #include "FloatTexture.hpp"
 #include "Surface.hpp"
-#include "ShaderImageViewer.hpp"
 
 #include <QQuickItem>
 #include <QUrl>
 #include <QRunnable>
 #include <QSGGeometryNode>
-#include <QSGSimpleMaterial>
 
 #include <QSharedPointer>
 #include <QVariant>
@@ -134,13 +132,15 @@ public:
     Q_SIGNAL void downscaleLevelChanged();
     Q_SIGNAL void surfaceChanged();
     Q_SIGNAL void canBeHoveredChanged();
-    Q_SIGNAL void sfmRequiredChanged();
     Q_SIGNAL void fisheyeCircleParametersChanged();
 
     // Q_INVOKABLE
     Q_INVOKABLE QVector4D pixelValueAt(int x, int y);
     
     Surface* getSurfacePtr() { return &_surface; }
+
+protected:
+    virtual void geometryChange(const QRectF& newGeometry, const QRectF& oldGeometry) override;
 
 private:
     /// Reload image from source
@@ -150,18 +150,22 @@ private:
     /// Custom QSGNode update
     QSGNode* updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePaintNodeData* data) override;
 
-    void updatePaintSurface(QSGGeometryNode* root, QSGSimpleMaterial<ShaderData>* material, QSGGeometry* geometryLine);
-
     QUrl _source;
     float _gamma = 1.f;
+    bool _gammaChanged = false;
     float _gain = 1.f;
+    bool _gainChanged = false;
+
+    bool _mouseOverChanged = false;
 
     bool _loading = false;
     bool _outdated = false;
     bool _clearBeforeLoad = true;
 
+    bool _geometryChanged = false;
     bool _imageChanged = false;
     EChannelMode _channelMode;
+    bool _channelModeChanged = false;
     QSharedPointer<FloatImage> _image;
     QRectF _boundingRect;
     QSize _textureSize;
