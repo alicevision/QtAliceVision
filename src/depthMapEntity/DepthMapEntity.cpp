@@ -319,7 +319,7 @@ void DepthMapEntity::loadDepthMap()
             Point3d p = CArr + (iCamArr * Point2d((double)x, (double)y)).normalize() * depthValue;
             Vec3f position(p.x, -p.y, -p.z);
 
-            indexPerPixel[y * depthMap.Width() + x] = positions.size();
+            indexPerPixel[y * depthMap.Width() + x] = (int)positions.size();
             positions.push_back(position);
 
             if(validSimMap)
@@ -393,11 +393,11 @@ void DepthMapEntity::loadDepthMap()
     }
 
     QBuffer* vertexBuffer = new QBuffer(QBuffer::VertexBuffer);
-    QByteArray trianglesData((const char*)&triangles[0], triangles.size() * sizeof(Vec3f));
+    QByteArray trianglesData((const char*)&triangles[0], (int)triangles.size() * sizeof(Vec3f));
     vertexBuffer->setData(trianglesData);
 
     QBuffer* normalBuffer = new QBuffer(QBuffer::VertexBuffer);
-    QByteArray normalsData((const char*)&normals[0], normals.size() * sizeof(Vec3f));
+    QByteArray normalsData((const char*)&normals[0], (int)normals.size() * sizeof(Vec3f));
     normalBuffer->setData(normalsData);
 
     QAttribute* positionAttribute = new QAttribute(this);
@@ -408,7 +408,7 @@ void DepthMapEntity::loadDepthMap()
     positionAttribute->setDataSize(3);
     positionAttribute->setByteOffset(0);
     positionAttribute->setByteStride(sizeof(Vec3f));
-    positionAttribute->setCount(triangles.size());
+    positionAttribute->setCount((uint)triangles.size());
 
     QAttribute* normalAttribute = new QAttribute(this);
     normalAttribute->setName(QAttribute::defaultNormalAttributeName());
@@ -418,7 +418,7 @@ void DepthMapEntity::loadDepthMap()
     normalAttribute->setDataSize(3);
     normalAttribute->setByteOffset(0);
     normalAttribute->setByteStride(sizeof(Vec3f));
-    normalAttribute->setCount(normals.size());
+    normalAttribute->setCount((uint)normals.size());
 
     customGeometry->addAttribute(positionAttribute);
     customGeometry->addAttribute(normalAttribute);
@@ -434,7 +434,7 @@ void DepthMapEntity::loadDepthMap()
 
     // read color data
     QBuffer* colorDataBuffer = new QBuffer(QBuffer::VertexBuffer);
-    QByteArray colorData((const char*)colorsFlat[0].data(), colorsFlat.size() * 3 * sizeof(float));
+    QByteArray colorData((const char*)colorsFlat[0].data(), (int)colorsFlat.size() * 3 * sizeof(float));
     colorDataBuffer->setData(colorData);
 
     QAttribute* colorAttribute = new QAttribute;
@@ -446,7 +446,7 @@ void DepthMapEntity::loadDepthMap()
     colorAttribute->setDataSize(3);
     colorAttribute->setByteOffset(0);
     colorAttribute->setByteStride(3 * sizeof(float));
-    colorAttribute->setCount(colorsFlat.size());
+    colorAttribute->setCount((uint)colorsFlat.size());
     customGeometry->addAttribute(colorAttribute);
 
     // create the geometry renderer

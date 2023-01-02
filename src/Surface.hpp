@@ -33,7 +33,7 @@ Q_OBJECT
 
 	Q_PROPERTY(qtAliceVision::MSfMData* msfmData READ getMSfmData WRITE setMSfmData NOTIFY sfmDataChanged)
 
-	Q_PROPERTY(EViewerType viewerType WRITE setViewerType NOTIFY viewerTypeChanged);
+	Q_PROPERTY(EViewerType viewerType READ getViewerType WRITE setViewerType NOTIFY viewerTypeChanged);
 
 	Q_PROPERTY(QList<QPoint> vertices READ vertices NOTIFY verticesChanged);
 
@@ -95,7 +95,7 @@ public:
 	// VIEWER TYPE
 	enum class EViewerType : quint8 { DEFAULT = 0, HDR, DISTORTION, PANORAMA };
 	Q_ENUM(EViewerType)
-
+	EViewerType getViewerType() const { return _viewerType; }
 	void setViewerType(EViewerType type);
 	bool isPanoramaViewerEnabled() const;
 	bool isDistortionViewerEnabled() const;

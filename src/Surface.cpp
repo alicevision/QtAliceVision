@@ -491,7 +491,7 @@ bool Surface::isMouseInside(float mx, float my)
     QPoint P(mx, my);
     bool inside = false;
 
-    for (size_t i = 0; i < indexCount(); i += 3)
+    for (int i = 0; i < indexCount(); i += 3)
     {
         if (i + 2 >= _indices.size()) break;
 

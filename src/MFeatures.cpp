@@ -360,7 +360,7 @@ void MFeatures::getViewIdsToLoad(std::vector<aliceVision::IndexT>& viewIdsToLoad
       }
       else // time window
       {
-        const aliceVision::IndexT minFrameId = (currentFrameId < _timeWindow) ? 0 : currentFrameId - _timeWindow;
+        const aliceVision::IndexT minFrameId = (currentFrameId < (uint)_timeWindow) ? 0 : currentFrameId - _timeWindow;
         const aliceVision::IndexT maxFrameId = currentFrameId + _timeWindow;
 
         for (const auto& viewPair : sfmData.getViews())
@@ -534,8 +534,8 @@ bool MFeatures::updateFromTracks()
           continue;
         }
 
-        MFeature* feature = viewFeatures.features.at(featId);
-        feature->setTrackId(trackId);
+        MFeature* feature = viewFeatures.features.at((int)featId);
+        feature->setTrackId((int)trackId);
         ++viewFeatures.nbTracks;
         updated = true;
       }
@@ -619,7 +619,7 @@ bool MFeatures::updateFromSfM()
           // setup landmark id and landmark 2d reprojection in the current view
           aliceVision::Vec2 r = intrinsic->project(camTransform, landmark.second.X.homogeneous());
 
-          if (itObs->second.id_feat >= 0 && itObs->second.id_feat < viewFeatures.features.size())
+          if (itObs->second.id_feat >= 0 && itObs->second.id_feat < (uint)viewFeatures.features.size())
           {
             viewFeatures.features.at(itObs->second.id_feat)->setLandmarkInfo(landmark.first, r.cast<float>());
           }

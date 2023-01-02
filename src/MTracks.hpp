@@ -20,7 +20,7 @@ class MTracks : public QObject
 
     Q_PROPERTY(QUrl matchingFolder READ getMatchingFolder WRITE setMatchingFolder NOTIFY matchingFolderChanged)
     Q_PROPERTY(Status status READ status NOTIFY statusChanged)
-    Q_PROPERTY(int nbTracks READ nbTracks CONSTANT)
+    Q_PROPERTY(size_t nbTracks READ nbTracks CONSTANT)
 
 public:
     enum Status {
@@ -93,7 +93,7 @@ public:
        }
     }
 
-    inline int nbTracks() const {
+    inline size_t nbTracks() const {
         if(!_tracks || _status != MTracks::Ready)
             return 0;
         return _tracks->size();
