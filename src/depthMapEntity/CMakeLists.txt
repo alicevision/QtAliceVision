@@ -25,6 +25,12 @@ find_package(OpenImageIO REQUIRED)
 # Target properties
 add_library(depthMapEntityPlugin SHARED ${PLUGIN_SOURCES} ${PLUGIN_HEADERS})
 
+if(MSVC)
+    target_compile_options(depthMapEntityPlugin PUBLIC /W4)
+else()
+    target_compile_options(depthMapEntityPlugin PUBLIC -Wall -Wextra -Wconversion -Wsign-conversion -Wshadow -Wpedantic)
+endif()
+
 target_include_directories(depthMapEntityPlugin 
     PUBLIC 
     ${OPENIMAGEIO_INCLUDE_DIRS}
