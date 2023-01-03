@@ -11,6 +11,7 @@ set(PLUGIN_SOURCES
     Surface.cpp
     MSfMDataStats.cpp
     PanoramaViewer.cpp
+    Painter.cpp
     )
 
 set(PLUGIN_HEADERS
@@ -27,6 +28,7 @@ set(PLUGIN_HEADERS
     PanoramaViewer.hpp
     Surface.hpp
     ShaderImageViewer.hpp
+    Painter.hpp
     )
 
 set(PLUGIN_MOCS

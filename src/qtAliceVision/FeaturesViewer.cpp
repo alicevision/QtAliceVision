@@ -67,152 +67,131 @@ namespace qtAliceVision
   {
     qDebug() << "[QtAliceVision] FeaturesViewer: Update paint " << _describerType << " features.";
 
-    QSGGeometry* geometry = nullptr;
-
-    int kFeatVertices = 0;
-    int kFeatIndices = 0;
-
-    switch (_featureDisplayMode)
+    if (params.nbFeaturesToDraw == 0)
     {
-    case FeaturesViewer::Points:
-      kFeatVertices = 1;
-      break;
-    case FeaturesViewer::Squares:
-      kFeatVertices = 4;
-      kFeatIndices = 6;
-      break;
-    case FeaturesViewer::OrientedSquares:
-      kFeatVertices = (4 * 2) + 2;  // rectangle edges + orientation line
-      break;
-    default:
-      break;
-    }
-
-    int vertexCount = params.nbFeaturesToDraw * kFeatVertices;
-    int indexCount = params.nbFeaturesToDraw * kFeatIndices;
-    if (node->childCount() < 1)
-    {
-      geometry = appendChildGeometry(node, vertexCount, indexCount);
-    }
-    else
-    {
-      geometry = getCleanChildGeometry(node, 0, vertexCount, indexCount);
-    }
-
-    switch (_featureDisplayMode)
-    {
-    case FeaturesViewer::Points:
-      geometry->setDrawingMode(QSGGeometry::DrawPoints);
-      geometry->setLineWidth(6.0f);
-      break;
-    case FeaturesViewer::Squares:
-      geometry->setDrawingMode(QSGGeometry::DrawTriangles);
-      break;
-    case FeaturesViewer::OrientedSquares:
-      geometry->setDrawingMode(QSGGeometry::DrawLines);
-      geometry->setLineWidth(1.0f);
-      break;
-    default:
-      break;
-    }
-
-    QSGGeometry::ColoredPoint2D* vertices = geometry->vertexDataAsColoredPoint2D();
-    auto* indices = geometry->indexDataAsUInt();
-
-    if (params.nbFeaturesToDraw == 0) // nothing to draw or something is not ready
+      // nothing to draw or something is not ready
+      painter.clearLayer(node, "features");
       return;
+    }
 
-    int nbFeaturesDrawn = 0;
+    switch (_featureDisplayMode)
+    {
+    case FeaturesViewer::Points:
+      paintFeaturesAsPoints(params, oldNode, node);
+      break;
+    case FeaturesViewer::Squares:
+      paintFeaturesAsSquares(params, oldNode, node);
+      break;
+    case FeaturesViewer::OrientedSquares:
+      paintFeaturesAsOrientedSquares(params, oldNode, node);
+      break;
+    }
+  }
+
+  void FeaturesViewer::paintFeaturesAsPoints(const PaintParams& params, QSGNode* oldNode, QSGNode* node)
+  {
+    std::vector<QPointF> points;
 
     const MFeatures::MViewFeatures* currentViewFeatures = _mfeatures->getCurrentViewFeatures(_describerType);
-
     for (const auto& feature : currentViewFeatures->features)
     {
       // feature scale filter
-      if (feature->scale() > params.maxFeatureScale ||
-          feature->scale() < params.minFeatureScale)
+      if (feature->scale() > params.maxFeatureScale || feature->scale() < params.minFeatureScale)
       {
         continue;
       }
 
-      if (nbFeaturesDrawn >= params.nbFeaturesToDraw)
+      const auto& feat = feature->pointFeature();
+      points.emplace_back(feat.x(), feat.y());
+    }
+
+    painter.drawPoints(node, "features", points, _featureColor, 6.f);
+  }
+
+  void FeaturesViewer::paintFeaturesAsSquares(const PaintParams& params, QSGNode* oldNode, QSGNode* node)
+  {
+    std::vector<QPointF> points;
+
+    const MFeatures::MViewFeatures* currentViewFeatures = _mfeatures->getCurrentViewFeatures(_describerType);
+    for (const auto& feature : currentViewFeatures->features)
+    {
+      // feature scale filter
+      if (feature->scale() > params.maxFeatureScale || feature->scale() < params.minFeatureScale)
       {
-        qWarning() << "[QtAliceVision] FeaturesViewer: Update paint " << _describerType
-                   << " features, Error on number of features.";
-        break;
+        continue;
       }
 
       const auto& feat = feature->pointFeature();
       const float radius = feat.scale();
       const double diag = 2.0 * feat.scale();
-      int vidx = nbFeaturesDrawn * kFeatVertices;
-      int iidx = nbFeaturesDrawn * kFeatIndices;
 
-      if (_featureDisplayMode == FeaturesViewer::Points)
-      {
-        setVertex(vertices, vidx, QPointF(feat.x(), feat.y()), _featureColor);
-      }
-      else
-      {
-        QRectF rect(feat.x(), feat.y(), diag, diag);
-        rect.translate(-radius, -radius);
-        QPointF tl = rect.topLeft();
-        QPointF tr = rect.topRight();
-        QPointF br = rect.bottomRight();
-        QPointF bl = rect.bottomLeft();
+      QRectF rect(feat.x(), feat.y(), diag, diag);
+      rect.translate(-radius, -radius);
+      QPointF tl = rect.topLeft();
+      QPointF tr = rect.topRight();
+      QPointF br = rect.bottomRight();
+      QPointF bl = rect.bottomLeft();
 
-        if (_featureDisplayMode == FeaturesViewer::Squares)
-        {
-          // create 2 triangles
-          setVertex(vertices, vidx, tl, _featureColor);
-          setVertex(vertices, vidx + 1, tr, _featureColor);
-          setVertex(vertices, vidx + 2, br, _featureColor);
-          setVertex(vertices, vidx + 3, bl, _featureColor);
-          indices[iidx] = static_cast<unsigned int>(vidx);
-          indices[iidx + 1] = static_cast<unsigned int>(vidx + 1);
-          indices[iidx + 2] = static_cast<unsigned int>(vidx + 2);
-          indices[iidx + 3] = static_cast<unsigned int>(vidx + 2);
-          indices[iidx + 4] = static_cast<unsigned int>(vidx + 3);
-          indices[iidx + 5] = static_cast<unsigned int>(vidx);
-        }
-        else if (_featureDisplayMode == FeaturesViewer::OrientedSquares)
-        {
-          // compute angle: use feature angle and remove self rotation
-          const auto radAngle = -feat.orientation() - qDegreesToRadians(rotation());
-          // generate a QTransform that represent this rotation
-          const auto t = QTransform().translate(feat.x(), feat.y()).rotateRadians(radAngle).translate(-feat.x(), -feat.y());
-
-          // create lines, each vertice has to be duplicated (A->B, B->C, C->D, D->A) since we use GL_LINES
-          std::vector<QPointF> points = { t.map(tl), t.map(tr), t.map(br), t.map(bl), t.map(tl) };
-          for (std::size_t k = 0; k < points.size(); ++k)
-          {
-            int lidx = static_cast<int>(k) * 2;  // local index
-            setVertex(vertices, vidx + lidx, points[k], _featureColor);
-            setVertex(vertices, vidx + lidx + 1, points[k + 1], _featureColor);
-          }
-          // orientation line: up vector (0, 1)
-          const int nbPoints = static_cast<int>(points.size());
-          setVertex(vertices, vidx + nbPoints * 2 - 2, rect.center(), _featureColor);
-          auto o2 = t.map(rect.center() - QPointF(0.0f, radius)); // rotate end point
-          setVertex(vertices, vidx + nbPoints * 2 - 1, o2, _featureColor);
-        }
-      }
-      ++nbFeaturesDrawn;
+      points.push_back(tl);
+      points.push_back(tr);
+      points.push_back(br);
+      points.push_back(br);
+      points.push_back(bl);
+      points.push_back(tl);
     }
+
+    painter.drawTriangles(node, "features", points, _featureColor);
+  }
+
+  void FeaturesViewer::paintFeaturesAsOrientedSquares(const PaintParams& params, QSGNode* oldNode, QSGNode* node)
+  {
+    std::vector<QLineF> lines;
+
+    const MFeatures::MViewFeatures* currentViewFeatures = _mfeatures->getCurrentViewFeatures(_describerType);
+    for (const auto& feature : currentViewFeatures->features)
+    {
+      // feature scale filter
+      if (feature->scale() > params.maxFeatureScale || feature->scale() < params.minFeatureScale)
+      {
+        continue;
+      }
+
+      const auto& feat = feature->pointFeature();
+      const float radius = feat.scale();
+      const double diag = 2.0 * feat.scale();
+
+      QRectF rect(feat.x(), feat.y(), diag, diag);
+      rect.translate(-radius, -radius);
+      QPointF tl = rect.topLeft();
+      QPointF tr = rect.topRight();
+      QPointF br = rect.bottomRight();
+      QPointF bl = rect.bottomLeft();
+
+      // compute angle: use feature angle and remove self rotation
+      const auto radAngle = -feat.orientation() - qDegreesToRadians(rotation());
+      // generate a QTransform that represent this rotation
+      const auto t = QTransform().translate(feat.x(), feat.y()).rotateRadians(radAngle).translate(-feat.x(), -feat.y());
+
+      // create lines, each vertice has to be duplicated (A->B, B->C, C->D, D->A) since we use GL_LINES
+      std::vector<QPointF> points = { t.map(tl), t.map(tr), t.map(br), t.map(bl), t.map(tl) };
+      for (unsigned int k = 0; k < points.size(); ++k)
+      {
+        lines.emplace_back(points[k], points[(k + 1) % points.size()]);
+      }
+      // orientation line: up vector (0, 1)
+      auto o2 = t.map(rect.center() - QPointF(0.0f, radius)); // rotate end point
+      lines.emplace_back(rect.center(), o2);
+    }
+
+    painter.drawLines(node, "features", lines, _featureColor, 2.f);
   }
 
   void FeaturesViewer::updatePaintTracks(const PaintParams& params, QSGNode* node)
   {
     qDebug() << "[QtAliceVision] FeaturesViewer: Update paint " << _describerType << " tracks.";
 
-    const int kLineVertices = 2;
-    const int kTriangleVertices = 3;
-
-    const MFeatures::MTrackFeaturesPerTrack* trackFeaturesPerTrack =
-        (_displayTracks && params.haveValidFeatures && params.haveValidTracks && params.haveValidLandmarks)
-        ? _mfeatures->getTrackFeaturesPerTrack(_describerType) : nullptr;
-    const aliceVision::IndexT currentFrameId = (trackFeaturesPerTrack != nullptr)
-        ? _mfeatures->getCurrentFrameId() : aliceVision::UndefinedIndexT;
+    const MFeatures::MTrackFeaturesPerTrack* trackFeaturesPerTrack = (_displayTracks && params.haveValidFeatures && params.haveValidTracks && params.haveValidLandmarks) ? _mfeatures->getTrackFeaturesPerTrack(_describerType) : nullptr;
+    const aliceVision::IndexT currentFrameId = (trackFeaturesPerTrack != nullptr) ? _mfeatures->getCurrentFrameId() : aliceVision::UndefinedIndexT;
 
     int nbTracksToDraw = 0;
     int nbTrackLinesToDraw[3] = {0, 0, 0};
@@ -287,168 +266,15 @@ namespace qtAliceVision
       }
     }
 
-    QSGGeometry* geometryHighlightPoint = nullptr;
-    QSGGeometry* geometryTrackLine[3] = {nullptr, nullptr, nullptr};
-    QSGGeometry* geometryReprojectionErrorLine = nullptr;
-    QSGGeometry* geometryPoint = nullptr;
-    QSGGeometry* geometryEndpoint = nullptr;
-
-    if (node->childCount() < 8)
+    if (nbTrackLinesToDraw == 0)
     {
-      // (1) Endpoints
-      geometryEndpoint = appendChildGeometry(node, nbEndpointsToDraw);
-      // (2) Highlight points
-      geometryHighlightPoint = appendChildGeometry(node, nbHighlightPointsToDraw);
-      // (3) Track lines
-      for (std::size_t idx = 0; idx < 3; idx++)
-        geometryTrackLine[idx] = appendChildGeometry(node, nbTrackLinesToDraw[idx] * kLineVertices);
-      // (4) Reprojection Error lines
-      geometryReprojectionErrorLine = appendChildGeometry(node, nbReprojectionErrorLinesToDraw * kLineVertices);
-      // (5) Points
-      geometryPoint = appendChildGeometry(node, nbPointsToDraw);
-    }
-    else
-    {
-      // (1) Endpoints
-      geometryEndpoint = getCleanChildGeometry(node, 1, nbEndpointsToDraw * kTriangleVertices);
-      // (2) Highlight points
-      geometryHighlightPoint = getCleanChildGeometry(node, 2, nbHighlightPointsToDraw);
-      // (3) Tracks lines
-      for (std::size_t idx = 0; idx < 3; idx++)
-        geometryTrackLine[idx] = getCleanChildGeometry(node, static_cast<int>(idx+3), nbTrackLinesToDraw[idx] * kLineVertices);
-      // (4) Reprojection Error lines
-      geometryReprojectionErrorLine = getCleanChildGeometry(node, 6, nbReprojectionErrorLinesToDraw * kLineVertices);
-      // (5) Points
-      geometryPoint = getCleanChildGeometry(node, 7, nbPointsToDraw);
-    }
-
-    geometryHighlightPoint->setDrawingMode(QSGGeometry::DrawPoints);
-    geometryHighlightPoint->setLineWidth(6.0f);
-
-    geometryTrackLine[0]->setDrawingMode(QSGGeometry::DrawLines);
-    geometryTrackLine[0]->setLineWidth(2.0f);
-
-    geometryTrackLine[1]->setDrawingMode(QSGGeometry::DrawLines);
-    geometryTrackLine[1]->setLineWidth(2.0f);
-
-    geometryTrackLine[2]->setDrawingMode(QSGGeometry::DrawLines);
-    geometryTrackLine[2]->setLineWidth(5.0f);
-
-    geometryReprojectionErrorLine->setDrawingMode(QSGGeometry::DrawLines);
-    geometryReprojectionErrorLine->setLineWidth(1.0f);
-
-    geometryPoint->setDrawingMode(QSGGeometry::DrawPoints);
-    geometryPoint->setLineWidth(4.0f);
-
-    geometryEndpoint->setDrawingMode(QSGGeometry::DrawTriangles);
-
-    QSGGeometry::ColoredPoint2D* verticesHighlightPoints = geometryHighlightPoint->vertexDataAsColoredPoint2D();
-    QSGGeometry::ColoredPoint2D* verticesTrackLines[3] = {
-      geometryTrackLine[0]->vertexDataAsColoredPoint2D(),
-      geometryTrackLine[1]->vertexDataAsColoredPoint2D(),
-      geometryTrackLine[2]->vertexDataAsColoredPoint2D()
-    };
-    QSGGeometry::ColoredPoint2D* verticesReprojectionErrorLines = geometryReprojectionErrorLine->vertexDataAsColoredPoint2D();
-    QSGGeometry::ColoredPoint2D* verticesPoints = geometryPoint->vertexDataAsColoredPoint2D();
-    QSGGeometry::ColoredPoint2D* verticesEndpoints = geometryEndpoint->vertexDataAsColoredPoint2D();
-
-    // utility lambda to get point color
-    const auto getPointColor = [&](bool contiguous, bool inliers, bool trackHasInliers) -> QColor
-    {
-      if (_trackContiguousFilter && !contiguous)
-        return QColor(0, 0, 0, 0);
-
-      if (_trackInliersFilter && !trackHasInliers)
-        return QColor(0, 0, 0, 0);
-
-      return inliers ? _landmarkColor : _matchColor;
-    };
-
-    // utility lambda to get line color
-    const auto getLineColor = [&](bool contiguous, bool inliers, bool trackHasInliers) -> QColor
-    {
-      if (_trackContiguousFilter && !contiguous)
-        return QColor(0, 0, 0, 0);
-
-      if (_trackInliersFilter && !trackHasInliers)
-        return QColor(0, 0, 0, 0);
-
-      if (!contiguous)
-        return QColor(50, 50, 50);
-      
-      if (!trackHasInliers)
-        return _featureColor;
-
-      return inliers ? _landmarkColor : _matchColor;
-    };
-
-    // utility lambda to get endpoint color
-    const auto getEndpointColor = [&](bool trackHasInliers) -> QColor
-    {
-        if (_trackInliersFilter && !trackHasInliers)
-            return QColor(0, 0, 0, 0);
-        
-        return _endpointColor;
-    };
-
-    // utility lambda to register a feature point, to avoid code complexity
-    const auto drawFeaturePoint = [&](aliceVision::IndexT curFrameId,
-                                      aliceVision::IndexT frameId,
-                                      const MFeature* feature,
-                                      const QColor& color,
-                                      int& nbReprojectionErrorLinesDrawn,
-                                      int& nbHighlightPointsDrawn,
-                                      int& nbPointsDrawn,
-                                      bool trackHasInliers)
-    {
-      if (_trackDisplayMode == WithAllMatches || (frameId == curFrameId && _trackDisplayMode == WithCurrentMatches))
-      {
-        const QPointF point2d = QPointF(feature->x(), feature->y());
-        const QPointF point3d = QPointF(feature->rx(), feature->ry());
-        setVertex(verticesPoints, nbPointsDrawn, trackHasInliers ? point3d : point2d, color);
-        ++nbPointsDrawn;
-
-        // draw a highlight point in order to identify the current match from the others
-        if (frameId == curFrameId)
-        {
-          QColor colorHighlight = QColor(200, 200, 200);
-          if (color.alpha() == 0)
-            colorHighlight = QColor(0, 0, 0, 0);  // color should be rgba(0,0,0,0) in order to be transparent.
-          setVertex(verticesHighlightPoints, nbHighlightPointsDrawn,
-                    (_display3dTracks && trackHasInliers) ? point3d : point2d, colorHighlight);
-          ++nbHighlightPointsDrawn;
-        }
-
-        // draw reprojection error for landmark
-        if (trackHasInliers)
-        {
-          const int vIdx = nbReprojectionErrorLinesDrawn * kLineVertices;
-          const QColor reprojectionColor = _landmarkColor.darker(150);
-          setVertex(verticesReprojectionErrorLines, vIdx, point2d, reprojectionColor);
-          setVertex(verticesReprojectionErrorLines, vIdx + 1, point3d, reprojectionColor);
-          ++nbReprojectionErrorLinesDrawn;
-        }
-      }
-    };
-
-    // utility lambda to register an oriented triangle corresponding to an endpoint
-    const auto drawEndpoint = [&](const QPointF& pointFrom,
-                                  const QPointF& pointTo,
-                                  const QColor& color,
-                                  int& nbEndpointsDrawn,
-                                  float size = 10.f)
-    {
-        QPointF triangle[] = {QPointF(0, 0), QPointF(-2, 1), QPointF(-2, -1)};
-        double angle = QLineF(pointFrom, pointTo).angle() - rotation();
-        auto tr = QTransform().rotate(-angle).scale(size, size);
-        const int vIdx = nbEndpointsDrawn * kTriangleVertices;
-        for (int i = 0; i < kTriangleVertices; i++)
-            setVertex(verticesEndpoints, vIdx + i, pointFrom + tr.map(triangle[i]), color);
-        nbEndpointsDrawn++;
-    };
-
-    if (nbTracksToDraw == 0)
+      painter.clearLayer(node, "trackLines_inliers");
+      painter.clearLayer(node, "trackLines_outliers");
+      painter.clearLayer(node, "highlightPoints");
+      painter.clearLayer(node, "trackPoints_inliers");
+      painter.clearLayer(node, "trackPoints_outliers");
       return;
+    }
 
     if (currentFrameId == aliceVision::UndefinedIndexT)
     {
@@ -457,11 +283,12 @@ namespace qtAliceVision
       return;
     }
 
-    int nbHighlightPointsDrawn = 0;
-    int nbTrackLinesDrawn[3] = {0, 0, 0};
-    int nbReprojectionErrorLinesDrawn = 0;
-    int nbPointsDrawn = 0;
-    int nbEndpointsDrawn = 0;
+    std::vector<QLineF> trackLinesInliers;
+    std::vector<QLineF> trackLinesOutliers;
+    std::vector<QLineF> trackLinesGaps;
+    std::vector<QPointF> highlightPoints;
+    std::vector<QPointF> trackPointsInliers;
+    std::vector<QPointF> trackPointsOutliers;
 
     for (const auto& trackFeaturesPair : *trackFeaturesPerTrack)
     {
@@ -481,15 +308,11 @@ namespace qtAliceVision
         continue;
       }
 
-      // track frame interval contains current frame
-      if (currentFrameId < globalTrackInfo.startFrameId || currentFrameId > globalTrackInfo.endFrameId)
+      const bool trackHasInliers = (trackFeatures.nbLandmarks > 0);
+      if (_trackInliersFilter && !trackHasInliers)
       {
-          continue;
+        continue;
       }
-
-      const MFeatures::ReconstructionState state = globalTrackInfo.reconstructionState();
-      const int stateIdx = static_cast<int>(state);
-      const bool trackHasInliers = (state != MFeatures::ReconstructionState::None);
 
       const MFeature* previousFeature = nullptr;
       aliceVision::IndexT previousFrameId = aliceVision::UndefinedIndexT;
@@ -514,42 +337,60 @@ namespace qtAliceVision
           // The 2 features of the track are resectioning inliers
           const bool inliers = previousFeatureInlier && currentFeatureInlier;
 
-          // draw previous point
-          const QColor previousPointColor = getPointColor(contiguous || previousTrackLineContiguous,
-                                                          previousFeatureInlier, trackHasInliers);
-          drawFeaturePoint(currentFrameId,
-                           previousFrameId, previousFeature, previousPointColor,
-                           nbReprojectionErrorLinesDrawn, nbHighlightPointsDrawn, nbPointsDrawn,
-                           trackFeatures.nbLandmarks > 0);
+          // geometry
+          QPointF prevPoint = (_display3dTracks && trackHasInliers) ? 
+                              QPointF(previousFeature->rx(), previousFeature->ry()) : 
+                              QPointF(previousFeature->x(), previousFeature->y());
+          QPointF curPoint = (_display3dTracks && trackHasInliers) ? 
+                             QPointF(feature->rx(), feature->ry()) : 
+                             QPointF(feature->x(), feature->y());
+          QLineF line = QLineF(prevPoint, curPoint);
 
-          // draw track last point
-          if (frameId == trackFeatures.maxFrameId)
-            drawFeaturePoint(currentFrameId,
-                             frameId, feature, getPointColor(contiguous, currentFeatureInlier, trackHasInliers),
-                             nbReprojectionErrorLinesDrawn, nbHighlightPointsDrawn, nbPointsDrawn,
-                             trackFeatures.nbLandmarks > 0);
-
-          // draw track line
-          const QColor  lineColor = getLineColor(contiguous, inliers, trackHasInliers);
-          int vIdx = nbTrackLinesDrawn[stateIdx] * kLineVertices;
-
-          QPointF prevPoint;
-          QPointF curPoint;
-          if (_display3dTracks && trackHasInliers)  // 3d track line
+          // track line
+          if (!contiguous && !_trackContiguousFilter)
           {
-            prevPoint = QPointF(previousFeature->rx(), previousFeature->ry());
-            curPoint = QPointF(feature->rx(), feature->ry());
+            trackLinesGaps.push_back(line);
           }
-          else  // 2d track line
+          else if (inliers)
           {
-            prevPoint = QPointF(previousFeature->x(), previousFeature->y());
-            curPoint = QPointF(feature->x(), feature->y());
+            trackLinesInliers.push_back(line);
+          }
+          else
+          {
+            trackLinesOutliers.push_back(line);
           }
 
-          setVertex(verticesTrackLines[stateIdx], vIdx, prevPoint, lineColor);
-          setVertex(verticesTrackLines[stateIdx], vIdx + 1, curPoint, lineColor);
+          // highlight point
+          if (frameId == currentFrameId && (_trackDisplayMode == WithAllMatches || _trackDisplayMode == WithCurrentMatches))
+          {
+            highlightPoints.push_back(curPoint);
+          }
 
-          ++nbTrackLinesDrawn[stateIdx];
+          // track points
+          // current point
+          if (_trackDisplayMode == WithAllMatches || (frameId == currentFrameId && _trackDisplayMode == WithCurrentMatches))
+          {
+            if (currentFeatureInlier)
+            {
+              trackPointsInliers.push_back(curPoint);
+            }
+            else
+            {
+              trackPointsOutliers.push_back(curPoint);
+            }
+          }
+          // first point in time window
+          if (_trackDisplayMode == WithAllMatches && previousFrameId == trackFeatures.minFrameId)
+          {
+            if (previousFeatureInlier)
+            {
+              trackPointsInliers.push_back(prevPoint);
+            }
+            else
+            {
+              trackPointsOutliers.push_back(prevPoint);
+            }
+          }
 
           previousTrackLineContiguous = contiguous;
 
@@ -572,123 +413,81 @@ namespace qtAliceVision
         previousFeature = feature;
       }
     }
+
+    painter.drawLines(node, "trackLines_inliers", trackLinesInliers, _landmarkColor, 2.f);
+    painter.drawLines(node, "trackLines_outliers", trackLinesOutliers, _matchColor, 2.f);
+    painter.drawLines(node, "trackLines_gaps", trackLinesGaps, QColor(50, 50, 50), 2.f);
+    painter.drawPoints(node, "highlightPoints", highlightPoints, QColor(255, 255, 255), 6.f);
+    painter.drawPoints(node, "trackPoints_inliers", trackPointsInliers, _landmarkColor, 4.f);
+    painter.drawPoints(node, "trackPoints_outliers", trackPointsOutliers, _matchColor, 4.f);
   }
 
   void FeaturesViewer::updatePaintMatches(const PaintParams& params, QSGNode* node)
   {
     qDebug() << "[QtAliceVision] FeaturesViewer: Update paint " << _describerType << " matches.";
 
-    QSGGeometry* geometryPoint = nullptr;
-
-    if (node->childCount() < 9)
+    if (params.nbMatchesToDraw == 0)
     {
-      geometryPoint = appendChildGeometry(node, params.nbMatchesToDraw);
-    }
-    else
-    {
-      geometryPoint = getCleanChildGeometry(node, 8, params.nbMatchesToDraw);
-    }
-
-    geometryPoint->setDrawingMode(QSGGeometry::DrawPoints);
-    geometryPoint->setLineWidth(6.0f);
-
-    QSGGeometry::ColoredPoint2D* verticesPoints = geometryPoint->vertexDataAsColoredPoint2D();
-
-    if (params.nbMatchesToDraw == 0)  // nothing to draw or something is not ready
+      // nothing to draw or something is not ready
+      painter.clearLayer(node, "matches");
       return;
+    }
 
-    int nbMatchesDrawn = 0;
+    std::vector<QPointF> points;
 
     const MFeatures::MViewFeatures* currentViewFeatures = _mfeatures->getCurrentViewFeatures(_describerType);
-
-    // Draw points in the center of non validated tracks
     for (const auto& feature : currentViewFeatures->features)
     {
       if (feature->trackId() >= 0 && feature->landmarkId() < 0)
       {
         // feature scale filter
-        if (feature->scale() > params.maxFeatureScale ||
-            feature->scale() < params.minFeatureScale)
+        if (feature->scale() > params.maxFeatureScale || feature->scale() < params.minFeatureScale)
         {
           continue;
         }
 
-        if (nbMatchesDrawn >= params.nbMatchesToDraw)
-        {
-          qWarning() << "[QtAliceVision] FeaturesViewer: Update paint "
-                     << _describerType << " matches, Error on number of matches.";
-          break;
-        }
-
-        setVertex(verticesPoints, nbMatchesDrawn, QPointF(feature->x(), feature->y()), _matchColor);
-        ++nbMatchesDrawn;
+        points.emplace_back(feature->x(), feature->y());
       }
     }
+
+    painter.drawPoints(node, "matches", points, _matchColor, 6.f);
   }
 
   void FeaturesViewer::updatePaintLandmarks(const PaintParams& params, QSGNode* node)
   {
     qDebug() << "[QtAliceVision] FeaturesViewer: Update paint " << _describerType << " landmarks.";
 
-    const int kReprojectionVertices = 2;
-
-    QSGGeometry* geometryLine = nullptr;
-    QSGGeometry* geometryPoint = nullptr;
-
-    if (node->childCount() < 11)
+    if (params.nbLandmarksToDraw == 0)
     {
-      geometryLine = appendChildGeometry(node, params.nbLandmarksToDraw * kReprojectionVertices);
-      geometryPoint = appendChildGeometry(node, params.nbLandmarksToDraw);
-    }
-    else
-    {
-      geometryLine = getCleanChildGeometry(node, 9, params.nbLandmarksToDraw * kReprojectionVertices);
-      geometryPoint = getCleanChildGeometry(node, 10, params.nbLandmarksToDraw);
-    }
-
-    geometryLine->setDrawingMode(QSGGeometry::DrawLines);
-    geometryLine->setLineWidth(2.0f);
-
-    geometryPoint->setDrawingMode(QSGGeometry::DrawPoints);
-    geometryPoint->setLineWidth(6.0f);
-
-    QSGGeometry::ColoredPoint2D* verticesLines = geometryLine->vertexDataAsColoredPoint2D();
-    QSGGeometry::ColoredPoint2D* verticesPoints = geometryPoint->vertexDataAsColoredPoint2D();
-
-    if (params.nbLandmarksToDraw == 0) // nothing to draw or something is not ready
+      // nothing to draw or something is not ready
+      painter.clearLayer(node, "reprojectionErrors");
+      painter.clearLayer(node, "landmarks");
       return;
+    }
 
-    int nbLandmarksDrawn = 0;
+    std::vector<QPointF> points;
+    std::vector<QLineF> lines;
 
     const MFeatures::MViewFeatures* currentViewFeatures = _mfeatures->getCurrentViewFeatures(_describerType);
-    const QColor reprojectionColor = _landmarkColor.darker(150);
-
-    // Draw lines between reprojected points and features extracted
     for (const auto& feature : currentViewFeatures->features)
     {
-      if (feature->landmarkId() >= 0) // isReconstructed
+      if (feature->landmarkId() >= 0)
       {
         // feature scale filter
-        if (feature->scale() > params.maxFeatureScale ||
-            feature->scale() < params.minFeatureScale)
+        if (feature->scale() > params.maxFeatureScale || feature->scale() < params.minFeatureScale)
         {
           continue;
         }
 
-        if (nbLandmarksDrawn >= params.nbLandmarksToDraw)
-        {
-          qWarning() << "[QtAliceVision] FeaturesViewer: Update paint "
-                     << _describerType << " landmarks, Error on number of landmarks.";
-          break;
-        }
-
-        const int vidx = nbLandmarksDrawn * kReprojectionVertices;
-        setVertex(verticesLines, vidx, QPointF(feature->x(), feature->y()), reprojectionColor);
-        setVertex(verticesLines, vidx + 1, QPointF(feature->rx(), feature->ry()), reprojectionColor);
-        setVertex(verticesPoints, nbLandmarksDrawn, QPointF(feature->rx(), feature->ry()), _landmarkColor);
-        ++nbLandmarksDrawn;
+        lines.emplace_back(feature->x(), feature->y(), feature->rx(), feature->ry());
+        points.emplace_back(feature->rx(), feature->ry());
       }
     }
+
+    const QColor reprojectionColor = _landmarkColor.darker(150);
+    painter.drawLines(node, "reprojectionErrors", lines, reprojectionColor, 1.f);
+
+    painter.drawPoints(node, "landmarks", points, _landmarkColor, 6.f);
   }
 
   void FeaturesViewer::initializePaintParams(PaintParams& params)

@@ -3,6 +3,7 @@
 #include <MFeatures.hpp>
 #include <MSfMData.hpp>
 #include <MTracks.hpp>
+#include <Painter.hpp>
 
 #include <QQuickItem>
 #include <QSGGeometry>
@@ -124,16 +125,14 @@ namespace qtAliceVision {
     QSGNode* updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePaintNodeData* data) override;
 
   private:
-    void updatePaintFeatures(const PaintParams& params, QSGNode* node);
-    void updatePaintTracks(const PaintParams& params, QSGNode* node);
-    void updatePaintMatches(const PaintParams& params, QSGNode* node);
-    void updatePaintLandmarks(const PaintParams& params, QSGNode* node);
-
     void initializePaintParams(PaintParams& params);
-
-    QSGGeometry* getCleanChildGeometry(QSGNode* node, int childIdx, int vertexCount, int indexCount = 0);
-    QSGGeometry* appendChildGeometry(QSGNode* node, int vertexCount, int indexCount = 0);
-    void setVertex(QSGGeometry::ColoredPoint2D* vertices, int idx, const QPointF& point, const QColor& c);
+    void updatePaintFeatures(const PaintParams& params, QSGNode* oldNode, QSGNode* node);
+    void paintFeaturesAsPoints(const PaintParams& params, QSGNode* oldNode, QSGNode* node);
+    void paintFeaturesAsSquares(const PaintParams& params, QSGNode* oldNode, QSGNode* node);
+    void paintFeaturesAsOrientedSquares(const PaintParams& params, QSGNode* oldNode, QSGNode* node);
+    void updatePaintTracks(const PaintParams& params, QSGNode* oldNode, QSGNode* node);
+    void updatePaintMatches(const PaintParams& params, QSGNode* oldNode, QSGNode* node);
+    void updatePaintLandmarks(const PaintParams& params, QSGNode* oldNode, QSGNode* node);
 
     bool _displayFeatures = true;
     bool _displayTracks = true;
@@ -158,6 +157,19 @@ namespace qtAliceVision {
 
     QString _describerType = "sift";
     MFeatures* _mfeatures = nullptr;
+
+    Painter painter = Painter({
+      "features",
+      "highlightPoints", 
+      "trackLines_inliers",
+      "trackLines_outliers",
+      "trackLines_gaps", 
+      "trackPoints_inliers",
+      "trackPoints_outliers", 
+      "matches", 
+      "reprojectionErrors", 
+      "landmarks"
+    });
   };
 
 } // namespace qtAliceVision
