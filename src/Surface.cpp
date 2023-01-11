@@ -53,7 +53,7 @@ void Surface::computeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indic
     if (_sfmLoaded && (_isPanoramaRotating || _needToUseIntrinsic))
     {
         // Load Intrinsic with 2 ways whether we are in the Panorama or Distorsion Viewer
-        if (_msfmData && _idView >= 0)
+        if (_msfmData)
         {
             intrinsic = getIntrinsicFromViewId(_idView);
         }
@@ -87,9 +87,9 @@ void Surface::computeGrid(QSGGeometry* geometryLine)
 
     int countPoint = 0;
     int index = 0;
-    for (size_t i = 0; i <= _subdivisions; i++)
+    for (int i = 0; i <= _subdivisions; i++)
     {
-        for (size_t j = 0; j <= _subdivisions; j++)
+        for (int j = 0; j <= _subdivisions; j++)
         {
             if (i == _subdivisions && j == _subdivisions)
                 continue;
@@ -97,9 +97,9 @@ void Surface::computeGrid(QSGGeometry* geometryLine)
             // Horizontal Lines
             if (i != _subdivisions)
             {
-                geometryLine->vertexDataAsPoint2D()[countPoint++].set(_vertices[index].x(), _vertices[index].y());
+                geometryLine->vertexDataAsPoint2D()[countPoint++].set((float)_vertices[index].x(), (float)_vertices[index].y());
                 index += _subdivisions + 1;
-                geometryLine->vertexDataAsPoint2D()[countPoint++].set(_vertices[index].x(), _vertices[index].y());
+                geometryLine->vertexDataAsPoint2D()[countPoint++].set((float)_vertices[index].x(), (float)_vertices[index].y());
                 index -= _subdivisions + 1;
 
                 if (j == _subdivisions)
@@ -110,9 +110,9 @@ void Surface::computeGrid(QSGGeometry* geometryLine)
             }
 
             // Vertical Lines
-            geometryLine->vertexDataAsPoint2D()[countPoint++].set(_vertices[index].x(), _vertices[index].y());
+            geometryLine->vertexDataAsPoint2D()[countPoint++].set((float)_vertices[index].x(), (float)_vertices[index].y());
             index++;
-            geometryLine->vertexDataAsPoint2D()[countPoint++].set(_vertices[index].x(), _vertices[index].y());
+            geometryLine->vertexDataAsPoint2D()[countPoint++].set((float)_vertices[index].x(), (float)_vertices[index].y());
         }
     }
 }
@@ -152,12 +152,12 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
 
     bool fillCoordsSphere = _defaultSphereCoordinates.empty();
     int vertexIndex = 0;
-    for (size_t i = 0; i <= _subdivisions; i++)
+    for (size_t i = 0; i <= (size_t)_subdivisions; i++)
     {
-        for (size_t j = 0; j <= _subdivisions; j++)
+        for (size_t j = 0; j <= (size_t)_subdivisions; j++)
         {
-            float x = i * textureSize.width() / (float)_subdivisions;
-            float y = j * textureSize.height() / (float)_subdivisions;
+            float x = (float)i * (float)textureSize.width() / (float)_subdivisions;
+            float y = (float)j * (float)textureSize.height() / (float)_subdivisions;
 
             const double cx = x - center(0);
             const double cy = y - center(1);
@@ -166,20 +166,20 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
 
             if (dist > maxradius)
             {
-                x = center(0) + maxradius * cx / dist;
-                y = center(1) + maxradius * cy / dist;
+                x = (float)(center(0) + maxradius * cx / dist);
+                y = (float)(center(1) + maxradius * cy / dist);
             }
 
 
-            float u = i / (float)_subdivisions;
-            float v = j / (float)_subdivisions;
+            float u = (float)i / (float)_subdivisions;
+            float v = (float)j / (float)_subdivisions;
 
             // Remove Distortion only if sfmData has been updated
             if (isDistortionViewerEnabled() && intrinsic && intrinsic->hasDistortion())
             {
                 const aliceVision::Vec2 undisto_pix(x, y);
                 const aliceVision::Vec2 disto_pix = intrinsic->get_d_pixel(undisto_pix);
-                vertices[vertexIndex].set(disto_pix.x(), disto_pix.y(), u, v);
+                vertices[vertexIndex].set((float)disto_pix.x(), (float)disto_pix.y(), u, v);
             }
 
             // Equirectangular Convertion only if sfmData has been updated
@@ -194,7 +194,7 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
                 }
 
                 // Rotate Panorama if some rotation values exist
-                aliceVision::Vec3 sphereCoordinates(_defaultSphereCoordinates[vertexIndex]);
+                aliceVision::Vec3 sphereCoordinates(_defaultSphereCoordinates[(size_t)vertexIndex]);
                 rotatePanorama(sphereCoordinates);
 
                 // Compute pixel coordinates in the panorama coordinate system
@@ -217,7 +217,7 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
                         _vertexEnabled[i][j - 1] = false;
                     }
                 }
-                vertices[vertexIndex].set(panoramaCoordinates.x(), panoramaCoordinates.y(), u, v);
+                vertices[vertexIndex].set((float)panoramaCoordinates.x(), (float)panoramaCoordinates.y(), u, v);
             }
 
             // Default 
@@ -232,7 +232,7 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
     Q_EMIT verticesChanged();
 }
 
-bool Surface::isPointValid(int i, int j) const
+bool Surface::isPointValid(size_t i, size_t j) const
 {
     // Check if the point and all its neighbours are enabled
     // If not, return false
@@ -250,17 +250,17 @@ bool Surface::isPointValid(int i, int j) const
         if (!_vertexEnabled[i - 1][j - 1]) return false;
     }
 
-    if (i < _subdivisions + 1) {
+    if ((int)i < _subdivisions + 1) {
         if (!_vertexEnabled[i + 1][j]) return false;
         if (j > 0 && !_vertexEnabled[i + 1][j - 1]) return false;
     }
 
-    if (j < _subdivisions + 1) {
+    if ((int)j < _subdivisions + 1) {
         if (!_vertexEnabled[i][j + 1]) return false;
         if (i > 0 && !_vertexEnabled[i - 1][j + 1]) return false;
     }
 
-    if (i < _subdivisions + 1 && j < _subdivisions + 1) {
+    if ((int)i < _subdivisions + 1 && (int)j < _subdivisions + 1) {
         if (!_vertexEnabled[i + 1][j + 1]) return false;
     }
 
@@ -269,9 +269,9 @@ bool Surface::isPointValid(int i, int j) const
 
 void Surface::resetValuesVertexEnabled()
 {
-    for (size_t i = 0; i <= _subdivisions; i++)
+    for (size_t i = 0; i <= (size_t)_subdivisions; i++)
     {
-        for (size_t j = 0; j <= _subdivisions; j++)
+        for (size_t j = 0; j <= (size_t)_subdivisions; j++)
         {
             _vertexEnabled[j][i] = true;
         }
@@ -281,20 +281,20 @@ void Surface::resetValuesVertexEnabled()
 void Surface::computeIndicesGrid(quint16* indices)
 {
     int index = 0;
-    for (int j = 0; j < _subdivisions; j++) {
-        for (int i = 0; i < _subdivisions; i++) {
+    for (size_t j = 0; j < (size_t)_subdivisions; j++) {
+        for (size_t i = 0; i < (size_t)_subdivisions; i++) {
             if (!isPanoramaViewerEnabled() || (isPanoramaViewerEnabled() && isPointValid(i, j)))
             {
-                int topLeft = (i * (_subdivisions + 1)) + j;
+                int topLeft = ((int)i * (_subdivisions + 1)) + (int)j;
                 int topRight = topLeft + 1;
                 int bottomLeft = topLeft + _subdivisions + 1;
                 int bottomRight = bottomLeft + 1;
-                indices[index++] = topLeft;
-                indices[index++] = bottomLeft;
-                indices[index++] = topRight;
-                indices[index++] = topRight;
-                indices[index++] = bottomLeft;
-                indices[index++] = bottomRight;
+                indices[index++] = static_cast<quint16>(topLeft);
+                indices[index++] = static_cast<quint16>(bottomLeft);
+                indices[index++] = static_cast<quint16>(topRight);
+                indices[index++] = static_cast<quint16>(topRight);
+                indices[index++] = static_cast<quint16>(bottomLeft);
+                indices[index++] = static_cast<quint16>(bottomRight);
             }
             else
             {
@@ -308,13 +308,13 @@ void Surface::computeIndicesGrid(quint16* indices)
         }
     }
     _indices.clear();
-    for (size_t i = 0; i < _indexCount; i++)
+    for (size_t i = 0; i < (size_t)_indexCount; i++)
         _indices.append(indices[i]);
 }
 
 void Surface::removeGrid(QSGGeometry* geometryLine)
 {
-    for (size_t i = 0; i < geometryLine->vertexCount(); i++)
+    for (size_t i = 0; i < (size_t)geometryLine->vertexCount(); i++)
     {
         geometryLine->vertexDataAsPoint2D()[i].set(0, 0);
     }
@@ -354,7 +354,7 @@ QPointF Surface::getPrincipalPoint() {
 
     aliceVision::camera::IntrinsicBase* intrinsic = nullptr;
 
-    if (_msfmData && _idView >= 0)
+    if (_msfmData)
     {
         intrinsic = getIntrinsicFromViewId(_idView);
     }
@@ -365,7 +365,7 @@ QPointF Surface::getPrincipalPoint() {
     }
 
     return {ppCorrection.x(), ppCorrection.y()};
-};
+}
 
 
 // VERTICES FUNCTION
@@ -374,7 +374,7 @@ void Surface::fillVertices(QSGGeometry::TexturedPoint2D* vertices)
     _vertices.clear();
     for (int i = 0; i < _vertexCount; i++)
     {
-        QPoint p(vertices[i].x, vertices[i].y);
+        QPoint p((int)vertices[i].x, (int)vertices[i].y);
         _vertices.append(p);
     }
 }
@@ -388,9 +388,9 @@ void Surface::updateSubdivisions(int sub)
     _vertexCount = (_subdivisions + 1) * (_subdivisions + 1);
     _indexCount = _subdivisions * _subdivisions * 6;
 
-    _vertexEnabled.resize(_subdivisions + 1);
-    for (size_t i = 0; i < _subdivisions + 1; i++)
-        _vertexEnabled[i].resize(_subdivisions + 1);
+    _vertexEnabled.resize((size_t)_subdivisions + 1);
+    for (size_t i = 0; i < (size_t)_subdivisions + 1; i++)
+        _vertexEnabled[i].resize((size_t)_subdivisions + 1);
 }
 
 void Surface::setSubdivisions(int newSubdivisions)
@@ -468,7 +468,7 @@ void Surface::setRoll(double rollInDegrees)
 double Surface::getEulerAngleDegrees(double angleRadians)
 {
     double angleDegrees = angleRadians;
-    int power = angleDegrees / M_PI;
+    int power = (int)(angleDegrees / M_PI);
     angleDegrees = fmod(angleDegrees, M_PI) * pow(-1, power);
 
     // Radians to Degrees
@@ -482,43 +482,47 @@ double Surface::getEulerAngleDegrees(double angleRadians)
 // ID VIEW FUNCTION
 void Surface::setIdView(int id)
 {
-    _idView = id;
+    // Handles cases where the sent view ID is unknown or unset (equals  to -1)
+    if (id >= 0)
+        _idView = (unsigned int)id;
+    else
+        _idView = 0;
 }
 
 // MOUSE FUNCTIONS
 bool Surface::isMouseInside(float mx, float my)
 {
-    QPoint P(mx, my);
+    QPointF P(mx, my);
     bool inside = false;
 
     for (int i = 0; i < indexCount(); i += 3)
     {
         if (i + 2 >= _indices.size()) break;
 
-        QPoint A = _vertices[_indices[i]];
-        QPoint B = _vertices[_indices[i + 1]];
-        QPoint C = _vertices[_indices[i + 2]];
+        QPointF A = _vertices[_indices[i]];
+        QPointF B = _vertices[_indices[i + 1]];
+        QPointF C = _vertices[_indices[i + 2]];
 
         // Compute vectors        
-        QPoint v0 = C - A;
-        QPoint v1 = B - A;
-        QPoint v2 = P - A;
+        QPointF v0 = C - A;
+        QPointF v1 = B - A;
+        QPointF v2 = P - A;
 
         // Compute dot products
-        float dot00 = QPoint::dotProduct(v0, v0);
-        float dot01 = QPoint::dotProduct(v0, v1);
-        float dot02 = QPoint::dotProduct(v0, v2);
-        float dot11 = QPoint::dotProduct(v1, v1);
-        float dot12 = QPoint::dotProduct(v1, v2);
+        double dot00 = QPointF::dotProduct(v0, v0);
+        double dot01 = QPointF::dotProduct(v0, v1);
+        double dot02 = QPointF::dotProduct(v0, v2);
+        double dot11 = QPointF::dotProduct(v1, v1);
+        double dot12 = QPointF::dotProduct(v1, v2);
 
         // Compute barycentric coordinates
-        const float dots = (dot00 * dot11 - dot01 * dot01);
+        const double dots = (dot00 * dot11 - dot01 * dot01);
         if (dots == 0)
             continue;
 
-        float invDenom = 1 / dots;
-        float u = (dot11 * dot02 - dot01 * dot12) * invDenom;
-        float v = (dot00 * dot12 - dot01 * dot02) * invDenom;
+        double invDenom = 1 / dots;
+        double u = (dot11 * dot02 - dot01 * dot12) * invDenom;
+        double v = (dot00 * dot12 - dot01 * dot02) * invDenom;
 
         // Check if point is in triangle
         if ((u >= 0) && (v >= 0) && (u + v < 1))
@@ -603,7 +607,7 @@ void Surface::setMSfmData(MSfMData* sfmData)
     Q_EMIT sfmDataChanged();
 }
 
-aliceVision::camera::IntrinsicBase* Surface::getIntrinsicFromViewId(int viewId) const
+aliceVision::camera::IntrinsicBase* Surface::getIntrinsicFromViewId(unsigned int viewId) const
 {
     if(!_msfmData)
     {

@@ -105,8 +105,8 @@ public:
 
 private:
     QUrl _sfmDataPath;
-    std::unique_ptr<aliceVision::sfmData::SfMData> _loadingSfmData;
     std::unique_ptr<aliceVision::sfmData::SfMData> _sfmData;
+    std::unique_ptr<aliceVision::sfmData::SfMData> _loadingSfmData;
     Status _status = MSfMData::None;
     bool _outdated = false;
 };

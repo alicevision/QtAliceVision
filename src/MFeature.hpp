@@ -27,7 +27,7 @@ class MFeature : public QObject
 
 public:
     MFeature() = default;
-    MFeature(const MFeature& other) { _feat = other._feat; }
+    MFeature(const MFeature& other) : QObject() { _feat = other._feat; }
 
     explicit MFeature(const aliceVision::feature::PointFeature& feat, QObject* parent=nullptr):
     QObject(parent)

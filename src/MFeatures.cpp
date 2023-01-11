@@ -71,9 +71,9 @@ void FeaturesIORunnable::run()
 
     for (int dIdx = 0; dIdx < descTypes.size(); ++dIdx)
     {
-      std::vector<std::unique_ptr<aliceVision::feature::Regions>>& regionsPerView = regionsPerViewPerDesc.at(dIdx);
+      std::vector<std::unique_ptr<aliceVision::feature::Regions>>& regionsPerView = regionsPerViewPerDesc.at((uint)dIdx);
 
-      for (int vIdx = 0; vIdx < viewIds.size(); ++vIdx)
+      for (std::size_t vIdx = 0; vIdx < viewIds.size(); ++vIdx)
       {
         qDebug() << "[QtAliceVision] Features: Load " << descTypes.at(dIdx).toString() << " from viewId: " << viewIds.at(vIdx) << ".";
 
@@ -360,8 +360,8 @@ void MFeatures::getViewIdsToLoad(std::vector<aliceVision::IndexT>& viewIdsToLoad
       }
       else // time window
       {
-        const aliceVision::IndexT minFrameId = (currentFrameId < (uint)_timeWindow) ? 0 : currentFrameId - _timeWindow;
-        const aliceVision::IndexT maxFrameId = currentFrameId + _timeWindow;
+        const aliceVision::IndexT minFrameId = (currentFrameId < (uint)_timeWindow) ? 0 : currentFrameId - (uint)_timeWindow;
+        const aliceVision::IndexT maxFrameId = currentFrameId + (uint)_timeWindow;
 
         for (const auto& viewPair : sfmData.getViews())
         {
@@ -382,7 +382,7 @@ void MFeatures::getViewIdsToLoad(std::vector<aliceVision::IndexT>& viewIdsToLoad
     return;
 
   // desciber types changed
-  if (_viewFeaturesPerViewPerDesc.size() != _describerTypes.size())
+  if ((int)_viewFeaturesPerViewPerDesc.size() != _describerTypes.size())
   {
     clearAll(); // erase all data in memory
     return;
@@ -424,14 +424,14 @@ void MFeatures::getViewIdsToLoad(std::vector<aliceVision::IndexT>& viewIdsToLoad
   {
     for (const auto& decriberType : _describerTypes)
     {
-      MViewFeaturesPerView& viewFeaturesPerView = _viewFeaturesPerViewPerDesc.at(decriberType.toString());
+      MViewFeaturesPerView& viewFeaturesPerViewPerDesc = _viewFeaturesPerViewPerDesc.at(decriberType.toString());
 
       for (aliceVision::IndexT viewIdToRemove : viewIdsToRemove)
       {
-        auto iter = viewFeaturesPerView.find(viewIdToRemove);
+        auto iter = viewFeaturesPerViewPerDesc.find(viewIdToRemove);
 
-        if (iter != viewFeaturesPerView.end())
-          viewFeaturesPerView.erase(iter);
+        if (iter != viewFeaturesPerViewPerDesc.end())
+          viewFeaturesPerViewPerDesc.erase(iter);
       }
     }
 
@@ -527,14 +527,14 @@ bool MFeatures::updateFromTracks()
           qInfo() << "[QtAliceVision] Features: Update from tracks, featIdPerViewIt invalid";
           continue;
         }
-        const std::size_t featId = featIdPerViewIt->second;
+        const int featId = static_cast<int>(featIdPerViewIt->second);
         if (featId >= viewFeatures.features.size())
         {
           qInfo() << "[QtAliceVision] Features: Update from tracks, featId invalid regarding loaded features for view: " << viewId;
           continue;
         }
 
-        MFeature* feature = viewFeatures.features.at((int)featId);
+        MFeature* feature = viewFeatures.features.at(featId);
         feature->setTrackId((int)trackId);
         ++viewFeatures.nbTracks;
         updated = true;
@@ -619,9 +619,9 @@ bool MFeatures::updateFromSfM()
           // setup landmark id and landmark 2d reprojection in the current view
           aliceVision::Vec2 r = intrinsic->project(camTransform, landmark.second.X.homogeneous());
 
-          if (itObs->second.id_feat >= 0 && itObs->second.id_feat < (uint)viewFeatures.features.size())
+          if (itObs->second.id_feat < (uint)viewFeatures.features.size())
           {
-            viewFeatures.features.at(itObs->second.id_feat)->setLandmarkInfo(landmark.first, r.cast<float>());
+            viewFeatures.features.at((int)itObs->second.id_feat)->setLandmarkInfo((int)landmark.first, r.cast<float>());
           }
           else if (!viewFeatures.features.empty())
           {
@@ -697,7 +697,8 @@ void MFeatures::updatePerTrackInformation()
       {
         if (feature->trackId() >= 0)
         {
-          MTrackFeatures& trackFreatures = _trackFeaturesPerTrackPerDesc[describerType][feature->trackId()];
+          unsigned int unsignedTrackId = (uint)feature->trackId();
+          MTrackFeatures& trackFreatures = _trackFeaturesPerTrackPerDesc[describerType][unsignedTrackId];
           trackFreatures.featuresPerFrame[frameId] = feature;
 
           viewIdPerFramePerDesc[describerType][frameId] = viewId;
@@ -705,8 +706,9 @@ void MFeatures::updatePerTrackInformation()
           if (feature->landmarkId() >= 0)
           {
             ++trackFreatures.nbLandmarks;
-            if (trackIdPerLandmark.find(feature->landmarkId()) == trackIdPerLandmark.end())
-              trackIdPerLandmark[feature->landmarkId()] = feature->trackId();
+            const auto unsignedLandmarkId = (uint)feature->landmarkId();
+            if (trackIdPerLandmark.find(unsignedLandmarkId) == trackIdPerLandmark.end())
+              trackIdPerLandmark[unsignedLandmarkId] = unsignedTrackId;
           }
 
           trackFreatures.maxFrameId = std::max(trackFreatures.maxFrameId, frameId);
@@ -729,7 +731,7 @@ void MFeatures::updatePerTrackInformation()
       MTrackFeatures& trackFreatures = trackFeaturesPerTrackPair.second;
 
       if (!trackFreatures.featuresPerFrame.empty())
-        trackFreatures.featureScaleAverage /= trackFreatures.featuresPerFrame.size();
+        trackFreatures.featureScaleAverage /= (float)trackFreatures.featuresPerFrame.size();
     }
   }
 

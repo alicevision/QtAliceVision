@@ -23,25 +23,25 @@ Q_OBJECT
 
 	//Q_PROPERTIES
 
-	Q_PROPERTY(bool displayGrid READ getDisplayGrid WRITE setDisplayGrid NOTIFY displayGridChanged);
+	Q_PROPERTY(bool displayGrid READ getDisplayGrid WRITE setDisplayGrid NOTIFY displayGridChanged)
 	
-	Q_PROPERTY(QColor gridColor READ getGridColor WRITE setGridColor NOTIFY gridColorChanged);
+	Q_PROPERTY(QColor gridColor READ getGridColor WRITE setGridColor NOTIFY gridColorChanged)
 
-	Q_PROPERTY(int gridOpacity READ getGridOpacity WRITE setGridOpacity NOTIFY gridOpacityChanged);
+	Q_PROPERTY(int gridOpacity READ getGridOpacity WRITE setGridOpacity NOTIFY gridOpacityChanged)
 
-	Q_PROPERTY(bool mouseOver READ getMouseOver WRITE setMouseOver NOTIFY mouseOverChanged);
+	Q_PROPERTY(bool mouseOver READ getMouseOver WRITE setMouseOver NOTIFY mouseOverChanged)
 
 	Q_PROPERTY(qtAliceVision::MSfMData* msfmData READ getMSfmData WRITE setMSfmData NOTIFY sfmDataChanged)
 
-	Q_PROPERTY(EViewerType viewerType READ getViewerType WRITE setViewerType NOTIFY viewerTypeChanged);
+	Q_PROPERTY(EViewerType viewerType READ getViewerType WRITE setViewerType NOTIFY viewerTypeChanged)
 
-	Q_PROPERTY(QList<QPoint> vertices READ vertices NOTIFY verticesChanged);
+	Q_PROPERTY(QList<QPoint> vertices READ vertices NOTIFY verticesChanged)
 
-	Q_PROPERTY(int subdivisions READ getSubdivisions WRITE setSubdivisions NOTIFY subdivisionsChanged);
+	Q_PROPERTY(int subdivisions READ getSubdivisions WRITE setSubdivisions NOTIFY subdivisionsChanged)
 
-	Q_PROPERTY(double yaw READ getYaw WRITE setYaw NOTIFY anglesChanged);
-	Q_PROPERTY(double pitch READ getPitch WRITE setPitch NOTIFY anglesChanged);
-	Q_PROPERTY(double roll READ getRoll WRITE setRoll NOTIFY anglesChanged);
+	Q_PROPERTY(double yaw READ getYaw WRITE setYaw NOTIFY anglesChanged)
+	Q_PROPERTY(double pitch READ getPitch WRITE setPitch NOTIFY anglesChanged)
+	Q_PROPERTY(double roll READ getRoll WRITE setRoll NOTIFY anglesChanged)
 
 
 public:
@@ -144,7 +144,7 @@ public:
 
 private:
 
-	aliceVision::camera::IntrinsicBase* getIntrinsicFromViewId(int viewId) const;
+	aliceVision::camera::IntrinsicBase* getIntrinsicFromViewId(unsigned int viewId) const;
 
 	void computeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize, int downscaleLevel = 0);
 
@@ -157,7 +157,7 @@ private:
 
 	void updateSubdivisions(int sub);
 
-	bool isPointValid(int i, int j) const;
+	bool isPointValid(std::size_t i, std::size_t j) const;
 
 	void resetValuesVertexEnabled();
 

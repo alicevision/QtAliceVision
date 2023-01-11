@@ -146,8 +146,8 @@ namespace qtAliceVision
     {
       QColor c = _featureColor;
       vertices[index].set(
-        point.x(), point.y(),
-        c.red(), c.green(), c.blue(), c.alpha()
+        (float)point.x(), (float)point.y(),
+        (uchar)c.red(), (uchar)c.green(), (uchar)c.blue(), (uchar)c.alpha()
       );
     };
 
@@ -474,30 +474,30 @@ namespace qtAliceVision
       QColor c = QColor(200, 200, 200);
       if (alpha == 0)
         c = QColor(0, 0, 0, 0); // color should be rgba(0,0,0,0) in order to be transparent.
-      verticesHighlightPoints[index].set(point.x(), point.y(), c.red(), c.green(), c.blue(), c.alpha());
+      verticesHighlightPoints[index].set((float)point.x(), (float)point.y(), (uchar)c.red(), (uchar)c.green(), (uchar)c.blue(), (uchar)c.alpha());
     };
 
     // utility lambda to register a track line vertex
     const auto setVerticeTrackLine = [&](unsigned int index, const QPointF& point, const QColor& c)
     {
-      verticesTrackLines[index].set(point.x(), point.y(), c.red(), c.green(), c.blue(), c.alpha());
+      verticesTrackLines[index].set((float)point.x(), (float)point.y(), (uchar)c.red(), (uchar)c.green(), (uchar)c.blue(), (uchar)c.alpha());
     };
 
     // utility lambda to register a reprojection error line vertex
     const auto setVerticeReprojectionErrorLine = [&](unsigned int index, const QPointF& point, const QColor& c)
     {
       const QColor rc = c.darker(150); // darken the color to avoid confusion with track lines
-      verticesReprojectionErrorLines[index].set(point.x(), point.y(), rc.red(), rc.green(), rc.blue(), rc.alpha());
+      verticesReprojectionErrorLines[index].set((float)point.x(), (float)point.y(), (uchar)rc.red(), (uchar)rc.green(), (uchar)rc.blue(), (uchar)rc.alpha());
     };
 
     // utility lambda to register a point vertex
     const auto setVerticePoint = [&](unsigned int index, const QPointF& point, const QColor& c)
     {
-      verticesPoints[index].set(point.x(), point.y(), c.red(), c.green(), c.blue(), c.alpha());
+      verticesPoints[index].set((float)point.x(), (float)point.y(), (uchar)c.red(), (uchar)c.green(), (uchar)c.blue(), (uchar)c.alpha());
     };
 
     // utility lambda to register a feature point, to avoid code complexity
-    const auto drawFeaturePoint = [&](aliceVision::IndexT currentFrameId, 
+    const auto drawFeaturePoint = [&](aliceVision::IndexT curFrameId,
                                       aliceVision::IndexT frameId, 
                                       const MFeature* feature, 
                                       const QColor& color,
@@ -506,7 +506,7 @@ namespace qtAliceVision
                                       unsigned int& nbPointsDrawn,
                                       bool trackHasInliers)
     {
-      if (_trackDisplayMode == WithAllMatches || (frameId == currentFrameId && _trackDisplayMode == WithCurrentMatches))
+      if (_trackDisplayMode == WithAllMatches || (frameId == curFrameId && _trackDisplayMode == WithCurrentMatches))
       {
         const QPointF point2d = QPointF(feature->x(), feature->y());
         const QPointF point3d = QPointF(feature->rx(), feature->ry());
@@ -515,7 +515,7 @@ namespace qtAliceVision
         ++nbPointsDrawn;
 
         // draw a highlight point in order to identify the current match from the others
-        if (frameId == currentFrameId) 
+        if (frameId == curFrameId)
         {
           setVerticeHighlightPoint(nbHighlightPointsDrawn, (_display3dTracks && trackHasInliers) ? point3d : point2d, color.alpha());
           ++nbHighlightPointsDrawn;
@@ -677,8 +677,8 @@ namespace qtAliceVision
     const auto setVerticePoint = [&](unsigned int index, const QPointF& point)
     {
       verticesPoints[index].set(
-        point.x(), point.y(),
-        _matchColor.red(), _matchColor.green(), _matchColor.blue(), _matchColor.alpha()
+        (float)point.x(), (float)point.y(),
+        (uchar)_matchColor.red(), (uchar)_matchColor.green(), (uchar)_matchColor.blue(), (uchar)_matchColor.alpha()
       );
     };
 
@@ -746,7 +746,7 @@ namespace qtAliceVision
         node->appendChildNode(root);
       }
       {
-        auto root = new QSGGeometryNode;
+        root = new QSGGeometryNode;
         // use VertexColorMaterial to later be able to draw selection in another color
         auto material = new QSGVertexColorMaterial;
         {
@@ -804,15 +804,15 @@ namespace qtAliceVision
     const auto setVerticeLine = [&](unsigned int index, const QPointF& point, const QColor& color)
     {
       verticesLines[index].set(
-        point.x(), point.y(),
-        color.red(), color.green(), color.blue(), color.alpha()
+        (float)point.x(), (float)point.y(),
+        (uchar)color.red(), (uchar)color.green(), (uchar)color.blue(), (uchar)color.alpha()
       );
     };
     const auto setVerticePoint = [&](unsigned int index, const QPointF& point, const QColor& color)
     {
       verticesPoints[index].set(
-        point.x(), point.y(),
-        color.red(), color.green(), color.blue(), color.alpha()
+        (float)point.x(), (float)point.y(),
+        (uchar)color.red(), (uchar)color.green(), (uchar)color.blue(), (uchar)color.alpha()
       );
     };
 
@@ -904,6 +904,7 @@ namespace qtAliceVision
 
   QSGNode* FeaturesViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePaintNodeData* data)
   {
+    (void)data; // Fix "unused parameter" warnings; should be replaced by [[maybe_unused]] when C++17 is supported
     PaintParams params;
     initializePaintParams(params);
 

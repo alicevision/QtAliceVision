@@ -243,7 +243,7 @@ void MViewStats::computeViewStats()
             std::vector<size_t>& residualFullHistY = _residualHistogramFull.GetHist();
             for(std::size_t i = 0; i < residualFullHistY.size(); ++i)
             {
-                residualFullHistY[i] = std::round(residualFullHistY[i] / nbCameras);
+                residualFullHistY[i] = (size_t)round((double)residualFullHistY[i] / nbCameras);
             }
             std::vector<double> residualHistX = _residualHistogramFull.GetXbinsValue();
             assert(residualHistX.size() == residualFullHistY.size());
@@ -285,7 +285,7 @@ void MViewStats::computeViewStats()
             // normalize the histogram to get the average number of observations
             for(std::size_t i = 0; i < observationsLengthsFullHistY.size(); ++i)
             {
-                observationsLengthsFullHistY[i] = round(observationsLengthsFullHistY[i] / nbCameras);
+                observationsLengthsFullHistY[i] = (size_t)round((double)observationsLengthsFullHistY[i] / nbCameras);
             }
             std::vector<double> observationsLengthsHistX = _observationsLengthsHistogramFull.GetXbinsValue();
             assert(observationsLengthsHistX.size() == observationsLengthsFullHistY.size());
@@ -323,7 +323,7 @@ void MViewStats::computeViewStats()
         std::vector<size_t>& observationsScaleFullHistY = _observationsScaleHistogramFull.GetHist();
         for(std::size_t i = 0; i < observationsScaleFullHistY.size(); ++i)
         {
-            observationsScaleFullHistY[i] = std::round(observationsScaleFullHistY[i] / nbCameras);
+            observationsScaleFullHistY[i] = (std::size_t)std::round((double)observationsScaleFullHistY[i] / nbCameras);
         }
         std::vector<double> observationsScaleHistX = _observationsScaleHistogramFull.GetXbinsValue();
         assert(observationsScaleHistX.size() == observationsScaleFullHistY.size());

@@ -26,17 +26,17 @@ class MViewStats : public QObject
     /// Pointer to sfmData
     Q_PROPERTY(qtAliceVision::MSfMData* msfmData READ getMSfmData WRITE setMSfmData NOTIFY sfmDataChanged)
     /// max AxisX value for reprojection residual histogram
-    Q_PROPERTY(int residualMaxAxisX MEMBER _residualMaxAxisX NOTIFY viewStatsChanged)
+    Q_PROPERTY(double residualMaxAxisX MEMBER _residualMaxAxisX NOTIFY viewStatsChanged)
     /// max AxisY value for reprojection residual histogram
-    Q_PROPERTY(int residualMaxAxisY MEMBER _residualMaxAxisY NOTIFY viewStatsChanged)
+    Q_PROPERTY(double residualMaxAxisY MEMBER _residualMaxAxisY NOTIFY viewStatsChanged)
     /// max AxisX value for observations lengths histogram
-    Q_PROPERTY(int observationsLengthsMaxAxisX MEMBER _observationsLengthsMaxAxisX NOTIFY viewStatsChanged)
+    Q_PROPERTY(double observationsLengthsMaxAxisX MEMBER _observationsLengthsMaxAxisX NOTIFY viewStatsChanged)
     /// max AxisY value for observations lengths histogram
-    Q_PROPERTY(int observationsLengthsMaxAxisY MEMBER _observationsLengthsMaxAxisY NOTIFY viewStatsChanged)
+    Q_PROPERTY(double observationsLengthsMaxAxisY MEMBER _observationsLengthsMaxAxisY NOTIFY viewStatsChanged)
     /// max AxisX value for scale histogram
-    Q_PROPERTY(int observationsScaleMaxAxisX MEMBER _observationsScaleMaxAxisX NOTIFY viewStatsChanged)
+    Q_PROPERTY(double observationsScaleMaxAxisX MEMBER _observationsScaleMaxAxisX NOTIFY viewStatsChanged)
     /// max AxisY value for scale histogram
-    Q_PROPERTY(int observationsScaleMaxAxisY MEMBER _observationsScaleMaxAxisY NOTIFY viewStatsChanged)
+    Q_PROPERTY(double observationsScaleMaxAxisY MEMBER _observationsScaleMaxAxisY NOTIFY viewStatsChanged)
 
 public:
     MViewStats()
@@ -86,4 +86,4 @@ private:
 
 }
 
-Q_DECLARE_METATYPE(QPointF);   // for usage in signals/slots/properties
+Q_DECLARE_METATYPE(QPointF)   // for usage in signals/slots/properties

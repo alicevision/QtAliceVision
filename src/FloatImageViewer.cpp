@@ -48,7 +48,7 @@ void FloatImageIORunnable::run()
         }
 
         // ensure it fits in RAM memory
-        for (size_t i = 0; i < _downscaleLevel; i++)
+        for (int i = 0; i < _downscaleLevel; i++)
         {
             FloatImage tmp;
             aliceVision::image::ImageHalfSample(image, tmp);
@@ -199,13 +199,13 @@ QVector4D FloatImageViewer::pixelValueAt(int x, int y)
 
 QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePaintNodeData* data)
 {
+    (void)data; // Fix "unused parameter" warnings; should be replaced by [[maybe_unused]] when C++17 is supported
     QVector4D channelOrder(0.f, 1.f, 2.f, 3.f);
 
     QSGGeometryNode* root = static_cast<QSGGeometryNode*>(oldNode);
     QSGSimpleMaterial<ShaderData>* material = nullptr;
 
     QSGGeometry* geometryLine = nullptr;
-    bool updateSfmData = false;
 
     if (!root)
     {
@@ -223,8 +223,8 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
         {
             /* Geometry and Material for the Grid */
             auto node = new QSGGeometryNode;
-            auto material = new QSGFlatColorMaterial;
-            material->setColor(_surface.getGridColor());
+            auto gridMaterial = new QSGFlatColorMaterial;
+            gridMaterial->setColor(_surface.getGridColor());
             {
                 // Vertexcount of the grid is equal to indexCount of the image
                 geometryLine = new QSGGeometry(QSGGeometry::defaultAttributes_Point2D(), _surface.indexCount());
@@ -233,7 +233,7 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
 
                 node->setGeometry(geometryLine);
                 node->setFlags(QSGNode::OwnsGeometry);
-                node->setMaterial(material);
+                node->setMaterial(gridMaterial);
                 node->setFlags(QSGNode::OwnsMaterial);
             }
             root->appendChildNode(node);
@@ -285,6 +285,10 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
     case EChannelMode::A:
         channelOrder = QVector4D(3.f, 3.f, 3.f, -1.f);
         break;
+    case EChannelMode::RGB:
+    case EChannelMode::RGBA:
+    default:
+        break;
     }
 
     bool updateGeometry = false;
@@ -317,11 +321,11 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
                 const double radiusInPercentage = (fisheyeCircleParams.z() / ((width > height) ? height : width)) * 2.0;
 
                 //Radius is converted in uv coordinates (0, 0.5)
-                const double radius = 0.5 * (radiusInPercentage);
+                const float radius = 0.5f * (float)radiusInPercentage;
 
-                material->state()->fisheyeCircleCoord = QVector2D(fisheyeCircleParams.x() / width, fisheyeCircleParams.y() / height);
+                material->state()->fisheyeCircleCoord = QVector2D((float)(fisheyeCircleParams.x() / width), (float)(fisheyeCircleParams.y() / height));
                 material->state()->fisheyeCircleRadius = radius;
-                material->state()->aspectRatio = aspectRatio;
+                material->state()->aspectRatio = (float)aspectRatio;
             }
             else
             {
@@ -345,8 +349,8 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
     {
         _boundingRect = newBoundingRect;
 
-        const float windowRatio = _boundingRect.width() / _boundingRect.height();
-        const float textureRatio = _textureSize.width() / float(_textureSize.height());
+        const double windowRatio = _boundingRect.width() / _boundingRect.height();
+        const float textureRatio = (float)_textureSize.width() / (float)_textureSize.height();
         QRectF geometryRect = _boundingRect;
         if (windowRatio > textureRatio)
         {

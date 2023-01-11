@@ -182,5 +182,5 @@ private:
 
 }
 
-Q_DECLARE_METATYPE(qtAliceVision::FloatImage);
-Q_DECLARE_METATYPE(QSharedPointer<qtAliceVision::FloatImage>);
+Q_DECLARE_METATYPE(qtAliceVision::FloatImage)
+Q_DECLARE_METATYPE(QSharedPointer<qtAliceVision::FloatImage>)
