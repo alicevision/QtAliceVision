@@ -354,27 +354,34 @@ void DepthMapEntity::loadDepthMap()
             int pixelIndexB = indexPerPixel[static_cast<std::size_t>((y + 1) * depthMap.Width() + x)];
             int pixelIndexC = indexPerPixel[static_cast<std::size_t>((y + 1) * depthMap.Width() + x + 1)];
             int pixelIndexD = indexPerPixel[static_cast<std::size_t>(y * depthMap.Width() + x + 1)];
+
+            // Cast indices to std::size_t once for readability
+            std::size_t sPixelIndexA = static_cast<std::size_t>(pixelIndexA);
+            std::size_t sPixelIndexB = static_cast<std::size_t>(pixelIndexB);
+            std::size_t sPixelIndexC = static_cast<std::size_t>(pixelIndexC);
+            std::size_t sPixelIndexD = static_cast<std::size_t>(pixelIndexD);
+
             if(pixelIndexA != -1 &&
                 pixelIndexB != -1 &&
                 pixelIndexC != -1 &&
-                validTriangleRatio(positions[static_cast<std::size_t>(pixelIndexA)],
-                                    positions[static_cast<std::size_t>(pixelIndexB)],
-                                    positions[static_cast<std::size_t>(pixelIndexC)]))
+                validTriangleRatio(positions[sPixelIndexA],
+                                    positions[sPixelIndexB],
+                                    positions[sPixelIndexC]))
             {
-                trianglesIndexes.push_back(static_cast<std::size_t>(pixelIndexA));
-                trianglesIndexes.push_back(static_cast<std::size_t>(pixelIndexB));
-                trianglesIndexes.push_back(static_cast<std::size_t>(pixelIndexC));
+                trianglesIndexes.push_back(sPixelIndexA);
+                trianglesIndexes.push_back(sPixelIndexB);
+                trianglesIndexes.push_back(sPixelIndexC);
             }
             if(pixelIndexC != -1 &&
                 pixelIndexD != -1 &&
                 pixelIndexA != -1 &&
-                validTriangleRatio(positions[static_cast<std::size_t>(pixelIndexC)],
-                                    positions[static_cast<std::size_t>(pixelIndexD)],
-                                    positions[static_cast<std::size_t>(pixelIndexA)]))
+                validTriangleRatio(positions[sPixelIndexC],
+                                    positions[sPixelIndexD],
+                                    positions[sPixelIndexA]))
             {
-                trianglesIndexes.push_back(static_cast<std::size_t>(pixelIndexC));
-                trianglesIndexes.push_back(static_cast<std::size_t>(pixelIndexD));
-                trianglesIndexes.push_back(static_cast<std::size_t>(pixelIndexA));
+                trianglesIndexes.push_back(sPixelIndexC);
+                trianglesIndexes.push_back(sPixelIndexD);
+                trianglesIndexes.push_back(sPixelIndexA);
             }
         }
     }

@@ -152,12 +152,15 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
 
     bool fillCoordsSphere = _defaultSphereCoordinates.empty();
     int vertexIndex = 0;
+    float fSubdivisions = static_cast<float>(_subdivisions);
     for (size_t i = 0; i <= static_cast<size_t>(_subdivisions); i++)
     {
         for (size_t j = 0; j <= static_cast<size_t>(_subdivisions); j++)
         {
-            float x = static_cast<float>(i) * static_cast<float>(textureSize.width()) / static_cast<float>(_subdivisions);
-            float y = static_cast<float>(j) * static_cast<float>(textureSize.height()) / static_cast<float>(_subdivisions);
+            float fI = static_cast<float>(i);
+            float fJ = static_cast<float>(j);
+            float x = fI * static_cast<float>(textureSize.width()) / fSubdivisions;
+            float y = fJ * static_cast<float>(textureSize.height()) / fSubdivisions;
 
             const double cx = x - center(0);
             const double cy = y - center(1);
@@ -171,8 +174,8 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
             }
 
 
-            float u = static_cast<float>(i) / static_cast<float>(_subdivisions);
-            float v = static_cast<float>(j) / static_cast<float>(_subdivisions);
+            const float u = fI / fSubdivisions;
+            const float v = fJ / fSubdivisions;
 
             // Remove Distortion only if sfmData has been updated
             if (isDistortionViewerEnabled() && intrinsic && intrinsic->hasDistortion())
