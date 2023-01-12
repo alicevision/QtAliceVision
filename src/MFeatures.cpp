@@ -173,7 +173,7 @@ void MFeatures::load()
     return;
   }
 
-  if(_currentViewId == aliceVision::UndefinedIndexT)
+  if (_currentViewId == aliceVision::UndefinedIndexT)
   {
     setStatus(None);
     return;
@@ -339,7 +339,7 @@ void MFeatures::getViewIdsToLoad(std::vector<aliceVision::IndexT>& viewIdsToLoad
     try
     {
       currentIntrinsicId = sfmData.getView(_currentViewId).getIntrinsicId();
-      currentFrameId = sfmData.getView(_currentViewId).getFrameId();;
+      currentFrameId = sfmData.getView(_currentViewId).getFrameId();
     }
     catch (std::exception& e)
     {
@@ -356,7 +356,6 @@ void MFeatures::getViewIdsToLoad(std::vector<aliceVision::IndexT>& viewIdsToLoad
           if ((currentIntrinsicId == view.getIntrinsicId() && (view.getFrameId() != aliceVision::UndefinedIndexT)))
               viewIdsToLoad.emplace_back(view.getViewId());
         }
-
       }
       else // time window
       {
@@ -376,7 +375,7 @@ void MFeatures::getViewIdsToLoad(std::vector<aliceVision::IndexT>& viewIdsToLoad
   // single view
   if (viewIdsToLoad.empty())
     viewIdsToLoad.emplace_back(_currentViewId);
-  
+
   // first initialization
   if (_viewFeaturesPerViewPerDesc.empty())
     return;
@@ -398,7 +397,7 @@ void MFeatures::getViewIdsToLoad(std::vector<aliceVision::IndexT>& viewIdsToLoad
   for (const auto& viewFeaturesPerViewPair : viewFeaturesPerView)
   {
     bool toKeep = false;
-      
+
     for (aliceVision::IndexT viewId : viewIdsToLoad)
     {
       if (viewFeaturesPerViewPair.first == viewId)
@@ -409,7 +408,7 @@ void MFeatures::getViewIdsToLoad(std::vector<aliceVision::IndexT>& viewIdsToLoad
       }
     }
 
-    if(!toKeep)
+    if (!toKeep)
       viewIdsToRemove.push_back(viewFeaturesPerViewPair.first);
   }
 
@@ -450,8 +449,8 @@ void MFeatures::getViewIdsToLoad(std::vector<aliceVision::IndexT>& viewIdsToLoad
       viewIdsToLoad.erase(iter);
   }
 
-  qDebug() << "[QtAliceVision] Features: Caching: " << viewIdsToKeep.size() << " frame(s) kept, " 
-                                                    << viewIdsToRemove.size() << " frame(s) removed, " 
+  qDebug() << "[QtAliceVision] Features: Caching: " << viewIdsToKeep.size() << " frame(s) kept, "
+                                                    << viewIdsToRemove.size() << " frame(s) removed, "
                                                     << viewIdsToLoad.size() << " frame(s) requested.";
 }
 
@@ -495,7 +494,7 @@ bool MFeatures::updateFromTracks()
       const aliceVision::IndexT viewId = viewFeaturesPerViewPair.first;
       MViewFeatures& viewFeatures = viewFeaturesPerViewPair.second;
 
-      if (viewFeatures.nbTracks > 0) // view already update 
+      if (viewFeatures.nbTracks > 0) // view already update
         continue;
 
       auto tracksPerViewIt = _mtracks->tracksPerView().find(viewId);
@@ -682,7 +681,7 @@ void MFeatures::updatePerTrackInformation()
   {
     const QString& describerType = viewFeaturesPerViewPerDescPair.first;
 
-    if (viewFeaturesPerViewPerDescPair.second.size() < 2) 
+    if (viewFeaturesPerViewPerDescPair.second.size() < 2)
       continue; // to build _trackFeaturesPerTrackPerDesc we need at least 2 views per desc
 
     for (auto& viewFeaturesPerViewPair : viewFeaturesPerViewPerDescPair.second)
@@ -713,7 +712,7 @@ void MFeatures::updatePerTrackInformation()
 
           trackFreatures.maxFrameId = std::max(trackFreatures.maxFrameId, frameId);
           trackFreatures.minFrameId = std::min(trackFreatures.minFrameId, frameId);
-          trackFreatures.featureScaleAverage += feature->scale(); // initialize score with feature scale sum
+          trackFreatures.featureScaleAverage += feature->scale();  // initialize score with feature scale sum
         }
       }
     }
@@ -723,7 +722,7 @@ void MFeatures::updatePerTrackInformation()
   if (_trackFeaturesPerTrackPerDesc.empty())
     return;
 
-  // compute average feature scale 
+  // compute average feature scale
   for (auto& trackFeaturesPerTrackPerDescPair : _trackFeaturesPerTrackPerDesc)
   {
     for (auto& trackFeaturesPerTrackPair : trackFeaturesPerTrackPerDescPair.second)
@@ -746,7 +745,7 @@ void MFeatures::updatePerTrackInformation()
 
     const aliceVision::IndexT trackId = trackIdIt->second;
     auto& trackFeatures = _trackFeaturesPerTrackPerDesc[describerTypeName][trackId];
-    
+
     for (auto& featuresPerFramePair : trackFeatures.featuresPerFrame)
     {
       if (featuresPerFramePair.second->landmarkId() >= 0)

@@ -25,9 +25,8 @@ class DepthMapEntity : public Qt3DCore::QEntity
     Q_PROPERTY(float pointSize READ pointSize WRITE setPointSize NOTIFY pointSizeChanged)
 
 public:
-
     // Identical to SceneLoader.Status
-    enum Status { 
+    enum Status {
         None = 0,
         Loading,
         Ready,
@@ -50,11 +49,11 @@ public:
 
     Status status() const { return _status; }
 
-    void setStatus(Status status) { 
-        if(status == _status) 
-            return; 
-        _status = status; 
-        Q_EMIT statusChanged(_status); 
+    void setStatus(Status status) {
+        if(status == _status)
+            return;
+        _status = status;
+        Q_EMIT statusChanged(_status);
     }
 
     Q_SLOT DisplayMode displayMode() const { return _displayMode; }

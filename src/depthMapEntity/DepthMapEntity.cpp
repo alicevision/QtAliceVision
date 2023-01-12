@@ -51,7 +51,7 @@ void DepthMapEntity::setSource(const QUrl& value)
         _status = DepthMapEntity::Error;
         return;
     }
-    
+
     _source = value;
 
     QFileInfo fileInfo = QFileInfo(_source.path());
@@ -290,7 +290,7 @@ void DepthMapEntity::loadDepthMap()
         qDebug() << "[DepthMapEntity] load sim map: " << _simMapSource.toLocalFile();
         image::readImage(simMapPath, simMap, image::EImageColorSpace::LINEAR);
     }
-    else 
+    else
     {
         qDebug() << "[DepthMapEntity] failed to find associated sim map";
     }
@@ -433,7 +433,7 @@ void DepthMapEntity::loadDepthMap()
     customGeometry->addAttribute(positionAttribute);
     customGeometry->addAttribute(normalAttribute);
     // customGeometry->setBoundingVolumePositionAttribute(positionAttribute);
-        
+
     // Duplicate colors as we cannot use indexes!
     std::vector<image::RGBfColor> colorsFlat;
     colorsFlat.reserve(trianglesIndexes.size());
@@ -462,9 +462,9 @@ void DepthMapEntity::loadDepthMap()
     // create the geometry renderer
     _meshRenderer = new QGeometryRenderer;
     _meshRenderer->setGeometry(customGeometry);
-    
+
     _status = DepthMapEntity::Ready;
-    
+
     // add components
     addComponent(_meshRenderer);
     updateMaterial();

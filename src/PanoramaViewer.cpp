@@ -68,7 +68,6 @@ QSGNode* PanoramaViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePai
 
 void PanoramaViewer::setMSfmData(MSfMData* sfmData)
 {
-
     if (_msfmData == sfmData)
         return;
 

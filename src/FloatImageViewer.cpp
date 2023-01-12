@@ -81,20 +81,20 @@ FloatImageViewer::FloatImageViewer(QQuickItem* parent)
     // CONNECTS
     connect(this, &FloatImageViewer::gammaChanged, this, &FloatImageViewer::update);
     connect(this, &FloatImageViewer::gainChanged, this, &FloatImageViewer::update);
-    
+
     connect(this, &FloatImageViewer::textureSizeChanged, this, &FloatImageViewer::update);
     connect(this, &FloatImageViewer::sourceSizeChanged, this, &FloatImageViewer::update);
     connect(this, &FloatImageViewer::imageChanged, this, &FloatImageViewer::update);
     connect(this, &FloatImageViewer::sourceChanged, this, &FloatImageViewer::reload);
-    
+
     connect(this, &FloatImageViewer::channelModeChanged, this, &FloatImageViewer::update);
- 
+
     connect(this, &FloatImageViewer::downscaleLevelChanged, this, &FloatImageViewer::reload);
 
     connect(&_surface, &Surface::gridColorChanged, this, &FloatImageViewer::update);
     connect(&_surface, &Surface::gridOpacityChanged, this, &FloatImageViewer::update);
     connect(&_surface, &Surface::displayGridChanged, this, &FloatImageViewer::update);
-   
+
     connect(&_surface, &Surface::mouseOverChanged, this, &FloatImageViewer::update);
     connect(&_surface, &Surface::viewerTypeChanged, this, &FloatImageViewer::update);
 
@@ -391,7 +391,7 @@ void FloatImageViewer::updatePaintSurface(QSGGeometryNode* root, QSGSimpleMateri
         root->markDirty(QSGNode::DirtyMaterial);
     }
 
-    // If vertices has changed, Re-Compute the grid 
+    // If vertices has changed, Re-Compute the grid
     if (_surface.hasVerticesChanged())
     {
         // Retrieve Vertices and Index Data

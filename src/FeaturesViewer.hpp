@@ -54,7 +54,6 @@ namespace qtAliceVision {
       Q_PROPERTY(qtAliceVision::MFeatures* mfeatures READ getMFeatures WRITE setMFeatures NOTIFY featuresChanged)
 
   public:
-
     /// Helpers
 
     enum FeatureDisplayMode {
@@ -72,7 +71,6 @@ namespace qtAliceVision {
     Q_ENUM(TrackDisplayMode)
 
     struct PaintParams {
-
       bool haveValidFeatures = false;
       bool haveValidTracks = false;
       bool haveValidLandmarks = false;
@@ -139,7 +137,7 @@ namespace qtAliceVision {
 
     float _featureMinScaleFilter = 0.f;
     float _featureMaxScaleFilter = 1.f;
-    
+
     bool _display3dTracks = false;
     bool _trackContiguousFilter = true;
     bool _trackInliersFilter = false;

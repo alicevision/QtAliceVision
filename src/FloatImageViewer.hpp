@@ -29,7 +29,6 @@ class FloatImageIORunnable : public QObject, public QRunnable
     Q_OBJECT
 
 public:
-
     explicit FloatImageIORunnable(const QUrl& path, int downscaleLevel = 0, QObject* parent = nullptr);
 
     /// Load image at path
@@ -48,7 +47,7 @@ private:
     */
 class FloatImageViewer : public QQuickItem
 {
-    
+
 Q_OBJECT
     // Q_PROPERTIES
     Q_PROPERTY(QUrl source MEMBER _source NOTIFY sourceChanged)
@@ -62,17 +61,17 @@ Q_OBJECT
     Q_PROPERTY(QSize textureSize MEMBER _textureSize NOTIFY textureSizeChanged)
 
     Q_PROPERTY(QSize sourceSize READ sourceSize NOTIFY sourceSizeChanged)
-    
+
     Q_PROPERTY(bool loading READ loading NOTIFY loadingChanged)
 
     Q_PROPERTY(bool clearBeforeLoad MEMBER _clearBeforeLoad NOTIFY clearBeforeLoadChanged)
-    
+
     Q_PROPERTY(EChannelMode channelMode MEMBER _channelMode NOTIFY channelModeChanged)
-    
+
     Q_PROPERTY(QVariantMap metadata READ metadata NOTIFY metadataChanged)
-   
+
     Q_PROPERTY(int downscaleLevel READ getDownscaleLevel WRITE setDownscaleLevel NOTIFY downscaleLevelChanged)
-    
+
     Q_PROPERTY(Surface* surface READ getSurfacePtr NOTIFY surfaceChanged)
 
     Q_PROPERTY(bool cropFisheye READ getCropFisheye WRITE setCropFisheye NOTIFY isCropFisheyeChanged)
@@ -139,7 +138,7 @@ public:
 
     // Q_INVOKABLE
     Q_INVOKABLE QVector4D pixelValueAt(int x, int y);
-    
+
     Surface* getSurfacePtr() { return &_surface; }
 
 private:

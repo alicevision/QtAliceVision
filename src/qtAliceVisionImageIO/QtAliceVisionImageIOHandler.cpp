@@ -19,9 +19,9 @@
 #include <memory>
 
 
-inline const float& clamp( const float& v, const float& lo, const float& hi )
+inline const float& clamp(const float& v, const float& lo, const float& hi)
 {
-    assert( !(hi < lo) );
+    assert(!(hi < lo));
     return (v < lo) ? lo : (hi < v) ? hi : v;
 }
 
@@ -66,7 +66,7 @@ bool QtAliceVisionImageIOHandler::canRead(QIODevice *device)
         return false;
     }
 
-    if (!(input->valid_file(path))) 
+    if (!(input->valid_file(path)))
     {
         qDebug() << "[QtAliceVisionImageIO] Cannot read: invalid file";
         return false;
@@ -92,15 +92,15 @@ bool QtAliceVisionImageIOHandler::read(QImage *image)
 
     oiio::ImageBuf inBuf;
     aliceVision::image::getBufferFromImage(img, inBuf);
-    
+
     oiio::ImageSpec inSpec = aliceVision::image::readImageSpec(path);
     float pixelAspectRatio = inSpec.get_float_attribute("PixelAspectRatio", 1.0f);
 
-    qDebug() << "[QtAliceVisionImageIO] width:" << inSpec.width 
-            << ", height:" << inSpec.height 
-            << ", nchannels:" << inSpec.nchannels  
+    qDebug() << "[QtAliceVisionImageIO] width:" << inSpec.width
+            << ", height:" << inSpec.height
+            << ", nchannels:" << inSpec.nchannels
             << ", pixelAspectRatio:" << pixelAspectRatio;
-    
+
     qDebug() << "[QtAliceVisionImageIO] create output QImage";
     QImage result(inSpec.width, inSpec.height, QImage::Format_RGB32);
 
@@ -113,7 +113,7 @@ bool QtAliceVisionImageIOHandler::read(QImage *image)
     float channelValues[] = {1.f, 1.f, 1.f, 1.f};
     oiio::ImageBufAlgo::channels(tmpBuf, inBuf, 4, channelOrder, channelValues, {}, false);
     inBuf.swap(tmpBuf);
-    
+
     qDebug() << "[QtAliceVisionImageIO] fill output QImage";
     oiio::ROI exportROI = inBuf.roi();
     exportROI.chbegin = 0;

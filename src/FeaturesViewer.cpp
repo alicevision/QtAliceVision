@@ -272,7 +272,7 @@ namespace qtAliceVision
 
         ++nbTracksToDraw;
         nbTrackLinesToDraw += (trackFeatures.featuresPerFrame.size() - 1); // number of lines in the track
-        
+
         if (_trackDisplayMode == WithCurrentMatches)
         {
           const auto it = trackFeatures.featuresPerFrame.find(currentFrameId);
@@ -289,7 +289,7 @@ namespace qtAliceVision
           const auto it = trackFeatures.featuresPerFrame.find(currentFrameId);
           if (it != trackFeatures.featuresPerFrame.end())
             ++nbHighlightPointsToDraw; // to draw a highlight point in order to identify the current match
-          
+
           if (trackFeatures.nbLandmarks > 0)
             nbReprojectionErrorLinesToDraw += trackFeatures.featuresPerFrame.size(); // one line per matches for rerojection error
 
@@ -408,7 +408,7 @@ namespace qtAliceVision
 
       if (!rootHighlightPoint || !rootTrackLine || !rootReprojectionErrorLine || !rootPoint)
         return;
-      
+
       rootHighlightPoint->markDirty(QSGNode::DirtyGeometry);
       rootTrackLine->markDirty(QSGNode::DirtyGeometry);
       rootReprojectionErrorLine->markDirty(QSGNode::DirtyGeometry);
@@ -502,11 +502,11 @@ namespace qtAliceVision
 
     // utility lambda to register a feature point, to avoid code complexity
     const auto drawFeaturePoint = [&](aliceVision::IndexT curFrameId,
-                                      aliceVision::IndexT frameId, 
-                                      const MFeature* feature, 
+                                      aliceVision::IndexT frameId,
+                                      const MFeature* feature,
                                       const QColor& color,
-                                      unsigned int& nbReprojectionErrorLinesDrawn, 
-                                      unsigned int& nbHighlightPointsDrawn, 
+                                      unsigned int& nbReprojectionErrorLinesDrawn,
+                                      unsigned int& nbHighlightPointsDrawn,
                                       unsigned int& nbPointsDrawn,
                                       bool trackHasInliers)
     {
@@ -514,7 +514,7 @@ namespace qtAliceVision
       {
         const QPointF point2d = QPointF(feature->x(), feature->y());
         const QPointF point3d = QPointF(feature->rx(), feature->ry());
-       
+
         setVerticePoint(nbPointsDrawn, trackHasInliers ? point3d : point2d, color);
         ++nbPointsDrawn;
 
@@ -687,7 +687,7 @@ namespace qtAliceVision
     };
 
     if (params.nbMatchesToDraw == 0) // nothing to draw or something is not ready
-      return; 
+      return;
 
     unsigned int nbMatchesDrawn = 0;
 
@@ -827,7 +827,7 @@ namespace qtAliceVision
 
     const MFeatures::MViewFeatures* currentViewFeatures = _mfeatures->getCurrentViewFeatures(_describerType);
     const QColor reprojectionColor = _landmarkColor.darker(150);
-    
+
     // Draw lines between reprojected points and features extracted
     for (const auto& feature : currentViewFeatures->features)
     {
@@ -870,7 +870,7 @@ namespace qtAliceVision
 
     const float minFeatureScale = _mfeatures->getMinFeatureScale(_describerType);
     const float difFeatureScale = _mfeatures->getMaxFeatureScale(_describerType) - minFeatureScale;
-    
+
     params.minFeatureScale = minFeatureScale + std::max(0.f, std::min(1.f, _featureMinScaleFilter)) * difFeatureScale;
     params.maxFeatureScale = minFeatureScale + std::max(0.f, std::min(1.f, _featureMaxScaleFilter)) * difFeatureScale;
 

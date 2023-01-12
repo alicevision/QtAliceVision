@@ -24,7 +24,7 @@ Q_OBJECT
 	//Q_PROPERTIES
 
 	Q_PROPERTY(bool displayGrid READ getDisplayGrid WRITE setDisplayGrid NOTIFY displayGridChanged)
-	
+
 	Q_PROPERTY(QColor gridColor READ getGridColor WRITE setGridColor NOTIFY gridColorChanged)
 
 	Q_PROPERTY(int gridOpacity READ getGridOpacity WRITE setGridOpacity NOTIFY gridOpacityChanged)
@@ -143,14 +143,13 @@ public:
 	const aliceVision::camera::EquiDistant* getIntrinsicEquiDistant() const;
 
 private:
-
 	aliceVision::camera::IntrinsicBase* getIntrinsicFromViewId(unsigned int viewId) const;
 
 	void computeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize, int downscaleLevel = 0);
 
 	void computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize textureSize,
 		aliceVision::camera::IntrinsicBase* intrinsic, int downscaleLevel = 0);
-		
+
 	void computeIndicesGrid(quint16* indices);
 
 	void rotatePanorama(aliceVision::Vec3& coordSphere);

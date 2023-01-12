@@ -74,7 +74,6 @@ public:
 
     QUrl getMatchingFolder() const { return _matchingFolder; }
     void setMatchingFolder(const QUrl& matchingFolder) {
-
         if(matchingFolder == _matchingFolder)
             return;
        _matchingFolder = matchingFolder;
@@ -104,7 +103,6 @@ private:
     std::unique_ptr<aliceVision::track::TracksMap> _tracks;
     std::unique_ptr<aliceVision::track::TracksPerView> _tracksPerView;
     Status _status = MTracks::None;
-
 };
 
 }

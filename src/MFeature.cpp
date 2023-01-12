@@ -38,8 +38,8 @@ void FeatureIORunnable::run()
     }
     catch(std::exception& e)
     {
-        qDebug() << "[QtAliceVision] Failed to load features (" << descType << ") for view: " << viewId << " from folder: " << folder
-                 << "\n" << e.what();
+        qDebug() << "[QtAliceVision] Failed to load features (" << descType << ") for view: " << viewId
+                 << " from folder: " << folder << "\n" << e.what();
 
         Q_EMIT resultReady(feats);
         return;

@@ -30,7 +30,7 @@ void FloatTexture::setImage(QSharedPointer<FloatImage>& image)
     _dirty = true;
     _dirtyBindOptions = true;
     _mipmapsGenerated = false;
- }
+}
 
 bool FloatTexture::isValid() const
 {

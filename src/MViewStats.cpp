@@ -200,7 +200,6 @@ void MViewStats::fillObservationsScaleViewSerie(QXYSeries* observationsScale)
         observationsScale->append(double(observationsScaleHistX[i]), double(observationsScaleHistY[i]));
         observationsScale->setPen(pen);
     }
-
 }
 
 
@@ -269,7 +268,7 @@ void MViewStats::computeViewStats()
         }
     }
 
-    _nbObservations = 0; 
+    _nbObservations = 0;
     {
         _observationsLengthsMaxAxisX = 0.0;
         _observationsLengthsMaxAxisY = 0.0;
@@ -359,7 +358,7 @@ void MViewStats::setMSfmData(qtAliceVision::MSfMData* sfmData)
     }
     _msfmData = sfmData;
     if(_msfmData != nullptr)
-    {        
+    {
         connect(_msfmData, SIGNAL(sfmDataChanged()), this, SIGNAL(sfmDataChanged()));
     }
     Q_EMIT sfmDataChanged();

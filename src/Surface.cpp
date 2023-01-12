@@ -66,7 +66,7 @@ void Surface::computeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indic
             Q_EMIT verticesChanged();
             _needToUseIntrinsic = false;
         }
-        else 
+        else
         {
             verticesComputed = false;
         }
@@ -77,7 +77,7 @@ void Surface::computeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indic
         computeVerticesGrid(vertices, textureSize, nullptr);
         setVerticesChanged(false);
     }
-        
+
     computeIndicesGrid(indices);
 }
 
@@ -117,7 +117,7 @@ void Surface::computeGrid(QSGGeometry* geometryLine)
     }
 }
 
-void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize textureSize, 
+void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize textureSize,
     aliceVision::camera::IntrinsicBase* intrinsic, int downscaleLevel)
 {
     // Retrieve pose if Panorama Viewer is enable
@@ -141,14 +141,14 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
     aliceVision::camera::EquiDistant* eqcam = dynamic_cast<aliceVision::camera::EquiDistant*>(intrinsic);
     aliceVision::Vec2 center = {0, 0};
     double radius = std::numeric_limits<double>::max();
-    
+
     if (eqcam)
     {
         center = { eqcam->getCircleCenterX(), eqcam->getCircleCenterY() };
         radius = eqcam->getCircleRadius();
     }
-    
-    
+
+
 
     bool fillCoordsSphere = _defaultSphereCoordinates.empty();
     int vertexIndex = 0;
@@ -202,7 +202,7 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
 
                 // Compute pixel coordinates in the panorama coordinate system
                 aliceVision::Vec2 panoramaCoordinates = toEquirectangular(sphereCoordinates, _panoramaWidth, _panoramaHeight);
-                    
+
                 // If image is on the seem
                 if (vertexIndex > 0 && j > 0)
                 {
@@ -223,7 +223,7 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
                 vertices[vertexIndex].set(static_cast<float>(panoramaCoordinates.x()), static_cast<float>(panoramaCoordinates.y()), u, v);
             }
 
-            // Default 
+            // Default
             if (!intrinsic)
             {
                 vertices[vertexIndex].set(x, y, u, v);
@@ -352,7 +352,7 @@ void Surface::setDisplayGrid(bool display)
     Q_EMIT displayGridChanged();
 }
 
-QPointF Surface::getPrincipalPoint() {     
+QPointF Surface::getPrincipalPoint() {
     aliceVision::Vec2 ppCorrection(0.0, 0.0);
 
     aliceVision::camera::IntrinsicBase* intrinsic = nullptr;
@@ -506,7 +506,7 @@ bool Surface::isMouseInside(float mx, float my)
         QPointF B = _vertices[_indices[i + 1]];
         QPointF C = _vertices[_indices[i + 2]];
 
-        // Compute vectors        
+        // Compute vectors
         QPointF v0 = C - A;
         QPointF v1 = B - A;
         QPointF v2 = P - A;

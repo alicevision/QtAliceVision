@@ -66,7 +66,7 @@ namespace qtAliceVision
 
     private:
         QSize _sourceSize = QSize(3000, 1500);
-        
+
         MSfMData* _msfmData = nullptr;
 
         int _downscale = 4;
@@ -75,5 +75,3 @@ namespace qtAliceVision
 }  // ns qtAliceVision
 
 Q_DECLARE_METATYPE(QList<QPoint>)
-
-
