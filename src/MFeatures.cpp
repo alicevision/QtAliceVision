@@ -71,7 +71,7 @@ void FeaturesIORunnable::run()
 
     for (int dIdx = 0; dIdx < descTypes.size(); ++dIdx)
     {
-      std::vector<std::unique_ptr<aliceVision::feature::Regions>>& regionsPerView = regionsPerViewPerDesc.at((uint)dIdx);
+      std::vector<std::unique_ptr<aliceVision::feature::Regions>>& regionsPerView = regionsPerViewPerDesc.at(static_cast<uint>(dIdx));
 
       for (std::size_t vIdx = 0; vIdx < viewIds.size(); ++vIdx)
       {
@@ -360,8 +360,8 @@ void MFeatures::getViewIdsToLoad(std::vector<aliceVision::IndexT>& viewIdsToLoad
       }
       else // time window
       {
-        const aliceVision::IndexT minFrameId = (currentFrameId < (uint)_timeWindow) ? 0 : currentFrameId - (uint)_timeWindow;
-        const aliceVision::IndexT maxFrameId = currentFrameId + (uint)_timeWindow;
+        const aliceVision::IndexT minFrameId = (currentFrameId < static_cast<uint>(_timeWindow)) ? 0 : currentFrameId - static_cast<uint>(_timeWindow);
+        const aliceVision::IndexT maxFrameId = currentFrameId + static_cast<uint>(_timeWindow);
 
         for (const auto& viewPair : sfmData.getViews())
         {
@@ -382,7 +382,7 @@ void MFeatures::getViewIdsToLoad(std::vector<aliceVision::IndexT>& viewIdsToLoad
     return;
 
   // desciber types changed
-  if ((int)_viewFeaturesPerViewPerDesc.size() != _describerTypes.size())
+  if (static_cast<int>(_viewFeaturesPerViewPerDesc.size()) != _describerTypes.size())
   {
     clearAll(); // erase all data in memory
     return;
@@ -535,7 +535,7 @@ bool MFeatures::updateFromTracks()
         }
 
         MFeature* feature = viewFeatures.features.at(featId);
-        feature->setTrackId((int)trackId);
+        feature->setTrackId(static_cast<int>(trackId));
         ++viewFeatures.nbTracks;
         updated = true;
       }
@@ -619,9 +619,9 @@ bool MFeatures::updateFromSfM()
           // setup landmark id and landmark 2d reprojection in the current view
           aliceVision::Vec2 r = intrinsic->project(camTransform, landmark.second.X.homogeneous());
 
-          if (itObs->second.id_feat < (uint)viewFeatures.features.size())
+          if (itObs->second.id_feat < static_cast<uint>(viewFeatures.features.size()))
           {
-            viewFeatures.features.at((int)itObs->second.id_feat)->setLandmarkInfo((int)landmark.first, r.cast<float>());
+            viewFeatures.features.at(static_cast<int>(itObs->second.id_feat))->setLandmarkInfo(static_cast<int>(landmark.first), r.cast<float>());
           }
           else if (!viewFeatures.features.empty())
           {
@@ -697,7 +697,7 @@ void MFeatures::updatePerTrackInformation()
       {
         if (feature->trackId() >= 0)
         {
-          unsigned int unsignedTrackId = (uint)feature->trackId();
+          unsigned int unsignedTrackId = static_cast<uint>(feature->trackId());
           MTrackFeatures& trackFreatures = _trackFeaturesPerTrackPerDesc[describerType][unsignedTrackId];
           trackFreatures.featuresPerFrame[frameId] = feature;
 
@@ -706,7 +706,7 @@ void MFeatures::updatePerTrackInformation()
           if (feature->landmarkId() >= 0)
           {
             ++trackFreatures.nbLandmarks;
-            const auto unsignedLandmarkId = (uint)feature->landmarkId();
+            const auto unsignedLandmarkId = static_cast<uint>(feature->landmarkId());
             if (trackIdPerLandmark.find(unsignedLandmarkId) == trackIdPerLandmark.end())
               trackIdPerLandmark[unsignedLandmarkId] = unsignedTrackId;
           }
@@ -731,7 +731,7 @@ void MFeatures::updatePerTrackInformation()
       MTrackFeatures& trackFreatures = trackFeaturesPerTrackPair.second;
 
       if (!trackFreatures.featuresPerFrame.empty())
-        trackFreatures.featureScaleAverage /= (float)trackFreatures.featuresPerFrame.size();
+        trackFreatures.featureScaleAverage /= static_cast<float>(trackFreatures.featuresPerFrame.size());
     }
   }
 

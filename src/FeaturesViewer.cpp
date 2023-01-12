@@ -146,8 +146,8 @@ namespace qtAliceVision
     {
       QColor c = _featureColor;
       vertices[index].set(
-        (float)point.x(), (float)point.y(),
-        (uchar)c.red(), (uchar)c.green(), (uchar)c.blue(), (uchar)c.alpha()
+        static_cast<float>(point.x()), static_cast<float>(point.y()),
+        static_cast<uchar>(c.red()), static_cast<uchar>(c.green()), static_cast<uchar>(c.blue()), static_cast<uchar>(c.alpha())
       );
     };
 
@@ -474,26 +474,26 @@ namespace qtAliceVision
       QColor c = QColor(200, 200, 200);
       if (alpha == 0)
         c = QColor(0, 0, 0, 0); // color should be rgba(0,0,0,0) in order to be transparent.
-      verticesHighlightPoints[index].set((float)point.x(), (float)point.y(), (uchar)c.red(), (uchar)c.green(), (uchar)c.blue(), (uchar)c.alpha());
+      verticesHighlightPoints[index].set(static_cast<float>(point.x()), static_cast<float>(point.y()), static_cast<uchar>(c.red()), static_cast<uchar>(c.green()), static_cast<uchar>(c.blue()), static_cast<uchar>(c.alpha()));
     };
 
     // utility lambda to register a track line vertex
     const auto setVerticeTrackLine = [&](unsigned int index, const QPointF& point, const QColor& c)
     {
-      verticesTrackLines[index].set((float)point.x(), (float)point.y(), (uchar)c.red(), (uchar)c.green(), (uchar)c.blue(), (uchar)c.alpha());
+      verticesTrackLines[index].set(static_cast<float>(point.x()), static_cast<float>(point.y()), static_cast<uchar>(c.red()), static_cast<uchar>(c.green()), static_cast<uchar>(c.blue()), static_cast<uchar>(c.alpha()));
     };
 
     // utility lambda to register a reprojection error line vertex
     const auto setVerticeReprojectionErrorLine = [&](unsigned int index, const QPointF& point, const QColor& c)
     {
       const QColor rc = c.darker(150); // darken the color to avoid confusion with track lines
-      verticesReprojectionErrorLines[index].set((float)point.x(), (float)point.y(), (uchar)rc.red(), (uchar)rc.green(), (uchar)rc.blue(), (uchar)rc.alpha());
+      verticesReprojectionErrorLines[index].set(static_cast<float>(point.x()), static_cast<float>(point.y()), static_cast<uchar>(rc.red()), static_cast<uchar>(rc.green()), static_cast<uchar>(rc.blue()), static_cast<uchar>(rc.alpha()));
     };
 
     // utility lambda to register a point vertex
     const auto setVerticePoint = [&](unsigned int index, const QPointF& point, const QColor& c)
     {
-      verticesPoints[index].set((float)point.x(), (float)point.y(), (uchar)c.red(), (uchar)c.green(), (uchar)c.blue(), (uchar)c.alpha());
+      verticesPoints[index].set(static_cast<float>(point.x()), static_cast<float>(point.y()), static_cast<uchar>(c.red()), static_cast<uchar>(c.green()), static_cast<uchar>(c.blue()), static_cast<uchar>(c.alpha()));
     };
 
     // utility lambda to register a feature point, to avoid code complexity
@@ -677,8 +677,8 @@ namespace qtAliceVision
     const auto setVerticePoint = [&](unsigned int index, const QPointF& point)
     {
       verticesPoints[index].set(
-        (float)point.x(), (float)point.y(),
-        (uchar)_matchColor.red(), (uchar)_matchColor.green(), (uchar)_matchColor.blue(), (uchar)_matchColor.alpha()
+        static_cast<float>(point.x()), static_cast<float>(point.y()),
+        static_cast<uchar>(_matchColor.red()), static_cast<uchar>(_matchColor.green()), static_cast<uchar>(_matchColor.blue()), static_cast<uchar>(_matchColor.alpha())
       );
     };
 
@@ -804,15 +804,15 @@ namespace qtAliceVision
     const auto setVerticeLine = [&](unsigned int index, const QPointF& point, const QColor& color)
     {
       verticesLines[index].set(
-        (float)point.x(), (float)point.y(),
-        (uchar)color.red(), (uchar)color.green(), (uchar)color.blue(), (uchar)color.alpha()
+        static_cast<float>(point.x()), static_cast<float>(point.y()),
+        static_cast<uchar>(color.red()), static_cast<uchar>(color.green()), static_cast<uchar>(color.blue()), static_cast<uchar>(color.alpha())
       );
     };
     const auto setVerticePoint = [&](unsigned int index, const QPointF& point, const QColor& color)
     {
       verticesPoints[index].set(
-        (float)point.x(), (float)point.y(),
-        (uchar)color.red(), (uchar)color.green(), (uchar)color.blue(), (uchar)color.alpha()
+        static_cast<float>(point.x()), static_cast<float>(point.y()),
+        static_cast<uchar>(color.red()), static_cast<uchar>(color.green()), static_cast<uchar>(color.blue()), static_cast<uchar>(color.alpha())
       );
     };
 

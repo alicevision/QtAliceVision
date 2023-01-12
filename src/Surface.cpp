@@ -97,9 +97,9 @@ void Surface::computeGrid(QSGGeometry* geometryLine)
             // Horizontal Lines
             if (i != _subdivisions)
             {
-                geometryLine->vertexDataAsPoint2D()[countPoint++].set((float)_vertices[index].x(), (float)_vertices[index].y());
+                geometryLine->vertexDataAsPoint2D()[countPoint++].set(static_cast<float>(_vertices[index].x()), static_cast<float>(_vertices[index].y()));
                 index += _subdivisions + 1;
-                geometryLine->vertexDataAsPoint2D()[countPoint++].set((float)_vertices[index].x(), (float)_vertices[index].y());
+                geometryLine->vertexDataAsPoint2D()[countPoint++].set(static_cast<float>(_vertices[index].x()), static_cast<float>(_vertices[index].y()));
                 index -= _subdivisions + 1;
 
                 if (j == _subdivisions)
@@ -110,9 +110,9 @@ void Surface::computeGrid(QSGGeometry* geometryLine)
             }
 
             // Vertical Lines
-            geometryLine->vertexDataAsPoint2D()[countPoint++].set((float)_vertices[index].x(), (float)_vertices[index].y());
+            geometryLine->vertexDataAsPoint2D()[countPoint++].set(static_cast<float>(_vertices[index].x()), static_cast<float>(_vertices[index].y()));
             index++;
-            geometryLine->vertexDataAsPoint2D()[countPoint++].set((float)_vertices[index].x(), (float)_vertices[index].y());
+            geometryLine->vertexDataAsPoint2D()[countPoint++].set(static_cast<float>(_vertices[index].x()), static_cast<float>(_vertices[index].y()));
         }
     }
 }
@@ -152,12 +152,12 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
 
     bool fillCoordsSphere = _defaultSphereCoordinates.empty();
     int vertexIndex = 0;
-    for (size_t i = 0; i <= (size_t)_subdivisions; i++)
+    for (size_t i = 0; i <= static_cast<size_t>(_subdivisions); i++)
     {
-        for (size_t j = 0; j <= (size_t)_subdivisions; j++)
+        for (size_t j = 0; j <= static_cast<size_t>(_subdivisions); j++)
         {
-            float x = (float)i * (float)textureSize.width() / (float)_subdivisions;
-            float y = (float)j * (float)textureSize.height() / (float)_subdivisions;
+            float x = static_cast<float>(i) * static_cast<float>(textureSize.width()) / static_cast<float>(_subdivisions);
+            float y = static_cast<float>(j) * static_cast<float>(textureSize.height()) / static_cast<float>(_subdivisions);
 
             const double cx = x - center(0);
             const double cy = y - center(1);
@@ -166,20 +166,20 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
 
             if (dist > maxradius)
             {
-                x = (float)(center(0) + maxradius * cx / dist);
-                y = (float)(center(1) + maxradius * cy / dist);
+                x = static_cast<float>(center(0) + maxradius * cx / dist);
+                y = static_cast<float>(center(1) + maxradius * cy / dist);
             }
 
 
-            float u = (float)i / (float)_subdivisions;
-            float v = (float)j / (float)_subdivisions;
+            float u = static_cast<float>(i) / static_cast<float>(_subdivisions);
+            float v = static_cast<float>(j) / static_cast<float>(_subdivisions);
 
             // Remove Distortion only if sfmData has been updated
             if (isDistortionViewerEnabled() && intrinsic && intrinsic->hasDistortion())
             {
                 const aliceVision::Vec2 undisto_pix(x, y);
                 const aliceVision::Vec2 disto_pix = intrinsic->get_d_pixel(undisto_pix);
-                vertices[vertexIndex].set((float)disto_pix.x(), (float)disto_pix.y(), u, v);
+                vertices[vertexIndex].set(static_cast<float>(disto_pix.x()), static_cast<float>(disto_pix.y()), u, v);
             }
 
             // Equirectangular Convertion only if sfmData has been updated
@@ -194,7 +194,7 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
                 }
 
                 // Rotate Panorama if some rotation values exist
-                aliceVision::Vec3 sphereCoordinates(_defaultSphereCoordinates[(size_t)vertexIndex]);
+                aliceVision::Vec3 sphereCoordinates(_defaultSphereCoordinates[static_cast<size_t>(vertexIndex)]);
                 rotatePanorama(sphereCoordinates);
 
                 // Compute pixel coordinates in the panorama coordinate system
@@ -217,7 +217,7 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
                         _vertexEnabled[i][j - 1] = false;
                     }
                 }
-                vertices[vertexIndex].set((float)panoramaCoordinates.x(), (float)panoramaCoordinates.y(), u, v);
+                vertices[vertexIndex].set(static_cast<float>(panoramaCoordinates.x()), static_cast<float>(panoramaCoordinates.y()), u, v);
             }
 
             // Default 
@@ -250,17 +250,17 @@ bool Surface::isPointValid(size_t i, size_t j) const
         if (!_vertexEnabled[i - 1][j - 1]) return false;
     }
 
-    if ((int)i < _subdivisions + 1) {
+    if (static_cast<int>(i) < _subdivisions + 1) {
         if (!_vertexEnabled[i + 1][j]) return false;
         if (j > 0 && !_vertexEnabled[i + 1][j - 1]) return false;
     }
 
-    if ((int)j < _subdivisions + 1) {
+    if (static_cast<int>(j) < _subdivisions + 1) {
         if (!_vertexEnabled[i][j + 1]) return false;
         if (i > 0 && !_vertexEnabled[i - 1][j + 1]) return false;
     }
 
-    if ((int)i < _subdivisions + 1 && (int)j < _subdivisions + 1) {
+    if (static_cast<int>(i) < _subdivisions + 1 && static_cast<int>(j) < _subdivisions + 1) {
         if (!_vertexEnabled[i + 1][j + 1]) return false;
     }
 
@@ -269,9 +269,9 @@ bool Surface::isPointValid(size_t i, size_t j) const
 
 void Surface::resetValuesVertexEnabled()
 {
-    for (size_t i = 0; i <= (size_t)_subdivisions; i++)
+    for (size_t i = 0; i <= static_cast<size_t>(_subdivisions); i++)
     {
-        for (size_t j = 0; j <= (size_t)_subdivisions; j++)
+        for (size_t j = 0; j <= static_cast<size_t>(_subdivisions); j++)
         {
             _vertexEnabled[j][i] = true;
         }
@@ -281,11 +281,11 @@ void Surface::resetValuesVertexEnabled()
 void Surface::computeIndicesGrid(quint16* indices)
 {
     int index = 0;
-    for (size_t j = 0; j < (size_t)_subdivisions; j++) {
-        for (size_t i = 0; i < (size_t)_subdivisions; i++) {
+    for (size_t j = 0; j < static_cast<size_t>(_subdivisions); j++) {
+        for (size_t i = 0; i < static_cast<size_t>(_subdivisions); i++) {
             if (!isPanoramaViewerEnabled() || (isPanoramaViewerEnabled() && isPointValid(i, j)))
             {
-                int topLeft = ((int)i * (_subdivisions + 1)) + (int)j;
+                int topLeft = (static_cast<int>(i) * (_subdivisions + 1)) + static_cast<int>(j);
                 int topRight = topLeft + 1;
                 int bottomLeft = topLeft + _subdivisions + 1;
                 int bottomRight = bottomLeft + 1;
@@ -308,13 +308,13 @@ void Surface::computeIndicesGrid(quint16* indices)
         }
     }
     _indices.clear();
-    for (size_t i = 0; i < (size_t)_indexCount; i++)
+    for (size_t i = 0; i < static_cast<size_t>(_indexCount); i++)
         _indices.append(indices[i]);
 }
 
 void Surface::removeGrid(QSGGeometry* geometryLine)
 {
-    for (size_t i = 0; i < (size_t)geometryLine->vertexCount(); i++)
+    for (size_t i = 0; i < static_cast<size_t>(geometryLine->vertexCount()); i++)
     {
         geometryLine->vertexDataAsPoint2D()[i].set(0, 0);
     }
@@ -374,7 +374,7 @@ void Surface::fillVertices(QSGGeometry::TexturedPoint2D* vertices)
     _vertices.clear();
     for (int i = 0; i < _vertexCount; i++)
     {
-        QPoint p((int)vertices[i].x, (int)vertices[i].y);
+        QPoint p(static_cast<int>(vertices[i].x), static_cast<int>(vertices[i].y));
         _vertices.append(p);
     }
 }
@@ -388,9 +388,9 @@ void Surface::updateSubdivisions(int sub)
     _vertexCount = (_subdivisions + 1) * (_subdivisions + 1);
     _indexCount = _subdivisions * _subdivisions * 6;
 
-    _vertexEnabled.resize((size_t)_subdivisions + 1);
-    for (size_t i = 0; i < (size_t)_subdivisions + 1; i++)
-        _vertexEnabled[i].resize((size_t)_subdivisions + 1);
+    _vertexEnabled.resize(static_cast<size_t>(_subdivisions) + 1);
+    for (size_t i = 0; i < static_cast<size_t>(_subdivisions) + 1; i++)
+        _vertexEnabled[i].resize(static_cast<size_t>(_subdivisions) + 1);
 }
 
 void Surface::setSubdivisions(int newSubdivisions)
@@ -468,7 +468,7 @@ void Surface::setRoll(double rollInDegrees)
 double Surface::getEulerAngleDegrees(double angleRadians)
 {
     double angleDegrees = angleRadians;
-    int power = (int)(angleDegrees / M_PI);
+    int power = static_cast<int>(angleDegrees / M_PI);
     angleDegrees = fmod(angleDegrees, M_PI) * pow(-1, power);
 
     // Radians to Degrees
@@ -484,7 +484,7 @@ void Surface::setIdView(int id)
 {
     // Handles cases where the sent view ID is unknown or unset (equals  to -1)
     if (id >= 0)
-        _idView = (unsigned int)id;
+        _idView = static_cast<uint>(id);
     else
         _idView = 0;
 }

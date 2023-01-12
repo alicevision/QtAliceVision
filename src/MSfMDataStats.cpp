@@ -348,7 +348,7 @@ void MSfMDataStats::computeGlobalSfMStats()
         _nbLandmarksPerView.resize(nbLandmarksPerView.size());
         std::copy(nbLandmarksPerView.begin(), nbLandmarksPerView.end(), _nbLandmarksPerView.begin());
 
-        _landmarksPerViewMaxAxisX = (int)_msfmData->rawData().getViews().size();
+        _landmarksPerViewMaxAxisX = static_cast<int>(_msfmData->rawData().getViews().size());
         _landmarksPerViewMaxAxisY = 0.0;
 
         for(int v: nbLandmarksPerView)

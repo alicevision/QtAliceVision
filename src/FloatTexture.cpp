@@ -48,10 +48,10 @@ int FloatTexture::textureId() const
         else if(_textureId == 0)
         {
             QOpenGLContext::currentContext()->functions()->glGenTextures(1, &const_cast<FloatTexture *>(this)->_textureId);
-            return (int)_textureId;
+            return static_cast<int>(_textureId);
         }
     }
-    return (int)_textureId;
+    return static_cast<int>(_textureId);
 }
 
 void FloatTexture::bind()
