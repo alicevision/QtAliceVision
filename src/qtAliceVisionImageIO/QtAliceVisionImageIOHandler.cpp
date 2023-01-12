@@ -27,7 +27,7 @@ inline const float& clamp( const float& v, const float& lo, const float& hi )
 
 inline unsigned short floatToUShort(float v)
 {
-    return (unsigned short)(clamp(v, 0.0f, 1.0f) * 65535);
+    return static_cast<unsigned short>(clamp(v, 0.0f, 1.0f) * 65535);
 }
 
 QtAliceVisionImageIOHandler::QtAliceVisionImageIOHandler()
@@ -122,7 +122,7 @@ bool QtAliceVisionImageIOHandler::read(QImage *image)
 
     if (pixelAspectRatio != 1.0f)
     {
-        QSize newSize(static_cast<int>((float)inSpec.width * pixelAspectRatio), inSpec.height);
+        QSize newSize(static_cast<int>(static_cast<float>(inSpec.width) * pixelAspectRatio), inSpec.height);
         result = result.scaled(newSize, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
     }
 
