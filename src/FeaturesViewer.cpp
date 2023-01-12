@@ -151,7 +151,8 @@ namespace qtAliceVision
       QColor c = _featureColor;
       vertices[index].set(
         static_cast<float>(point.x()), static_cast<float>(point.y()),
-        static_cast<uchar>(c.red()), static_cast<uchar>(c.green()), static_cast<uchar>(c.blue()), static_cast<uchar>(c.alpha())
+        static_cast<uchar>(c.red()), static_cast<uchar>(c.green()), static_cast<uchar>(c.blue()),
+        static_cast<uchar>(c.alpha())
       );
     };
 
@@ -173,7 +174,8 @@ namespace qtAliceVision
 
       if (nbFeaturesDrawn >= params.nbFeaturesToDraw)
       {
-        qWarning() << "[QtAliceVision] FeaturesViewer: Update paint " << _describerType << " features, Error on number of features.";
+        qWarning() << "[QtAliceVision] FeaturesViewer: Update paint " << _describerType
+                   << " features, Error on number of features.";
         break;
       }
 
@@ -242,8 +244,11 @@ namespace qtAliceVision
 
     const unsigned int kLineVertices = 2;
 
-    const MFeatures::MTrackFeaturesPerTrack* trackFeaturesPerTrack = (_displayTracks && params.haveValidFeatures && params.haveValidTracks && params.haveValidLandmarks) ? _mfeatures->getTrackFeaturesPerTrack(_describerType) : nullptr;
-    const aliceVision::IndexT currentFrameId = (trackFeaturesPerTrack != nullptr) ? _mfeatures->getCurrentFrameId() : aliceVision::UndefinedIndexT;
+    const MFeatures::MTrackFeaturesPerTrack* trackFeaturesPerTrack =
+        (_displayTracks && params.haveValidFeatures && params.haveValidTracks && params.haveValidLandmarks)
+        ? _mfeatures->getTrackFeaturesPerTrack(_describerType) : nullptr;
+    const aliceVision::IndexT currentFrameId = (trackFeaturesPerTrack != nullptr)
+        ? _mfeatures->getCurrentFrameId() : aliceVision::UndefinedIndexT;
 
     std::size_t nbTracksToDraw = 0;
     std::size_t nbTrackLinesToDraw = 0;
@@ -478,26 +483,42 @@ namespace qtAliceVision
       QColor c = QColor(200, 200, 200);
       if (alpha == 0)
         c = QColor(0, 0, 0, 0); // color should be rgba(0,0,0,0) in order to be transparent.
-      verticesHighlightPoints[index].set(static_cast<float>(point.x()), static_cast<float>(point.y()), static_cast<uchar>(c.red()), static_cast<uchar>(c.green()), static_cast<uchar>(c.blue()), static_cast<uchar>(c.alpha()));
+      verticesHighlightPoints[index].set(
+        static_cast<float>(point.x()), static_cast<float>(point.y()),
+        static_cast<uchar>(c.red()), static_cast<uchar>(c.green()), static_cast<uchar>(c.blue()),
+        static_cast<uchar>(c.alpha())
+      );
     };
 
     // utility lambda to register a track line vertex
     const auto setVerticeTrackLine = [&](unsigned int index, const QPointF& point, const QColor& c)
     {
-      verticesTrackLines[index].set(static_cast<float>(point.x()), static_cast<float>(point.y()), static_cast<uchar>(c.red()), static_cast<uchar>(c.green()), static_cast<uchar>(c.blue()), static_cast<uchar>(c.alpha()));
+      verticesTrackLines[index].set(
+        static_cast<float>(point.x()), static_cast<float>(point.y()),
+        static_cast<uchar>(c.red()), static_cast<uchar>(c.green()), static_cast<uchar>(c.blue()),
+        static_cast<uchar>(c.alpha())
+      );
     };
 
     // utility lambda to register a reprojection error line vertex
     const auto setVerticeReprojectionErrorLine = [&](unsigned int index, const QPointF& point, const QColor& c)
     {
       const QColor rc = c.darker(150); // darken the color to avoid confusion with track lines
-      verticesReprojectionErrorLines[index].set(static_cast<float>(point.x()), static_cast<float>(point.y()), static_cast<uchar>(rc.red()), static_cast<uchar>(rc.green()), static_cast<uchar>(rc.blue()), static_cast<uchar>(rc.alpha()));
+      verticesReprojectionErrorLines[index].set(
+        static_cast<float>(point.x()), static_cast<float>(point.y()),
+        static_cast<uchar>(rc.red()), static_cast<uchar>(rc.green()), static_cast<uchar>(rc.blue()),
+        static_cast<uchar>(rc.alpha())
+      );
     };
 
     // utility lambda to register a point vertex
     const auto setVerticePoint = [&](unsigned int index, const QPointF& point, const QColor& c)
     {
-      verticesPoints[index].set(static_cast<float>(point.x()), static_cast<float>(point.y()), static_cast<uchar>(c.red()), static_cast<uchar>(c.green()), static_cast<uchar>(c.blue()), static_cast<uchar>(c.alpha()));
+      verticesPoints[index].set(
+        static_cast<float>(point.x()), static_cast<float>(point.y()),
+        static_cast<uchar>(c.red()), static_cast<uchar>(c.green()), static_cast<uchar>(c.blue()),
+        static_cast<uchar>(c.alpha())
+      );
     };
 
     // utility lambda to register a feature point, to avoid code complexity
@@ -521,7 +542,8 @@ namespace qtAliceVision
         // draw a highlight point in order to identify the current match from the others
         if (frameId == curFrameId)
         {
-          setVerticeHighlightPoint(nbHighlightPointsDrawn, (_display3dTracks && trackHasInliers) ? point3d : point2d, color.alpha());
+          setVerticeHighlightPoint(nbHighlightPointsDrawn,
+                                   (_display3dTracks && trackHasInliers) ? point3d : point2d, color.alpha());
           ++nbHighlightPointsDrawn;
         }
 
@@ -541,7 +563,8 @@ namespace qtAliceVision
 
     if (currentFrameId == aliceVision::UndefinedIndexT)
     {
-      qInfo() << "[QtAliceVision] FeaturesViewer: Unable to update paint " << _describerType << " tracks, can't find current frame id.";
+      qInfo() << "[QtAliceVision] FeaturesViewer: Unable to update paint "
+              << _describerType << " tracks, can't find current frame id.";
       return;
     }
 
@@ -594,12 +617,16 @@ namespace qtAliceVision
 
 
           // draw previous point
-          const QColor& previousPointColor = getColor(false, contiguous || previousTrackLineContiguous, previousFeatureInlier, trackHasInliers);
-          drawFeaturePoint(currentFrameId, previousFrameId, previousFeature, previousPointColor, nbReprojectionErrorLinesDrawn, nbHighlightPointsDrawn, nbPointsDrawn, trackHasInliers);
+          const QColor& previousPointColor = getColor(false, contiguous || previousTrackLineContiguous,
+            previousFeatureInlier, trackHasInliers);
+          drawFeaturePoint(currentFrameId, previousFrameId, previousFeature, previousPointColor,
+            nbReprojectionErrorLinesDrawn, nbHighlightPointsDrawn, nbPointsDrawn, trackHasInliers);
 
           // draw track last point
           if (frameId == trackFeatures.maxFrameId)
-            drawFeaturePoint(currentFrameId, frameId, feature, getColor(false, contiguous, currentFeatureInlier, trackHasInliers), nbReprojectionErrorLinesDrawn, nbHighlightPointsDrawn, nbPointsDrawn, trackHasInliers);
+            drawFeaturePoint(currentFrameId, frameId, feature,
+              getColor(false, contiguous, currentFeatureInlier, trackHasInliers),
+              nbReprojectionErrorLinesDrawn, nbHighlightPointsDrawn, nbPointsDrawn, trackHasInliers);
 
           // draw track line
           const QColor&  c = getColor(true, contiguous, inliers, trackHasInliers);
@@ -707,7 +734,8 @@ namespace qtAliceVision
 
         if (nbMatchesDrawn >= params.nbMatchesToDraw)
         {
-          qWarning() << "[QtAliceVision] FeaturesViewer: Update paint " << _describerType << " matches, Error on number of matches.";
+          qWarning() << "[QtAliceVision] FeaturesViewer: Update paint "
+                     << _describerType << " matches, Error on number of matches.";
           break;
         }
 
@@ -809,14 +837,16 @@ namespace qtAliceVision
     {
       verticesLines[index].set(
         static_cast<float>(point.x()), static_cast<float>(point.y()),
-        static_cast<uchar>(color.red()), static_cast<uchar>(color.green()), static_cast<uchar>(color.blue()), static_cast<uchar>(color.alpha())
+        static_cast<uchar>(color.red()), static_cast<uchar>(color.green()), static_cast<uchar>(color.blue()),
+        static_cast<uchar>(color.alpha())
       );
     };
     const auto setVerticePoint = [&](unsigned int index, const QPointF& point, const QColor& color)
     {
       verticesPoints[index].set(
         static_cast<float>(point.x()), static_cast<float>(point.y()),
-        static_cast<uchar>(color.red()), static_cast<uchar>(color.green()), static_cast<uchar>(color.blue()), static_cast<uchar>(color.alpha())
+        static_cast<uchar>(color.red()), static_cast<uchar>(color.green()), static_cast<uchar>(color.blue()),
+        static_cast<uchar>(color.alpha())
       );
     };
 
@@ -842,7 +872,8 @@ namespace qtAliceVision
 
         if (nbLandmarksDrawn >= params.nbLandmarksToDraw)
         {
-          qWarning() << "[QtAliceVision] FeaturesViewer: Update paint " << _describerType << " landmarks, Error on number of landmarks.";
+          qWarning() << "[QtAliceVision] FeaturesViewer: Update paint "
+                     << _describerType << " landmarks, Error on number of landmarks.";
           break;
         }
 

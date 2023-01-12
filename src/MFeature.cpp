@@ -33,7 +33,8 @@ void FeatureIORunnable::run()
     QList<MFeature*> feats;
     try
     {
-        std::unique_ptr<feature::ImageDescriber> describer = feature::createImageDescriber(feature::EImageDescriberType_stringToEnum(descType.toStdString()));
+        std::unique_ptr<feature::ImageDescriber> describer =
+            feature::createImageDescriber(feature::EImageDescriberType_stringToEnum(descType.toStdString()));
         regions = sfm::loadFeatures({folder.toLocalFile().toStdString()}, viewId, *describer);
     }
     catch(std::exception& e)

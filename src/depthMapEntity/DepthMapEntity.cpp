@@ -268,7 +268,9 @@ void DepthMapEntity::loadDepthMap()
     }
 
     Matrix3x3 iCamArr;
-    const oiio::ParamValue * icParam = inSpec.find_attribute("AliceVision:iCamArr", oiio::TypeDesc(oiio::TypeDesc::DOUBLE, oiio::TypeDesc::MATRIX33));
+    const oiio::ParamValue * icParam = inSpec.find_attribute("AliceVision:iCamArr",
+        oiio::TypeDesc(oiio::TypeDesc::DOUBLE, oiio::TypeDesc::MATRIX33));
+
     if(icParam)
     {
         qDebug() << "[DepthMapEntity] iCamArr: " << icParam->nvalues();
@@ -403,11 +405,13 @@ void DepthMapEntity::loadDepthMap()
     }
 
     QBuffer* vertexBuffer = new QBuffer;
-    QByteArray trianglesData(reinterpret_cast<const char*>(&triangles[0]), static_cast<int>(triangles.size() * sizeof(Vec3f)));
+    QByteArray trianglesData(reinterpret_cast<const char*>(&triangles[0]),
+                             static_cast<int>(triangles.size() * sizeof(Vec3f)));
     vertexBuffer->setData(trianglesData);
 
     QBuffer* normalBuffer = new QBuffer;
-    QByteArray normalsData(reinterpret_cast<const char*>(&normals[0]), static_cast<int>(normals.size() * sizeof(Vec3f)));
+    QByteArray normalsData(reinterpret_cast<const char*>(&normals[0]),
+                           static_cast<int>(normals.size() * sizeof(Vec3f)));
     normalBuffer->setData(normalsData);
 
     QAttribute* positionAttribute = new QAttribute(this);
@@ -444,11 +448,13 @@ void DepthMapEntity::loadDepthMap()
 
     // read color data
     QBuffer* colorDataBuffer = new QBuffer;
-    QByteArray colorData(reinterpret_cast<const char*>(colorsFlat[0].data()), static_cast<int>(colorsFlat.size() * 3 * sizeof(float)));
+    QByteArray colorData(reinterpret_cast<const char*>(colorsFlat[0].data()),
+                         static_cast<int>(colorsFlat.size() * 3 * sizeof(float)));
     colorDataBuffer->setData(colorData);
 
     QAttribute* colorAttribute = new QAttribute;
-    qDebug() << "[DepthMapEntity] Qt3DRender::QAttribute::defaultColorAttributeName(): " << Qt3DRender::QAttribute::defaultColorAttributeName();
+    qDebug() << "[DepthMapEntity] Qt3DRender::QAttribute::defaultColorAttributeName(): "
+             << Qt3DRender::QAttribute::defaultColorAttributeName();
     colorAttribute->setName(Qt3DRender::QAttribute::defaultColorAttributeName());
     colorAttribute->setAttributeType(QAttribute::VertexAttribute);
     colorAttribute->setBuffer(colorDataBuffer);

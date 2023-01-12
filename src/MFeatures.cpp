@@ -71,11 +71,13 @@ void FeaturesIORunnable::run()
 
     for (int dIdx = 0; dIdx < descTypes.size(); ++dIdx)
     {
-      std::vector<std::unique_ptr<aliceVision::feature::Regions>>& regionsPerView = regionsPerViewPerDesc.at(static_cast<uint>(dIdx));
+      std::vector<std::unique_ptr<aliceVision::feature::Regions>>& regionsPerView =
+        regionsPerViewPerDesc.at(static_cast<uint>(dIdx));
 
       for (std::size_t vIdx = 0; vIdx < viewIds.size(); ++vIdx)
       {
-        qDebug() << "[QtAliceVision] Features: Load " << descTypes.at(dIdx).toString() << " from viewId: " << viewIds.at(vIdx) << ".";
+        qDebug() << "[QtAliceVision] Features: Load " << descTypes.at(dIdx).toString()
+                 << " from viewId: " << viewIds.at(vIdx) << ".";
 
         MFeatures::MViewFeatures& viewFeatures = (*viewFeaturesPerViewPerDescPtr)[descTypes.at(dIdx).toString()][viewIds.at(vIdx)];
         viewFeatures.features.reserve(static_cast<int>(regionsPerView.at(vIdx)->RegionCount()));
@@ -512,7 +514,8 @@ bool MFeatures::updateFromTracks()
         const auto& trackIterator = tracks.find(trackId);
         if (trackIterator == tracks.end())
         {
-          qInfo() << "[QtAliceVision] Features: Update from tracks, track: " << trackId << " in current view: " << viewId << " does not exist in tracks";
+          qInfo() << "[QtAliceVision] Features: Update from tracks, track: " << trackId
+                  << " in current view: " << viewId << " does not exist in tracks";
           continue;
         }
         const aliceVision::track::Track& currentTrack = trackIterator->second;
@@ -620,11 +623,13 @@ bool MFeatures::updateFromSfM()
 
           if (itObs->second.id_feat < static_cast<uint>(viewFeatures.features.size()))
           {
-            viewFeatures.features.at(static_cast<int>(itObs->second.id_feat))->setLandmarkInfo(static_cast<int>(landmark.first), r.cast<float>());
+            viewFeatures.features.at(static_cast<int>(itObs->second.id_feat))->setLandmarkInfo(
+              static_cast<int>(landmark.first), r.cast<float>());
           }
           else if (!viewFeatures.features.empty())
           {
-            qWarning() << "[QtAliceVision] [ERROR] Features: Update from SfM, view: " << viewId << ", id_feat: " << itObs->second.id_feat << ", size: " << viewFeatures.features.size();
+            qWarning() << "[QtAliceVision] [ERROR] Features: Update from SfM, view: " << viewId << ", id_feat: "
+                       << itObs->second.id_feat << ", size: " << viewFeatures.features.size();
           }
 
           ++viewFeatures.nbLandmarks; // Update nb landmarks

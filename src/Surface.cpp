@@ -97,9 +97,11 @@ void Surface::computeGrid(QSGGeometry* geometryLine)
             // Horizontal Lines
             if (i != _subdivisions)
             {
-                geometryLine->vertexDataAsPoint2D()[countPoint++].set(static_cast<float>(_vertices[index].x()), static_cast<float>(_vertices[index].y()));
+                geometryLine->vertexDataAsPoint2D()[countPoint++].set(
+                    static_cast<float>(_vertices[index].x()), static_cast<float>(_vertices[index].y()));
                 index += _subdivisions + 1;
-                geometryLine->vertexDataAsPoint2D()[countPoint++].set(static_cast<float>(_vertices[index].x()), static_cast<float>(_vertices[index].y()));
+                geometryLine->vertexDataAsPoint2D()[countPoint++].set(
+                    static_cast<float>(_vertices[index].x()), static_cast<float>(_vertices[index].y()));
                 index -= _subdivisions + 1;
 
                 if (j == _subdivisions)
@@ -110,9 +112,11 @@ void Surface::computeGrid(QSGGeometry* geometryLine)
             }
 
             // Vertical Lines
-            geometryLine->vertexDataAsPoint2D()[countPoint++].set(static_cast<float>(_vertices[index].x()), static_cast<float>(_vertices[index].y()));
+            geometryLine->vertexDataAsPoint2D()[countPoint++].set(
+                static_cast<float>(_vertices[index].x()), static_cast<float>(_vertices[index].y()));
             index++;
-            geometryLine->vertexDataAsPoint2D()[countPoint++].set(static_cast<float>(_vertices[index].x()), static_cast<float>(_vertices[index].y()));
+            geometryLine->vertexDataAsPoint2D()[countPoint++].set(
+                static_cast<float>(_vertices[index].x()), static_cast<float>(_vertices[index].y()));
         }
     }
 }
@@ -220,7 +224,8 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
                         _vertexEnabled[i][j - 1] = false;
                     }
                 }
-                vertices[vertexIndex].set(static_cast<float>(panoramaCoordinates.x()), static_cast<float>(panoramaCoordinates.y()), u, v);
+                vertices[vertexIndex].set(
+                    static_cast<float>(panoramaCoordinates.x()), static_cast<float>(panoramaCoordinates.y()), u, v);
             }
 
             // Default

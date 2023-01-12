@@ -382,7 +382,10 @@ void MSfMDataStats::computeGlobalSfMStats()
     //Observations Lengths Per View graph
     {
        _observationsLengthsPerViewMaxAxisX = 0;
-       sfm::computeObservationsLengthsPerView(_msfmData->rawData(), _observationsLengthsPerViewMaxAxisX, _nbObservationsLengthsPerViewMin, _nbObservationsLengthsPerViewMax, _nbObservationsLengthsPerViewMean, _nbObservationsLengthsPerViewMedian, _nbObservationsLengthsPerViewFirstQuartile, _nbObservationsLengthsPerViewThirdQuartile);
+       sfm::computeObservationsLengthsPerView(_msfmData->rawData(), _observationsLengthsPerViewMaxAxisX,
+        _nbObservationsLengthsPerViewMin, _nbObservationsLengthsPerViewMax, _nbObservationsLengthsPerViewMean,
+        _nbObservationsLengthsPerViewMedian, _nbObservationsLengthsPerViewFirstQuartile,
+        _nbObservationsLengthsPerViewThirdQuartile);
        _observationsLengthsPerViewMaxAxisY = 0.0;
 
        for(std::size_t i = 0; i < _nbObservationsLengthsPerViewMin.size(); ++i)

@@ -198,7 +198,8 @@ void QtAliceVisionImageIOHandler::setOption(ImageOption option, const QVariant &
     if (option == ScaledSize && value.isValid())
     {
         _scaledSize = value.value<QSize>();
-        qDebug() << "[QtAliceVisionImageIO] setOption scaledSize: " << _scaledSize.width() << "x" << _scaledSize.height();
+        qDebug() << "[QtAliceVisionImageIO] setOption scaledSize: "
+                 << _scaledSize.width() << "x" << _scaledSize.height();
     }
 }
 

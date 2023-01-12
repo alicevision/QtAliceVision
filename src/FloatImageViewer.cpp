@@ -210,7 +210,8 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
     if (!root)
     {
         root = new QSGGeometryNode;
-        auto geometry = new QSGGeometry(QSGGeometry::defaultAttributes_TexturedPoint2D(), _surface.vertexCount(), _surface.indexCount());
+        auto geometry = new QSGGeometry(QSGGeometry::defaultAttributes_TexturedPoint2D(),
+                                        _surface.vertexCount(), _surface.indexCount());
         geometry->setDrawingMode(GL_TRIANGLES);
         geometry->setIndexDataPattern(QSGGeometry::StaticPattern);
         geometry->setVertexDataPattern(QSGGeometry::StaticPattern);
@@ -312,7 +313,10 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
             const aliceVision::camera::EquiDistant* intrinsicEquiDistant = _surface.getIntrinsicEquiDistant();
             if(_cropFisheye && intrinsicEquiDistant)
             {
-                const aliceVision::Vec3 fisheyeCircleParams(intrinsicEquiDistant->getCircleCenterX(), intrinsicEquiDistant->getCircleCenterY(), intrinsicEquiDistant->getCircleRadius());
+                const aliceVision::Vec3 fisheyeCircleParams(
+                    intrinsicEquiDistant->getCircleCenterX(),
+                    intrinsicEquiDistant->getCircleCenterY(),
+                    intrinsicEquiDistant->getCircleRadius());
 
                 const double width = _image->Width() * pow(2.0, _downscaleLevel);
                 const double height = _image->Height() * pow(2.0, _downscaleLevel);
@@ -323,7 +327,9 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
                 //Radius is converted in uv coordinates (0, 0.5)
                 const float radius = 0.5f * static_cast<float>(radiusInPercentage);
 
-                material->state()->fisheyeCircleCoord = QVector2D(static_cast<float>(fisheyeCircleParams.x() / width), static_cast<float>(fisheyeCircleParams.y() / height));
+                material->state()->fisheyeCircleCoord = QVector2D(
+                    static_cast<float>(fisheyeCircleParams.x() / width),
+                    static_cast<float>(fisheyeCircleParams.y() / height));
                 material->state()->fisheyeCircleRadius = radius;
                 material->state()->aspectRatio = static_cast<float>(aspectRatio);
             }
