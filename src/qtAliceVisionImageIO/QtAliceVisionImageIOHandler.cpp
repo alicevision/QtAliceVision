@@ -185,6 +185,7 @@ QVariant QtAliceVisionImageIOHandler::option(ImageOption option) const
         case 6: return QImageIOHandler::TransformationRotate90; break;
         case 7: return QImageIOHandler::TransformationMirrorAndRotate90; break;
         case 8: return QImageIOHandler::TransformationRotate270; break;
+        default: break;
         }
     }
     return QImageIOHandler::option(option);

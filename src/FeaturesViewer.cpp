@@ -84,6 +84,8 @@ namespace qtAliceVision
     case FeaturesViewer::OrientedSquares:
       kFeatVertices = (4 * 2) + 2;  // doubled rectangle points + orientation line
       break;
+    default:
+      break;
     }
 
     if (!oldNode || oldNode->childCount() == 0)
@@ -135,6 +137,8 @@ namespace qtAliceVision
     case FeaturesViewer::OrientedSquares:
       geometry->setDrawingMode(QSGGeometry::DrawLines);
       geometry->setLineWidth(1.0f);
+      break;
+    default:
       break;
     }
 
