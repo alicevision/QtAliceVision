@@ -33,13 +33,14 @@ void FeatureIORunnable::run()
     QList<MFeature*> feats;
     try
     {
-        std::unique_ptr<feature::ImageDescriber> describer = feature::createImageDescriber(feature::EImageDescriberType_stringToEnum(descType.toStdString()));
+        std::unique_ptr<feature::ImageDescriber> describer =
+            feature::createImageDescriber(feature::EImageDescriberType_stringToEnum(descType.toStdString()));
         regions = sfm::loadFeatures({folder.toLocalFile().toStdString()}, viewId, *describer);
     }
     catch(std::exception& e)
     {
-        qDebug() << "[QtAliceVision] Failed to load features (" << descType << ") for view: " << viewId << " from folder: " << folder
-                 << "\n" << e.what();
+        qDebug() << "[QtAliceVision] Failed to load features (" << descType << ") for view: " << viewId
+                 << " from folder: " << folder << "\n" << e.what();
 
         Q_EMIT resultReady(feats);
         return;

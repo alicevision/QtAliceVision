@@ -48,7 +48,7 @@ void FloatImageIORunnable::run()
         }
 
         // ensure it fits in RAM memory
-        for (size_t i = 0; i < _downscaleLevel; i++)
+        for (int i = 0; i < _downscaleLevel; i++)
         {
             FloatImage tmp;
             aliceVision::image::ImageHalfSample(image, tmp);
@@ -81,20 +81,20 @@ FloatImageViewer::FloatImageViewer(QQuickItem* parent)
     // CONNECTS
     connect(this, &FloatImageViewer::gammaChanged, this, &FloatImageViewer::update);
     connect(this, &FloatImageViewer::gainChanged, this, &FloatImageViewer::update);
-    
+
     connect(this, &FloatImageViewer::textureSizeChanged, this, &FloatImageViewer::update);
     connect(this, &FloatImageViewer::sourceSizeChanged, this, &FloatImageViewer::update);
     connect(this, &FloatImageViewer::imageChanged, this, &FloatImageViewer::update);
     connect(this, &FloatImageViewer::sourceChanged, this, &FloatImageViewer::reload);
-    
+
     connect(this, &FloatImageViewer::channelModeChanged, this, &FloatImageViewer::update);
- 
+
     connect(this, &FloatImageViewer::downscaleLevelChanged, this, &FloatImageViewer::reload);
 
     connect(&_surface, &Surface::gridColorChanged, this, &FloatImageViewer::update);
     connect(&_surface, &Surface::gridOpacityChanged, this, &FloatImageViewer::update);
     connect(&_surface, &Surface::displayGridChanged, this, &FloatImageViewer::update);
-   
+
     connect(&_surface, &Surface::mouseOverChanged, this, &FloatImageViewer::update);
     connect(&_surface, &Surface::viewerTypeChanged, this, &FloatImageViewer::update);
 
@@ -199,18 +199,19 @@ QVector4D FloatImageViewer::pixelValueAt(int x, int y)
 
 QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePaintNodeData* data)
 {
+    (void)data; // Fix "unused parameter" warnings; should be replaced by [[maybe_unused]] when C++17 is supported
     QVector4D channelOrder(0.f, 1.f, 2.f, 3.f);
 
     QSGGeometryNode* root = static_cast<QSGGeometryNode*>(oldNode);
     QSGSimpleMaterial<ShaderData>* material = nullptr;
 
     QSGGeometry* geometryLine = nullptr;
-    bool updateSfmData = false;
 
     if (!root)
     {
         root = new QSGGeometryNode;
-        auto geometry = new QSGGeometry(QSGGeometry::defaultAttributes_TexturedPoint2D(), _surface.vertexCount(), _surface.indexCount());
+        auto geometry = new QSGGeometry(QSGGeometry::defaultAttributes_TexturedPoint2D(),
+                                        _surface.vertexCount(), _surface.indexCount());
         geometry->setDrawingMode(GL_TRIANGLES);
         geometry->setIndexDataPattern(QSGGeometry::StaticPattern);
         geometry->setVertexDataPattern(QSGGeometry::StaticPattern);
@@ -223,8 +224,8 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
         {
             /* Geometry and Material for the Grid */
             auto node = new QSGGeometryNode;
-            auto material = new QSGFlatColorMaterial;
-            material->setColor(_surface.getGridColor());
+            auto gridMaterial = new QSGFlatColorMaterial;
+            gridMaterial->setColor(_surface.getGridColor());
             {
                 // Vertexcount of the grid is equal to indexCount of the image
                 geometryLine = new QSGGeometry(QSGGeometry::defaultAttributes_Point2D(), _surface.indexCount());
@@ -233,7 +234,7 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
 
                 node->setGeometry(geometryLine);
                 node->setFlags(QSGNode::OwnsGeometry);
-                node->setMaterial(material);
+                node->setMaterial(gridMaterial);
                 node->setFlags(QSGNode::OwnsMaterial);
             }
             root->appendChildNode(node);
@@ -285,6 +286,10 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
     case EChannelMode::A:
         channelOrder = QVector4D(3.f, 3.f, 3.f, -1.f);
         break;
+    case EChannelMode::RGB:
+    case EChannelMode::RGBA:
+    default:
+        break;
     }
 
     bool updateGeometry = false;
@@ -308,7 +313,10 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
             const aliceVision::camera::EquiDistant* intrinsicEquiDistant = _surface.getIntrinsicEquiDistant();
             if(_cropFisheye && intrinsicEquiDistant)
             {
-                const aliceVision::Vec3 fisheyeCircleParams(intrinsicEquiDistant->getCircleCenterX(), intrinsicEquiDistant->getCircleCenterY(), intrinsicEquiDistant->getCircleRadius());
+                const aliceVision::Vec3 fisheyeCircleParams(
+                    intrinsicEquiDistant->getCircleCenterX(),
+                    intrinsicEquiDistant->getCircleCenterY(),
+                    intrinsicEquiDistant->getCircleRadius());
 
                 const double width = _image->Width() * pow(2.0, _downscaleLevel);
                 const double height = _image->Height() * pow(2.0, _downscaleLevel);
@@ -317,11 +325,13 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
                 const double radiusInPercentage = (fisheyeCircleParams.z() / ((width > height) ? height : width)) * 2.0;
 
                 //Radius is converted in uv coordinates (0, 0.5)
-                const double radius = 0.5 * (radiusInPercentage);
+                const float radius = 0.5f * static_cast<float>(radiusInPercentage);
 
-                material->state()->fisheyeCircleCoord = QVector2D(fisheyeCircleParams.x() / width, fisheyeCircleParams.y() / height);
+                material->state()->fisheyeCircleCoord = QVector2D(
+                    static_cast<float>(fisheyeCircleParams.x() / width),
+                    static_cast<float>(fisheyeCircleParams.y() / height));
                 material->state()->fisheyeCircleRadius = radius;
-                material->state()->aspectRatio = aspectRatio;
+                material->state()->aspectRatio = static_cast<float>(aspectRatio);
             }
             else
             {
@@ -345,8 +355,8 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
     {
         _boundingRect = newBoundingRect;
 
-        const float windowRatio = _boundingRect.width() / _boundingRect.height();
-        const float textureRatio = _textureSize.width() / float(_textureSize.height());
+        const double windowRatio = _boundingRect.width() / _boundingRect.height();
+        const float textureRatio = static_cast<float>(_textureSize.width()) / static_cast<float>(_textureSize.height());
         QRectF geometryRect = _boundingRect;
         if (windowRatio > textureRatio)
         {
@@ -387,7 +397,7 @@ void FloatImageViewer::updatePaintSurface(QSGGeometryNode* root, QSGSimpleMateri
         root->markDirty(QSGNode::DirtyMaterial);
     }
 
-    // If vertices has changed, Re-Compute the grid 
+    // If vertices has changed, Re-Compute the grid
     if (_surface.hasVerticesChanged())
     {
         // Retrieve Vertices and Index Data

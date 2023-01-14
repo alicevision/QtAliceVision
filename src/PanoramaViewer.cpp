@@ -40,20 +40,20 @@ void PanoramaViewer::computeDownscale()
 
     int totalSizeImages = 0;
     for (const auto& view : _msfmData->rawData().getViews())
-        totalSizeImages += int(((view.second->getWidth() * view.second->getHeight()) * 4) / std::pow(10, 6));
+        totalSizeImages += int(static_cast<double>((view.second->getWidth() * view.second->getHeight()) * 4) / std::pow(10, 6));
 
     // Downscale = 4 by default
     _downscale = 4;
-    for (size_t i = 0; i < _downscale; i++) 
-        totalSizeImages *= 0.5;
+    for (int i = 0; i < _downscale; i++)
+        totalSizeImages = static_cast<int>(totalSizeImages * 0.5);
 
     // ensure it fits in RAM memory
     aliceVision::system::MemoryInfo memInfo = aliceVision::system::getMemoryInfo();
-    const int freeRam = int(memInfo.freeRam / std::pow(2, 20));
+    const int freeRam = int(static_cast<double>(memInfo.freeRam) / std::pow(2, 20));
     while (totalSizeImages > freeRam * 0.5)
     {
         _downscale++;
-        totalSizeImages *= 0.5;
+        totalSizeImages = static_cast<int>(totalSizeImages * 0.5);
     }
 
     Q_EMIT downscaleReady();
@@ -61,13 +61,13 @@ void PanoramaViewer::computeDownscale()
 
 QSGNode* PanoramaViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePaintNodeData* data)
 {
+    (void)data; // Fix "unused parameter" warnings; should be replaced by [[maybe_unused]] when C++17 is supported
     QSGGeometryNode* root = static_cast<QSGGeometryNode*>(oldNode);
     return root;
 }
 
 void PanoramaViewer::setMSfmData(MSfMData* sfmData)
 {
-
     if (_msfmData == sfmData)
         return;
 

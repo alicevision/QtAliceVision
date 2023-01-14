@@ -200,7 +200,6 @@ void MViewStats::fillObservationsScaleViewSerie(QXYSeries* observationsScale)
         observationsScale->append(double(observationsScaleHistX[i]), double(observationsScaleHistY[i]));
         observationsScale->setPen(pen);
     }
-
 }
 
 
@@ -243,7 +242,7 @@ void MViewStats::computeViewStats()
             std::vector<size_t>& residualFullHistY = _residualHistogramFull.GetHist();
             for(std::size_t i = 0; i < residualFullHistY.size(); ++i)
             {
-                residualFullHistY[i] = std::round(residualFullHistY[i] / nbCameras);
+                residualFullHistY[i] = static_cast<size_t>(round(static_cast<double>(residualFullHistY[i]) / nbCameras));
             }
             std::vector<double> residualHistX = _residualHistogramFull.GetXbinsValue();
             assert(residualHistX.size() == residualFullHistY.size());
@@ -269,7 +268,7 @@ void MViewStats::computeViewStats()
         }
     }
 
-    _nbObservations = 0; 
+    _nbObservations = 0;
     {
         _observationsLengthsMaxAxisX = 0.0;
         _observationsLengthsMaxAxisY = 0.0;
@@ -285,7 +284,7 @@ void MViewStats::computeViewStats()
             // normalize the histogram to get the average number of observations
             for(std::size_t i = 0; i < observationsLengthsFullHistY.size(); ++i)
             {
-                observationsLengthsFullHistY[i] = round(observationsLengthsFullHistY[i] / nbCameras);
+                observationsLengthsFullHistY[i] = static_cast<size_t>(round(static_cast<double>(observationsLengthsFullHistY[i]) / nbCameras));
             }
             std::vector<double> observationsLengthsHistX = _observationsLengthsHistogramFull.GetXbinsValue();
             assert(observationsLengthsHistX.size() == observationsLengthsFullHistY.size());
@@ -323,7 +322,7 @@ void MViewStats::computeViewStats()
         std::vector<size_t>& observationsScaleFullHistY = _observationsScaleHistogramFull.GetHist();
         for(std::size_t i = 0; i < observationsScaleFullHistY.size(); ++i)
         {
-            observationsScaleFullHistY[i] = std::round(observationsScaleFullHistY[i] / nbCameras);
+            observationsScaleFullHistY[i] = static_cast<std::size_t>(std::round(static_cast<double>(observationsScaleFullHistY[i]) / nbCameras));
         }
         std::vector<double> observationsScaleHistX = _observationsScaleHistogramFull.GetXbinsValue();
         assert(observationsScaleHistX.size() == observationsScaleFullHistY.size());
@@ -359,7 +358,7 @@ void MViewStats::setMSfmData(qtAliceVision::MSfMData* sfmData)
     }
     _msfmData = sfmData;
     if(_msfmData != nullptr)
-    {        
+    {
         connect(_msfmData, SIGNAL(sfmDataChanged()), this, SIGNAL(sfmDataChanged()));
     }
     Q_EMIT sfmDataChanged();

@@ -23,7 +23,7 @@ class MFeatures : public QObject
     Q_OBJECT
 
     /// Data properties
-    
+
     // Path to folder containing the features
     Q_PROPERTY(QUrl featureFolder MEMBER _featureFolder NOTIFY featureFolderChanged)
     // Describer types to load
@@ -83,7 +83,7 @@ public:
 
       aliceVision::IndexT minFrameId = std::numeric_limits<aliceVision::IndexT>::max();
       aliceVision::IndexT maxFrameId = std::numeric_limits<aliceVision::IndexT>::min();
-      int nbLandmarks = 0;             // number of features of the track associated to a 3D landmark 
+      int nbLandmarks = 0;             // number of features of the track associated to a 3D landmark
       float featureScaleAverage = 0.f; // average feature scale
     };
     using MTrackFeaturesPerTrack = std::map<aliceVision::IndexT, MTrackFeatures>;
@@ -201,12 +201,12 @@ public:
      * @see MFeatures status enum
      * @return MFeatures status enum
      */
-    Status status() const 
-    { 
-      return _status; 
+    Status status() const
+    {
+      return _status;
     }
 
-    void setStatus(Status status) 
+    void setStatus(Status status)
     {
       if (status == _status)
         return;
@@ -219,7 +219,7 @@ public:
     }
 
 private:
-    
+
     /// Private methods (to use with Loading status)
 
     /**
@@ -265,7 +265,7 @@ private:
     void clearAllSfMInfo();
     void clearAllFeatureReprojection();
     void clearAll();
-    
+
     /// Private members
 
     // inputs

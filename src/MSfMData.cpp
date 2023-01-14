@@ -92,7 +92,6 @@ void MSfMData::load()
     }
     if (!(status() == Loading))
     {
-
         setStatus(Loading);
 
         _loadingSfmData->clear();
@@ -115,7 +114,7 @@ void MSfMData::onSfmDataReady()
     if(!_loadingSfmData)
         return;
 
-    if (_outdated) 
+    if (_outdated)
     {
         clear();
         setStatus(None);

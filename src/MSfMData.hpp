@@ -20,7 +20,7 @@ class MSfMData : public QObject
 
     Q_PROPERTY(QUrl sfmDataPath READ getSfmDataPath WRITE setSfmDataPath NOTIFY sfmDataPathChanged)
     Q_PROPERTY(Status status READ status NOTIFY statusChanged)
-    Q_PROPERTY(int nbCameras READ nbCameras NOTIFY statusChanged)
+    Q_PROPERTY(size_t nbCameras READ nbCameras NOTIFY statusChanged)
     Q_PROPERTY(QVariantList viewsIds READ getViewsIds NOTIFY viewsIdsChanged)
 
 public:
@@ -88,7 +88,7 @@ public:
        }
     }
 
-    inline int nbCameras() const {
+    inline size_t nbCameras() const {
         if(!_sfmData || _status != Ready)
             return 0;
         return _sfmData->getValidViews().size();
@@ -105,8 +105,8 @@ public:
 
 private:
     QUrl _sfmDataPath;
-    std::unique_ptr<aliceVision::sfmData::SfMData> _loadingSfmData;
     std::unique_ptr<aliceVision::sfmData::SfMData> _sfmData;
+    std::unique_ptr<aliceVision::sfmData::SfMData> _loadingSfmData;
     Status _status = MSfMData::None;
     bool _outdated = false;
 };

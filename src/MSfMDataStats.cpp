@@ -69,9 +69,9 @@ void MSfMDataStats::fillResidualsMinPerViewSerie(QXYSeries* residualsPerView)
         return;
     }
 
-    for(int i = 0; i < _nbResidualsPerViewMin.size(); ++i)
+    for(std::size_t i = 0; i < _nbResidualsPerViewMin.size(); ++i)
     {
-        residualsPerView->append(i, double(_nbResidualsPerViewMin[i]));
+        residualsPerView->append(double(i), double(_nbResidualsPerViewMin[i]));
     }
 }
 
@@ -90,9 +90,9 @@ void MSfMDataStats::fillResidualsMaxPerViewSerie(QXYSeries* residualsPerView)
         return;
     }
 
-    for(int i = 0; i < _nbResidualsPerViewMax.size(); ++i)
+    for(std::size_t i = 0; i < _nbResidualsPerViewMax.size(); ++i)
     {
-        residualsPerView->append(i, double(_nbResidualsPerViewMax[i]));
+        residualsPerView->append(double(i), double(_nbResidualsPerViewMax[i]));
     }
 }
 
@@ -111,9 +111,9 @@ void MSfMDataStats::fillResidualsMeanPerViewSerie(QXYSeries* residualsPerView)
         return;
     }
 
-    for(int i = 0; i < _nbResidualsPerViewMean.size(); ++i)
+    for(std::size_t i = 0; i < _nbResidualsPerViewMean.size(); ++i)
     {
-        residualsPerView->append(i, double(_nbResidualsPerViewMean[i]));
+        residualsPerView->append(double(i), double(_nbResidualsPerViewMean[i]));
     }
 }
 
@@ -132,9 +132,9 @@ void MSfMDataStats::fillResidualsMedianPerViewSerie(QXYSeries* residualsPerView)
         return;
     }
 
-    for(int i = 0; i < _nbResidualsPerViewMedian.size(); ++i)
+    for(std::size_t i = 0; i < _nbResidualsPerViewMedian.size(); ++i)
     {
-        residualsPerView->append(i, double(_nbResidualsPerViewMedian[i]));
+        residualsPerView->append(double(i), double(_nbResidualsPerViewMedian[i]));
     }
 }
 
@@ -153,9 +153,9 @@ void MSfMDataStats::fillResidualsFirstQuartilePerViewSerie(QXYSeries* residualsP
         return;
     }
 
-    for(int i = 0; i < _nbResidualsPerViewFirstQuartile.size(); ++i)
+    for(std::size_t i = 0; i < _nbResidualsPerViewFirstQuartile.size(); ++i)
     {
-        residualsPerView->append(i, double(_nbResidualsPerViewFirstQuartile[i]));
+        residualsPerView->append(double(i), double(_nbResidualsPerViewFirstQuartile[i]));
     }
 }
 
@@ -174,9 +174,9 @@ void MSfMDataStats::fillResidualsThirdQuartilePerViewSerie(QXYSeries* residualsP
         return;
     }
 
-    for(int i = 0; i < _nbResidualsPerViewThirdQuartile.size(); ++i)
+    for(std::size_t i = 0; i < _nbResidualsPerViewThirdQuartile.size(); ++i)
     {
-        residualsPerView->append(i, double(_nbResidualsPerViewThirdQuartile[i]));
+        residualsPerView->append(double(i), double(_nbResidualsPerViewThirdQuartile[i]));
     }
 }
 
@@ -195,9 +195,9 @@ void MSfMDataStats::fillObservationsLengthsMinPerViewSerie(QXYSeries* observatio
         return;
     }
 
-    for(int i = 0; i < _nbObservationsLengthsPerViewMin.size(); ++i)
+    for(std::size_t i = 0; i < _nbObservationsLengthsPerViewMin.size(); ++i)
     {
-        observationsLengthsPerView->append(i, double(_nbObservationsLengthsPerViewMin[i]));
+        observationsLengthsPerView->append(double(i), double(_nbObservationsLengthsPerViewMin[i]));
     }
 }
 
@@ -216,9 +216,9 @@ void MSfMDataStats::fillObservationsLengthsMaxPerViewSerie(QXYSeries* observatio
         return;
     }
 
-    for(int i = 0; i < _nbObservationsLengthsPerViewMax.size(); ++i)
+    for(std::size_t i = 0; i < _nbObservationsLengthsPerViewMax.size(); ++i)
     {
-        observationsLengthsPerView->append(i, double(_nbObservationsLengthsPerViewMax[i]));
+        observationsLengthsPerView->append(double(i), double(_nbObservationsLengthsPerViewMax[i]));
     }
 }
 
@@ -237,9 +237,9 @@ void MSfMDataStats::fillObservationsLengthsMeanPerViewSerie(QXYSeries* observati
         return;
     }
 
-    for(int i = 0; i < _nbObservationsLengthsPerViewMean.size(); ++i)
+    for(std::size_t i = 0; i < _nbObservationsLengthsPerViewMean.size(); ++i)
     {
-        observationsLengthsPerView->append(i, double(_nbObservationsLengthsPerViewMean[i]));
+        observationsLengthsPerView->append(double(i), double(_nbObservationsLengthsPerViewMean[i]));
     }
 }
 
@@ -258,9 +258,9 @@ void MSfMDataStats::fillObservationsLengthsMedianPerViewSerie(QXYSeries* observa
         return;
     }
 
-    for(int i = 0; i < _nbObservationsLengthsPerViewMedian.size(); ++i)
+    for(std::size_t i = 0; i < _nbObservationsLengthsPerViewMedian.size(); ++i)
     {
-        observationsLengthsPerView->append(i, double(_nbObservationsLengthsPerViewMedian[i]));
+        observationsLengthsPerView->append(double(i), double(_nbObservationsLengthsPerViewMedian[i]));
     }
 }
 
@@ -279,9 +279,9 @@ void MSfMDataStats::fillObservationsLengthsFirstQuartilePerViewSerie(QXYSeries* 
         return;
     }
 
-    for(int i = 0; i < _nbObservationsLengthsPerViewFirstQuartile.size(); ++i)
+    for(std::size_t i = 0; i < _nbObservationsLengthsPerViewFirstQuartile.size(); ++i)
     {
-        observationsLengthsPerView->append(i, double(_nbObservationsLengthsPerViewFirstQuartile[i]));
+        observationsLengthsPerView->append(double(i), double(_nbObservationsLengthsPerViewFirstQuartile[i]));
     }
 }
 
@@ -300,9 +300,9 @@ void MSfMDataStats::fillObservationsLengthsThirdQuartilePerViewSerie(QXYSeries* 
         return;
     }
 
-    for(int i = 0; i < _nbObservationsLengthsPerViewThirdQuartile.size(); ++i)
+    for(std::size_t i = 0; i < _nbObservationsLengthsPerViewThirdQuartile.size(); ++i)
     {
-        observationsLengthsPerView->append(i, double(_nbObservationsLengthsPerViewThirdQuartile[i]));
+        observationsLengthsPerView->append(double(i), double(_nbObservationsLengthsPerViewThirdQuartile[i]));
     }
 }
 
@@ -348,7 +348,7 @@ void MSfMDataStats::computeGlobalSfMStats()
         _nbLandmarksPerView.resize(nbLandmarksPerView.size());
         std::copy(nbLandmarksPerView.begin(), nbLandmarksPerView.end(), _nbLandmarksPerView.begin());
 
-        _landmarksPerViewMaxAxisX = round(_msfmData->rawData().getViews().size());
+        _landmarksPerViewMaxAxisX = static_cast<int>(_msfmData->rawData().getViews().size());
         _landmarksPerViewMaxAxisY = 0.0;
 
         for(int v: nbLandmarksPerView)
@@ -365,7 +365,7 @@ void MSfMDataStats::computeGlobalSfMStats()
        sfm::computeResidualsPerView(_msfmData->rawData(), _residualsPerViewMaxAxisX, _nbResidualsPerViewMin, _nbResidualsPerViewMax, _nbResidualsPerViewMean, _nbResidualsPerViewMedian, _nbResidualsPerViewFirstQuartile, _nbResidualsPerViewThirdQuartile);
        _residualsPerViewMaxAxisY = 0.0;
 
-       for(int i = 0; i < _nbResidualsPerViewMin.size(); ++i)
+       for(std::size_t i = 0; i < _nbResidualsPerViewMin.size(); ++i)
        {
            _residualsPerViewMaxAxisY = round(std::max(_residualsPerViewMaxAxisY, double(_nbResidualsPerViewMin[i])));
            _residualsPerViewMaxAxisY = round(std::max(_residualsPerViewMaxAxisY, double(_nbResidualsPerViewMax[i])));
@@ -382,10 +382,13 @@ void MSfMDataStats::computeGlobalSfMStats()
     //Observations Lengths Per View graph
     {
        _observationsLengthsPerViewMaxAxisX = 0;
-       sfm::computeObservationsLengthsPerView(_msfmData->rawData(), _observationsLengthsPerViewMaxAxisX, _nbObservationsLengthsPerViewMin, _nbObservationsLengthsPerViewMax, _nbObservationsLengthsPerViewMean, _nbObservationsLengthsPerViewMedian, _nbObservationsLengthsPerViewFirstQuartile, _nbObservationsLengthsPerViewThirdQuartile);
+       sfm::computeObservationsLengthsPerView(_msfmData->rawData(), _observationsLengthsPerViewMaxAxisX,
+        _nbObservationsLengthsPerViewMin, _nbObservationsLengthsPerViewMax, _nbObservationsLengthsPerViewMean,
+        _nbObservationsLengthsPerViewMedian, _nbObservationsLengthsPerViewFirstQuartile,
+        _nbObservationsLengthsPerViewThirdQuartile);
        _observationsLengthsPerViewMaxAxisY = 0.0;
 
-       for(int i = 0; i < _nbObservationsLengthsPerViewMin.size(); ++i)
+       for(std::size_t i = 0; i < _nbObservationsLengthsPerViewMin.size(); ++i)
        {
            _observationsLengthsPerViewMaxAxisY = round(std::max(_observationsLengthsPerViewMaxAxisY, double(_nbObservationsLengthsPerViewMin[i])));
            _observationsLengthsPerViewMaxAxisY = round(std::max(_observationsLengthsPerViewMaxAxisY, double(_nbObservationsLengthsPerViewMax[i])));
@@ -437,14 +440,14 @@ void MSfMDataStats::computeGlobalTracksStats()
             const auto viewId = viewIt.first;
 
             if(_mTracks->tracksPerView().count(viewId))
-                _nbTracksPerView.push_back(_mTracks->tracksPerView().at(viewId).size());
+                _nbTracksPerView.push_back(double(_mTracks->tracksPerView().at(viewId).size()));
             else
-                _nbTracksPerView.push_back(0);
+                _nbTracksPerView.push_back(0.0);
         }
 
-        for(int v: _nbTracksPerView)
+        for(double v: _nbTracksPerView)
         {
-            _landmarksPerViewMaxAxisY = std::max(_landmarksPerViewMaxAxisY, double(v));
+            _landmarksPerViewMaxAxisY = std::max(_landmarksPerViewMaxAxisY, v);
         }
 
     Q_EMIT tracksStatsChanged();

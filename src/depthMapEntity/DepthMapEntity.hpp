@@ -18,16 +18,15 @@ class DepthMapEntity : public Qt3DCore::QEntity
     Q_OBJECT
     Q_ENUMS(DisplayMode)
 
-    Q_PROPERTY(QUrl source READ source WRITE setSource NOTIFY sourceChanged);
+    Q_PROPERTY(QUrl source READ source WRITE setSource NOTIFY sourceChanged)
     Q_PROPERTY(Status status READ status NOTIFY statusChanged)
-    Q_PROPERTY(DisplayMode displayMode READ displayMode WRITE setDisplayMode NOTIFY displayModeChanged);
-    Q_PROPERTY(bool displayColor READ displayColor WRITE setDisplayColor NOTIFY displayColorChanged);
-    Q_PROPERTY(float pointSize READ pointSize WRITE setPointSize NOTIFY pointSizeChanged);
+    Q_PROPERTY(DisplayMode displayMode READ displayMode WRITE setDisplayMode NOTIFY displayModeChanged)
+    Q_PROPERTY(bool displayColor READ displayColor WRITE setDisplayColor NOTIFY displayColorChanged)
+    Q_PROPERTY(float pointSize READ pointSize WRITE setPointSize NOTIFY pointSizeChanged)
 
 public:
-
     // Identical to SceneLoader.Status
-    enum Status { 
+    enum Status {
         None = 0,
         Loading,
         Ready,
@@ -50,11 +49,11 @@ public:
 
     Status status() const { return _status; }
 
-    void setStatus(Status status) { 
-        if(status == _status) 
-            return; 
-        _status = status; 
-        Q_EMIT statusChanged(_status); 
+    void setStatus(Status status) {
+        if(status == _status)
+            return;
+        _status = status;
+        Q_EMIT statusChanged(_status);
     }
 
     Q_SLOT DisplayMode displayMode() const { return _displayMode; }

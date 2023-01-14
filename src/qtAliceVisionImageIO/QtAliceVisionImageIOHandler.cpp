@@ -19,15 +19,15 @@
 #include <memory>
 
 
-inline const float& clamp( const float& v, const float& lo, const float& hi )
+inline const float& clamp(const float& v, const float& lo, const float& hi)
 {
-    assert( !(hi < lo) );
+    assert(!(hi < lo));
     return (v < lo) ? lo : (hi < v) ? hi : v;
 }
 
 inline unsigned short floatToUShort(float v)
 {
-    return clamp(v, 0.0f, 1.0f) * 65535;
+    return static_cast<unsigned short>(clamp(v, 0.0f, 1.0f) * 65535);
 }
 
 QtAliceVisionImageIOHandler::QtAliceVisionImageIOHandler()
@@ -66,7 +66,7 @@ bool QtAliceVisionImageIOHandler::canRead(QIODevice *device)
         return false;
     }
 
-    if (!(input->valid_file(path))) 
+    if (!(input->valid_file(path)))
     {
         qDebug() << "[QtAliceVisionImageIO] Cannot read: invalid file";
         return false;
@@ -92,15 +92,15 @@ bool QtAliceVisionImageIOHandler::read(QImage *image)
 
     oiio::ImageBuf inBuf;
     aliceVision::image::getBufferFromImage(img, inBuf);
-    
+
     oiio::ImageSpec inSpec = aliceVision::image::readImageSpec(path);
     float pixelAspectRatio = inSpec.get_float_attribute("PixelAspectRatio", 1.0f);
 
-    qDebug() << "[QtAliceVisionImageIO] width:" << inSpec.width 
-            << ", height:" << inSpec.height 
-            << ", nchannels:" << inSpec.nchannels  
+    qDebug() << "[QtAliceVisionImageIO] width:" << inSpec.width
+            << ", height:" << inSpec.height
+            << ", nchannels:" << inSpec.nchannels
             << ", pixelAspectRatio:" << pixelAspectRatio;
-    
+
     qDebug() << "[QtAliceVisionImageIO] create output QImage";
     QImage result(inSpec.width, inSpec.height, QImage::Format_RGB32);
 
@@ -113,7 +113,7 @@ bool QtAliceVisionImageIOHandler::read(QImage *image)
     float channelValues[] = {1.f, 1.f, 1.f, 1.f};
     oiio::ImageBufAlgo::channels(tmpBuf, inBuf, 4, channelOrder, channelValues, {}, false);
     inBuf.swap(tmpBuf);
-    
+
     qDebug() << "[QtAliceVisionImageIO] fill output QImage";
     oiio::ROI exportROI = inBuf.roi();
     exportROI.chbegin = 0;
@@ -122,7 +122,7 @@ bool QtAliceVisionImageIOHandler::read(QImage *image)
 
     if (pixelAspectRatio != 1.0f)
     {
-        QSize newSize(inSpec.width * pixelAspectRatio, inSpec.height);
+        QSize newSize(static_cast<int>(static_cast<float>(inSpec.width) * pixelAspectRatio), inSpec.height);
         result = result.scaled(newSize, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
     }
 
@@ -138,7 +138,7 @@ bool QtAliceVisionImageIOHandler::read(QImage *image)
     return true;
 }
 
-bool QtAliceVisionImageIOHandler::write(const QImage &image)
+bool QtAliceVisionImageIOHandler::write(const QImage&)
 {
     // TODO
     return false;
@@ -185,6 +185,7 @@ QVariant QtAliceVisionImageIOHandler::option(ImageOption option) const
         case 6: return QImageIOHandler::TransformationRotate90; break;
         case 7: return QImageIOHandler::TransformationMirrorAndRotate90; break;
         case 8: return QImageIOHandler::TransformationRotate270; break;
+        default: break;
         }
     }
     return QImageIOHandler::option(option);
@@ -197,7 +198,8 @@ void QtAliceVisionImageIOHandler::setOption(ImageOption option, const QVariant &
     if (option == ScaledSize && value.isValid())
     {
         _scaledSize = value.value<QSize>();
-        qDebug() << "[QtAliceVisionImageIO] setOption scaledSize: " << _scaledSize.width() << "x" << _scaledSize.height();
+        qDebug() << "[QtAliceVisionImageIO] setOption scaledSize: "
+                 << _scaledSize.width() << "x" << _scaledSize.height();
     }
 }
 

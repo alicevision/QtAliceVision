@@ -57,7 +57,7 @@ private:
 private:
     QSharedPointer<FloatImage> _srcImage;
 
-    uint _textureId = 0;
+    unsigned int _textureId = 0;
     QSize _textureSize;
 
     bool _dirty = false;

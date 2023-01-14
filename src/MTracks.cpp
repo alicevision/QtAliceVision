@@ -19,7 +19,6 @@ class TracksIORunnable : public QObject, public QRunnable
     Q_OBJECT
 
 public:
-
     explicit TracksIORunnable(const QUrl& matchingFolder):
     _matchingFolder(matchingFolder)
     {}
