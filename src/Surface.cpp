@@ -163,8 +163,22 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
         {
             float fI = static_cast<float>(i);
             float fJ = static_cast<float>(j);
-            float x = fI * static_cast<float>(textureSize.width()) / fSubdivisions;
-            float y = fJ * static_cast<float>(textureSize.height()) / fSubdivisions;
+            float x, y = 0.f;
+
+            /* The panorama viewer needs to use the previously computed vertices to compute the current ones,
+             * otherwise images will end up stacked together on the top-left corner.
+             * For anything other than the panorama viewer, the surface vertices should be recomputed from scratch
+             * so the distorsions are not accumulated. */
+            if (_vertices.empty() || !isPanoramaViewerEnabled())
+            {
+                x = fI * static_cast<float>(textureSize.width()) / fSubdivisions;
+                y = fJ * static_cast<float>(textureSize.height()) / fSubdivisions;
+            }
+            else
+            {
+                x = static_cast<float>(_vertices[vertexIndex].x());
+                y = static_cast<float>(_vertices[vertexIndex].y());
+            }
 
             const double cx = x - center(0);
             const double cy = y - center(1);
@@ -207,7 +221,7 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
                 // Compute pixel coordinates in the panorama coordinate system
                 aliceVision::Vec2 panoramaCoordinates = toEquirectangular(sphereCoordinates, _panoramaWidth, _panoramaHeight);
 
-                // If image is on the seem
+                // If image is on the seam
                 if (vertexIndex > 0 && j > 0)
                 {
                     double deltaX = panoramaCoordinates.x() - vertices[vertexIndex - 1].x;
