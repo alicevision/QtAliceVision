@@ -81,9 +81,9 @@ namespace qtAliceVision {
       float minFeatureScale = std::numeric_limits<float>::min();
       float maxFeatureScale = std::numeric_limits<float>::max();
 
-      std::size_t nbFeaturesToDraw = 0;
-      std::size_t nbMatchesToDraw = 0;
-      std::size_t nbLandmarksToDraw = 0;
+      int nbFeaturesToDraw = 0;
+      int nbMatchesToDraw = 0;
+      int nbLandmarksToDraw = 0;
     };
 
     /// Signals
@@ -133,7 +133,7 @@ namespace qtAliceVision {
 
     QSGGeometry* getCleanChildGeometry(QSGNode* node, int childIdx, int vertexCount, int indexCount = 0);
     QSGGeometry* appendChildGeometry(QSGNode* node, int vertexCount, int indexCount = 0);
-    void setVertex(QSGGeometry::ColoredPoint2D* vertices, unsigned int idx, const QPointF& point, const QColor& c);
+    void setVertex(QSGGeometry::ColoredPoint2D* vertices, int idx, const QPointF& point, const QColor& c);
 
     bool _displayFeatures = true;
     bool _displayTracks = true;

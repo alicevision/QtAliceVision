@@ -69,8 +69,8 @@ namespace qtAliceVision
 
     QSGGeometry* geometry = nullptr;
 
-    unsigned int kFeatVertices = 0;
-    unsigned int kFeatIndices = 0;
+    int kFeatVertices = 0;
+    int kFeatIndices = 0;
 
     switch (_featureDisplayMode)
     {
@@ -122,7 +122,7 @@ namespace qtAliceVision
     if (params.nbFeaturesToDraw == 0) // nothing to draw or something is not ready
       return;
 
-    unsigned int nbFeaturesDrawn = 0;
+    int nbFeaturesDrawn = 0;
 
     const MFeatures::MViewFeatures* currentViewFeatures = _mfeatures->getCurrentViewFeatures(_describerType);
 
@@ -145,8 +145,8 @@ namespace qtAliceVision
       const auto& feat = feature->pointFeature();
       const float radius = feat.scale();
       const double diag = 2.0 * feat.scale();
-      unsigned int vidx = nbFeaturesDrawn * kFeatVertices;
-      unsigned int iidx = nbFeaturesDrawn * kFeatIndices;
+      int vidx = nbFeaturesDrawn * kFeatVertices;
+      int iidx = nbFeaturesDrawn * kFeatIndices;
 
       if (_featureDisplayMode == FeaturesViewer::Points)
       {
@@ -168,12 +168,12 @@ namespace qtAliceVision
           setVertex(vertices, vidx + 1, tr, _featureColor);
           setVertex(vertices, vidx + 2, br, _featureColor);
           setVertex(vertices, vidx + 3, bl, _featureColor);
-          indices[iidx] = vidx;
-          indices[iidx + 1] = vidx + 1;
-          indices[iidx + 2] = vidx + 2;
-          indices[iidx + 3] = vidx + 2;
-          indices[iidx + 4] = vidx + 3;
-          indices[iidx + 5] = vidx;
+          indices[iidx] = static_cast<unsigned int>(vidx);
+          indices[iidx + 1] = static_cast<unsigned int>(vidx + 1);
+          indices[iidx + 2] = static_cast<unsigned int>(vidx + 2);
+          indices[iidx + 3] = static_cast<unsigned int>(vidx + 2);
+          indices[iidx + 4] = static_cast<unsigned int>(vidx + 3);
+          indices[iidx + 5] = static_cast<unsigned int>(vidx);
         }
         else if (_featureDisplayMode == FeaturesViewer::OrientedSquares)
         {
@@ -184,14 +184,14 @@ namespace qtAliceVision
 
           // create lines, each vertice has to be duplicated (A->B, B->C, C->D, D->A) since we use GL_LINES
           std::vector<QPointF> points = { t.map(tl), t.map(tr), t.map(br), t.map(bl), t.map(tl) };
-          for (unsigned int k = 0; k < points.size(); ++k)
+          for (std::size_t k = 0; k < points.size(); ++k)
           {
-            auto lidx = k * 2; // local index
+            int lidx = static_cast<int>(k) * 2;  // local index
             setVertex(vertices, vidx + lidx, points[k], _featureColor);
             setVertex(vertices, vidx + lidx + 1, points[k + 1], _featureColor);
           }
           // orientation line: up vector (0, 1)
-          const auto nbPoints = static_cast<unsigned int>(points.size());
+          const int nbPoints = static_cast<int>(points.size());
           setVertex(vertices, vidx + nbPoints * 2 - 2, rect.center(), _featureColor);
           auto o2 = t.map(rect.center() - QPointF(0.0f, radius)); // rotate end point
           setVertex(vertices, vidx + nbPoints * 2 - 1, o2, _featureColor);
@@ -205,8 +205,8 @@ namespace qtAliceVision
   {
     qDebug() << "[QtAliceVision] FeaturesViewer: Update paint " << _describerType << " tracks.";
 
-    const unsigned int kLineVertices = 2;
-    const unsigned int kTriangleVertices = 3;
+    const int kLineVertices = 2;
+    const int kTriangleVertices = 3;
 
     const MFeatures::MTrackFeaturesPerTrack* trackFeaturesPerTrack =
         (_displayTracks && params.haveValidFeatures && params.haveValidTracks && params.haveValidLandmarks)
@@ -214,12 +214,12 @@ namespace qtAliceVision
     const aliceVision::IndexT currentFrameId = (trackFeaturesPerTrack != nullptr)
         ? _mfeatures->getCurrentFrameId() : aliceVision::UndefinedIndexT;
 
-    std::size_t nbTracksToDraw = 0;
-    std::size_t nbTrackLinesToDraw[3] = {0, 0, 0};
-    std::size_t nbReprojectionErrorLinesToDraw = 0;
-    std::size_t nbPointsToDraw = 0;
-    std::size_t nbHighlightPointsToDraw = 0;
-    std::size_t nbEndpointsToDraw = 0;
+    int nbTracksToDraw = 0;
+    int nbTrackLinesToDraw[3] = {0, 0, 0};
+    int nbReprojectionErrorLinesToDraw = 0;
+    int nbPointsToDraw = 0;
+    int nbHighlightPointsToDraw = 0;
+    int nbEndpointsToDraw = 0;
 
     if (trackFeaturesPerTrack != nullptr)
     {
@@ -251,7 +251,7 @@ namespace qtAliceVision
 
         const MFeatures::ReconstructionState state = globalTrackInfo.reconstructionState();
         const int stateIdx = static_cast<int>(state);
-        nbTrackLinesToDraw[stateIdx] += (trackFeatures.featuresPerFrame.size() - 1);  // number of lines in the track
+        nbTrackLinesToDraw[stateIdx] += static_cast<int>(trackFeatures.featuresPerFrame.size()) - 1;  // number of lines in the track
         
         if (_trackDisplayMode == WithCurrentMatches)
         {
@@ -268,12 +268,12 @@ namespace qtAliceVision
         {
           const auto it = trackFeatures.featuresPerFrame.find(currentFrameId);
           if (it != trackFeatures.featuresPerFrame.end())
-            ++nbHighlightPointsToDraw; // to draw a highlight point in order to identify the current match
+            ++nbHighlightPointsToDraw;  // to draw a highlight point in order to identify the current match
           
           if (trackFeatures.nbLandmarks > 0)
-            nbReprojectionErrorLinesToDraw += trackFeatures.featuresPerFrame.size(); // one line per matches for rerojection error
+            nbReprojectionErrorLinesToDraw += static_cast<int>(trackFeatures.featuresPerFrame.size());  // one line per matches for reprojection error
 
-          nbPointsToDraw += trackFeatures.featuresPerFrame.size(); // one point per matches
+          nbPointsToDraw += static_cast<int>(trackFeatures.featuresPerFrame.size());  // one point per matches
         }
 
         if (_displayTrackEndpoints)
@@ -314,8 +314,8 @@ namespace qtAliceVision
       // (2) Highlight points
       geometryHighlightPoint = getCleanChildGeometry(node, 2, nbHighlightPointsToDraw);
       // (3) Tracks lines
-      for (std::size_t idx = 0; idx < 3; idx++) 
-        geometryTrackLine[idx] = getCleanChildGeometry(node, idx+3, nbTrackLinesToDraw[idx] * kLineVertices);
+      for (std::size_t idx = 0; idx < 3; idx++)
+        geometryTrackLine[idx] = getCleanChildGeometry(node, static_cast<int>(idx+3), nbTrackLinesToDraw[idx] * kLineVertices);
       // (4) Reprojection Error lines
       geometryReprojectionErrorLine = getCleanChildGeometry(node, 6, nbReprojectionErrorLinesToDraw * kLineVertices);
       // (5) Points
@@ -344,8 +344,8 @@ namespace qtAliceVision
 
     QSGGeometry::ColoredPoint2D* verticesHighlightPoints = geometryHighlightPoint->vertexDataAsColoredPoint2D();
     QSGGeometry::ColoredPoint2D* verticesTrackLines[3] = {
-      geometryTrackLine[0]->vertexDataAsColoredPoint2D(), 
-      geometryTrackLine[1]->vertexDataAsColoredPoint2D(), 
+      geometryTrackLine[0]->vertexDataAsColoredPoint2D(),
+      geometryTrackLine[1]->vertexDataAsColoredPoint2D(),
       geometryTrackLine[2]->vertexDataAsColoredPoint2D()
     };
     QSGGeometry::ColoredPoint2D* verticesReprojectionErrorLines = geometryReprojectionErrorLine->vertexDataAsColoredPoint2D();
@@ -396,9 +396,9 @@ namespace qtAliceVision
                                       aliceVision::IndexT frameId,
                                       const MFeature* feature,
                                       const QColor& color,
-                                      unsigned int& nbReprojectionErrorLinesDrawn,
-                                      unsigned int& nbHighlightPointsDrawn,
-                                      unsigned int& nbPointsDrawn,
+                                      int& nbReprojectionErrorLinesDrawn,
+                                      int& nbHighlightPointsDrawn,
+                                      int& nbPointsDrawn,
                                       bool trackHasInliers)
     {
       if (_trackDisplayMode == WithAllMatches || (frameId == curFrameId && _trackDisplayMode == WithCurrentMatches))
@@ -421,7 +421,7 @@ namespace qtAliceVision
         // draw reprojection error for landmark
         if (trackHasInliers)
         {
-          const unsigned vIdx = nbReprojectionErrorLinesDrawn * kLineVertices;
+          const int vIdx = nbReprojectionErrorLinesDrawn * kLineVertices;
           setVertex(verticesReprojectionErrorLines, vIdx, point2d, color);
           setVertex(verticesReprojectionErrorLines, vIdx + 1, point3d, color);
           ++nbReprojectionErrorLinesDrawn;
@@ -430,17 +430,17 @@ namespace qtAliceVision
     };
 
     // utility lambda to register an oriented triangle corresponding to an endpoint
-    const auto drawEndpoint = [&](const QPointF& pointFrom, 
-                                  const QPointF& pointTo, 
-                                  const QColor& color, 
-                                  unsigned int& nbEndpointsDrawn, 
+    const auto drawEndpoint = [&](const QPointF& pointFrom,
+                                  const QPointF& pointTo,
+                                  const QColor& color,
+                                  int& nbEndpointsDrawn,
                                   float size = 10.f)
     {
         QPointF triangle[] = {QPointF(0, 0), QPointF(-2, 1), QPointF(-2, -1)};
-        float angle = QLineF(pointFrom, pointTo).angle() - rotation();
+        double angle = QLineF(pointFrom, pointTo).angle() - rotation();
         auto tr = QTransform().rotate(-angle).scale(size, size);
         const int vIdx = nbEndpointsDrawn * kTriangleVertices;
-        for (int i = 0; i < kTriangleVertices; i++) 
+        for (int i = 0; i < kTriangleVertices; i++)
             setVertex(verticesEndpoints, vIdx + i, pointFrom + tr.map(triangle[i]), color);
         nbEndpointsDrawn++;
     };
@@ -455,11 +455,11 @@ namespace qtAliceVision
       return;
     }
 
-    unsigned int nbHighlightPointsDrawn = 0;
-    unsigned int nbTrackLinesDrawn[3] = {0, 0, 0};
-    unsigned int nbReprojectionErrorLinesDrawn = 0;
-    unsigned int nbPointsDrawn = 0;
-    unsigned int nbEndpointsDrawn = 0;
+    int nbHighlightPointsDrawn = 0;
+    int nbTrackLinesDrawn[3] = {0, 0, 0};
+    int nbReprojectionErrorLinesDrawn = 0;
+    int nbPointsDrawn = 0;
+    int nbEndpointsDrawn = 0;
 
     for (const auto& trackFeaturesPair : *trackFeaturesPerTrack)
     {
@@ -522,7 +522,7 @@ namespace qtAliceVision
 
           // draw track line
           const QColor  lineColor = getLineColor(contiguous, inliers, trackHasInliers);
-          unsigned int vIdx = nbTrackLinesDrawn[stateIdx] * kLineVertices;
+          int vIdx = nbTrackLinesDrawn[stateIdx] * kLineVertices;
 
           QPointF prevPoint;
           QPointF curPoint;
@@ -588,7 +588,7 @@ namespace qtAliceVision
     if (params.nbMatchesToDraw == 0) // nothing to draw or something is not ready
       return;
 
-    unsigned int nbMatchesDrawn = 0;
+    int nbMatchesDrawn = 0;
 
     const MFeatures::MViewFeatures* currentViewFeatures = _mfeatures->getCurrentViewFeatures(_describerType);
 
@@ -621,7 +621,7 @@ namespace qtAliceVision
   {
     qDebug() << "[QtAliceVision] FeaturesViewer: Update paint " << _describerType << " landmarks.";
 
-    const unsigned int kReprojectionVertices = 2;
+    const int kReprojectionVertices = 2;
 
     QSGGeometry* geometryLine = nullptr;
     QSGGeometry* geometryPoint = nullptr;
@@ -649,7 +649,7 @@ namespace qtAliceVision
     if (params.nbLandmarksToDraw == 0) // nothing to draw or something is not ready
       return;
 
-    unsigned int nbLandmarksDrawn = 0;
+    int nbLandmarksDrawn = 0;
 
     const MFeatures::MViewFeatures* currentViewFeatures = _mfeatures->getCurrentViewFeatures(_describerType);
     const QColor reprojectionColor = _landmarkColor.darker(150);
@@ -673,7 +673,7 @@ namespace qtAliceVision
           break;
         }
 
-        const unsigned int vidx = nbLandmarksDrawn * kReprojectionVertices;
+        const int vidx = nbLandmarksDrawn * kReprojectionVertices;
         setVertex(verticesLines, vidx, QPointF(feature->x(), feature->y()), reprojectionColor);
         setVertex(verticesLines, vidx + 1, QPointF(feature->rx(), feature->ry()), reprojectionColor);
         setVertex(verticesPoints, nbLandmarksDrawn, QPointF(feature->rx(), feature->ry()), _landmarkColor);
@@ -795,9 +795,14 @@ namespace qtAliceVision
     return geometry;
   }
 
-  void FeaturesViewer::setVertex(QSGGeometry::ColoredPoint2D* vertices, unsigned int idx, const QPointF& point, const QColor& c)
+  void FeaturesViewer::setVertex(QSGGeometry::ColoredPoint2D* vertices, int idx, const QPointF& point, const QColor& c)
   {
-    vertices[idx].set(point.x(), point.y(), c.red(), c.green(), c.blue(), c.alpha());
+    vertices[idx].set(static_cast<float>(point.x()),
+                      static_cast<float>(point.y()),
+                      static_cast<unsigned char>(c.red()),
+                      static_cast<unsigned char>(c.green()),
+                      static_cast<unsigned char>(c.blue()),
+                      static_cast<unsigned char>(c.alpha()));
   }
 
 } // namespace qtAliceVision
