@@ -413,8 +413,9 @@ namespace qtAliceVision
         {
           QColor colorHighlight = QColor(200, 200, 200);
           if (color.alpha() == 0)
-            colorHighlight = QColor(0, 0, 0, 0); // color should be rgba(0,0,0,0) in order to be transparent.
-          setVertex(verticesHighlightPoints, nbHighlightPointsDrawn, (_display3dTracks && trackHasInliers) ? point3d : point2d, colorHighlight);
+            colorHighlight = QColor(0, 0, 0, 0);  // color should be rgba(0,0,0,0) in order to be transparent.
+          setVertex(verticesHighlightPoints, nbHighlightPointsDrawn,
+                    (_display3dTracks && trackHasInliers) ? point3d : point2d, colorHighlight);
           ++nbHighlightPointsDrawn;
         }
 
@@ -422,8 +423,9 @@ namespace qtAliceVision
         if (trackHasInliers)
         {
           const int vIdx = nbReprojectionErrorLinesDrawn * kLineVertices;
-          setVertex(verticesReprojectionErrorLines, vIdx, point2d, color);
-          setVertex(verticesReprojectionErrorLines, vIdx + 1, point3d, color);
+          const QColor reprojectionColor = _landmarkColor.darker(150);
+          setVertex(verticesReprojectionErrorLines, vIdx, point2d, reprojectionColor);
+          setVertex(verticesReprojectionErrorLines, vIdx + 1, point3d, reprojectionColor);
           ++nbReprojectionErrorLinesDrawn;
         }
       }
@@ -513,12 +515,19 @@ namespace qtAliceVision
           const bool inliers = previousFeatureInlier && currentFeatureInlier;
 
           // draw previous point
-          const QColor previousPointColor = getPointColor(contiguous || previousTrackLineContiguous, previousFeatureInlier, trackHasInliers);
-          drawFeaturePoint(currentFrameId, previousFrameId, previousFeature, previousPointColor, nbReprojectionErrorLinesDrawn, nbHighlightPointsDrawn, nbPointsDrawn, trackFeatures.nbLandmarks > 0);
+          const QColor previousPointColor = getPointColor(contiguous || previousTrackLineContiguous,
+                                                          previousFeatureInlier, trackHasInliers);
+          drawFeaturePoint(currentFrameId,
+                           previousFrameId, previousFeature, previousPointColor,
+                           nbReprojectionErrorLinesDrawn, nbHighlightPointsDrawn, nbPointsDrawn,
+                           trackFeatures.nbLandmarks > 0);
 
           // draw track last point
           if (frameId == trackFeatures.maxFrameId)
-            drawFeaturePoint(currentFrameId, frameId, feature, getPointColor(contiguous, currentFeatureInlier, trackHasInliers), nbReprojectionErrorLinesDrawn, nbHighlightPointsDrawn, nbPointsDrawn, trackFeatures.nbLandmarks > 0);
+            drawFeaturePoint(currentFrameId,
+                             frameId, feature, getPointColor(contiguous, currentFeatureInlier, trackHasInliers),
+                             nbReprojectionErrorLinesDrawn, nbHighlightPointsDrawn, nbPointsDrawn,
+                             trackFeatures.nbLandmarks > 0);
 
           // draw track line
           const QColor  lineColor = getLineColor(contiguous, inliers, trackHasInliers);
@@ -526,12 +535,12 @@ namespace qtAliceVision
 
           QPointF prevPoint;
           QPointF curPoint;
-          if (_display3dTracks && trackHasInliers) // 3d track line
+          if (_display3dTracks && trackHasInliers)  // 3d track line
           {
             prevPoint = QPointF(previousFeature->rx(), previousFeature->ry());
             curPoint = QPointF(feature->rx(), feature->ry());
           }
-          else // 2d track line
+          else  // 2d track line
           {
             prevPoint = QPointF(previousFeature->x(), previousFeature->y());
             curPoint = QPointF(feature->x(), feature->y());
@@ -585,7 +594,7 @@ namespace qtAliceVision
 
     QSGGeometry::ColoredPoint2D* verticesPoints = geometryPoint->vertexDataAsColoredPoint2D();
 
-    if (params.nbMatchesToDraw == 0) // nothing to draw or something is not ready
+    if (params.nbMatchesToDraw == 0)  // nothing to draw or something is not ready
       return;
 
     int nbMatchesDrawn = 0;
