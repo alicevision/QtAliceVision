@@ -201,7 +201,7 @@ void MFeatures::updateGlobalTrackInfo(MViewFeaturesPerViewPerDesc* viewFeaturesP
         const aliceVision::IndexT frameId = viewFeatures.frameId;
         for (auto* feature : viewFeatures.features)
         {
-        const int trackId = feature->trackId();
+        const aliceVision::IndexT trackId = static_cast<aliceVision::IndexT>(feature->trackId());
         MGlobalTrackInfo& info = _globalTrackInfoPerTrack[trackId];
 
         info.nbFeatures++;
