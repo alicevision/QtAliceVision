@@ -7,6 +7,8 @@
 #include <aliceVision/feature/ImageDescriber.hpp>
 #include <aliceVision/sfm/pipeline/regionsIO.hpp>
 
+#include <algorithm>
+
 namespace qtAliceVision
 {
 
@@ -104,6 +106,8 @@ MFeatures::MFeatures()
   connect(this, &MFeatures::timeWindowChanged, this, &MFeatures::load);
   connect(this, &MFeatures::tracksChanged, this, &MFeatures::clearAndLoad);
   connect(this, &MFeatures::sfmDataChanged, this, &MFeatures::clearAndLoad);
+  connect(this, &MFeatures::tracksChanged, this, &MFeatures::loadGlobalInfo);
+  connect(this, &MFeatures::sfmDataChanged, this, &MFeatures::loadGlobalInfo);
 }
 
 MFeatures::~MFeatures()
@@ -150,11 +154,83 @@ void MFeatures::setMSfmData(MSfMData* sfmData)
   Q_EMIT sfmDataChanged();
 }
 
+void MFeatures::loadGlobalInfo()
+{
+  // safety check
+  if (_mtracks == nullptr || _mtracks->status() != MTracks::Ready) {
+    return;
+  }
+  if (_msfmData == nullptr || _msfmData->status() != MSfMData::Ready) {
+    return;
+  }
+  // get all viewIds from sfmData
+  std::vector<aliceVision::IndexT> viewIds;
+  getAllViewIds(viewIds);
+  if (viewIds.empty()) {
+    return;
+  }
+  
+  // load features from file in a seperate thread
+  qDebug("[QtAliceVision] Track global info: Load features from file in a seperate thread.");
+  setGlobalInfoStatus(Loading);
+  FeaturesIORunnable* ioRunnable = new FeaturesIORunnable(FeaturesIORunnable::IOParams(_featureFolder, viewIds, _describerTypes));
+  connect(ioRunnable, &FeaturesIORunnable::resultReady, this, &MFeatures::updateGlobalTrackInfo);
+  QThreadPool::globalInstance()->start(ioRunnable);
+}
+
+void MFeatures::updateGlobalTrackInfo(MViewFeaturesPerViewPerDesc* viewFeaturesPerViewPerDesc)
+{
+  const bool newFeaturesLoaded = (viewFeaturesPerViewPerDesc != nullptr);
+
+  const bool tracksUpdated = updateFromTracks(viewFeaturesPerViewPerDesc);
+  const bool sfmUpdated = updateFromSfM(viewFeaturesPerViewPerDesc);
+
+  const bool updated = newFeaturesLoaded && tracksUpdated && sfmUpdated;
+  if (updated)
+  {
+    // clear previous global track info
+    _globalTrackInfoPerTrack.clear();
+
+    // update global information for each track
+    for (auto& p1 : *viewFeaturesPerViewPerDesc)
+    {
+      auto& viewFeaturesPerView = p1.second;
+      for (auto& p2 : viewFeaturesPerView)
+      {
+        auto& viewFeatures = p2.second;
+        const aliceVision::IndexT frameId = viewFeatures.frameId;
+        for (auto* feature : viewFeatures.features)
+        {
+        const aliceVision::IndexT trackId = static_cast<aliceVision::IndexT>(feature->trackId());
+        MGlobalTrackInfo& info = _globalTrackInfoPerTrack[trackId];
+
+        info.nbFeatures++;
+
+        if (feature->landmarkId() != -1)
+            info.nbLandmarks++;
+
+        if (frameId < info.startFrameId)
+            info.startFrameId = frameId;
+
+        if (frameId > info.endFrameId)
+            info.endFrameId = frameId;
+        }
+      }
+    }
+
+    // clear loaded features
+    delete viewFeaturesPerViewPerDesc;
+  }
+
+  // done
+  setGlobalInfoStatus(Ready);
+}
+
 void MFeatures::load()
 {
   _outdatedFeatures = false;
 
-  if (status() == Loading)
+  if (_localInfoStatus == Loading)
   {
     qDebug("[QtAliceVision] Features: Unable to load, a load event is already running.");
     _outdatedFeatures = true;
@@ -164,24 +240,24 @@ void MFeatures::load()
   if (_describerTypes.empty())
   {
     qDebug("[QtAliceVision] Features: Unable to load, no describer types given.");
-    setStatus(None);
+    setLocalInfoStatus(None);
     return;
   }
 
   if (_featureFolder.isEmpty())
   {
     qDebug("[QtAliceVision] Features: Unable to load, no feature folder given.");
-    setStatus(None);
+    setLocalInfoStatus(None);
     return;
   }
 
   if (_currentViewId == aliceVision::UndefinedIndexT)
   {
-    setStatus(None);
+    setLocalInfoStatus(None);
     return;
   }
 
-  setStatus(Loading);
+  setLocalInfoStatus(Loading);
 
   std::vector<aliceVision::IndexT> viewIds;
 
@@ -218,7 +294,7 @@ void MFeatures::onFeaturesReady(MViewFeaturesPerViewPerDesc* viewFeaturesPerView
   if (_outdatedFeatures)
   {
     clearViewFeaturesPerViewPerDesc(viewFeaturesPerViewPerDesc); // handle nullptr cases
-    setStatus(None);
+    setLocalInfoStatus(None);
     load();
     return;
   }
@@ -236,8 +312,8 @@ void MFeatures::onFeaturesReady(MViewFeaturesPerViewPerDesc* viewFeaturesPerView
   }
 
   // update features with Tracks and SfMData information
-  const bool tracksUpdated = updateFromTracks();
-  const bool sfmUpdated = updateFromSfM();
+  const bool tracksUpdated = updateFromTracks(&_viewFeaturesPerViewPerDesc);
+  const bool sfmUpdated = updateFromSfM(&_viewFeaturesPerViewPerDesc);
 
   const bool featuresChanged = newFeaturesLoaded || tracksUpdated || sfmUpdated;
 
@@ -262,7 +338,7 @@ void MFeatures::onFeaturesReady(MViewFeaturesPerViewPerDesc* viewFeaturesPerView
   }
 
   // done
-  setStatus(Ready);
+  setLocalInfoStatus(Ready);
 }
 
 aliceVision::IndexT MFeatures::getCurrentFrameId() const
@@ -326,6 +402,16 @@ const MFeatures::MTrackFeaturesPerTrack* MFeatures::getTrackFeaturesPerTrack(con
     return nullptr;
 
   return &(itrDesc->second);
+}
+
+void MFeatures::getAllViewIds(std::vector<aliceVision::IndexT>& viewIdsToLoad)
+{
+  const aliceVision::sfmData::SfMData& sfmData = _msfmData->rawData();
+  for (const auto& viewPair : sfmData.getViews())
+  {
+    const aliceVision::sfmData::View& view = *(viewPair.second);
+    viewIdsToLoad.emplace_back(view.getViewId());
+  }
 }
 
 void MFeatures::getViewIdsToLoad(std::vector<aliceVision::IndexT>& viewIdsToLoad)
@@ -456,11 +542,11 @@ void MFeatures::getViewIdsToLoad(std::vector<aliceVision::IndexT>& viewIdsToLoad
                                                     << viewIdsToLoad.size() << " frame(s) requested.";
 }
 
-bool MFeatures::updateFromTracks()
+bool MFeatures::updateFromTracks(MViewFeaturesPerViewPerDesc* viewFeaturesPerViewPerDesc)
 {
   bool updated = false;
 
-  if (_viewFeaturesPerViewPerDesc.empty())
+  if (viewFeaturesPerViewPerDesc->empty())
   {
     qDebug("[QtAliceVision] Features: Unable to update from tracks, no features loaded.");
     return updated;
@@ -487,7 +573,7 @@ bool MFeatures::updateFromTracks()
   qDebug("[QtAliceVision] Features: Update from tracks.");
 
   // Update newly loaded features with information from the sfmData
-  for (auto& viewFeaturesPerViewPerDescPair : _viewFeaturesPerViewPerDesc)
+  for (auto& viewFeaturesPerViewPerDescPair : *viewFeaturesPerViewPerDesc)
   {
     const aliceVision::feature::EImageDescriberType descType = aliceVision::feature::EImageDescriberType_stringToEnum(viewFeaturesPerViewPerDescPair.first.toStdString());
 
@@ -546,11 +632,11 @@ bool MFeatures::updateFromTracks()
   return updated;
 }
 
-bool MFeatures::updateFromSfM()
+bool MFeatures::updateFromSfM(MViewFeaturesPerViewPerDesc* viewFeaturesPerViewPerDesc)
 {
   bool updated = false;
 
-  if (_viewFeaturesPerViewPerDesc.empty())
+  if (viewFeaturesPerViewPerDesc->empty())
   {
     qDebug("[QtAliceVision] Features: Unable to update from SfM, no features loaded.");
     return updated;
@@ -576,7 +662,7 @@ bool MFeatures::updateFromSfM()
 
   qDebug("[QtAliceVision] Features: Update from SfM.");
 
-  for (auto& viewFeaturesPerViewPerDescPair : _viewFeaturesPerViewPerDesc)
+  for (auto& viewFeaturesPerViewPerDescPair : *viewFeaturesPerViewPerDesc)
   {
     const aliceVision::feature::EImageDescriberType descType = aliceVision::feature::EImageDescriberType_stringToEnum(viewFeaturesPerViewPerDescPair.first.toStdString());
 
@@ -875,6 +961,70 @@ void MFeatures::clearAll()
   _trackFeaturesPerTrackPerDesc.clear(); // no need to delete feature pointers, they are hosted and manage by viewFeaturesPerViewPerDesc
 
   qInfo() << "[QtAliceVision] MFeatures clear";
+}
+
+void MFeatures::setLocalInfoStatus(Status status)
+{
+  if (status == _localInfoStatus)
+    return;
+  
+  _localInfoStatus = status;
+
+  if (_localInfoStatus == Error || _globalInfoStatus == Error)
+  {
+    setStatus(Error);
+    return;
+  }
+  
+  if (_localInfoStatus == Loading || _globalInfoStatus == Loading)
+  {
+    setStatus(Loading);
+    return;
+  }
+
+  if (_localInfoStatus == None && _globalInfoStatus == None)
+  {
+    setStatus(None);
+    return;
+  }
+
+  if (_localInfoStatus == Ready && _globalInfoStatus == Ready)
+  {
+    setStatus(Ready);
+    return;
+  }
+}
+
+void MFeatures::setGlobalInfoStatus(Status status)
+{
+  if (status == _globalInfoStatus)
+    return;
+  
+  _globalInfoStatus = status;
+
+  if (_localInfoStatus == Error || _globalInfoStatus == Error)
+  {
+    setStatus(Error);
+    return;
+  }
+  
+  if (_localInfoStatus == Loading || _globalInfoStatus == Loading)
+  {
+    setStatus(Loading);
+    return;
+  }
+
+  if (_localInfoStatus == None && _globalInfoStatus == None)
+  {
+    setStatus(None);
+    return;
+  }
+
+  if (_localInfoStatus == Ready && _globalInfoStatus == Ready)
+  {
+    setStatus(Ready);
+    return;
+  }
 }
 
 } // namespace qtAliceVision

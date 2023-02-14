@@ -5,6 +5,7 @@
 #include <MTracks.hpp>
 
 #include <QQuickItem>
+#include <QSGGeometry>
 
 namespace qtAliceVision {
 
@@ -39,6 +40,8 @@ namespace qtAliceVision {
       Q_PROPERTY(bool trackContiguousFilter MEMBER _trackContiguousFilter NOTIFY trackContiguousFilterChanged)
       // Display only tracks with at least one inlier
       Q_PROPERTY(bool trackInliersFilter MEMBER _trackInliersFilter NOTIFY trackInliersFilterChanged)
+      // Display track endpoints
+      Q_PROPERTY(bool displayTrackEndpoints MEMBER _displayTrackEndpoints NOTIFY displayTrackEndpointsChanged)
       // Features color
       Q_PROPERTY(QColor featureColor MEMBER _featureColor NOTIFY featureColorChanged)
       // Matches color
@@ -78,9 +81,9 @@ namespace qtAliceVision {
       float minFeatureScale = std::numeric_limits<float>::min();
       float maxFeatureScale = std::numeric_limits<float>::max();
 
-      std::size_t nbFeaturesToDraw = 0;
-      std::size_t nbMatchesToDraw = 0;
-      std::size_t nbLandmarksToDraw = 0;
+      int nbFeaturesToDraw = 0;
+      int nbMatchesToDraw = 0;
+      int nbLandmarksToDraw = 0;
     };
 
     /// Signals
@@ -99,6 +102,7 @@ namespace qtAliceVision {
     Q_SIGNAL void display3dTracksChanged();
     Q_SIGNAL void trackContiguousFilterChanged();
     Q_SIGNAL void trackInliersFilterChanged();
+    Q_SIGNAL void displayTrackEndpointsChanged();
 
     Q_SIGNAL void featureColorChanged();
     Q_SIGNAL void matchColorChanged();
@@ -120,12 +124,16 @@ namespace qtAliceVision {
     QSGNode* updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePaintNodeData* data) override;
 
   private:
-    void updatePaintFeatures(const PaintParams& params, QSGNode* oldNode, QSGNode* node);
-    void updatePaintTracks(const PaintParams& params, QSGNode* oldNode, QSGNode* node);
-    void updatePaintMatches(const PaintParams& params, QSGNode* oldNode, QSGNode* node);
-    void updatePaintLandmarks(const PaintParams& params, QSGNode* oldNode, QSGNode* node);
+    void updatePaintFeatures(const PaintParams& params, QSGNode* node);
+    void updatePaintTracks(const PaintParams& params, QSGNode* node);
+    void updatePaintMatches(const PaintParams& params, QSGNode* node);
+    void updatePaintLandmarks(const PaintParams& params, QSGNode* node);
 
     void initializePaintParams(PaintParams& params);
+
+    QSGGeometry* getCleanChildGeometry(QSGNode* node, int childIdx, int vertexCount, int indexCount = 0);
+    QSGGeometry* appendChildGeometry(QSGNode* node, int vertexCount, int indexCount = 0);
+    void setVertex(QSGGeometry::ColoredPoint2D* vertices, int idx, const QPointF& point, const QColor& c);
 
     bool _displayFeatures = true;
     bool _displayTracks = true;
@@ -141,10 +149,12 @@ namespace qtAliceVision {
     bool _display3dTracks = false;
     bool _trackContiguousFilter = true;
     bool _trackInliersFilter = false;
+    bool _displayTrackEndpoints = true;
 
     QColor _featureColor = QColor(20, 220, 80);
     QColor _matchColor = QColor(255, 127, 0);
     QColor _landmarkColor = QColor(255, 0, 0);
+    QColor _endpointColor = QColor(80, 80, 80);
 
     QString _describerType = "sift";
     MFeatures* _mfeatures = nullptr;
