@@ -51,6 +51,13 @@ find_package(Qt5 COMPONENTS Charts REQUIRED)
 # Target properties
 add_library(qtAliceVisionPlugin SHARED ${PLUGIN_SOURCES} ${PLUGIN_HEADERS} ${PLUGIN_MOCS})
 
+
+if(MSVC)
+    target_compile_options(qtAliceVisionPlugin PUBLIC /W4)
+else()
+    target_compile_options(qtAliceVisionPlugin PUBLIC -Wall -Wextra -Wconversion -Wsign-conversion -Wshadow -Wpedantic)
+endif()
+
 target_link_libraries(qtAliceVisionPlugin
   PUBLIC
     aliceVision_feature

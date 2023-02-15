@@ -86,7 +86,7 @@ private:
 	 * @param layer Layer name.
 	 * @return Layer index.
 	 */
-	std::size_t layerIndex(const std::string& layer) const;
+	int layerIndex(const std::string& layer) const;
 
 	/**
 	 * @brief Add children nodes if necessary to the given scene graph node to match this object's layers.

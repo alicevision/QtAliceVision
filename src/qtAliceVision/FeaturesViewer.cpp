@@ -77,18 +77,18 @@ namespace qtAliceVision
     switch (_featureDisplayMode)
     {
     case FeaturesViewer::Points:
-      paintFeaturesAsPoints(params, oldNode, node);
+      paintFeaturesAsPoints(params, node);
       break;
     case FeaturesViewer::Squares:
-      paintFeaturesAsSquares(params, oldNode, node);
+      paintFeaturesAsSquares(params, node);
       break;
     case FeaturesViewer::OrientedSquares:
-      paintFeaturesAsOrientedSquares(params, oldNode, node);
+      paintFeaturesAsOrientedSquares(params, node);
       break;
     }
   }
 
-  void FeaturesViewer::paintFeaturesAsPoints(const PaintParams& params, QSGNode* oldNode, QSGNode* node)
+  void FeaturesViewer::paintFeaturesAsPoints(const PaintParams& params, QSGNode* node)
   {
     std::vector<QPointF> points;
 
@@ -108,7 +108,7 @@ namespace qtAliceVision
     painter.drawPoints(node, "features", points, _featureColor, 6.f);
   }
 
-  void FeaturesViewer::paintFeaturesAsSquares(const PaintParams& params, QSGNode* oldNode, QSGNode* node)
+  void FeaturesViewer::paintFeaturesAsSquares(const PaintParams& params, QSGNode* node)
   {
     std::vector<QPointF> points;
 
@@ -143,7 +143,7 @@ namespace qtAliceVision
     painter.drawTriangles(node, "features", points, _featureColor);
   }
 
-  void FeaturesViewer::paintFeaturesAsOrientedSquares(const PaintParams& params, QSGNode* oldNode, QSGNode* node)
+  void FeaturesViewer::paintFeaturesAsOrientedSquares(const PaintParams& params, QSGNode* node)
   {
     std::vector<QLineF> lines;
 
@@ -190,8 +190,12 @@ namespace qtAliceVision
   {
     qDebug() << "[QtAliceVision] FeaturesViewer: Update paint " << _describerType << " tracks.";
 
-    const MFeatures::MTrackFeaturesPerTrack* trackFeaturesPerTrack = (_displayTracks && params.haveValidFeatures && params.haveValidTracks && params.haveValidLandmarks) ? _mfeatures->getTrackFeaturesPerTrack(_describerType) : nullptr;
-    const aliceVision::IndexT currentFrameId = (trackFeaturesPerTrack != nullptr) ? _mfeatures->getCurrentFrameId() : aliceVision::UndefinedIndexT;
+    const MFeatures::MTrackFeaturesPerTrack* trackFeaturesPerTrack =
+        (_displayTracks && params.haveValidFeatures && params.haveValidTracks && params.haveValidLandmarks) ?
+            _mfeatures->getTrackFeaturesPerTrack(_describerType) : nullptr;
+    const aliceVision::IndexT currentFrameId =
+        (trackFeaturesPerTrack != nullptr) ?
+            _mfeatures->getCurrentFrameId() : aliceVision::UndefinedIndexT;
 
     int nbTracksToDraw = 0;
     int nbTrackLinesToDraw[3] = {0, 0, 0};
@@ -266,13 +270,17 @@ namespace qtAliceVision
       }
     }
 
-    if (nbTrackLinesToDraw == 0)
+    if (nbTrackLinesToDraw == 0 || !params.haveValidTracks || !_displayTracks)
     {
-      painter.clearLayer(node, "trackLines_inliers");
-      painter.clearLayer(node, "trackLines_outliers");
+      painter.clearLayer(node, "trackEndpoints");
       painter.clearLayer(node, "highlightPoints");
-      painter.clearLayer(node, "trackPoints_inliers");
+      painter.clearLayer(node, "trackLines_gaps");
+      painter.clearLayer(node, "trackLines_reconstruction_none");
+      painter.clearLayer(node, "trackLines_reconstruction_partial_outliers");
+      painter.clearLayer(node, "trackLines_reconstruction_partial_inliers");
+      painter.clearLayer(node, "trackLines_reconstruction_full");
       painter.clearLayer(node, "trackPoints_outliers");
+      painter.clearLayer(node, "trackPoints_inliers");
       return;
     }
 
@@ -283,12 +291,15 @@ namespace qtAliceVision
       return;
     }
 
-    std::vector<QLineF> trackLinesInliers;
-    std::vector<QLineF> trackLinesOutliers;
-    std::vector<QLineF> trackLinesGaps;
+    std::vector<QPointF> trackEndpoints;
     std::vector<QPointF> highlightPoints;
-    std::vector<QPointF> trackPointsInliers;
-    std::vector<QPointF> trackPointsOutliers;
+    std::vector<QLineF> trackLines_reconstruction_none;
+    std::vector<QLineF> trackLines_reconstruction_partial_outliers;
+    std::vector<QLineF> trackLines_reconstruction_partial_inliers;
+    std::vector<QLineF> trackLines_reconstruction_full;
+    std::vector<QLineF> trackLines_gaps;
+    std::vector<QPointF> trackPoints_outliers;
+    std::vector<QPointF> trackPoints_inliers;
 
     for (const auto& trackFeaturesPair : *trackFeaturesPerTrack)
     {
@@ -308,15 +319,17 @@ namespace qtAliceVision
         continue;
       }
 
-      const bool trackHasInliers = (trackFeatures.nbLandmarks > 0);
-      if (_trackInliersFilter && !trackHasInliers)
+      // track frame interval contains current frame
+      if (currentFrameId < globalTrackInfo.startFrameId || currentFrameId > globalTrackInfo.endFrameId)
       {
         continue;
       }
 
+      const MFeatures::ReconstructionState state = globalTrackInfo.reconstructionState();
+      const bool trackHasInliers = (state != MFeatures::ReconstructionState::None);
+
       const MFeature* previousFeature = nullptr;
       aliceVision::IndexT previousFrameId = aliceVision::UndefinedIndexT;
-      bool previousTrackLineContiguous = false;
 
       for (aliceVision::IndexT frameId = trackFeatures.minFrameId; frameId <= trackFeatures.maxFrameId; ++frameId)
       {
@@ -338,73 +351,102 @@ namespace qtAliceVision
           const bool inliers = previousFeatureInlier && currentFeatureInlier;
 
           // geometry
-          QPointF prevPoint = (_display3dTracks && trackHasInliers) ? 
-                              QPointF(previousFeature->rx(), previousFeature->ry()) : 
+          QPointF prevPoint = (_display3dTracks && trackHasInliers) ?
+                              QPointF(previousFeature->rx(), previousFeature->ry()) :
                               QPointF(previousFeature->x(), previousFeature->y());
-          QPointF curPoint = (_display3dTracks && trackHasInliers) ? 
-                             QPointF(feature->rx(), feature->ry()) : 
+          QPointF curPoint = (_display3dTracks && trackHasInliers) ?
+                             QPointF(feature->rx(), feature->ry()) :
                              QPointF(feature->x(), feature->y());
           QLineF line = QLineF(prevPoint, curPoint);
 
           // track line
-          if (!contiguous && !_trackContiguousFilter)
-          {
-            trackLinesGaps.push_back(line);
-          }
-          else if (inliers)
-          {
-            trackLinesInliers.push_back(line);
-          }
-          else
-          {
-            trackLinesOutliers.push_back(line);
-          }
+         if (!contiguous)
+         {
+            trackLines_gaps.push_back(line);
+         }
+         else if (state == MFeatures::ReconstructionState::None && !_trackInliersFilter)
+         {
+            trackLines_reconstruction_none.push_back(line);
+         }
+         else if (state == MFeatures::ReconstructionState::Partial)
+         {
+            if (inliers)
+            {
+                trackLines_reconstruction_partial_inliers.push_back(line);
+            }
+            else
+            {
+                trackLines_reconstruction_partial_outliers.push_back(line);
+            }
+         }
+         else if (state == MFeatures::ReconstructionState::Complete)
+         {
+            trackLines_reconstruction_full.push_back(line);
+         }
 
           // highlight point
-          if (frameId == currentFrameId && (_trackDisplayMode == WithAllMatches || _trackDisplayMode == WithCurrentMatches))
+          if (_trackDisplayMode == WithAllMatches || _trackDisplayMode == WithCurrentMatches)
           {
-            highlightPoints.push_back(curPoint);
+            if (previousFrameId == currentFrameId)
+            {
+                highlightPoints.push_back(prevPoint);
+            }
+            else if (frameId == currentFrameId)
+            {
+                highlightPoints.push_back(curPoint);
+            }
           }
 
           // track points
           // current point
-          if (_trackDisplayMode == WithAllMatches || (frameId == currentFrameId && _trackDisplayMode == WithCurrentMatches))
+          if (_trackDisplayMode == WithAllMatches ||
+             (frameId == currentFrameId && _trackDisplayMode == WithCurrentMatches))
           {
             if (currentFeatureInlier)
             {
-              trackPointsInliers.push_back(curPoint);
+              trackPoints_inliers.push_back(curPoint);
             }
             else
             {
-              trackPointsOutliers.push_back(curPoint);
+              trackPoints_outliers.push_back(curPoint);
             }
           }
           // first point in time window
-          if (_trackDisplayMode == WithAllMatches && previousFrameId == trackFeatures.minFrameId)
+          if ((_trackDisplayMode == WithAllMatches && previousFrameId == trackFeatures.minFrameId) ||
+              (_trackDisplayMode == WithCurrentMatches && previousFrameId == currentFrameId))
           {
             if (previousFeatureInlier)
             {
-              trackPointsInliers.push_back(prevPoint);
+              trackPoints_inliers.push_back(prevPoint);
             }
             else
             {
-              trackPointsOutliers.push_back(prevPoint);
+              trackPoints_outliers.push_back(prevPoint);
             }
           }
 
-          previousTrackLineContiguous = contiguous;
-
           if (_displayTrackEndpoints)
           {
-            const QColor endpointColor = getEndpointColor(trackHasInliers);
 
             // draw global start point
             if (previousFrameId == globalTrackInfo.startFrameId)
-                drawEndpoint(prevPoint, curPoint, endpointColor, nbEndpointsDrawn);
+            {
+                QPointF triangle[] = {QPointF(0, 0), QPointF(-2, 1), QPointF(-2, -1)};
+                double angle = QLineF(prevPoint, curPoint).angle() - rotation();
+                auto tr = QTransform().rotate(-angle).scale(10, 10);
+                for (int i = 0; i < 3; ++i)
+                    trackEndpoints.push_back(prevPoint + tr.map(triangle[i]));
+            }
 
             // draw global end point
             if (frameId == globalTrackInfo.endFrameId)
-                drawEndpoint(curPoint, prevPoint, endpointColor, nbEndpointsDrawn);
+            {
+                QPointF triangle[] = {QPointF(0, 0), QPointF(-2, 1), QPointF(-2, -1)};
+                double angle = QLineF(curPoint, prevPoint).angle() - rotation();
+                auto tr = QTransform().rotate(-angle).scale(10, 10);
+                for (int i = 0; i < 3; ++i)
+                    trackEndpoints.push_back(curPoint + tr.map(triangle[i]));
+            }
           }
         }
 
@@ -414,12 +456,15 @@ namespace qtAliceVision
       }
     }
 
-    painter.drawLines(node, "trackLines_inliers", trackLinesInliers, _landmarkColor, 2.f);
-    painter.drawLines(node, "trackLines_outliers", trackLinesOutliers, _matchColor, 2.f);
-    painter.drawLines(node, "trackLines_gaps", trackLinesGaps, QColor(50, 50, 50), 2.f);
+    painter.drawTriangles(node, "trackEndpoints", trackEndpoints, _endpointColor);
     painter.drawPoints(node, "highlightPoints", highlightPoints, QColor(255, 255, 255), 6.f);
-    painter.drawPoints(node, "trackPoints_inliers", trackPointsInliers, _landmarkColor, 4.f);
-    painter.drawPoints(node, "trackPoints_outliers", trackPointsOutliers, _matchColor, 4.f);
+    painter.drawLines(node, "trackLines_reconstruction_none", trackLines_reconstruction_none, _featureColor, 2.f);
+    painter.drawLines(node, "trackLines_reconstruction_partial_outliers", trackLines_reconstruction_partial_outliers, _matchColor, 2.f);
+    painter.drawLines(node, "trackLines_reconstruction_partial_inliers", trackLines_reconstruction_partial_inliers, _landmarkColor, 2.f);
+    painter.drawLines(node, "trackLines_reconstruction_full", trackLines_reconstruction_full, _landmarkColor, 5.f);
+    painter.drawLines(node, "trackLines_gaps", trackLines_gaps, _trackContiguousFilter ? QColor(0, 0, 0, 0) : QColor(50, 50, 50), 2.f);
+    painter.drawPoints(node, "trackPoints_outliers", trackPoints_outliers, _matchColor, 4.f);
+    painter.drawPoints(node, "trackPoints_inliers", trackPoints_inliers, _landmarkColor, 4.f);
   }
 
   void FeaturesViewer::updatePaintMatches(const PaintParams& params, QSGNode* node)
@@ -563,54 +608,6 @@ namespace qtAliceVision
     updatePaintLandmarks(params, node);
 
     return node;
-  }
-
-  QSGGeometry* FeaturesViewer::getCleanChildGeometry(QSGNode* node, int childIdx, int vertexCount, int indexCount) 
-  {
-    auto* root = static_cast<QSGGeometryNode*>(node->childAtIndex(childIdx));
-    if (!root) 
-      return nullptr;
-    
-    root->markDirty(QSGNode::DirtyGeometry);
-
-    QSGGeometry* geometry = root->geometry();
-    geometry->allocate(vertexCount, indexCount);
-    return geometry;
-  }
-
-  QSGGeometry* FeaturesViewer::appendChildGeometry(QSGNode* node, int vertexCount, int indexCount) 
-  {
-    auto root = new QSGGeometryNode;
-    // use VertexColorMaterial to later be able to draw selection in another color
-    auto material = new QSGVertexColorMaterial;
-
-    QSGGeometry* geometry = new QSGGeometry(
-      QSGGeometry::defaultAttributes_ColoredPoint2D(),
-      vertexCount,
-      indexCount,
-      QSGGeometry::UnsignedIntType);
-
-    geometry->setIndexDataPattern(QSGGeometry::StaticPattern);
-    geometry->setVertexDataPattern(QSGGeometry::StaticPattern);
-
-    root->setGeometry(geometry);
-    root->setFlags(QSGNode::OwnsGeometry);
-    root->setFlags(QSGNode::OwnsMaterial);
-    root->setMaterial(material);
-
-    node->appendChildNode(root);
-
-    return geometry;
-  }
-
-  void FeaturesViewer::setVertex(QSGGeometry::ColoredPoint2D* vertices, int idx, const QPointF& point, const QColor& c)
-  {
-    vertices[idx].set(static_cast<float>(point.x()),
-                      static_cast<float>(point.y()),
-                      static_cast<unsigned char>(c.red()),
-                      static_cast<unsigned char>(c.green()),
-                      static_cast<unsigned char>(c.blue()),
-                      static_cast<unsigned char>(c.alpha()));
   }
 
 } // namespace qtAliceVision

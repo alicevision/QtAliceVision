@@ -126,13 +126,13 @@ namespace qtAliceVision {
 
   private:
     void initializePaintParams(PaintParams& params);
-    void updatePaintFeatures(const PaintParams& params, QSGNode* oldNode, QSGNode* node);
-    void paintFeaturesAsPoints(const PaintParams& params, QSGNode* oldNode, QSGNode* node);
-    void paintFeaturesAsSquares(const PaintParams& params, QSGNode* oldNode, QSGNode* node);
-    void paintFeaturesAsOrientedSquares(const PaintParams& params, QSGNode* oldNode, QSGNode* node);
-    void updatePaintTracks(const PaintParams& params, QSGNode* oldNode, QSGNode* node);
-    void updatePaintMatches(const PaintParams& params, QSGNode* oldNode, QSGNode* node);
-    void updatePaintLandmarks(const PaintParams& params, QSGNode* oldNode, QSGNode* node);
+    void updatePaintFeatures(const PaintParams& params, QSGNode* node);
+    void paintFeaturesAsPoints(const PaintParams& params, QSGNode* node);
+    void paintFeaturesAsSquares(const PaintParams& params, QSGNode* node);
+    void paintFeaturesAsOrientedSquares(const PaintParams& params, QSGNode* node);
+    void updatePaintTracks(const PaintParams& params, QSGNode* node);
+    void updatePaintMatches(const PaintParams& params, QSGNode* node);
+    void updatePaintLandmarks(const PaintParams& params, QSGNode* node);
 
     bool _displayFeatures = true;
     bool _displayTracks = true;
@@ -160,14 +160,17 @@ namespace qtAliceVision {
 
     Painter painter = Painter({
       "features",
-      "highlightPoints", 
-      "trackLines_inliers",
-      "trackLines_outliers",
-      "trackLines_gaps", 
+      "trackEndpoints",
+      "highlightPoints",
+      "trackLines_reconstruction_none",
+      "trackLines_reconstruction_partial_outliers",
+      "trackLines_reconstruction_partial_inliers",
+      "trackLines_reconstruction_full",
+      "trackLines_gaps",
+      "trackPoints_outliers",
       "trackPoints_inliers",
-      "trackPoints_outliers", 
-      "matches", 
-      "reprojectionErrors", 
+      "matches",
+      "reprojectionErrors",
       "landmarks"
     });
   };

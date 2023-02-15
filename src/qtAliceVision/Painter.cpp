@@ -11,13 +11,13 @@ Painter::Painter(const std::vector<std::string>& layers) :
 {
 }
 
-std::size_t Painter::layerIndex(const std::string& layer) const
+int Painter::layerIndex(const std::string& layer) const
 {
 	for (std::size_t idx = 0; idx < _layers.size(); idx++)
 	{
 		if (_layers[idx] == layer) 
 		{
-			return idx;
+			return static_cast<int>(idx);
 		}
 	}
 	return -1;
@@ -31,7 +31,7 @@ bool Painter::ensureGeometry(QSGNode* node) const
 		return false;
 	}
 
-	while (node->childCount() < _layers.size())
+	while (node->childCount() < static_cast<int>(_layers.size()))
 	{
 		auto root = new QSGGeometryNode;
 		
@@ -59,7 +59,7 @@ QSGGeometryNode* Painter::getGeometryNode(QSGNode* node, const std::string& laye
 		return nullptr;
 	}
 
-	std::size_t index = layerIndex(layer);
+	int index = layerIndex(layer);
 	if (index < 0) 
 	{
 		qDebug() << "[qtAliceVision] Painter::getGeometryNode: could not find corresponding index for layer " << layer;
@@ -100,7 +100,7 @@ void Painter::drawPoints(QSGNode* node,
 
 	root->markDirty(QSGNode::DirtyGeometry);
 	auto geometry = root->geometry();
-	geometry->allocate(points.size(), 0);
+	geometry->allocate(static_cast<int>(points.size()), 0);
 
 	geometry->setDrawingMode(QSGGeometry::DrawPoints);
     geometry->setLineWidth(pointSize);
@@ -115,7 +115,7 @@ void Painter::drawPoints(QSGNode* node,
     for (std::size_t i = 0; i < points.size(); i++)
     {
     	const QPointF& p = points[i];
-    	vertices[i].set(p.x(), p.y());
+    	vertices[i].set(static_cast<float>(p.x()), static_cast<float>(p.y()));
     }
 
     auto* material = static_cast<QSGFlatColorMaterial*>(root->material());
@@ -143,7 +143,7 @@ void Painter::drawLines(QSGNode* node,
 
 	root->markDirty(QSGNode::DirtyGeometry);
 	auto geometry = root->geometry();
-	geometry->allocate(lines.size() * 2, 0);
+	geometry->allocate(static_cast<int>(lines.size()) * 2, 0);
 
 	geometry->setDrawingMode(QSGGeometry::DrawLines);
     geometry->setLineWidth(lineWidth);
@@ -158,8 +158,8 @@ void Painter::drawLines(QSGNode* node,
     for (std::size_t i = 0; i < lines.size(); i++)
     {
     	const QLineF& l = lines[i];
-    	vertices[2 * i].set(l.x1(), l.y1());
-    	vertices[2 * i + 1].set(l.x2(), l.y2());
+    	vertices[2 * i].set(static_cast<float>(l.x1()), static_cast<float>(l.y1()));
+    	vertices[2 * i + 1].set(static_cast<float>(l.x2()), static_cast<float>(l.y2()));
     }
 
     auto* material = static_cast<QSGFlatColorMaterial*>(root->material());
@@ -186,7 +186,7 @@ void Painter::drawTriangles(QSGNode* node,
 
 	root->markDirty(QSGNode::DirtyGeometry);
 	auto geometry = root->geometry();
-	geometry->allocate(points.size(), 0);
+	geometry->allocate(static_cast<int>(points.size()), 0);
 
 	geometry->setDrawingMode(QSGGeometry::DrawTriangles);
 
@@ -200,7 +200,7 @@ void Painter::drawTriangles(QSGNode* node,
     for (std::size_t i = 0; i < points.size(); i++)
     {
     	const QPointF& p = points[i];
-    	vertices[i].set(p.x(), p.y());
+    	vertices[i].set(static_cast<float>(p.x()), static_cast<float>(p.y()));
     }
 
     auto* material = static_cast<QSGFlatColorMaterial*>(root->material());
