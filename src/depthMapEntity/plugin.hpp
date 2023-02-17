@@ -2,10 +2,11 @@
 
 #include "DepthMapEntity.hpp"
 
-#include <QtQml/QtQml>
 #include <QtQml/QQmlExtensionPlugin>
+#include <QtQml/QtQml>
 
-namespace depthMapEntity {
+namespace depthMapEntity
+{
 
 class DepthMapEntityPlugin : public QQmlExtensionPlugin
 {
@@ -25,5 +26,4 @@ public:
         qmlRegisterType<DepthMapEntity>(uri, 2, 1, "DepthMapEntity");
     }
 };
-
-}
+} // namespace depthMapEntity

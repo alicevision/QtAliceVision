@@ -12,7 +12,7 @@ NamespaceIndentation: None
 MaxEmptyLinesToKeep: 1
 KeepEmptyLinesAtTheStartOfBlocks: true
 PointerAlignment: Left
-SpaceBeforeParens: Never
+SpaceBeforeParens: ControlStatements
 SpaceBeforeAssignmentOperators: true
 SpacesInParentheses: false
 AlwaysBreakTemplateDeclarations: true

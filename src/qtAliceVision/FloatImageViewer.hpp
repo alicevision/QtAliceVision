@@ -1,14 +1,14 @@
 #pragma once
 
 #include "FloatTexture.hpp"
-#include "Surface.hpp"
 #include "ShaderImageViewer.hpp"
+#include "Surface.hpp"
 
 #include <QQuickItem>
-#include <QUrl>
 #include <QRunnable>
 #include <QSGGeometryNode>
 #include <QSGSimpleMaterial>
+#include <QUrl>
 
 #include <QSharedPointer>
 #include <QVariant>
@@ -17,13 +17,12 @@
 #include <memory>
 #include <string>
 
-
 namespace qtAliceVision
 {
 
 /**
-    * @brief QRunnable object dedicated to load image using AliceVision.
-    */
+ * @brief QRunnable object dedicated to load image using AliceVision.
+ */
 class FloatImageIORunnable : public QObject, public QRunnable
 {
     Q_OBJECT
@@ -35,7 +34,8 @@ public:
     Q_SLOT void run() override;
 
     /// Emitted when the image is loaded
-    Q_SIGNAL void resultReady(QSharedPointer<qtAliceVision::FloatImage> image, QSize sourceSize, const QVariantMap& metadata);
+    Q_SIGNAL void resultReady(QSharedPointer<qtAliceVision::FloatImage> image, QSize sourceSize,
+                              const QVariantMap& metadata);
 
 private:
     QUrl _path;
@@ -43,12 +43,12 @@ private:
 };
 
 /**
-    * @brief Load and display image.
-    */
+ * @brief Load and display image.
+ */
 class FloatImageViewer : public QQuickItem
 {
 
-Q_OBJECT
+    Q_OBJECT
     // Q_PROPERTIES
     Q_PROPERTY(QUrl source MEMBER _source NOTIFY sourceChanged)
 
@@ -80,46 +80,45 @@ public:
     explicit FloatImageViewer(QQuickItem* parent = nullptr);
     ~FloatImageViewer() override;
 
-    bool loading() const
-    {
-        return _loading;
-    }
+    bool loading() const { return _loading; }
 
     void setLoading(bool loading);
 
-    QSize sourceSize() const
-    {
-        return _sourceSize;
-    }
+    QSize sourceSize() const { return _sourceSize; }
 
-    const QVariantMap& metadata() const
-    {
-        return _metadata;
-    }
+    const QVariantMap& metadata() const { return _metadata; }
 
     int getDownscaleLevel() const { return _downscaleLevel; }
     void setDownscaleLevel(int level)
     {
-        if (level == _downscaleLevel) return;
+        if (level == _downscaleLevel)
+            return;
 
         // Level [0;3]
-        if (level < 0 && level > 6) level = 4;
+        if (level < 0 && level > 6)
+            level = 4;
         _downscaleLevel = level;
         reload();
-        //Q_EMIT downscaleLevelChanged();
+        // Q_EMIT downscaleLevelChanged();
     }
 
-    enum class EChannelMode : quint8 { RGBA, RGB, R, G, B, A };
+    enum class EChannelMode : quint8
+    {
+        RGBA,
+        RGB,
+        R,
+        G,
+        B,
+        A
+    };
     Q_ENUM(EChannelMode)
 
     bool getCropFisheye() const { return _cropFisheye; }
-    void setCropFisheye(bool cropFisheye) {
-        _cropFisheye = cropFisheye;
-    }
+    void setCropFisheye(bool cropFisheye) { _cropFisheye = cropFisheye; }
 
     Q_SIGNAL void isCropFisheyeChanged();
 
-    //Q_SIGNALS
+    // Q_SIGNALS
     Q_SIGNAL void sourceChanged();
     Q_SIGNAL void loadingChanged();
     Q_SIGNAL void clearBeforeLoadChanged();
@@ -145,7 +144,8 @@ private:
     /// Reload image from source
     void reload();
     /// Handle result from asynchronous file loading
-    Q_SLOT void onResultReady(QSharedPointer<qtAliceVision::FloatImage> image, QSize sourceSize, const QVariantMap& metadata);
+    Q_SLOT void onResultReady(QSharedPointer<qtAliceVision::FloatImage> image, QSize sourceSize,
+                              const QVariantMap& metadata);
     /// Custom QSGNode update
     QSGNode* updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePaintNodeData* data) override;
 
@@ -179,7 +179,7 @@ private:
     bool _cropFisheye = false;
 };
 
-}
+} // namespace qtAliceVision
 
 Q_DECLARE_METATYPE(qtAliceVision::FloatImage)
 Q_DECLARE_METATYPE(QSharedPointer<qtAliceVision::FloatImage>)

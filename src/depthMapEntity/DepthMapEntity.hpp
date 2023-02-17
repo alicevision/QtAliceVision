@@ -3,15 +3,15 @@
 #include <Qt3DCore/QEntity>
 #include <QtCore/QUrl>
 
-#include <Qt3DCore/QTransform>
-#include <Qt3DRender/QParameter>
-#include <Qt3DRender/QMaterial>
-#include <Qt3DExtras/QPerVertexColorMaterial>
 #include <QDiffuseSpecularMaterial>
 #include <QGeometryRenderer>
+#include <Qt3DCore/QTransform>
+#include <Qt3DExtras/QPerVertexColorMaterial>
+#include <Qt3DRender/QMaterial>
+#include <Qt3DRender/QParameter>
 
-
-namespace depthMapEntity {
+namespace depthMapEntity
+{
 
 class DepthMapEntity : public Qt3DCore::QEntity
 {
@@ -26,7 +26,8 @@ class DepthMapEntity : public Qt3DCore::QEntity
 
 public:
     // Identical to SceneLoader.Status
-    enum Status {
+    enum Status
+    {
         None = 0,
         Loading,
         Ready,
@@ -37,7 +38,8 @@ public:
     DepthMapEntity(Qt3DCore::QNode* = nullptr);
     ~DepthMapEntity() = default;
 
-    enum class DisplayMode {
+    enum class DisplayMode
+    {
         Points,
         Triangles,
         Unknown
@@ -49,8 +51,9 @@ public:
 
     Status status() const { return _status; }
 
-    void setStatus(Status status) {
-        if(status == _status)
+    void setStatus(Status status)
+    {
+        if (status == _status)
             return;
         _status = status;
         Q_EMIT statusChanged(_status);
@@ -92,5 +95,4 @@ private:
     Qt3DRender::QMaterial* _currentMaterial = nullptr;
     Qt3DRender::QGeometryRenderer* _meshRenderer = nullptr;
 };
-
-}
+} // namespace depthMapEntity

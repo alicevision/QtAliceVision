@@ -6,8 +6,8 @@
 #include <QRunnable>
 #include <QUrl>
 
-
-namespace qtAliceVision {
+namespace qtAliceVision
+{
 
 class TracksIORunnable;
 
@@ -23,11 +23,12 @@ class MTracks : public QObject
     Q_PROPERTY(size_t nbTracks READ nbTracks CONSTANT)
 
 public:
-    enum Status {
-            None = 0,
-            Loading,
-            Ready,
-            Error
+    enum Status
+    {
+        None = 0,
+        Loading,
+        Ready,
+        Error
     };
     Q_ENUM(Status)
 
@@ -50,50 +51,44 @@ public:
 private:
     void clear()
     {
-        if(_tracks)
+        if (_tracks)
             _tracks->clear();
-        if(_tracksPerView)
+        if (_tracksPerView)
             _tracksPerView->clear();
         qInfo() << "[QtAliceVision] MTracks clear";
         Q_EMIT tracksChanged();
     }
 
 public:
-    const aliceVision::track::TracksMap* tracksPtr() const
-    {
-        return _tracks.get();
-    }
-    const aliceVision::track::TracksMap& tracks() const
-    {
-        return *_tracks;
-    }
-    const aliceVision::track::TracksPerView& tracksPerView() const
-    {
-        return *_tracksPerView;
-    }
+    const aliceVision::track::TracksMap* tracksPtr() const { return _tracks.get(); }
+    const aliceVision::track::TracksMap& tracks() const { return *_tracks; }
+    const aliceVision::track::TracksPerView& tracksPerView() const { return *_tracksPerView; }
 
     QUrl getMatchingFolder() const { return _matchingFolder; }
-    void setMatchingFolder(const QUrl& matchingFolder) {
-        if(matchingFolder == _matchingFolder)
+    void setMatchingFolder(const QUrl& matchingFolder)
+    {
+        if (matchingFolder == _matchingFolder)
             return;
-       _matchingFolder = matchingFolder;
-       Q_EMIT matchingFolderChanged();
+        _matchingFolder = matchingFolder;
+        Q_EMIT matchingFolderChanged();
     }
 
     Status status() const { return _status; }
-    void setStatus(Status status) {
-       if(status == _status)
-           return;
-       _status = status;
-       Q_EMIT statusChanged(_status);
-       if(status == Ready || status == Error)
-       {
-           Q_EMIT tracksChanged();
-       }
+    void setStatus(Status status)
+    {
+        if (status == _status)
+            return;
+        _status = status;
+        Q_EMIT statusChanged(_status);
+        if (status == Ready || status == Error)
+        {
+            Q_EMIT tracksChanged();
+        }
     }
 
-    inline size_t nbTracks() const {
-        if(!_tracks || _status != MTracks::Ready)
+    inline size_t nbTracks() const
+    {
+        if (!_tracks || _status != MTracks::Ready)
             return 0;
         return _tracks->size();
     }
@@ -105,4 +100,4 @@ private:
     Status _status = MTracks::None;
 };
 
-}
+} // namespace qtAliceVision

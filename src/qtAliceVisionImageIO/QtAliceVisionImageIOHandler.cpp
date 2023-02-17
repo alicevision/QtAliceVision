@@ -1,23 +1,22 @@
 #include "QtAliceVisionImageIOHandler.hpp"
 
-#include <QImage>
-#include <QIODevice>
-#include <QFileDevice>
-#include <QVariant>
 #include <QDataStream>
 #include <QDebug>
+#include <QFileDevice>
+#include <QIODevice>
+#include <QImage>
+#include <QVariant>
 
-#include <OpenImageIO/imageio.h>
 #include <OpenImageIO/imagebuf.h>
 #include <OpenImageIO/imagebufalgo.h>
+#include <OpenImageIO/imageio.h>
 
-#include <aliceVision/image/io.hpp>
 #include <aliceVision/image/Image.hpp>
+#include <aliceVision/image/io.hpp>
 #include <aliceVision/image/pixelTypes.hpp>
 
 #include <iostream>
 #include <memory>
-
 
 inline const float& clamp(const float& v, const float& lo, const float& hi)
 {
@@ -35,13 +34,11 @@ QtAliceVisionImageIOHandler::QtAliceVisionImageIOHandler()
     qDebug() << "[QtAliceVisionImageIO] QtAliceVisionImageIOHandler";
 }
 
-QtAliceVisionImageIOHandler::~QtAliceVisionImageIOHandler()
-{
-}
+QtAliceVisionImageIOHandler::~QtAliceVisionImageIOHandler() {}
 
 bool QtAliceVisionImageIOHandler::canRead() const
 {
-    if(canRead(device()))
+    if (canRead(device()))
     {
         setFormat(name());
         return true;
@@ -49,10 +46,10 @@ bool QtAliceVisionImageIOHandler::canRead() const
     return false;
 }
 
-bool QtAliceVisionImageIOHandler::canRead(QIODevice *device)
+bool QtAliceVisionImageIOHandler::canRead(QIODevice* device)
 {
     QFileDevice* d = dynamic_cast<QFileDevice*>(device);
-    if(!d)
+    if (!d)
     {
         qDebug() << "[QtAliceVisionImageIO] Cannot read: invalid device";
         return false;
@@ -76,10 +73,10 @@ bool QtAliceVisionImageIOHandler::canRead(QIODevice *device)
     return true;
 }
 
-bool QtAliceVisionImageIOHandler::read(QImage *image)
+bool QtAliceVisionImageIOHandler::read(QImage* image)
 {
     QFileDevice* d = dynamic_cast<QFileDevice*>(device());
-    if(!d)
+    if (!d)
     {
         qWarning() << "[QtAliceVisionImageIO] Read image failed (not a FileDevice).";
         return false;
@@ -96,10 +93,8 @@ bool QtAliceVisionImageIOHandler::read(QImage *image)
     oiio::ImageSpec inSpec = aliceVision::image::readImageSpec(path);
     float pixelAspectRatio = inSpec.get_float_attribute("PixelAspectRatio", 1.0f);
 
-    qDebug() << "[QtAliceVisionImageIO] width:" << inSpec.width
-            << ", height:" << inSpec.height
-            << ", nchannels:" << inSpec.nchannels
-            << ", pixelAspectRatio:" << pixelAspectRatio;
+    qDebug() << "[QtAliceVisionImageIO] width:" << inSpec.width << ", height:" << inSpec.height
+             << ", nchannels:" << inSpec.nchannels << ", pixelAspectRatio:" << pixelAspectRatio;
 
     qDebug() << "[QtAliceVisionImageIO] create output QImage";
     QImage result(inSpec.width, inSpec.height, QImage::Format_RGB32);
@@ -146,11 +141,11 @@ bool QtAliceVisionImageIOHandler::write(const QImage&)
 
 bool QtAliceVisionImageIOHandler::supportsOption(ImageOption option) const
 {
-    if(option == Size)
+    if (option == Size)
         return true;
-    if(option == ImageTransformation)
+    if (option == ImageTransformation)
         return true;
-    if(option == ScaledSize)
+    if (option == ScaledSize)
         return true;
 
     return false;
@@ -159,7 +154,7 @@ bool QtAliceVisionImageIOHandler::supportsOption(ImageOption option) const
 QVariant QtAliceVisionImageIOHandler::option(ImageOption option) const
 {
     QFileDevice* d = dynamic_cast<QFileDevice*>(device());
-    if(!d)
+    if (!d)
     {
         qDebug("[QtAliceVisionImageIO] Read image failed (not a FileDevice).");
         return QImageIOHandler::option(option);
@@ -171,35 +166,52 @@ QVariant QtAliceVisionImageIOHandler::option(ImageOption option) const
     {
         return QSize(spec.width, spec.height);
     }
-    else if(option == ImageTransformation)
+    else if (option == ImageTransformation)
     {
         int orientation = 0;
         spec.getattribute("orientation", oiio::TypeInt, &orientation);
-        switch(orientation)
+        switch (orientation)
         {
-        case 1: return QImageIOHandler::TransformationNone; break;
-        case 2: return QImageIOHandler::TransformationMirror; break;
-        case 3: return QImageIOHandler::TransformationRotate180; break;
-        case 4: return QImageIOHandler::TransformationFlip; break;
-        case 5: return QImageIOHandler::TransformationFlipAndRotate90; break;
-        case 6: return QImageIOHandler::TransformationRotate90; break;
-        case 7: return QImageIOHandler::TransformationMirrorAndRotate90; break;
-        case 8: return QImageIOHandler::TransformationRotate270; break;
-        default: break;
+            case 1:
+                return QImageIOHandler::TransformationNone;
+                break;
+            case 2:
+                return QImageIOHandler::TransformationMirror;
+                break;
+            case 3:
+                return QImageIOHandler::TransformationRotate180;
+                break;
+            case 4:
+                return QImageIOHandler::TransformationFlip;
+                break;
+            case 5:
+                return QImageIOHandler::TransformationFlipAndRotate90;
+                break;
+            case 6:
+                return QImageIOHandler::TransformationRotate90;
+                break;
+            case 7:
+                return QImageIOHandler::TransformationMirrorAndRotate90;
+                break;
+            case 8:
+                return QImageIOHandler::TransformationRotate270;
+                break;
+            default:
+                break;
         }
     }
     return QImageIOHandler::option(option);
 }
 
-void QtAliceVisionImageIOHandler::setOption(ImageOption option, const QVariant &value)
+void QtAliceVisionImageIOHandler::setOption(ImageOption option, const QVariant& value)
 {
     Q_UNUSED(option);
     Q_UNUSED(value);
     if (option == ScaledSize && value.isValid())
     {
         _scaledSize = value.value<QSize>();
-        qDebug() << "[QtAliceVisionImageIO] setOption scaledSize: "
-                 << _scaledSize.width() << "x" << _scaledSize.height();
+        qDebug() << "[QtAliceVisionImageIO] setOption scaledSize: " << _scaledSize.width() << "x"
+                 << _scaledSize.height();
     }
 }
 

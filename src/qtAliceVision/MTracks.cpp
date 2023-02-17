@@ -4,12 +4,12 @@
 #include <aliceVision/track/TracksBuilder.hpp>
 #include <aliceVision/track/tracksUtils.hpp>
 
-#include <QThreadPool>
-#include <QFileInfo>
 #include <QDebug>
+#include <QFileInfo>
+#include <QThreadPool>
 
-
-namespace qtAliceVision {
+namespace qtAliceVision
+{
 
 /**
  * @brief QRunnable object dedicated to load sfmData using AliceVision.
@@ -19,13 +19,15 @@ class TracksIORunnable : public QObject, public QRunnable
     Q_OBJECT
 
 public:
-    explicit TracksIORunnable(const QUrl& matchingFolder):
-    _matchingFolder(matchingFolder)
-    {}
+    explicit TracksIORunnable(const QUrl& matchingFolder)
+        : _matchingFolder(matchingFolder)
+    {
+    }
 
     Q_SLOT void run() override;
 
-    Q_SIGNAL void resultReady(aliceVision::track::TracksMap* _tracks, aliceVision::track::TracksPerView* _tracksPerView);
+    Q_SIGNAL void resultReady(aliceVision::track::TracksMap* _tracks,
+                              aliceVision::track::TracksPerView* _tracksPerView);
 
 private:
     const QUrl _matchingFolder;
@@ -41,8 +43,7 @@ void TracksIORunnable::run()
     {
         matching::PairwiseMatches pairwiseMatches;
         if (!matching::Load(pairwiseMatches,
-                            /*viewsKeysFilter=*/{},
-                            {_matchingFolder.toLocalFile().toStdString()},
+                            /*viewsKeysFilter=*/{}, {_matchingFolder.toLocalFile().toStdString()},
                             /*descTypes=*/{},
                             /*maxNbMatches=*/0,
                             /*minNbMatches=*/0))
@@ -54,10 +55,11 @@ void TracksIORunnable::run()
         tracksBuilder.exportToSTL(*tracks);
         track::computeTracksPerView(*tracks, *tracksPerView);
     }
-    catch(std::exception& e)
+    catch (std::exception& e)
     {
         qDebug() << "[QtAliceVision] Failed to load matches: " << _matchingFolder << "."
-                 << "\n" << e.what();
+                 << "\n"
+                 << e.what();
     }
 
     Q_EMIT resultReady(tracks.release(), tracksPerView.release());
@@ -77,13 +79,13 @@ MTracks::~MTracks()
 void MTracks::load()
 {
     qDebug() << "MTracks::load _matchingFolder: " << _matchingFolder;
-    if(_matchingFolder.isEmpty())
+    if (_matchingFolder.isEmpty())
     {
         setStatus(None);
         clear();
         return;
     }
-    if(!QFileInfo::exists(_matchingFolder.toLocalFile()))
+    if (!QFileInfo::exists(_matchingFolder.toLocalFile()))
     {
         setStatus(Error);
         clear();
@@ -107,6 +109,6 @@ void MTracks::onReady(aliceVision::track::TracksMap* tracks, aliceVision::track:
     setStatus(Ready);
 }
 
-}
+} // namespace qtAliceVision
 
 #include "MTracks.moc"

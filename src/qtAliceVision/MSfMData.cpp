@@ -1,12 +1,13 @@
 #include "MSfMData.hpp"
 
-#include <QThreadPool>
-#include <QFileInfo>
 #include <QDebug>
+#include <QFileInfo>
+#include <QThreadPool>
 
 #include <aliceVision/sfmDataIO/sfmDataIO.hpp>
 
-namespace qtAliceVision {
+namespace qtAliceVision
+{
 
 /**
  * @brief QRunnable object dedicated to load sfmData using AliceVision.
@@ -16,9 +17,10 @@ class SfmDataIORunnable : public QObject, public QRunnable
     Q_OBJECT
 public:
     explicit SfmDataIORunnable(const QUrl& sfmDataPath, aliceVision::sfmData::SfMData* sfmData)
-    : _sfmDataPath(sfmDataPath)
-    , _sfmData(sfmData)
-    {}
+        : _sfmDataPath(sfmDataPath)
+        , _sfmData(sfmData)
+    {
+    }
 
     /// Load SfM based on input parameters
     Q_SLOT void run() override;
@@ -41,18 +43,19 @@ void SfmDataIORunnable::run()
 
     try
     {
-        if(!sfmDataIO::Load(*_sfmData, _sfmDataPath.toLocalFile().toStdString(), sfmDataIO::ESfMData::ALL))
+        if (!sfmDataIO::Load(*_sfmData, _sfmDataPath.toLocalFile().toStdString(), sfmDataIO::ESfMData::ALL))
         {
             qDebug() << "[QtAliceVision] Failed to load sfmData: " << _sfmDataPath << ".";
         }
     }
-    catch(std::exception& e)
+    catch (std::exception& e)
     {
         qDebug() << "[QtAliceVision] Failed to load sfmData: " << _sfmDataPath << "."
-                 << "\n" << e.what();
+                 << "\n"
+                 << e.what();
     }
 
-    Q_EMIT resultReady(); //sfmData.release());
+    Q_EMIT resultReady(); // sfmData.release());
 }
 
 MSfMData::MSfMData()
@@ -77,14 +80,15 @@ void MSfMData::load()
 {
     _outdated = false;
 
-    if(_sfmDataPath.isEmpty())
+    if (_sfmDataPath.isEmpty())
     {
-        if (status() == Loading) _outdated = true;
+        if (status() == Loading)
+            _outdated = true;
         setStatus(None);
         clear();
         return;
     }
-    if(!QFileInfo::exists(_sfmDataPath.toLocalFile()))
+    if (!QFileInfo::exists(_sfmDataPath.toLocalFile()))
     {
         setStatus(Error);
         clear();
@@ -100,18 +104,20 @@ void MSfMData::load()
         connect(ioRunnable, &SfmDataIORunnable::resultReady, this, &MSfMData::onSfmDataReady);
         QThreadPool::globalInstance()->start(ioRunnable);
     }
-    else {
+    else
+    {
         _outdated = true;
     }
 }
 
-QString MSfMData::getUrlFromViewId(int viewId){
-    return QString::fromUtf8(_sfmData->getView(aliceVision::IndexT (viewId)).getImagePath().c_str());
+QString MSfMData::getUrlFromViewId(int viewId)
+{
+    return QString::fromUtf8(_sfmData->getView(aliceVision::IndexT(viewId)).getImagePath().c_str());
 }
 
 void MSfMData::onSfmDataReady()
 {
-    if(!_loadingSfmData)
+    if (!_loadingSfmData)
         return;
 
     if (_outdated)
@@ -128,6 +134,6 @@ void MSfMData::onSfmDataReady()
     setStatus(Ready);
 }
 
-}
+} // namespace qtAliceVision
 
 #include "MSfMData.moc"

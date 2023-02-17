@@ -1,26 +1,26 @@
 #include "DepthMapEntity.hpp"
 
-#include <Qt3DRender/QEffect>
-#include <Qt3DRender/QTechnique>
-#include <Qt3DRender/QRenderPass>
-#include <Qt3DRender/QShaderProgram>
+#include <QDebug>
+#include <Qt3DCore/QTransform>
 #include <Qt3DRender/QAttribute>
 #include <Qt3DRender/QBuffer>
-#include <Qt3DCore/QTransform>
-#include <QtCore/QFileInfo>
+#include <Qt3DRender/QEffect>
+#include <Qt3DRender/QRenderPass>
+#include <Qt3DRender/QShaderProgram>
+#include <Qt3DRender/QTechnique>
 #include <QtCore/QDir>
-#include <QDebug>
+#include <QtCore/QFileInfo>
 
-#include <OpenImageIO/imageio.h>
 #include <OpenImageIO/imagebuf.h>
 #include <OpenImageIO/imagebufalgo.h>
+#include <OpenImageIO/imageio.h>
 
-#include <aliceVision/image/io.hpp>
 #include <aliceVision/image/Image.hpp>
-#include <aliceVision/mvsData/jetColorMap.hpp>
+#include <aliceVision/image/io.hpp>
+#include <aliceVision/mvsData/Matrix3x3.hpp>
 #include <aliceVision/mvsData/Point2d.hpp>
 #include <aliceVision/mvsData/Point3d.hpp>
-#include <aliceVision/mvsData/Matrix3x3.hpp>
+#include <aliceVision/mvsData/jetColorMap.hpp>
 #include <aliceVision/numeric/numeric.hpp>
 
 #include <cmath>
@@ -28,8 +28,8 @@
 
 using namespace aliceVision;
 
-
-namespace depthMapEntity {
+namespace depthMapEntity
+{
 
 DepthMapEntity::DepthMapEntity(Qt3DCore::QNode* parent)
     : Qt3DCore::QEntity(parent)
@@ -42,10 +42,10 @@ DepthMapEntity::DepthMapEntity(Qt3DCore::QNode* parent)
 
 void DepthMapEntity::setSource(const QUrl& value)
 {
-    if(_source == value)
+    if (_source == value)
         return;
 
-    if(!value.isValid())
+    if (!value.isValid())
     {
         qDebug() << "[DepthMapEntity] Invalid source";
         _status = DepthMapEntity::Error;
@@ -56,19 +56,17 @@ void DepthMapEntity::setSource(const QUrl& value)
 
     QFileInfo fileInfo = QFileInfo(_source.path());
     QString filename = fileInfo.fileName();
-    if(filename.contains("depthMap"))
+    if (filename.contains("depthMap"))
     {
         _depthMapSource = _source;
-        _simMapSource = QUrl::fromLocalFile(
-            QFileInfo(fileInfo.dir(), filename.replace("depthMap", "simMap")).filePath()
-        );
+        _simMapSource =
+            QUrl::fromLocalFile(QFileInfo(fileInfo.dir(), filename.replace("depthMap", "simMap")).filePath());
     }
-    else if(filename.contains("simMap"))
+    else if (filename.contains("simMap"))
     {
         _simMapSource = _source;
-        _depthMapSource = QUrl::fromLocalFile(
-            QFileInfo(fileInfo.dir(), filename.replace("simMap", "depthMap")).filePath()
-        );
+        _depthMapSource =
+            QUrl::fromLocalFile(QFileInfo(fileInfo.dir(), filename.replace("simMap", "depthMap")).filePath());
     }
     else
     {
@@ -83,7 +81,7 @@ void DepthMapEntity::setSource(const QUrl& value)
 
 void DepthMapEntity::setDisplayMode(const DepthMapEntity::DisplayMode& value)
 {
-    if(_displayMode == value)
+    if (_displayMode == value)
         return;
     _displayMode = value;
     updateMaterial();
@@ -93,7 +91,7 @@ void DepthMapEntity::setDisplayMode(const DepthMapEntity::DisplayMode& value)
 
 void DepthMapEntity::setDisplayColor(bool value)
 {
-    if(_displayColor == value)
+    if (_displayColor == value)
         return;
     _displayColor = value;
     updateMaterial();
@@ -103,32 +101,32 @@ void DepthMapEntity::setDisplayColor(bool value)
 
 void DepthMapEntity::updateMaterial()
 {
-    if(_status != DepthMapEntity::Ready)
-      return;
+    if (_status != DepthMapEntity::Ready)
+        return;
 
     Qt3DRender::QMaterial* newMaterial = nullptr;
 
-    switch(_displayMode)
+    switch (_displayMode)
     {
-    case DisplayMode::Points:
-        newMaterial = _cloudMaterial;
-        _meshRenderer->setPrimitiveType(Qt3DRender::QGeometryRenderer::Points);
-        break;
-    case DisplayMode::Triangles:
-        _meshRenderer->setPrimitiveType(Qt3DRender::QGeometryRenderer::Triangles);
-        if(_displayColor)
-            newMaterial = _colorMaterial;
-        else
+        case DisplayMode::Points:
+            newMaterial = _cloudMaterial;
+            _meshRenderer->setPrimitiveType(Qt3DRender::QGeometryRenderer::Points);
+            break;
+        case DisplayMode::Triangles:
+            _meshRenderer->setPrimitiveType(Qt3DRender::QGeometryRenderer::Triangles);
+            if (_displayColor)
+                newMaterial = _colorMaterial;
+            else
+                newMaterial = _diffuseMaterial;
+            break;
+        default:
             newMaterial = _diffuseMaterial;
-        break;
-    default:
-        newMaterial = _diffuseMaterial;
     }
 
-    if(newMaterial == _currentMaterial)
+    if (newMaterial == _currentMaterial)
         return;
 
-    if(_currentMaterial)
+    if (_currentMaterial)
         removeComponent(_currentMaterial);
 
     _currentMaterial = newMaterial;
@@ -137,7 +135,7 @@ void DepthMapEntity::updateMaterial()
 
 void DepthMapEntity::setPointSize(const float& value)
 {
-    if(_pointSize == value)
+    if (_pointSize == value)
         return;
     _pointSize = value;
     _pointSizeParameter->setValue(value);
@@ -212,18 +210,13 @@ void DepthMapEntity::createMaterials()
 
 bool validTriangleRatio(const Vec3f& a, const Vec3f& b, const Vec3f& c)
 {
-    std::vector<double> distances = {
-        DistanceL2(a, b),
-        DistanceL2(b, c),
-        DistanceL2(c, a)
-    };
+    std::vector<double> distances = {DistanceL2(a, b), DistanceL2(b, c), DistanceL2(c, a)};
     double mi = std::min({distances[0], distances[1], distances[2]});
     double ma = std::max({distances[0], distances[1], distances[2]});
-    if(ma == 0.0)
+    if (ma == 0.0)
         return false;
     return (mi / ma) > 1.0 / 5.0;
 }
-
 
 // private
 void DepthMapEntity::loadDepthMap()
@@ -232,7 +225,7 @@ void DepthMapEntity::loadDepthMap()
 
     _status = DepthMapEntity::Loading;
 
-    if(_meshRenderer)
+    if (_meshRenderer)
     {
         removeComponent(_meshRenderer);
         _meshRenderer->deleteLater();
@@ -261,7 +254,7 @@ void DepthMapEntity::loadDepthMap()
 
     Point3d CArr;
     const oiio::ParamValue* cParam = inSpec.find_attribute("AliceVision:CArr");
-    if(cParam)
+    if (cParam)
     {
         qDebug() << "[DepthMapEntity] CArr: " << cParam->nvalues();
         std::copy_n(static_cast<const double*>(cParam->data()), 3, CArr.m);
@@ -274,10 +267,10 @@ void DepthMapEntity::loadDepthMap()
     }
 
     Matrix3x3 iCamArr;
-    const oiio::ParamValue * icParam = inSpec.find_attribute("AliceVision:iCamArr",
-        oiio::TypeDesc(oiio::TypeDesc::DOUBLE, oiio::TypeDesc::MATRIX33));
+    const oiio::ParamValue* icParam =
+        inSpec.find_attribute("AliceVision:iCamArr", oiio::TypeDesc(oiio::TypeDesc::DOUBLE, oiio::TypeDesc::MATRIX33));
 
-    if(icParam)
+    if (icParam)
     {
         qDebug() << "[DepthMapEntity] iCamArr: " << icParam->nvalues();
         std::copy_n(static_cast<const double*>(icParam->data()), 9, iCamArr.m);
@@ -292,7 +285,7 @@ void DepthMapEntity::loadDepthMap()
     // Load sim map
 
     image::Image<float> simMap;
-    if(_simMapSource.isValid())
+    if (_simMapSource.isValid())
     {
         const std::string simMapPath = _simMapSource.toLocalFile().toStdString();
         qDebug() << "[DepthMapEntity] Load sim map: " << _simMapSource.toLocalFile();
@@ -319,21 +312,22 @@ void DepthMapEntity::loadDepthMap()
 
     oiio::ImageBufAlgo::PixelStats stats = oiio::ImageBufAlgo::computePixelStats(inBuf);
 
-    for(int y = 0; y < depthMap.Height(); ++y)
+    for (int y = 0; y < depthMap.Height(); ++y)
     {
-        for(int x = 0; x < depthMap.Width(); ++x)
+        for (int x = 0; x < depthMap.Width(); ++x)
         {
             float depthValue = depthMap(y, x);
-            if(!std::isfinite(depthValue) || depthValue <= 0.f)
+            if (!std::isfinite(depthValue) || depthValue <= 0.f)
                 continue;
 
-            Point3d p = CArr + (iCamArr * Point2d(static_cast<double>(x), static_cast<double>(y))).normalize() * depthValue;
+            Point3d p =
+                CArr + (iCamArr * Point2d(static_cast<double>(x), static_cast<double>(y))).normalize() * depthValue;
             Vec3f position(static_cast<float>(p.x), static_cast<float>(-p.y), static_cast<float>(-p.z));
 
             indexPerPixel[static_cast<std::size_t>(y * depthMap.Width() + x)] = static_cast<int>(positions.size());
             positions.push_back(position);
 
-            if(validSimMap)
+            if (validSimMap)
             {
                 float simValue = simMap(y, x);
                 image::RGBfColor color = getColorFromJetColorMap(simValue);
@@ -357,10 +351,10 @@ void DepthMapEntity::loadDepthMap()
 
     // vertices buffer
     std::vector<std::size_t> trianglesIndexes;
-    trianglesIndexes.reserve(2*3*positions.size());
-    for(int y = 0; y < depthMap.Height()-1; ++y)
+    trianglesIndexes.reserve(2 * 3 * positions.size());
+    for (int y = 0; y < depthMap.Height() - 1; ++y)
     {
-        for(int x = 0; x < depthMap.Width()-1; ++x)
+        for (int x = 0; x < depthMap.Width() - 1; ++x)
         {
             int pixelIndexA = indexPerPixel[static_cast<std::size_t>(y * depthMap.Width() + x)];
             int pixelIndexB = indexPerPixel[static_cast<std::size_t>((y + 1) * depthMap.Width() + x)];
@@ -373,23 +367,15 @@ void DepthMapEntity::loadDepthMap()
             std::size_t sPixelIndexC = static_cast<std::size_t>(pixelIndexC);
             std::size_t sPixelIndexD = static_cast<std::size_t>(pixelIndexD);
 
-            if(pixelIndexA != -1 &&
-                pixelIndexB != -1 &&
-                pixelIndexC != -1 &&
-                validTriangleRatio(positions[sPixelIndexA],
-                                    positions[sPixelIndexB],
-                                    positions[sPixelIndexC]))
+            if (pixelIndexA != -1 && pixelIndexB != -1 && pixelIndexC != -1 &&
+                validTriangleRatio(positions[sPixelIndexA], positions[sPixelIndexB], positions[sPixelIndexC]))
             {
                 trianglesIndexes.push_back(sPixelIndexA);
                 trianglesIndexes.push_back(sPixelIndexB);
                 trianglesIndexes.push_back(sPixelIndexC);
             }
-            if(pixelIndexC != -1 &&
-                pixelIndexD != -1 &&
-                pixelIndexA != -1 &&
-                validTriangleRatio(positions[sPixelIndexC],
-                                    positions[sPixelIndexD],
-                                    positions[sPixelIndexA]))
+            if (pixelIndexC != -1 && pixelIndexD != -1 && pixelIndexA != -1 &&
+                validTriangleRatio(positions[sPixelIndexC], positions[sPixelIndexD], positions[sPixelIndexA]))
             {
                 trianglesIndexes.push_back(sPixelIndexC);
                 trianglesIndexes.push_back(sPixelIndexD);
@@ -401,17 +387,17 @@ void DepthMapEntity::loadDepthMap()
 
     std::vector<Vec3f> triangles;
     triangles.resize(trianglesIndexes.size());
-    for(std::size_t i = 0; i < trianglesIndexes.size(); ++i)
+    for (std::size_t i = 0; i < trianglesIndexes.size(); ++i)
     {
         triangles[i] = positions[trianglesIndexes[i]];
     }
     std::vector<Vec3f> normals;
     normals.resize(triangles.size());
-    for(std::size_t i = 0; i < trianglesIndexes.size(); i+=3)
+    for (std::size_t i = 0; i < trianglesIndexes.size(); i += 3)
     {
-        Vec3f normal = (triangles[i+1]-triangles[i]).cross(triangles[i+2]-triangles[i]);
-        for(std::size_t t = 0; t < 3; ++t)
-            normals[i+t] = normal;
+        Vec3f normal = (triangles[i + 1] - triangles[i]).cross(triangles[i + 2] - triangles[i]);
+        for (std::size_t t = 0; t < 3; ++t)
+            normals[i + t] = normal;
     }
 
     QBuffer* vertexBuffer = new QBuffer;
@@ -451,7 +437,7 @@ void DepthMapEntity::loadDepthMap()
     // Duplicate colors as we cannot use indexes!
     std::vector<image::RGBfColor> colorsFlat;
     colorsFlat.reserve(trianglesIndexes.size());
-    for(std::size_t i = 0; i < trianglesIndexes.size(); ++i)
+    for (std::size_t i = 0; i < trianglesIndexes.size(); ++i)
     {
         colorsFlat.push_back(colors[trianglesIndexes[i]]);
     }
@@ -487,4 +473,4 @@ void DepthMapEntity::loadDepthMap()
     qDebug() << "[DepthMapEntity] Mesh Renderer added";
 }
 
-} // namespace
+} // namespace depthMapEntity

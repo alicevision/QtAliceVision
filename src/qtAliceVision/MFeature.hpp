@@ -7,7 +7,8 @@
 #include <aliceVision/sfm/pipeline/regionsIO.hpp>
 #include <aliceVision/sfmData/SfMData.hpp>
 
-namespace qtAliceVision {
+namespace qtAliceVision
+{
 
 /**
  * @brief QObject wrapper around a PointFeature.
@@ -27,17 +28,19 @@ class MFeature : public QObject
 
 public:
     MFeature() = default;
-    MFeature(const MFeature& other) : QObject() { _feat = other._feat; }
-
-    explicit MFeature(const aliceVision::feature::PointFeature& feat, QObject* parent=nullptr):
-    QObject(parent)
-    , _feat(feat)
-    {}
-
-    void clearLandmarkInfo()
+    MFeature(const MFeature& other)
+        : QObject()
     {
-        setLandmarkInfo(-1, aliceVision::Vec2f(.0f, .0f));
+        _feat = other._feat;
     }
+
+    explicit MFeature(const aliceVision::feature::PointFeature& feat, QObject* parent = nullptr)
+        : QObject(parent)
+        , _feat(feat)
+    {
+    }
+
+    void clearLandmarkInfo() { setLandmarkInfo(-1, aliceVision::Vec2f(.0f, .0f)); }
 
     void setLandmarkInfo(int landmarkId, const aliceVision::Vec2f& reprojection)
     {
@@ -45,19 +48,10 @@ public:
         _reprojection = reprojection;
     }
 
-    void setReprojection(const aliceVision::Vec2f& reprojection)
-    {
-      _reprojection = reprojection;
-    }
+    void setReprojection(const aliceVision::Vec2f& reprojection) { _reprojection = reprojection; }
 
-    void clearTrack()
-    {
-        setTrackId(-1);
-    }
-    void setTrackId(int trackId)
-    {
-        _trackId = trackId;
-    }
+    void clearTrack() { setTrackId(-1); }
+    void setTrackId(int trackId) { _trackId = trackId; }
     inline float x() const { return _feat.x(); }
     inline float y() const { return _feat.y(); }
     inline float scale() const { return _feat.scale(); }
@@ -88,9 +82,10 @@ public:
     /// io parameters: folder, viewId, describerType
     using IOParams = std::tuple<QUrl, aliceVision::IndexT, QString>;
 
-    explicit FeatureIORunnable(const IOParams& params):
-    _params(params)
-    {}
+    explicit FeatureIORunnable(const IOParams& params)
+        : _params(params)
+    {
+    }
 
     /// Load features based on input parameters
     Q_SLOT void run() override;
@@ -107,4 +102,4 @@ private:
     IOParams _params;
 };
 
-}
+} // namespace qtAliceVision

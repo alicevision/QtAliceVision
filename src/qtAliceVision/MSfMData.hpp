@@ -7,7 +7,8 @@
 #include <aliceVision/sfmData/SfMData.hpp>
 #include <memory>
 
-namespace qtAliceVision {
+namespace qtAliceVision
+{
 
 class SfmDataIORunnable;
 
@@ -24,11 +25,12 @@ class MSfMData : public QObject
     Q_PROPERTY(QVariantList viewsIds READ getViewsIds NOTIFY viewsIdsChanged)
 
 public:
-    enum Status {
-            None = 0,
-            Loading,
-            Ready,
-            Error
+    enum Status
+    {
+        None = 0,
+        Loading,
+        Ready,
+        Error
     };
     Q_ENUM(Status)
 
@@ -54,49 +56,44 @@ private:
     void clear();
 
 public:
-    const aliceVision::sfmData::SfMData& rawData() const
-    {
-        return *_sfmData;
-    }
-    aliceVision::sfmData::SfMData& rawData()
-    {
-        return *_sfmData;
-    }
-    const aliceVision::sfmData::SfMData* rawDataPtr() const
-    {
-        return _sfmData.get();
-    }
+    const aliceVision::sfmData::SfMData& rawData() const { return *_sfmData; }
+    aliceVision::sfmData::SfMData& rawData() { return *_sfmData; }
+    const aliceVision::sfmData::SfMData* rawDataPtr() const { return _sfmData.get(); }
 
     QUrl getSfmDataPath() const { return _sfmDataPath; }
-    void setSfmDataPath(const QUrl& sfmDataPath) {
-        if(sfmDataPath == _sfmDataPath)
+    void setSfmDataPath(const QUrl& sfmDataPath)
+    {
+        if (sfmDataPath == _sfmDataPath)
             return;
-       _sfmDataPath = sfmDataPath;
-       load();
-       Q_EMIT sfmDataPathChanged();
+        _sfmDataPath = sfmDataPath;
+        load();
+        Q_EMIT sfmDataPathChanged();
     }
 
     Status status() const { return _status; }
-    void setStatus(Status status) {
-       if(status == _status)
-           return;
-       _status = status;
-       Q_EMIT statusChanged(_status);
-       if(status == Ready || status == Error)
-       {
-           Q_EMIT sfmDataChanged();
-       }
+    void setStatus(Status status)
+    {
+        if (status == _status)
+            return;
+        _status = status;
+        Q_EMIT statusChanged(_status);
+        if (status == Ready || status == Error)
+        {
+            Q_EMIT sfmDataChanged();
+        }
     }
 
-    inline size_t nbCameras() const {
-        if(!_sfmData || _status != Ready)
+    inline size_t nbCameras() const
+    {
+        if (!_sfmData || _status != Ready)
             return 0;
         return _sfmData->getValidViews().size();
     }
 
-    QVariantList getViewsIds() const{
+    QVariantList getViewsIds() const
+    {
         QVariantList viewsIds;
-        for(const auto& id: _sfmData->getValidViews())
+        for (const auto& id : _sfmData->getValidViews())
         {
             viewsIds.append(id);
         }
@@ -111,4 +108,4 @@ private:
     bool _outdated = false;
 };
 
-}
+} // namespace qtAliceVision

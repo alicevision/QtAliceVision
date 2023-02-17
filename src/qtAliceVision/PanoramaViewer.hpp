@@ -1,13 +1,13 @@
 #pragma once
 
-#include "FloatTexture.hpp"
 #include "FloatImageViewer.hpp"
+#include "FloatTexture.hpp"
 #include "Surface.hpp"
 
 #include <QQuickItem>
-#include <QUrl>
 #include <QRunnable>
 #include <QSharedPointer>
+#include <QUrl>
 #include <QVariant>
 #include <QVector4D>
 
@@ -15,63 +15,57 @@
 #include <aliceVision/types.hpp>
 
 #include <map>
-#include <string>
 #include <memory>
+#include <string>
 
 namespace qtAliceVision
 {
-    /**
-     * @brief Displays a list of Float Images.
-     */
-    class PanoramaViewer : public QQuickItem
-    {
-        Q_OBJECT
-            Q_PROPERTY(QSize sourceSize READ sourceSize NOTIFY sourceSizeChanged)
+/**
+ * @brief Displays a list of Float Images.
+ */
+class PanoramaViewer : public QQuickItem
+{
+    Q_OBJECT
+    Q_PROPERTY(QSize sourceSize READ sourceSize NOTIFY sourceSizeChanged)
 
-            Q_PROPERTY(qtAliceVision::MSfMData* msfmData READ getMSfmData WRITE setMSfmData NOTIFY sfmDataChanged)
+    Q_PROPERTY(qtAliceVision::MSfMData* msfmData READ getMSfmData WRITE setMSfmData NOTIFY sfmDataChanged)
 
-            Q_PROPERTY(int downscale MEMBER _downscale NOTIFY downscaleChanged)
+    Q_PROPERTY(int downscale MEMBER _downscale NOTIFY downscaleChanged)
 
-    public:
-        explicit PanoramaViewer(QQuickItem* parent = nullptr);
-        ~PanoramaViewer() override;
+public:
+    explicit PanoramaViewer(QQuickItem* parent = nullptr);
+    ~PanoramaViewer() override;
 
-        QSize sourceSize() const
-        {
-            return _sourceSize;
-        }
+    QSize sourceSize() const { return _sourceSize; }
 
-        MSfMData* getMSfmData() { return _msfmData; }
-        void setMSfmData(MSfMData* sfmData);
+    MSfMData* getMSfmData() { return _msfmData; }
+    void setMSfmData(MSfMData* sfmData);
 
-        void msfmDataUpdate()
-        {
-            computeDownscale();
-        }
+    void msfmDataUpdate() { computeDownscale(); }
 
-    public:
-        Q_SIGNAL void sourceSizeChanged();
+public:
+    Q_SIGNAL void sourceSizeChanged();
 
-        Q_SIGNAL void sfmDataChanged();
+    Q_SIGNAL void sfmDataChanged();
 
-        Q_SIGNAL void downscaleChanged();
+    Q_SIGNAL void downscaleChanged();
 
-        Q_SIGNAL void downscaleReady();
+    Q_SIGNAL void downscaleReady();
 
-    private:
-        /// Custom QSGNode update
-        QSGNode* updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePaintNodeData* data) override;
+private:
+    /// Custom QSGNode update
+    QSGNode* updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePaintNodeData* data) override;
 
-        void computeDownscale();
+    void computeDownscale();
 
-    private:
-        QSize _sourceSize = QSize(3000, 1500);
+private:
+    QSize _sourceSize = QSize(3000, 1500);
 
-        MSfMData* _msfmData = nullptr;
+    MSfMData* _msfmData = nullptr;
 
-        int _downscale = 4;
-    };
+    int _downscale = 4;
+};
 
-}  // ns qtAliceVision
+} // namespace qtAliceVision
 
 Q_DECLARE_METATYPE(QList<QPoint>)
