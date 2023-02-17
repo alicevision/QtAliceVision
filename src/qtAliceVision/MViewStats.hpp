@@ -10,7 +10,6 @@
 
 #include <aliceVision/sfm/sfmStatistics.hpp>
 #include <aliceVision/utils/Histogram.hpp>
-#include <MFeature.hpp>
 #include <MSfMData.hpp>
 
 namespace qtAliceVision

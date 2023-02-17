@@ -1,7 +1,6 @@
 # Target srcs
 set(PLUGIN_SOURCES
     FeaturesViewer.cpp
-    MFeature.cpp
     MFeatures.cpp
     MSfMData.cpp
     MViewStats.cpp
@@ -17,7 +16,6 @@ set(PLUGIN_SOURCES
 set(PLUGIN_HEADERS
     plugin.hpp
     FeaturesViewer.hpp
-    MFeature.hpp
     MFeatures.hpp
     MSfMData.hpp
     MTracks.hpp
@@ -33,7 +31,6 @@ set(PLUGIN_HEADERS
 
 set(PLUGIN_MOCS
     FeaturesViewer.hpp
-    MFeature.hpp
     MFeatures.hpp
     MSfMData.hpp
     MViewStats.hpp

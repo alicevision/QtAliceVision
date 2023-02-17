@@ -10,7 +10,6 @@
 #include <aliceVision/sfmData/SfMData.hpp>
 #include <aliceVision/track/Track.hpp>
 #include <aliceVision/utils/Histogram.hpp>
-#include <MFeature.hpp>
 #include <MSfMData.hpp>
 #include <MTracks.hpp>
 
