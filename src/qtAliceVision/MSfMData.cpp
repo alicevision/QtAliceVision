@@ -9,32 +9,6 @@
 namespace qtAliceVision
 {
 
-/**
- * @brief QRunnable object dedicated to load sfmData using AliceVision.
- */
-class SfmDataIORunnable : public QObject, public QRunnable
-{
-    Q_OBJECT
-public:
-    explicit SfmDataIORunnable(const QUrl& sfmDataPath, aliceVision::sfmData::SfMData* sfmData)
-        : _sfmDataPath(sfmDataPath)
-        , _sfmData(sfmData)
-    {
-    }
-
-    /// Load SfM based on input parameters
-    Q_SLOT void run() override;
-
-    /**
-     * @brief  Emitted when sfmData have been loaded and sfmData objects created.
-     */
-    Q_SIGNAL void resultReady();
-
-private:
-    const QUrl _sfmDataPath;
-    aliceVision::sfmData::SfMData* _sfmData;
-};
-
 void SfmDataIORunnable::run()
 {
     using namespace aliceVision;

@@ -50,6 +50,11 @@ class FeaturesViewer : public QQuickItem
     Q_PROPERTY(QColor matchColor MEMBER _matchColor NOTIFY matchColorChanged)
     // Landmarks color
     Q_PROPERTY(QColor landmarkColor MEMBER _landmarkColor NOTIFY landmarkColorChanged)
+    // Currenty selected ViewId
+    Q_PROPERTY(quint32 currentViewId MEMBER _currentViewId NOTIFY currentViewIdChanged)
+    // Time window to consider
+    Q_PROPERTY(bool enableTimeWindow MEMBER _enableTimeWindow NOTIFY enableTimeWindowChanged)
+    Q_PROPERTY(int timeWindow MEMBER _timeWindow NOTIFY timeWindowChanged)
 
     /// Data properties
 
@@ -57,6 +62,10 @@ class FeaturesViewer : public QQuickItem
     Q_PROPERTY(QString describerType MEMBER _describerType NOTIFY describerTypeChanged)
     // Pointer to Features
     Q_PROPERTY(qtAliceVision::MFeatures* mfeatures READ getMFeatures WRITE setMFeatures NOTIFY featuresChanged)
+    // Pointer to Tracks
+    Q_PROPERTY(qtAliceVision::MTracks* mtracks READ getMTracks WRITE setMTracks NOTIFY tracksChanged)
+    // Pointer to SfmData
+    Q_PROPERTY(qtAliceVision::MSfMData* msfmData READ getMSfMData WRITE setMSfMData NOTIFY sfmDataChanged)
 
 public:
     /// Helpers
@@ -85,10 +94,6 @@ public:
 
         float minFeatureScale = std::numeric_limits<float>::min();
         float maxFeatureScale = std::numeric_limits<float>::max();
-
-        int nbFeaturesToDraw = 0;
-        int nbMatchesToDraw = 0;
-        int nbLandmarksToDraw = 0;
     };
 
     /// Signals
@@ -113,8 +118,14 @@ public:
     Q_SIGNAL void matchColorChanged();
     Q_SIGNAL void landmarkColorChanged();
 
+    Q_SIGNAL void currentViewIdChanged();
+    Q_SIGNAL void enableTimeWindowChanged();
+    Q_SIGNAL void timeWindowChanged();
+
     Q_SIGNAL void describerTypeChanged();
     Q_SIGNAL void featuresChanged();
+    Q_SIGNAL void tracksChanged();
+    Q_SIGNAL void sfmDataChanged();
 
     /// Public methods
 
@@ -123,6 +134,12 @@ public:
 
     MFeatures* getMFeatures() { return _mfeatures; }
     void setMFeatures(MFeatures* sfmData);
+
+    MTracks* getMTracks() { return _mtracks; }
+    void setMTracks(MTracks* tracks);
+
+    MSfMData* getMSfMData() { return _msfmdata; }
+    void setMSfMData(MSfMData* sfmData);
 
 private:
     /// Custom QSGNode update
@@ -159,8 +176,14 @@ private:
     QColor _landmarkColor = QColor(255, 0, 0);
     QColor _endpointColor = QColor(80, 80, 80);
 
+    aliceVision::IndexT _currentViewId;
+    bool _enableTimeWindow = false;
+    int _timeWindow = 1;
+
     QString _describerType = "sift";
     MFeatures* _mfeatures = nullptr;
+    MTracks* _mtracks = nullptr;
+    MSfMData* _msfmdata = nullptr;
 
     Painter painter =
         Painter({"features", "trackEndpoints", "highlightPoints", "trackLines_reconstruction_none",

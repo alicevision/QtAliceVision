@@ -11,28 +11,6 @@
 namespace qtAliceVision
 {
 
-/**
- * @brief QRunnable object dedicated to load sfmData using AliceVision.
- */
-class TracksIORunnable : public QObject, public QRunnable
-{
-    Q_OBJECT
-
-public:
-    explicit TracksIORunnable(const QUrl& matchingFolder)
-        : _matchingFolder(matchingFolder)
-    {
-    }
-
-    Q_SLOT void run() override;
-
-    Q_SIGNAL void resultReady(aliceVision::track::TracksMap* _tracks,
-                              aliceVision::track::TracksPerView* _tracksPerView);
-
-private:
-    const QUrl _matchingFolder;
-};
-
 void TracksIORunnable::run()
 {
     using namespace aliceVision;
