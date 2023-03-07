@@ -44,7 +44,7 @@ void DepthMapEntity::setSource(const QUrl& value)
 {
     if(_source == value)
         return;
-    
+
     if(!value.isValid())
     {
         qDebug() << "[DepthMapEntity] invalid source";
@@ -116,9 +116,9 @@ void DepthMapEntity::updateMaterial()
         break;
     case DisplayMode::Triangles:
         _meshRenderer->setPrimitiveType(Qt3DRender::QGeometryRenderer::Triangles);
-        if(_displayColor) 
+        if(_displayColor)
             newMaterial = _colorMaterial;
-        else 
+        else
             newMaterial = _diffuseMaterial;
         break;
     default:
