@@ -44,10 +44,10 @@ void DepthMapEntity::setSource(const QUrl& value)
 {
     if(_source == value)
         return;
-    
+
     if(!value.isValid())
     {
-        qDebug() << "[DepthMapEntity] invalid source";
+        qDebug() << "[DepthMapEntity] Invalid source";
         _status = DepthMapEntity::Error;
         return;
     }
@@ -72,7 +72,7 @@ void DepthMapEntity::setSource(const QUrl& value)
     }
     else
     {
-        qDebug() << "[DepthMapEntity] source filename must contain depthMap or simMap";
+        qWarning () << "[DepthMapEntity] Source filename must contain depthMap or simMap";
         _status = DepthMapEntity::Error;
         return;
     }
@@ -116,9 +116,9 @@ void DepthMapEntity::updateMaterial()
         break;
     case DisplayMode::Triangles:
         _meshRenderer->setPrimitiveType(Qt3DRender::QGeometryRenderer::Triangles);
-        if(_displayColor) 
+        if(_displayColor)
             newMaterial = _colorMaterial;
-        else 
+        else
             newMaterial = _diffuseMaterial;
         break;
     default:
@@ -242,9 +242,15 @@ void DepthMapEntity::loadDepthMap()
     // Load depth map and metadata
 
     const std::string depthMapPath = _depthMapSource.toLocalFile().toStdString();
-    qDebug() << "[DepthMapEntity] load depth map: " << _depthMapSource.toLocalFile();
+    qDebug() << "[DepthMapEntity] Load depth map: " << _depthMapSource.toLocalFile();
     image::Image<float> depthMap;
-    image::readImage(depthMapPath, depthMap, image::EImageColorSpace::LINEAR);
+    try {
+        image::readImage(depthMapPath, depthMap, image::EImageColorSpace::LINEAR);
+    } catch (const std::runtime_error& error) {
+        qCritical() << "[DepthMapEntity] Could not load depth map:" << error.what();
+        _status = DepthMapEntity::Error;
+        return;
+    }
 
     oiio::ImageBuf inBuf;
     image::getBufferFromImage(depthMap, inBuf);
@@ -262,7 +268,7 @@ void DepthMapEntity::loadDepthMap()
     }
     else
     {
-        qDebug() << "[DepthMapEntity] missing metadata CArr.";
+        qDebug() << "[DepthMapEntity] Missing metadata CArr.";
         _status = DepthMapEntity::Error;
         return;
     }
@@ -278,7 +284,7 @@ void DepthMapEntity::loadDepthMap()
     }
     else
     {
-        qDebug() << "[DepthMapEntity] missing metadata iCamArr.";
+        qDebug() << "[DepthMapEntity] Missing metadata iCamArr.";
         _status = DepthMapEntity::Error;
         return;
     }
@@ -289,19 +295,23 @@ void DepthMapEntity::loadDepthMap()
     if(_simMapSource.isValid())
     {
         const std::string simMapPath = _simMapSource.toLocalFile().toStdString();
-        qDebug() << "[DepthMapEntity] load sim map: " << _simMapSource.toLocalFile();
-        image::readImage(simMapPath, simMap, image::EImageColorSpace::LINEAR);
+        qDebug() << "[DepthMapEntity] Load sim map: " << _simMapSource.toLocalFile();
+        try {
+            image::readImage(simMapPath, simMap, image::EImageColorSpace::LINEAR);
+        } catch (const std::runtime_error& error) {
+            qWarning() << "[DepthMapEntity] Sim map could not be loaded:" << error.what();
+        }
     }
     else
     {
-        qDebug() << "[DepthMapEntity] failed to find associated sim map";
+        qWarning() << "[DepthMapEntity] Failed to find associated sim map";
     }
 
     const bool validSimMap = (simMap.Width() == depthMap.Width()) && (simMap.Height() == depthMap.Height());
 
     // 3D points position and color (using jetColorMap)
 
-    qDebug() << "[DepthMapEntity] computing positions and colors for point cloud";
+    qDebug() << "[DepthMapEntity] Computing positions and colors for point cloud";
 
     std::vector<int> indexPerPixel(static_cast<std::size_t>(depthMap.Width() * depthMap.Height()), -1);
     std::vector<Vec3f> positions;
@@ -341,7 +351,7 @@ void DepthMapEntity::loadDepthMap()
 
     // Create geometry
 
-    qDebug() << "[DepthMapEntity] creating geometry";
+    qDebug() << "[DepthMapEntity] Creating geometry";
 
     QGeometry* customGeometry = new QGeometry;
 
