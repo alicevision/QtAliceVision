@@ -72,7 +72,7 @@ void DepthMapEntity::setSource(const QUrl& value)
     }
     else
     {
-        qDebug() << "[DepthMapEntity] source filename must contain depthMap or simMap";
+        qWarning () << "[DepthMapEntity] Source filename must contain depthMap or simMap";
         _status = DepthMapEntity::Error;
         return;
     }
@@ -244,7 +244,13 @@ void DepthMapEntity::loadDepthMap()
     const std::string depthMapPath = _depthMapSource.toLocalFile().toStdString();
     qDebug() << "[DepthMapEntity] load depth map: " << _depthMapSource.toLocalFile();
     image::Image<float> depthMap;
-    image::readImage(depthMapPath, depthMap, image::EImageColorSpace::LINEAR);
+    try {
+        image::readImage(depthMapPath, depthMap, image::EImageColorSpace::LINEAR);
+    } catch (const std::runtime_error& error) {
+        qCritical() << "[DepthMapEntity] Could not load depth map:" << error.what();
+        _status = DepthMapEntity::Error;
+        return;
+    }
 
     oiio::ImageBuf inBuf;
     image::getBufferFromImage(depthMap, inBuf);
@@ -290,11 +296,15 @@ void DepthMapEntity::loadDepthMap()
     {
         const std::string simMapPath = _simMapSource.toLocalFile().toStdString();
         qDebug() << "[DepthMapEntity] load sim map: " << _simMapSource.toLocalFile();
-        image::readImage(simMapPath, simMap, image::EImageColorSpace::LINEAR);
+        try {
+            image::readImage(simMapPath, simMap, image::EImageColorSpace::LINEAR);
+        } catch (const std::runtime_error& error) {
+            qWarning() << "[DepthMapEntity] Sim map could not be loaded:" << error.what();
+        }
     }
     else
     {
-        qDebug() << "[DepthMapEntity] failed to find associated sim map";
+        qWarning() << "[DepthMapEntity] Failed to find associated sim map";
     }
 
     const bool validSimMap = (simMap.Width() == depthMap.Width()) && (simMap.Height() == depthMap.Height());
