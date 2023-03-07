@@ -47,7 +47,7 @@ void DepthMapEntity::setSource(const QUrl& value)
 
     if(!value.isValid())
     {
-        qDebug() << "[DepthMapEntity] invalid source";
+        qDebug() << "[DepthMapEntity] Invalid source";
         _status = DepthMapEntity::Error;
         return;
     }
@@ -242,7 +242,7 @@ void DepthMapEntity::loadDepthMap()
     // Load depth map and metadata
 
     const std::string depthMapPath = _depthMapSource.toLocalFile().toStdString();
-    qDebug() << "[DepthMapEntity] load depth map: " << _depthMapSource.toLocalFile();
+    qDebug() << "[DepthMapEntity] Load depth map: " << _depthMapSource.toLocalFile();
     image::Image<float> depthMap;
     try {
         image::readImage(depthMapPath, depthMap, image::EImageColorSpace::LINEAR);
@@ -268,7 +268,7 @@ void DepthMapEntity::loadDepthMap()
     }
     else
     {
-        qDebug() << "[DepthMapEntity] missing metadata CArr.";
+        qDebug() << "[DepthMapEntity] Missing metadata CArr.";
         _status = DepthMapEntity::Error;
         return;
     }
@@ -284,7 +284,7 @@ void DepthMapEntity::loadDepthMap()
     }
     else
     {
-        qDebug() << "[DepthMapEntity] missing metadata iCamArr.";
+        qDebug() << "[DepthMapEntity] Missing metadata iCamArr.";
         _status = DepthMapEntity::Error;
         return;
     }
@@ -295,7 +295,7 @@ void DepthMapEntity::loadDepthMap()
     if(_simMapSource.isValid())
     {
         const std::string simMapPath = _simMapSource.toLocalFile().toStdString();
-        qDebug() << "[DepthMapEntity] load sim map: " << _simMapSource.toLocalFile();
+        qDebug() << "[DepthMapEntity] Load sim map: " << _simMapSource.toLocalFile();
         try {
             image::readImage(simMapPath, simMap, image::EImageColorSpace::LINEAR);
         } catch (const std::runtime_error& error) {
@@ -311,7 +311,7 @@ void DepthMapEntity::loadDepthMap()
 
     // 3D points position and color (using jetColorMap)
 
-    qDebug() << "[DepthMapEntity] computing positions and colors for point cloud";
+    qDebug() << "[DepthMapEntity] Computing positions and colors for point cloud";
 
     std::vector<int> indexPerPixel(static_cast<std::size_t>(depthMap.Width() * depthMap.Height()), -1);
     std::vector<Vec3f> positions;
@@ -351,7 +351,7 @@ void DepthMapEntity::loadDepthMap()
 
     // Create geometry
 
-    qDebug() << "[DepthMapEntity] creating geometry";
+    qDebug() << "[DepthMapEntity] Creating geometry";
 
     QGeometry* customGeometry = new QGeometry;
 
