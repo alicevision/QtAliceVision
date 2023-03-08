@@ -36,6 +36,7 @@ MSfMData::MSfMData()
     : _sfmData(new aliceVision::sfmData::SfMData())
     , _loadingSfmData(new aliceVision::sfmData::SfMData())
 {
+    connect(this, &MSfMData::sfmDataPathChanged, this, &MSfMData::load);
 }
 
 MSfMData::~MSfMData()
@@ -106,6 +107,35 @@ void MSfMData::onSfmDataReady()
     _sfmData.swap(_loadingSfmData);
     _loadingSfmData->clear();
     setStatus(Ready);
+}
+
+void MSfMData::setStatus(Status status)
+{
+    if (status == _status)
+        return;
+    _status = status;
+    Q_EMIT statusChanged(_status);
+    if (status == Ready || status == Error)
+    {
+        Q_EMIT sfmDataChanged();
+    }
+}
+
+size_t MSfMData::nbCameras() const
+{
+    if (!_sfmData || _status != Ready)
+        return 0;
+    return _sfmData->getValidViews().size();
+}
+
+QVariantList MSfMData::getViewsIds() const
+{
+    QVariantList viewsIds;
+    for (const auto& id : _sfmData->getValidViews())
+    {
+        viewsIds.append(id);
+    }
+    return viewsIds;
 }
 
 } // namespace qtAliceVision

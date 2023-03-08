@@ -81,6 +81,33 @@ MFeatures::~MFeatures()
     }
 }
 
+const std::vector<aliceVision::feature::PointFeature>& MFeatures::getFeatures(
+    const std::string& describerType, const aliceVision::IndexT& viewId) const
+{
+    // TODO: make method safe
+    return (*_featuresPerViewPerDesc).at(describerType).at(viewId);
+}
+
+float MFeatures::getMinFeatureScale(const std::string& describerType) const
+{
+    auto scaleIt = _minFeatureScalePerDesc.find(describerType);
+    if (scaleIt != _minFeatureScalePerDesc.end())
+    {
+        return scaleIt->second;
+    }
+    return 0.f;
+}
+
+float MFeatures::getMaxFeatureScale(const std::string& describerType) const
+{
+    auto scaleIt = _maxFeatureScalePerDesc.find(describerType);
+    if (scaleIt != _maxFeatureScalePerDesc.end())
+    {
+        return scaleIt->second;
+    }
+    return std::numeric_limits<float>::max();
+}
+
 void MFeatures::load()
 {
     _needReload = false;
@@ -114,9 +141,8 @@ void MFeatures::load()
 
     if (_viewIds.empty())
     {
-        // no need to load features in a seperate thread (e.g. data already in memory).
-        // call onFeaturesReady because Tracks / SfMData information may need to be updated.
-        onFeaturesReady(nullptr);
+        qDebug("[QtAliceVision] Features: Unable to load, no viewId given.");
+        setStatus(None);
         return;
     }
 

@@ -54,6 +54,16 @@ MTracks::~MTracks()
     clear();
 }
 
+void MTracks::clear()
+{
+    if (_tracks)
+        _tracks->clear();
+    if (_tracksPerView)
+        _tracksPerView->clear();
+    qInfo() << "[QtAliceVision] MTracks clear";
+    Q_EMIT tracksChanged();
+}
+
 void MTracks::load()
 {
     qDebug() << "MTracks::load _matchingFolder: " << _matchingFolder;
@@ -85,6 +95,25 @@ void MTracks::onReady(aliceVision::track::TracksMap* tracks, aliceVision::track:
     _tracks.reset(tracks);
     _tracksPerView.reset(tracksPerView);
     setStatus(Ready);
+}
+
+void MTracks::setStatus(Status status)
+{
+    if (status == _status)
+        return;
+    _status = status;
+    Q_EMIT statusChanged(_status);
+    if (status == Ready || status == Error)
+    {
+        Q_EMIT tracksChanged();
+    }
+}
+
+size_t MTracks::nbTracks() const
+{
+    if (!_tracks || _status != MTracks::Ready)
+        return 0;
+    return _tracks->size();
 }
 
 } // namespace qtAliceVision

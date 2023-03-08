@@ -8,11 +8,45 @@
 #include <QQuickItem>
 #include <QSGGeometry>
 
+#include <vector>
+#include <unordered_map>
+#include <string>
+
 namespace qtAliceVision
 {
 
+class MReconstruction
+{
+public:
+
+    struct FeatureData {
+        float x, y;
+        float rx, ry;
+        float scale;
+        float orientation;
+        bool hasTrack;
+        bool hasLandmark;
+    };
+
+    struct PointwiseTrackData {
+        aliceVision::IndexT frameId = aliceVision::UndefinedIndexT;
+        aliceVision::IndexT viewId = aliceVision::UndefinedIndexT;
+        aliceVision::IndexT featureId = aliceVision::UndefinedIndexT;
+    };
+
+    struct TrackData {
+        std::vector<PointwiseTrackData> elements;
+        float averageScale;
+        int nbReconstructed;
+    };
+
+    std::unordered_map<aliceVision::IndexT, std::vector<FeatureData>> featureDatasPerView;
+    std::vector<TrackData> trackDatas;
+
+};
+
 /**
- * @brief Display extracted features / Matches / Tracks
+ * @brief Display extracted features, matches, tracks and landmarks in 2D.
  */
 class FeaturesViewer : public QQuickItem
 {
@@ -96,6 +130,10 @@ public:
         float maxFeatureScale = std::numeric_limits<float>::max();
     };
 
+    /// Slots
+
+    Q_SLOT void updateReconstruction();
+
     /// Signals
 
     Q_SIGNAL void displayFeaturesChanged();
@@ -126,6 +164,7 @@ public:
     Q_SIGNAL void featuresChanged();
     Q_SIGNAL void tracksChanged();
     Q_SIGNAL void sfmDataChanged();
+    Q_SIGNAL void reconstructionChanged();
 
     /// Public methods
 
@@ -133,7 +172,7 @@ public:
     ~FeaturesViewer() override;
 
     MFeatures* getMFeatures() { return _mfeatures; }
-    void setMFeatures(MFeatures* sfmData);
+    void setMFeatures(MFeatures* features);
 
     MTracks* getMTracks() { return _mtracks; }
     void setMTracks(MTracks* tracks);
@@ -156,9 +195,9 @@ private:
     void updatePaintLandmarks(const PaintParams& params, QSGNode* node);
 
     bool _displayFeatures = true;
-    bool _displayTracks = true;
-    bool _displayMatches = true;
-    bool _displayLandmarks = true;
+    bool _displayTracks = false;
+    bool _displayMatches = false;
+    bool _displayLandmarks = false;
 
     FeatureDisplayMode _featureDisplayMode = FeaturesViewer::Points;
     TrackDisplayMode _trackDisplayMode = FeaturesViewer::WithCurrentMatches;
@@ -184,6 +223,7 @@ private:
     MFeatures* _mfeatures = nullptr;
     MTracks* _mtracks = nullptr;
     MSfMData* _msfmdata = nullptr;
+    MReconstruction _mreconstruction;
 
     Painter painter =
         Painter({"features", "trackEndpoints", "highlightPoints", "trackLines_reconstruction_none",

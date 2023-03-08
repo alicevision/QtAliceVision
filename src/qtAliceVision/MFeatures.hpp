@@ -20,7 +20,7 @@ using FeaturesPerViewPerDesc =
     std::map<std::string, std::map<aliceVision::IndexT, std::vector<aliceVision::feature::PointFeature>>>;
 
 /**
- * @brief QObject that allows to manage / access view info & features
+ * @brief QObject wrapper around extracted features.
  */
 class MFeatures : public QObject
 {
@@ -74,26 +74,14 @@ public:
     ~MFeatures() override;
 
     FeaturesPerViewPerDesc& rawData() { return *_featuresPerViewPerDesc; }
-
     const FeaturesPerViewPerDesc& rawData() const { return *_featuresPerViewPerDesc; }
+    const FeaturesPerViewPerDesc* rawDataPtr() const { return _featuresPerViewPerDesc; }
 
-    FeaturesPerViewPerDesc* rawDataPtr() { return _featuresPerViewPerDesc; }
-
-    const std::vector<aliceVision::feature::PointFeature>& getFeatures(const std::string& describerType,
-                                                                       const aliceVision::IndexT& viewId) const
-    {
-        return (*_featuresPerViewPerDesc).at(describerType).at(viewId);
-    }
+    const std::vector<aliceVision::feature::PointFeature>& getFeatures(
+        const std::string& describerType, const aliceVision::IndexT& viewId) const;
     
-    float getMinFeatureScale(const std::string& describerType) const
-    {
-        return _minFeatureScalePerDesc.at(describerType);
-    }
-
-    float getMaxFeatureScale(const std::string& describerType) const
-    {
-        return _maxFeatureScalePerDesc.at(describerType);
-    }
+    float getMinFeatureScale(const std::string& describerType) const;
+    float getMaxFeatureScale(const std::string& describerType) const;
 
     /**
      * @brief Get MFeatures status
@@ -114,7 +102,7 @@ private:
 
     void updateMinMaxFeatureScale();
 
-    void updateFeaturesInfo(); // TODO
+    void updateFeaturesInfo();
 
     /// Private members
 

@@ -43,13 +43,30 @@ FeaturesViewer::FeaturesViewer(QQuickItem* parent)
     connect(this, &FeaturesViewer::timeWindowChanged, this, &FeaturesViewer::update);
 
     // trigger data repaint events
-    connect(this, &FeaturesViewer::describerTypeChanged, this, &FeaturesViewer::update);
-    connect(this, &FeaturesViewer::featuresChanged, this, &FeaturesViewer::update);
-    connect(this, &FeaturesViewer::tracksChanged, this, &FeaturesViewer::update);
-    connect(this, &FeaturesViewer::sfmDataChanged, this, &FeaturesViewer::update);
+    connect(this, &FeaturesViewer::describerTypeChanged, this, &FeaturesViewer::updateReconstruction);
+    connect(this, &FeaturesViewer::featuresChanged, this, &FeaturesViewer::updateReconstruction);
+    connect(this, &FeaturesViewer::tracksChanged, this, &FeaturesViewer::updateReconstruction);
+    connect(this, &FeaturesViewer::sfmDataChanged, this, &FeaturesViewer::updateReconstruction);
+    connect(this, &FeaturesViewer::reconstructionChanged, this, &FeaturesViewer::update);
 }
 
-FeaturesViewer::~FeaturesViewer() {}
+FeaturesViewer::~FeaturesViewer()
+{
+    if (_mfeatures)
+    {
+        delete _mfeatures;
+    }
+
+    if (_mtracks)
+    {
+        delete _mtracks;
+    }
+
+    if (_msfmdata)
+    {
+        delete _msfmdata;
+    }
+}
 
 void FeaturesViewer::setMFeatures(MFeatures* features)
 {
@@ -112,7 +129,7 @@ void FeaturesViewer::updatePaintFeatures(const PaintParams& params, QSGNode* nod
 {
     qDebug() << "[QtAliceVision] FeaturesViewer: Update paint " << _describerType << " features.";
 
-    if (!params.haveValidFeatures)
+    if (!_displayFeatures || !params.haveValidFeatures)
     {
         // nothing to draw or something is not ready
         painter.clearLayer(node, "features");
@@ -137,16 +154,16 @@ void FeaturesViewer::paintFeaturesAsPoints(const PaintParams& params, QSGNode* n
 {
     std::vector<QPointF> points;
 
-    const auto& currentViewFeatures = _mfeatures->getFeatures(_describerType.toStdString(), _currentViewId);
+    const auto& currentViewFeatures = _mreconstruction.featureDatasPerView.at(_currentViewId);
     for (const auto& feature : currentViewFeatures)
     {
         // feature scale filter
-        if (feature.scale() > params.maxFeatureScale || feature.scale() < params.minFeatureScale)
+        if (feature.scale > params.maxFeatureScale || feature.scale < params.minFeatureScale)
         {
             continue;
         }
 
-        points.emplace_back(feature.x(), feature.y());
+        points.emplace_back(feature.x, feature.y);
     }
 
     painter.drawPoints(node, "features", points, _featureColor, 6.f);
@@ -156,19 +173,19 @@ void FeaturesViewer::paintFeaturesAsSquares(const PaintParams& params, QSGNode* 
 {
     std::vector<QPointF> points;
 
-    const auto& currentViewFeatures = _mfeatures->getFeatures(_describerType.toStdString(), _currentViewId);
+    const auto& currentViewFeatures = _mreconstruction.featureDatasPerView.at(_currentViewId);
     for (const auto& feature : currentViewFeatures)
     {
         // feature scale filter
-        if (feature.scale() > params.maxFeatureScale || feature.scale() < params.minFeatureScale)
+        if (feature.scale > params.maxFeatureScale || feature.scale < params.minFeatureScale)
         {
             continue;
         }
 
-        const float radius = feature.scale();
-        const double diag = 2.0 * feature.scale();
+        const float radius = feature.scale;
+        const double diag = 2.0 * feature.scale;
 
-        QRectF rect(feature.x(), feature.y(), diag, diag);
+        QRectF rect(feature.x, feature.y, diag, diag);
         rect.translate(-radius, -radius);
         QPointF tl = rect.topLeft();
         QPointF tr = rect.topRight();
@@ -190,19 +207,19 @@ void FeaturesViewer::paintFeaturesAsOrientedSquares(const PaintParams& params, Q
 {
     std::vector<QLineF> lines;
 
-    const auto& currentViewFeatures = _mfeatures->getFeatures(_describerType.toStdString(), _currentViewId);
+    const auto& currentViewFeatures = _mreconstruction.featureDatasPerView.at(_currentViewId);
     for (const auto& feature : currentViewFeatures)
     {
         // feature scale filter
-        if (feature.scale() > params.maxFeatureScale || feature.scale() < params.minFeatureScale)
+        if (feature.scale > params.maxFeatureScale || feature.scale < params.minFeatureScale)
         {
             continue;
         }
 
-        const float radius = feature.scale();
-        const double diag = 2.0 * feature.scale();
+        const float radius = feature.scale;
+        const double diag = 2.0 * feature.scale;
 
-        QRectF rect(feature.x(), feature.y(), diag, diag);
+        QRectF rect(feature.x, feature.y, diag, diag);
         rect.translate(-radius, -radius);
         QPointF tl = rect.topLeft();
         QPointF tr = rect.topRight();
@@ -210,10 +227,10 @@ void FeaturesViewer::paintFeaturesAsOrientedSquares(const PaintParams& params, Q
         QPointF bl = rect.bottomLeft();
 
         // compute angle: use feature angle and remove self rotation
-        const auto radAngle = -feature.orientation() - qDegreesToRadians(rotation());
+        const auto radAngle = -feature.orientation - qDegreesToRadians(rotation());
         // generate a QTransform that represent this rotation
         const auto t =
-            QTransform().translate(feature.x(), feature.y()).rotateRadians(radAngle).translate(-feature.x(), -feature.y());
+            QTransform().translate(feature.x, feature.y).rotateRadians(radAngle).translate(-feature.x, -feature.y);
 
         // create lines, each vertice has to be duplicated (A->B, B->C, C->D, D->A) since we use GL_LINES
         std::vector<QPointF> points = {t.map(tl), t.map(tr), t.map(br), t.map(bl), t.map(tl)};
@@ -234,7 +251,7 @@ void FeaturesViewer::updatePaintTracks(const PaintParams& params, QSGNode* node)
     qDebug() << "[QtAliceVision] FeaturesViewer: Update paint " << _describerType << " tracks.";
 
     // TODO: also support having only valid tracks (i.e no landmarks)
-    if  (!params.haveValidFeatures || !params.haveValidTracks || !params.haveValidLandmarks)
+    if  (!_displayTracks || !params.haveValidFeatures || !params.haveValidTracks || !params.haveValidLandmarks)
     {
         painter.clearLayer(node, "trackEndpoints");
         painter.clearLayer(node, "highlightPoints");
@@ -275,52 +292,23 @@ void FeaturesViewer::updatePaintTracks(const PaintParams& params, QSGNode* node)
     std::vector<QPointF> trackPoints_outliers;
     std::vector<QPointF> trackPoints_inliers;
 
-    const auto& tracksMap = _mtracks->tracks();
-
-    const auto& sfmData = _msfmdata->rawData();
-    const auto& landmarks = sfmData.getLandmarks();
-
-    for (const auto& [trackId, track] : tracksMap)
+    for (const auto& track : _mreconstruction.trackDatas)
     {
-        // check describer type
-        if (_describerType.toStdString() != aliceVision::feature::EImageDescriberType_enumToString(track.descType))
-        {
-            continue;
-        }
-
         // check that track has at least 2 features
-        if (track.featPerView.size() < 2)
+        if (track.elements.size() < 2)
         {
             continue;
         }
 
         // apply scale filter
-        float avgScale = 0.f;
-        for (const auto& [viewId, featId] : track.featPerView)
-        {
-            const auto& viewFeatures = _mfeatures->getFeatures(_describerType.toStdString(), viewId);
-            avgScale += viewFeatures[featId].scale();
-        }
-        avgScale /= static_cast<float>(track.featPerView.size());
-        if (avgScale < params.minFeatureScale || avgScale > params.maxFeatureScale)
+        if (track.averageScale < params.minFeatureScale || track.averageScale > params.maxFeatureScale)
         {
             continue;
         }
 
         // retrieve track reconstruction state
-        bool trackHasInliers, trackFullyReconstructed;
-        auto landmarkIt = landmarks.find(trackId);
-        if (landmarkIt == landmarks.end())
-        {
-            trackHasInliers = false;
-            trackFullyReconstructed = false;
-        }
-        else
-        {
-            trackHasInliers = true;
-            const auto& landmark = landmarkIt->second;
-            trackFullyReconstructed = (landmark.observations.size() == track.featPerView.size());
-        }
+        const bool trackHasInliers = (track.nbReconstructed > 0);
+        const bool trackFullyReconstructed = (track.nbReconstructed == track.elements.size());
 
         // apply inlier filter
         if (!trackHasInliers && _trackInliersFilter)
@@ -328,96 +316,47 @@ void FeaturesViewer::updatePaintTracks(const PaintParams& params, QSGNode* node)
             continue;
         }
 
-        // build ordered map of {frameId, viewId} in the track
-        std::map<aliceVision::IndexT, aliceVision::IndexT> trackFrames;
-        for (const auto& [viewId, _] : track.featPerView)
-        {
-            aliceVision::IndexT frameId = sfmData.getView(viewId).getFrameId();
-            trackFrames[frameId] = viewId;
-        }
-
         // check that track frame interval contains current frame
-        const aliceVision::IndexT startFrameId = trackFrames.begin()->first;
-        const aliceVision::IndexT endFrameId = trackFrames.rbegin()->first;
+        const aliceVision::IndexT startFrameId = track.elements.front().frameId;
+        const aliceVision::IndexT endFrameId = track.elements.back().frameId;
         if (currentFrameId < startFrameId || currentFrameId > endFrameId)
         {
             continue;
         }
 
         // utility variables to store data between iterations
-        aliceVision::feature::PointFeature previousFeature;
+        MReconstruction::FeatureData previousFeature;
         aliceVision::IndexT previousFrameId = aliceVision::UndefinedIndexT;
         bool previousFeatureInlier = false;
-        aliceVision::Vec2 previousObservationPos;
         
-        for (const auto& [frameId, viewId] : trackFrames)
+        for (const auto& elt : track.elements)
         {
             // check that frameId is in timeWindow if enabled
-            if (_enableTimeWindow && (frameId < currentFrameId - _timeWindow || frameId > currentFrameId + _timeWindow))
+            if (_enableTimeWindow
+                && (elt.frameId < currentFrameId - _timeWindow || elt.frameId > currentFrameId + _timeWindow))
             {
                 continue;
             }
 
-            // retrieve point feature
-            const auto& currentViewFeatures = _mfeatures->getFeatures(_describerType.toStdString(), viewId);
-            const auto& featId = track.featPerView.at(viewId);
-            const auto& feature = currentViewFeatures.at(featId);
+            // retrieve feature data
+            const auto& viewFeatures = _mreconstruction.featureDatasPerView.at(elt.viewId);
+            const auto& currentFeature = viewFeatures.at(elt.featureId);
 
             // retrieve whether or not current feature has a corresponding observation
-            bool currentFeatureInlier;
-            aliceVision::Vec2 currentObservationPos;
-            if (trackHasInliers)
-            {
-                const auto& landmark = landmarkIt->second;
-                auto observationIt = landmark.observations.find(viewId);
-                currentFeatureInlier = (observationIt != landmark.observations.end());
-                if (currentFeatureInlier)
-                {
-                    const auto& observation = observationIt->second;
-                    currentObservationPos = observation.x;
-                }
-            }
-            else
-            {
-                currentFeatureInlier = false;
-            }
+            const bool currentFeatureInlier = currentFeature.hasLandmark;
 
             if (previousFrameId != aliceVision::UndefinedIndexT)
             {
                 // The 2 features of the track are contiguous
-                const bool contiguous = (previousFrameId == (frameId - 1));
+                const bool contiguous = (previousFrameId == (elt.frameId - 1));
                 // The 2 features of the track are resectioning inliers
                 const bool inliers = previousFeatureInlier && currentFeatureInlier;
 
                 // geometry
-                // points
-                QPointF prevPoint, curPoint;
-                if (_display3dTracks)
-                {
-                    if (previousFeatureInlier)
-                    {
-                        prevPoint = QPointF(previousObservationPos.x(), previousObservationPos.y());
-                    }
-                    else
-                    {
-                        prevPoint = QPointF(previousFeature.x(), previousFeature.y());
-                    }
-
-                    if (currentFeatureInlier)
-                    {
-                        curPoint = QPointF(currentObservationPos.x(), currentObservationPos.y());
-                    }
-                    else
-                    {
-                        curPoint = QPointF(feature.x(), feature.y());
-                    }
-                }
-                else
-                {
-                    prevPoint = QPointF(previousFeature.x(), previousFeature.y());
-                    curPoint = QPointF(feature.x(), feature.y());
-                }
-                // line between the previous and current point
+                const QPointF prevPoint = (_display3dTracks && previousFeatureInlier)
+                    ? QPointF(previousFeature.rx, previousFeature.ry) : QPointF(previousFeature.x, previousFeature.y);
+                const QPointF curPoint = (_display3dTracks && currentFeatureInlier)
+                    ? QPointF(currentFeature.rx, currentFeature.ry) : QPointF(currentFeature.x, currentFeature.y);
                 const QLineF line = QLineF(prevPoint, curPoint);
 
                 // track line
@@ -452,7 +391,7 @@ void FeaturesViewer::updatePaintTracks(const PaintParams& params, QSGNode* node)
                     {
                         highlightPoints.push_back(prevPoint);
                     }
-                    else if (frameId == currentFrameId)
+                    else if (elt.frameId == currentFrameId)
                     {
                         highlightPoints.push_back(curPoint);
                     }
@@ -461,7 +400,7 @@ void FeaturesViewer::updatePaintTracks(const PaintParams& params, QSGNode* node)
                 // track points
                 // current point
                 if (_trackDisplayMode == WithAllMatches ||
-                    (frameId == currentFrameId && _trackDisplayMode == WithCurrentMatches))
+                    (elt.frameId == currentFrameId && _trackDisplayMode == WithCurrentMatches))
                 {
                     if (currentFeatureInlier)
                     {
@@ -500,7 +439,7 @@ void FeaturesViewer::updatePaintTracks(const PaintParams& params, QSGNode* node)
                     }
 
                     // draw global end point
-                    if (frameId == endFrameId)
+                    if (elt.frameId == endFrameId)
                     {
                         QPointF triangle[] = {QPointF(0, 0), QPointF(-2, 1), QPointF(-2, -1)};
                         double angle = QLineF(curPoint, prevPoint).angle() - rotation();
@@ -512,10 +451,9 @@ void FeaturesViewer::updatePaintTracks(const PaintParams& params, QSGNode* node)
             }
 
             // frame id is now previous frame id
-            previousFrameId = frameId;
-            previousFeature = feature;
+            previousFrameId = elt.frameId;
+            previousFeature = currentFeature;
             previousFeatureInlier = currentFeatureInlier;
-            previousObservationPos = currentObservationPos;
         }
     }
 
@@ -538,7 +476,7 @@ void FeaturesViewer::updatePaintMatches(const PaintParams& params, QSGNode* node
     qDebug() << "[QtAliceVision] FeaturesViewer: Update paint " << _describerType << " matches.";
 
     // TODO: also support having only valid tracks (i.e no landmarks)
-    if (!params.haveValidFeatures || !params.haveValidTracks || !params.haveValidLandmarks)
+    if (!_displayMatches || !params.haveValidFeatures || !params.haveValidTracks || !params.haveValidLandmarks)
     {
         // nothing to draw or something is not ready
         painter.clearLayer(node, "matches");
@@ -547,46 +485,26 @@ void FeaturesViewer::updatePaintMatches(const PaintParams& params, QSGNode* node
 
     std::vector<QPointF> points;
 
-    const auto& currentViewFeatures = _mfeatures->getFeatures(_describerType.toStdString(), _currentViewId);
+    const auto& currentViewFeatures = _mreconstruction.featureDatasPerView.at(_currentViewId);
 
-    const auto& tracksPerView = _mtracks->tracksPerView();
-    const auto& currentViewTracks = tracksPerView.at(_currentViewId);
-
-    const auto& tracksMap = _mtracks->tracks();
-
-    const auto& sfmData = _msfmdata->rawData();
-    const auto& landmarks = sfmData.getLandmarks();
-
-    for (const auto& trackId : currentViewTracks)
+    for (const auto& feature : currentViewFeatures)
     {
-        const auto& track = tracksMap.at(trackId);
-
-        // check describer type
-        if (_describerType.toStdString() != aliceVision::feature::EImageDescriberType_enumToString(track.descType))
+        if (feature.scale > params.maxFeatureScale || feature.scale < params.minFeatureScale)
         {
             continue;
         }
 
-        auto landmarkIt = landmarks.find(trackId);
-        if (landmarkIt != landmarks.end())
-        {
-            const auto& landmark = landmarkIt->second;
-            auto observationIt = landmark.observations.find(_currentViewId);
-            if (observationIt != landmark.observations.end())
-            {
-                continue;
-            }
-        }
-
-        const auto& featId = track.featPerView.at(_currentViewId);
-        const auto& feature = currentViewFeatures.at(featId);
-
-        if (feature.scale() > params.maxFeatureScale || feature.scale() < params.minFeatureScale)
+        if (!feature.hasTrack)
         {
             continue;
         }
 
-        points.emplace_back(feature.x(), feature.y());
+        if (feature.hasLandmark)
+        {
+            continue;
+        }
+
+        points.emplace_back(feature.x, feature.y);
     }
 
     painter.drawPoints(node, "matches", points, _matchColor, 6.f);
@@ -596,7 +514,7 @@ void FeaturesViewer::updatePaintLandmarks(const PaintParams& params, QSGNode* no
 {
     qDebug() << "[QtAliceVision] FeaturesViewer: Update paint " << _describerType << " landmarks.";
 
-    if  (!params.haveValidFeatures || !params.haveValidTracks || !params.haveValidLandmarks)
+    if  (!_displayLandmarks || !params.haveValidFeatures || !params.haveValidTracks || !params.haveValidLandmarks)
     {
         // nothing to draw or something is not ready
         painter.clearLayer(node, "reprojectionErrors");
@@ -607,53 +525,22 @@ void FeaturesViewer::updatePaintLandmarks(const PaintParams& params, QSGNode* no
     std::vector<QPointF> points;
     std::vector<QLineF> lines;
 
-    const auto& currentViewFeatures = _mfeatures->getFeatures(_describerType.toStdString(), _currentViewId);
+    const auto& currentViewFeatures = _mreconstruction.featureDatasPerView.at(_currentViewId);
 
-    const auto& tracksPerView = _mtracks->tracksPerView();
-    const auto& currentViewTracks = tracksPerView.at(_currentViewId);
-
-    const auto& tracksMap = _mtracks->tracks();
-
-    const auto& sfmData = _msfmdata->rawData();
-    const auto& landmarks = sfmData.getLandmarks();
-
-    for (const auto& trackId : currentViewTracks)
+    for (const auto& feature : currentViewFeatures)
     {
-        const auto& track = tracksMap.at(trackId);
-
-        // check describerType
-        if (_describerType.toStdString() != aliceVision::feature::EImageDescriberType_enumToString(track.descType))
+        if (feature.scale > params.maxFeatureScale || feature.scale < params.minFeatureScale)
         {
             continue;
         }
 
-        auto landmarkIt = landmarks.find(trackId);
-        if (landmarkIt == landmarks.end())
+        if (!feature.hasLandmark)
         {
             continue;
         }
 
-        const auto& landmark = landmarkIt->second;
-
-        auto observationIt = landmark.observations.find(_currentViewId);
-        if (observationIt == landmark.observations.end())
-        {
-            continue;
-        }
-
-        const auto& observation = observationIt->second;
-        const aliceVision::Vec2& reprojection = observation.x;
-
-        const auto& featId = track.featPerView.at(_currentViewId);
-        const auto& feature = currentViewFeatures.at(featId);
-
-        if (feature.scale() > params.maxFeatureScale || feature.scale() < params.minFeatureScale)
-        {
-            continue;
-        }
-
-        lines.emplace_back(feature.x(), feature.y(), reprojection.x(), reprojection.y());
-        points.emplace_back(reprojection.x(), reprojection.y());
+        lines.emplace_back(feature.x, feature.y, feature.rx, feature.ry);
+        points.emplace_back(feature.rx, feature.ry);
     }
 
     const QColor reprojectionColor = _landmarkColor.darker(150);
@@ -705,6 +592,141 @@ QSGNode* FeaturesViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePai
     updatePaintLandmarks(params, node);
 
     return node;
+}
+
+void FeaturesViewer::updateReconstruction()
+{
+    // clear previous data
+
+    _mreconstruction.featureDatasPerView.clear();
+    _mreconstruction.trackDatas.clear();
+
+    // check validity of the different data sources
+
+    bool validFeatures = _mfeatures ?
+        _mfeatures->rawDataPtr() != nullptr && _mfeatures->status() == MFeatures::Ready : false;
+    
+    bool validTracks = _mtracks ?
+        _mtracks->tracksPtr() != nullptr && _mtracks->status() == MTracks::Ready : false;
+    
+    bool validLandmarks = _msfmdata ?
+        _msfmdata->rawDataPtr() != nullptr && _msfmdata->status() == MSfMData::Ready : false;
+    
+    // features
+
+    if (validFeatures)
+    {
+        const auto& featuresPerViewPerDesc = _mfeatures->rawData();
+        const auto& featuresPerView = featuresPerViewPerDesc.at(_describerType.toStdString());
+        
+        for (const auto& [viewId, features] : featuresPerView)
+        {
+            std::vector<MReconstruction::FeatureData> featureDatas;
+
+            for (const auto& feature : features)
+            {
+                MReconstruction::FeatureData data;
+                data.x = feature.x();
+                data.y = feature.y();
+                data.rx = data.x;
+                data.ry = data.y;
+                data.scale = feature.scale();
+                data.orientation = feature.orientation();
+                data.hasTrack = false;
+                data.hasLandmark = false;
+                featureDatas.push_back(data);
+            }
+
+            _mreconstruction.featureDatasPerView[viewId] = featureDatas;
+        }
+    }
+    else
+    {
+        return;
+    }
+
+    // sfmdata
+
+    if (validLandmarks)
+    {
+        const auto& sfmData = _msfmdata->rawData();
+        const auto& landmarks = sfmData.getLandmarks();
+
+        for (const auto& [_, landmark] : landmarks)
+        {
+            for (const auto& [viewId, observation] : landmark.observations)
+            {
+                auto& featureDatas = _mreconstruction.featureDatasPerView.at(viewId);
+                auto& data = featureDatas[observation.id_feat];
+
+                data.hasLandmark = true;
+
+                const auto& view = sfmData.getView(viewId);
+                const auto& pose = sfmData.getPose(view);
+                const auto& camTransform = pose.getTransform();
+                const auto& intrinsic = sfmData.getIntrinsicPtr(view.getIntrinsicId());
+                const aliceVision::Vec2 reprojection = intrinsic->project(camTransform, landmark.X.homogeneous());
+                data.rx = reprojection.x();
+                data.ry = reprojection.y();
+            }
+        }
+    }
+
+    // tracks
+    
+    if (validTracks)
+    {
+        const auto& tracks = _mtracks->tracks();
+
+        for (const auto& [_, track] : tracks)
+        {
+            MReconstruction::TrackData trackData;
+
+            trackData.averageScale = 0.f;
+            trackData.nbReconstructed = 0;
+
+            for (const auto& [viewId, featureId] : track.featPerView)
+            {
+                auto& featureDatas = _mreconstruction.featureDatasPerView.at(viewId);
+                auto& data = featureDatas[featureId];
+
+                data.hasTrack = true;
+
+                trackData.averageScale += data.scale;
+
+                if (data.hasLandmark)
+                {
+                    trackData.nbReconstructed++;
+                }
+
+                MReconstruction::PointwiseTrackData elt;
+                elt.viewId = viewId;
+                elt.featureId = featureId;
+
+                if (validLandmarks)
+                {
+                    const auto& sfmData = _msfmdata->rawData();
+                    const auto& view = sfmData.getView(viewId);
+                    elt.frameId = view.getFrameId();
+                }
+
+                trackData.elements.push_back(elt);
+            }
+
+            trackData.averageScale /= static_cast<float>(track.featPerView.size());
+
+            std::sort(trackData.elements.begin(), trackData.elements.end(), 
+                [](const auto& elt1, const auto& elt2){
+                    return elt1.frameId < elt2.frameId;
+                });
+
+            _mreconstruction.trackDatas.push_back(trackData);
+        }
+    }
+
+    // signal
+
+    Q_EMIT reconstructionChanged();
 }
 
 } // namespace qtAliceVision
