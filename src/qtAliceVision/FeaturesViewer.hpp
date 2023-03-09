@@ -15,6 +15,13 @@
 namespace qtAliceVision
 {
 
+/**
+ * @brief Cached reconstruction data used for drawing by the FeaturesViewer.
+ * 
+ * Given a describer type, reconstruction data is organized in two parts:
+ * - for each view, the features data with 3D reconstruction information if there is any
+ * - the tracks, containing track elements ordered by frame number.
+ */
 class MReconstruction
 {
 public:
@@ -47,6 +54,14 @@ public:
 
 /**
  * @brief Display extracted features, matches, tracks and landmarks in 2D.
+ * 
+ * The FeaturesViewer uses MFeatures, MTracks and MSfMData to load data from disk
+ * and keeps an MReconstruction instance to cache the reconstruction data
+ * in a way that makes sense for drawing.
+ * 
+ * The various display options and filters can be manipulated from QML.
+ * 
+ * The FeaturesViewer relies on the Painter class for paiting routines and layer organization.
  */
 class FeaturesViewer : public QQuickItem
 {

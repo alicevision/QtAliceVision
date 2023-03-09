@@ -13,6 +13,14 @@ class TracksIORunnable;
 
 /**
  * @brief QObject wrapper around Tracks.
+ * 
+ * Given a folder containing feature matches,
+ * the role of an MTracks instance is to load the matches from disk
+ * and build the corresponding tracks.
+ * These tasks are done asynchronously to avoid freezing the UI.
+ * 
+ * MTracks objects are accessible from QML
+ * and can be manipulated through their properties.
  */
 class MTracks : public QObject
 {
@@ -85,7 +93,7 @@ private:
 };
 
 /**
- * @brief QRunnable object dedicated to load sfmData using AliceVision.
+ * @brief QRunnable object dedicated to loading matches and building tracks using AliceVision.
  */
 class TracksIORunnable : public QObject, public QRunnable
 {

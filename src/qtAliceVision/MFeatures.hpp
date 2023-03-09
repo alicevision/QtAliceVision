@@ -21,6 +21,19 @@ using FeaturesPerViewPerDesc =
 
 /**
  * @brief QObject wrapper around extracted features.
+ * 
+ * Given a folder containing extracted features,
+ * the role of an MFeatures instance is to load the features from disk.
+ * Describer types and view IDs to load must also be specified.
+ * This task is done asynchronously to avoid freezing the UI.
+ * 
+ * MFeatures objects are accessible from QML
+ * and can be manipulated through their properties.
+ * 
+ * Note:
+ * for a given describer type and view ID,
+ * features are stored in an array-like structure
+ * and the ID a a feature corresponds to its index in this array.
  */
 class MFeatures : public QObject
 {
@@ -124,7 +137,7 @@ private:
 };
 
 /**
- * @brief QRunnable object dedicated to load features using AliceVision.
+ * @brief QRunnable object dedicated to loading features using AliceVision.
  */
 class FeaturesIORunnable : public QObject, public QRunnable
 {

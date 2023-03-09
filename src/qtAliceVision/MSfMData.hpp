@@ -12,6 +12,20 @@ namespace qtAliceVision
 
 /**
  * @brief QObject wrapper around a SfMData.
+ * 
+ * Given a path to a SfMData file,
+ * the role of an MSfMData instance is to load the SfMData from disk.
+ * This task is done asynchronously to avoid freezing the UI.
+ * 
+ * MSfMData objects are accesible from QML
+ * and can be manipulated through their properties.
+ * 
+ * Note:
+ * a SfMData contains important information for linking together various reconstruction data, such as:
+ * - views (and their corresponding frame ID)
+ * - poses (and their corresponding camera transform)
+ * - intrinsics
+ * - landmarks (and their corresponding observations, i.e. the 2D features used to build the landmark).
  */
 class MSfMData : public QObject
 {
@@ -19,7 +33,7 @@ class MSfMData : public QObject
 
     /// Data properties
 
-    // Path to folder containing the SfMData
+    // Path to SfMData file
     Q_PROPERTY(QUrl sfmDataPath MEMBER _sfmDataPath NOTIFY sfmDataPathChanged)
     // Total number of reconstructed cameras
     Q_PROPERTY(size_t nbCameras READ nbCameras NOTIFY statusChanged)
@@ -90,7 +104,7 @@ private:
 };
 
 /**
- * @brief QRunnable object dedicated to load sfmData using AliceVision.
+ * @brief QRunnable object dedicated to loading a SfMData using AliceVision.
  */
 class SfmDataIORunnable : public QObject, public QRunnable
 {
