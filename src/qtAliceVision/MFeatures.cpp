@@ -81,33 +81,6 @@ MFeatures::~MFeatures()
     }
 }
 
-const std::vector<aliceVision::feature::PointFeature>& MFeatures::getFeatures(
-    const std::string& describerType, const aliceVision::IndexT& viewId) const
-{
-    // TODO: make method safe
-    return (*_featuresPerViewPerDesc).at(describerType).at(viewId);
-}
-
-float MFeatures::getMinFeatureScale(const std::string& describerType) const
-{
-    auto scaleIt = _minFeatureScalePerDesc.find(describerType);
-    if (scaleIt != _minFeatureScalePerDesc.end())
-    {
-        return scaleIt->second;
-    }
-    return 0.f;
-}
-
-float MFeatures::getMaxFeatureScale(const std::string& describerType) const
-{
-    auto scaleIt = _maxFeatureScalePerDesc.find(describerType);
-    if (scaleIt != _maxFeatureScalePerDesc.end())
-    {
-        return scaleIt->second;
-    }
-    return std::numeric_limits<float>::max();
-}
-
 void MFeatures::load()
 {
     _needReload = false;
@@ -116,12 +89,6 @@ void MFeatures::load()
     {
         qDebug("[QtAliceVision] Features: Unable to load, a load event is already running.");
         _needReload = true;
-        return;
-    }
-
-    if (_status == Loading)
-    {
-        qDebug("[QtAliceVision] Features: Unable to load, a load event is already running.");
         return;
     }
 
@@ -145,6 +112,8 @@ void MFeatures::load()
         setStatus(None);
         return;
     }
+
+    setStatus(Loading);
 
     // load features from file in a seperate thread
     qDebug("[QtAliceVision] Features: Load features from file in a seperate thread.");
@@ -188,8 +157,6 @@ void MFeatures::onFeaturesReady(FeaturesPerViewPerDesc* featuresPerViewPerDesc)
         }
 
         _featuresPerViewPerDesc = featuresPerViewPerDesc;
-        updateMinMaxFeatureScale();
-        updateFeaturesInfo();
     }
 
     setStatus(Ready);
@@ -209,62 +176,33 @@ void MFeatures::setStatus(Status status)
     }
 }
 
-void MFeatures::updateMinMaxFeatureScale()
+int MFeatures::nbFeatures(QString describerType, int viewId) const
 {
-    _minFeatureScalePerDesc.clear();
-    _maxFeatureScalePerDesc.clear();
+    if (_status != Ready)
+    {
+        return 0;
+    }
 
     if (!_featuresPerViewPerDesc)
     {
-        return;
+        return 0;
     }
 
-    for (const auto& [descType, featuresPerView] : *_featuresPerViewPerDesc)
+    const auto featuresPerViewIt = _featuresPerViewPerDesc->find(describerType.toStdString());
+    if (featuresPerViewIt == _featuresPerViewPerDesc->end())
     {
-        float scale_min = std::numeric_limits<float>::max();
-        float scale_max = 0.f;
-
-        for (const auto& [_, features] : featuresPerView)
-        {
-            for (const auto& feature : features)
-            {
-                scale_min = std::min(scale_min, feature.scale());
-                scale_max = std::max(scale_max, feature.scale());
-            }
-        }
-
-        _minFeatureScalePerDesc[descType] = scale_min;
-        _maxFeatureScalePerDesc[descType] = scale_max;
+        return 0;
     }
-}
 
-void MFeatures::updateFeaturesInfo()
-{
-    qDebug("[QtAliceVision] Features: Update UI features information.");
-
-    _featuresInfo.clear();
-
-    if (!_featuresPerViewPerDesc)
+    const auto& featuresPerView = featuresPerViewIt->second;
+    const auto featuresIt = featuresPerView.find(viewId);
+    if (featuresIt == featuresPerView.end())
     {
-        return;
+        return 0;
     }
 
-    for (const auto& [descType, featuresPerView] : *_featuresPerViewPerDesc)
-    {
-        QMap<QString, QVariant> infoPerView;
-
-        for (const auto& [viewId, features] : featuresPerView)
-        {
-            QMap<QString, QVariant> info;
-            info.insert("nbFeatures", QString::number(features.size()));
-
-            infoPerView.insert(QString::number(viewId), QVariant(info));
-        }
-
-        _featuresInfo.insert(QString::fromStdString(descType), QVariant(infoPerView));
-    }
-
-    Q_EMIT featuresInfoChanged();
+    const auto& features = featuresIt->second;
+    return features.size();
 }
 
 } // namespace qtAliceVision

@@ -47,8 +47,6 @@ class MFeatures : public QObject
     Q_PROPERTY(QVariantList viewIds MEMBER _viewIds NOTIFY viewIdsChanged)
     // Describer types to load
     Q_PROPERTY(QVariantList describerTypes MEMBER _describerTypes NOTIFY describerTypesChanged)
-    /// The list of features information (per view, per describer) for UI
-    Q_PROPERTY(QVariantMap featuresInfo READ featuresInfo NOTIFY featuresInfoChanged)
 
     /// Status
 
@@ -76,9 +74,12 @@ public:
     Q_SIGNAL void featureFolderChanged();
     Q_SIGNAL void describerTypesChanged();
     Q_SIGNAL void viewIdsChanged();
-    Q_SIGNAL void featuresInfoChanged();
     Q_SIGNAL void featuresChanged();
     Q_SIGNAL void statusChanged(Status status);
+
+    /// Invokables
+
+    Q_INVOKABLE int nbFeatures(QString describerType, int viewId) const;
 
     /// Public methods
 
@@ -90,35 +91,10 @@ public:
     const FeaturesPerViewPerDesc& rawData() const { return *_featuresPerViewPerDesc; }
     const FeaturesPerViewPerDesc* rawDataPtr() const { return _featuresPerViewPerDesc; }
 
-    const std::vector<aliceVision::feature::PointFeature>& getFeatures(
-        const std::string& describerType, const aliceVision::IndexT& viewId) const;
-    
-    float getMinFeatureScale(const std::string& describerType) const;
-    float getMaxFeatureScale(const std::string& describerType) const;
-
-    /**
-     * @brief Get MFeatures status
-     * @see MFeatures status enum
-     * @return MFeatures status enum
-     */
     Status status() const { return _status; }
-
     void setStatus(Status status);
 
-    const QVariantMap& featuresInfo() const
-    {
-        return _featuresInfo;
-    }
-
 private:
-    /// Private methods
-
-    void updateMinMaxFeatureScale();
-
-    void updateFeaturesInfo();
-
-    /// Private members
-
     // inputs
     QUrl _featureFolder;
     QVariantList _viewIds;
@@ -127,9 +103,6 @@ private:
     bool _needReload = false;
 
     // internal data
-    std::map<std::string, float> _minFeatureScalePerDesc;
-    std::map<std::string, float> _maxFeatureScalePerDesc;
-    QVariantMap _featuresInfo;
     FeaturesPerViewPerDesc* _featuresPerViewPerDesc = nullptr;
 
     /// status
