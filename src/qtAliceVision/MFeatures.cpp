@@ -42,7 +42,7 @@ void FeaturesIORunnable::run()
         return;
     }
 
-    for (int dIdx = 0; dIdx < _describerTypes.size(); ++dIdx)
+    for (std::size_t dIdx = 0; dIdx < _describerTypes.size(); ++dIdx)
     {
         const auto& descTypeStr = _describerTypes.at(dIdx);
 
@@ -194,15 +194,20 @@ int MFeatures::nbFeatures(QString describerType, int viewId) const
         return 0;
     }
 
+    if (viewId < 0)
+    {
+        return 0;
+    }
+
     const auto& featuresPerView = featuresPerViewIt->second;
-    const auto featuresIt = featuresPerView.find(viewId);
+    const auto featuresIt = featuresPerView.find(static_cast<aliceVision::IndexT>(viewId));
     if (featuresIt == featuresPerView.end())
     {
         return 0;
     }
 
     const auto& features = featuresIt->second;
-    return features.size();
+    return static_cast<int>(features.size());
 }
 
 } // namespace qtAliceVision

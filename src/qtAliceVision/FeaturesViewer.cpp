@@ -329,7 +329,7 @@ void FeaturesViewer::updatePaintTracks(const PaintParams& params, QSGNode* node)
 
         // retrieve track reconstruction state
         const bool trackHasInliers = (track.nbReconstructed > 0);
-        const bool trackFullyReconstructed = (track.nbReconstructed == track.elements.size());
+        const bool trackFullyReconstructed = (static_cast<std::size_t>(track.nbReconstructed) == track.elements.size());
 
         // apply inlier filter
         if (!trackHasInliers && _trackInliersFilter)
@@ -354,7 +354,8 @@ void FeaturesViewer::updatePaintTracks(const PaintParams& params, QSGNode* node)
         {
             // check that frameId is in timeWindow if enabled
             if (_enableTimeWindow
-                && (elt.frameId < currentFrameId - _timeWindow || elt.frameId > currentFrameId + _timeWindow))
+                && (elt.frameId < currentFrameId - static_cast<aliceVision::IndexT>(_timeWindow) ||
+                    elt.frameId > currentFrameId + static_cast<aliceVision::IndexT>(_timeWindow)))
             {
                 continue;
             }
@@ -725,8 +726,8 @@ void FeaturesViewer::updateReconstruction()
                 const auto& camTransform = pose.getTransform();
                 const auto& intrinsic = sfmData.getIntrinsicPtr(view.getIntrinsicId());
                 const aliceVision::Vec2 reprojection = intrinsic->project(camTransform, landmark.X.homogeneous());
-                data.rx = reprojection.x();
-                data.ry = reprojection.y();
+                data.rx = static_cast<float>(reprojection.x());
+                data.ry = static_cast<float>(reprojection.y());
             }
         }
     }
@@ -751,7 +752,8 @@ void FeaturesViewer::updateReconstruction()
 
             for (const auto& [viewId, featureId] : track.featPerView)
             {
-                const auto featureDatasIt = _mreconstruction.featureDatasPerView.find(viewId);
+                const auto featureDatasIt =
+                    _mreconstruction.featureDatasPerView.find(static_cast<aliceVision::IndexT>(viewId));
                 if (featureDatasIt == _mreconstruction.featureDatasPerView.end())
                 {
                     continue;
@@ -772,11 +774,11 @@ void FeaturesViewer::updateReconstruction()
                 if (validLandmarks)
                 {
                     MReconstruction::PointwiseTrackData elt;
-                    elt.viewId = viewId;
-                    elt.featureId = featureId;
+                    elt.viewId = static_cast<aliceVision::IndexT>(viewId);
+                    elt.featureId = static_cast<aliceVision::IndexT>(featureId);
 
                     const auto& sfmData = _msfmdata->rawData();
-                    const auto& view = sfmData.getView(viewId);
+                    const auto& view = sfmData.getView(static_cast<aliceVision::IndexT>(viewId));
                     elt.frameId = view.getFrameId();
 
                     trackData.elements.push_back(elt);
