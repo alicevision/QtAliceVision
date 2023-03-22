@@ -49,6 +49,8 @@ public:
 
     std::unordered_map<aliceVision::IndexT, std::vector<FeatureData>> featureDatasPerView;
     std::vector<TrackData> trackDatas;
+    float minFeatureScale;
+    float maxFeatureScale;
 
 };
 
@@ -211,8 +213,8 @@ private:
 
     bool _displayFeatures = true;
     bool _displayTracks = false;
-    bool _displayMatches = false;
-    bool _displayLandmarks = false;
+    bool _displayMatches = true;
+    bool _displayLandmarks = true;
 
     FeatureDisplayMode _featureDisplayMode = FeaturesViewer::Points;
     TrackDisplayMode _trackDisplayMode = FeaturesViewer::WithCurrentMatches;

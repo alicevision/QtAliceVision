@@ -8,6 +8,7 @@
 
 #include <vector>
 #include <algorithm>
+#include <limits>
 
 namespace qtAliceVision
 {
@@ -154,7 +155,14 @@ void FeaturesViewer::paintFeaturesAsPoints(const PaintParams& params, QSGNode* n
 {
     std::vector<QPointF> points;
 
-    const auto& currentViewFeatures = _mreconstruction.featureDatasPerView.at(_currentViewId);
+    const auto currentViewFeaturesIt = _mreconstruction.featureDatasPerView.find(_currentViewId);
+    if (currentViewFeaturesIt == _mreconstruction.featureDatasPerView.end())
+    {
+        return;
+    }
+
+    const auto& currentViewFeatures = currentViewFeaturesIt->second;
+
     for (const auto& feature : currentViewFeatures)
     {
         // feature scale filter
@@ -173,7 +181,14 @@ void FeaturesViewer::paintFeaturesAsSquares(const PaintParams& params, QSGNode* 
 {
     std::vector<QPointF> points;
 
-    const auto& currentViewFeatures = _mreconstruction.featureDatasPerView.at(_currentViewId);
+    const auto currentViewFeaturesIt = _mreconstruction.featureDatasPerView.find(_currentViewId);
+    if (currentViewFeaturesIt == _mreconstruction.featureDatasPerView.end())
+    {
+        return;
+    }
+
+    const auto& currentViewFeatures = currentViewFeaturesIt->second;
+
     for (const auto& feature : currentViewFeatures)
     {
         // feature scale filter
@@ -207,7 +222,14 @@ void FeaturesViewer::paintFeaturesAsOrientedSquares(const PaintParams& params, Q
 {
     std::vector<QLineF> lines;
 
-    const auto& currentViewFeatures = _mreconstruction.featureDatasPerView.at(_currentViewId);
+    const auto currentViewFeaturesIt = _mreconstruction.featureDatasPerView.find(_currentViewId);
+    if (currentViewFeaturesIt == _mreconstruction.featureDatasPerView.end())
+    {
+        return;
+    }
+
+    const auto& currentViewFeatures = currentViewFeaturesIt->second;
+
     for (const auto& feature : currentViewFeatures)
     {
         // feature scale filter
@@ -250,7 +272,6 @@ void FeaturesViewer::updatePaintTracks(const PaintParams& params, QSGNode* node)
 {
     qDebug() << "[QtAliceVision] FeaturesViewer: Update paint " << _describerType << " tracks.";
 
-    // TODO: also support having only valid tracks (i.e no landmarks)
     if  (!_displayTracks || !params.haveValidFeatures || !params.haveValidTracks || !params.haveValidLandmarks)
     {
         painter.clearLayer(node, "trackEndpoints");
@@ -340,7 +361,7 @@ void FeaturesViewer::updatePaintTracks(const PaintParams& params, QSGNode* node)
 
             // retrieve feature data
             const auto& viewFeatures = _mreconstruction.featureDatasPerView.at(elt.viewId);
-            const auto& currentFeature = viewFeatures.at(elt.featureId);
+            const auto& currentFeature = viewFeatures[elt.featureId];
 
             // retrieve whether or not current feature has a corresponding observation
             const bool currentFeatureInlier = currentFeature.hasLandmark;
@@ -475,8 +496,7 @@ void FeaturesViewer::updatePaintMatches(const PaintParams& params, QSGNode* node
 {
     qDebug() << "[QtAliceVision] FeaturesViewer: Update paint " << _describerType << " matches.";
 
-    // TODO: also support having only valid tracks (i.e no landmarks)
-    if (!_displayMatches || !params.haveValidFeatures || !params.haveValidTracks || !params.haveValidLandmarks)
+    if (!_displayMatches || !params.haveValidFeatures || !params.haveValidTracks)
     {
         // nothing to draw or something is not ready
         painter.clearLayer(node, "matches");
@@ -485,7 +505,13 @@ void FeaturesViewer::updatePaintMatches(const PaintParams& params, QSGNode* node
 
     std::vector<QPointF> points;
 
-    const auto& currentViewFeatures = _mreconstruction.featureDatasPerView.at(_currentViewId);
+    const auto currentViewFeaturesIt = _mreconstruction.featureDatasPerView.find(_currentViewId);
+    if (currentViewFeaturesIt == _mreconstruction.featureDatasPerView.end())
+    {
+        return;
+    }
+
+    const auto& currentViewFeatures = currentViewFeaturesIt->second;
 
     for (const auto& feature : currentViewFeatures)
     {
@@ -525,7 +551,13 @@ void FeaturesViewer::updatePaintLandmarks(const PaintParams& params, QSGNode* no
     std::vector<QPointF> points;
     std::vector<QLineF> lines;
 
-    const auto& currentViewFeatures = _mreconstruction.featureDatasPerView.at(_currentViewId);
+    const auto currentViewFeaturesIt = _mreconstruction.featureDatasPerView.find(_currentViewId);
+    if (currentViewFeaturesIt == _mreconstruction.featureDatasPerView.end())
+    {
+        return;
+    }
+
+    const auto& currentViewFeatures = currentViewFeaturesIt->second;
 
     for (const auto& feature : currentViewFeatures)
     {
@@ -563,8 +595,8 @@ void FeaturesViewer::initializePaintParams(PaintParams& params)
     params.haveValidLandmarks = _msfmdata ?
         _msfmdata->rawDataPtr() != nullptr && _msfmdata->status() == MSfMData::Ready : false;
 
-    const float minFeatureScale = _mfeatures->getMinFeatureScale(_describerType.toStdString());
-    const float difFeatureScale = _mfeatures->getMaxFeatureScale(_describerType.toStdString()) - minFeatureScale;
+    const float minFeatureScale = _mreconstruction.minFeatureScale;
+    const float difFeatureScale = _mreconstruction.maxFeatureScale - minFeatureScale;
 
     params.minFeatureScale = minFeatureScale + std::max(0.f, std::min(1.f, _featureMinScaleFilter)) * difFeatureScale;
     params.maxFeatureScale = minFeatureScale + std::max(0.f, std::min(1.f, _featureMaxScaleFilter)) * difFeatureScale;
@@ -600,6 +632,8 @@ void FeaturesViewer::updateReconstruction()
 
     _mreconstruction.featureDatasPerView.clear();
     _mreconstruction.trackDatas.clear();
+    _mreconstruction.minFeatureScale = 0.f;
+    _mreconstruction.maxFeatureScale = std::numeric_limits<float>::max();
 
     // check validity of the different data sources
 
@@ -617,7 +651,15 @@ void FeaturesViewer::updateReconstruction()
     if (validFeatures)
     {
         const auto& featuresPerViewPerDesc = _mfeatures->rawData();
-        const auto& featuresPerView = featuresPerViewPerDesc.at(_describerType.toStdString());
+        const auto featuresPerViewIt = featuresPerViewPerDesc.find(_describerType.toStdString());
+        if (featuresPerViewIt == featuresPerViewPerDesc.end())
+        {
+            return;
+        }
+        const auto& featuresPerView = featuresPerViewIt->second;
+
+        float minScale = std::numeric_limits<float>::max();
+        float maxScale = 0.f;
         
         for (const auto& [viewId, features] : featuresPerView)
         {
@@ -635,10 +677,16 @@ void FeaturesViewer::updateReconstruction()
                 data.hasTrack = false;
                 data.hasLandmark = false;
                 featureDatas.push_back(data);
+
+                minScale = std::min(minScale, data.scale);
+                maxScale = std::max(maxScale, data.scale);
             }
 
             _mreconstruction.featureDatasPerView[viewId] = featureDatas;
         }
+
+        _mreconstruction.minFeatureScale = minScale;
+        _mreconstruction.maxFeatureScale = maxScale;
     }
     else
     {
@@ -656,7 +704,18 @@ void FeaturesViewer::updateReconstruction()
         {
             for (const auto& [viewId, observation] : landmark.observations)
             {
-                auto& featureDatas = _mreconstruction.featureDatasPerView.at(viewId);
+                const auto featureDatasIt = _mreconstruction.featureDatasPerView.find(viewId);
+                if (featureDatasIt == _mreconstruction.featureDatasPerView.end())
+                {
+                    continue;
+                }
+
+                auto& featureDatas = featureDatasIt->second;
+                if (observation.id_feat >= featureDatas.size())
+                {
+                    continue;
+                }
+
                 auto& data = featureDatas[observation.id_feat];
 
                 data.hasLandmark = true;
@@ -680,6 +739,11 @@ void FeaturesViewer::updateReconstruction()
 
         for (const auto& [_, track] : tracks)
         {
+            if (track.featPerView.size() < 2)
+            {
+                continue;
+            }
+
             MReconstruction::TrackData trackData;
 
             trackData.averageScale = 0.f;
@@ -687,35 +751,46 @@ void FeaturesViewer::updateReconstruction()
 
             for (const auto& [viewId, featureId] : track.featPerView)
             {
-                auto& featureDatas = _mreconstruction.featureDatasPerView.at(viewId);
+                const auto featureDatasIt = _mreconstruction.featureDatasPerView.find(viewId);
+                if (featureDatasIt == _mreconstruction.featureDatasPerView.end())
+                {
+                    continue;
+                }
+
+                auto& featureDatas = featureDatasIt->second;
+                if (featureId >= featureDatas.size())
+                {
+                    continue;
+                }
+
                 auto& data = featureDatas[featureId];
 
                 data.hasTrack = true;
 
                 trackData.averageScale += data.scale;
 
-                if (data.hasLandmark)
-                {
-                    trackData.nbReconstructed++;
-                }
-
-                MReconstruction::PointwiseTrackData elt;
-                elt.viewId = viewId;
-                elt.featureId = featureId;
-
                 if (validLandmarks)
                 {
+                    MReconstruction::PointwiseTrackData elt;
+                    elt.viewId = viewId;
+                    elt.featureId = featureId;
+
                     const auto& sfmData = _msfmdata->rawData();
                     const auto& view = sfmData.getView(viewId);
                     elt.frameId = view.getFrameId();
-                }
 
-                trackData.elements.push_back(elt);
+                    trackData.elements.push_back(elt);
+
+                    if (data.hasLandmark)
+                    {
+                        trackData.nbReconstructed++;
+                    }
+                }
             }
 
             trackData.averageScale /= static_cast<float>(track.featPerView.size());
 
-            std::sort(trackData.elements.begin(), trackData.elements.end(), 
+            std::sort(trackData.elements.begin(), trackData.elements.end(),
                 [](const auto& elt1, const auto& elt2){
                     return elt1.frameId < elt2.frameId;
                 });
