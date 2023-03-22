@@ -353,7 +353,7 @@ void FeaturesViewer::updatePaintTracks(const PaintParams& params, QSGNode* node)
         for (const auto& elt : track.elements)
         {
             // check that frameId is in timeWindow if enabled
-            if (_enableTimeWindow
+            if (_enableTimeWindow && (_timeWindow >= 0)
                 && (elt.frameId < currentFrameId - static_cast<aliceVision::IndexT>(_timeWindow) ||
                     elt.frameId > currentFrameId + static_cast<aliceVision::IndexT>(_timeWindow)))
             {
