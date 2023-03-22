@@ -5,7 +5,9 @@
 #include <QUrl>
 
 #include <aliceVision/sfmData/SfMData.hpp>
+
 #include <memory>
+#include <string>
 
 namespace qtAliceVision
 {
@@ -68,7 +70,6 @@ public:
 
     Q_SLOT void load();
     Q_SLOT void onSfmDataReady();
-    Q_INVOKABLE QString getUrlFromViewId(int viewId);
 
     /// Signals
 
@@ -76,6 +77,11 @@ public:
     Q_SIGNAL void sfmDataChanged();
     Q_SIGNAL void statusChanged(Status status);
     Q_SIGNAL void viewsIdsChanged();
+
+    /// Invokables
+
+    Q_INVOKABLE QString getUrlFromViewId(int viewId);
+    Q_INVOKABLE int nbLandmarks(QString describerType, int viewId) const;
 
 public:
     const aliceVision::sfmData::SfMData& rawData() const { return *_sfmData; }

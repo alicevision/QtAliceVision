@@ -42,7 +42,6 @@ MSfMData::MSfMData()
 MSfMData::~MSfMData()
 {
     setStatus(None);
-    clear();
 }
 
 void MSfMData::clear()
@@ -136,6 +135,35 @@ QVariantList MSfMData::getViewsIds() const
         viewsIds.append(id);
     }
     return viewsIds;
+}
+
+int MSfMData::nbLandmarks(QString describerType, int viewId) const
+{
+    if (_status != Ready)
+    {
+        return 0;
+    }
+
+    if (!_sfmData)
+    {
+        return 0;
+    }
+
+    const auto& landmarks = _sfmData->getLandmarks();
+
+    int count = 0;
+    auto descType = aliceVision::feature::EImageDescriberType_stringToEnum(describerType.toStdString());
+    for (const auto& [_, landmark] : landmarks)
+    {
+        if (landmark.descType != descType) continue;
+
+        const auto observationIt = landmark.observations.find(viewId);
+        if (observationIt == landmark.observations.end()) continue;
+
+        ++count;
+    }
+
+    return count;
 }
 
 } // namespace qtAliceVision

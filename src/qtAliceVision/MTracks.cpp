@@ -51,7 +51,6 @@ MTracks::MTracks()
 MTracks::~MTracks()
 {
     setStatus(None);
-    clear();
 }
 
 void MTracks::clear()
@@ -109,11 +108,41 @@ void MTracks::setStatus(Status status)
     }
 }
 
-size_t MTracks::nbTracks() const
+int MTracks::nbMatches(QString describerType, int viewId) const
 {
-    if (!_tracks || _status != MTracks::Ready)
+    if (_status != Ready)
+    {
         return 0;
-    return _tracks->size();
+    }
+
+    if (!_tracksPerView)
+    {
+        return 0;
+    }
+
+    const auto trackIdsIt = _tracksPerView->find(viewId);
+    if (trackIdsIt == _tracksPerView->end())
+    {
+        return 0;
+    }
+
+    const auto& trackIds = trackIdsIt->second;
+
+    int count = 0;
+    auto descType = aliceVision::feature::EImageDescriberType_stringToEnum(describerType.toStdString());
+    for (const auto& trackId : trackIds)
+    {
+        const auto trackIt = _tracks->find(trackId);
+        if (trackIt == _tracks->end()) continue;
+
+        const auto& track = trackIt->second;
+        if (track.descType == descType)
+        {
+            ++count;
+        }
+    }
+
+    return count;
 }
 
 } // namespace qtAliceVision

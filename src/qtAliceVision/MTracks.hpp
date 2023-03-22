@@ -6,10 +6,10 @@
 #include <QRunnable>
 #include <QUrl>
 
+#include <string>
+
 namespace qtAliceVision
 {
-
-class TracksIORunnable;
 
 /**
  * @brief QObject wrapper around Tracks.
@@ -30,8 +30,6 @@ class MTracks : public QObject
 
     // Path to folder containing the matches
     Q_PROPERTY(QUrl matchingFolder MEMBER _matchingFolder NOTIFY matchingFolderChanged)
-    // Total number of tracks built from the matches
-    Q_PROPERTY(size_t nbTracks READ nbTracks CONSTANT)
 
     /// Status
 
@@ -68,6 +66,10 @@ public:
     Q_SIGNAL void tracksChanged();
     Q_SIGNAL void statusChanged(Status status);
 
+    /// Invokables
+
+    Q_INVOKABLE int nbMatches(QString describerType, int viewId) const;
+
 public:
     const aliceVision::track::TracksMap* tracksPtr() const { return _tracks.get(); }
     const aliceVision::track::TracksMap& tracks() const { return *_tracks; }
@@ -75,8 +77,6 @@ public:
 
     Status status() const { return _status; }
     void setStatus(Status status);
-
-    size_t nbTracks() const;
 
 private:
     /// Private methods
