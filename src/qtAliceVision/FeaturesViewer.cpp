@@ -53,20 +53,6 @@ FeaturesViewer::FeaturesViewer(QQuickItem* parent)
 
 FeaturesViewer::~FeaturesViewer()
 {
-    if (_mfeatures)
-    {
-        delete _mfeatures;
-    }
-
-    if (_mtracks)
-    {
-        delete _mtracks;
-    }
-
-    if (_msfmdata)
-    {
-        delete _msfmdata;
-    }
 }
 
 void FeaturesViewer::setMFeatures(MFeatures* features)

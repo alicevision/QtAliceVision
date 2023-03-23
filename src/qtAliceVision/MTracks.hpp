@@ -71,7 +71,7 @@ public:
     Q_INVOKABLE int nbMatches(QString describerType, int viewId) const;
 
 public:
-    const aliceVision::track::TracksMap* tracksPtr() const { return _tracks.get(); }
+    const aliceVision::track::TracksMap* tracksPtr() const { return _tracks; }
     const aliceVision::track::TracksMap& tracks() const { return *_tracks; }
     const aliceVision::track::TracksPerView& tracksPerView() const { return *_tracksPerView; }
 
@@ -79,16 +79,14 @@ public:
     void setStatus(Status status);
 
 private:
-    /// Private methods
-
-    void clear();
-
     /// Private members
 
     QUrl _matchingFolder;
-    std::unique_ptr<aliceVision::track::TracksMap> _tracks;
-    std::unique_ptr<aliceVision::track::TracksPerView> _tracksPerView;
 
+    aliceVision::track::TracksMap* _tracks = nullptr;
+    aliceVision::track::TracksPerView* _tracksPerView = nullptr;
+
+    bool _needReload = false;
     Status _status = MTracks::None;
 };
 
@@ -107,8 +105,8 @@ public:
 
     Q_SLOT void run() override;
 
-    Q_SIGNAL void resultReady(aliceVision::track::TracksMap* _tracks,
-                              aliceVision::track::TracksPerView* _tracksPerView);
+    Q_SIGNAL void resultReady(aliceVision::track::TracksMap* tracks,
+                              aliceVision::track::TracksPerView* tracksPerView);
 
 private:
     const QUrl _matchingFolder;

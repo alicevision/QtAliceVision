@@ -69,7 +69,7 @@ public:
     /// Slots
 
     Q_SLOT void load();
-    Q_SLOT void onSfmDataReady();
+    Q_SLOT void onSfmDataReady(aliceVision::sfmData::SfMData* sfmData);
 
     /// Signals
 
@@ -86,7 +86,7 @@ public:
 public:
     const aliceVision::sfmData::SfMData& rawData() const { return *_sfmData; }
     aliceVision::sfmData::SfMData& rawData() { return *_sfmData; }
-    const aliceVision::sfmData::SfMData* rawDataPtr() const { return _sfmData.get(); }
+    const aliceVision::sfmData::SfMData* rawDataPtr() const { return _sfmData; }
 
     Status status() const { return _status; }
     void setStatus(Status status);
@@ -96,17 +96,14 @@ public:
     QVariantList getViewsIds() const;
 
 private:
-    /// Private methods
-
-    void clear();
-
     /// Private members
 
     QUrl _sfmDataPath;
-    std::unique_ptr<aliceVision::sfmData::SfMData> _sfmData;
-    std::unique_ptr<aliceVision::sfmData::SfMData> _loadingSfmData;
+
+    aliceVision::sfmData::SfMData* _sfmData = nullptr;
+
+    bool _needReload = false;
     Status _status = MSfMData::None;
-    bool _outdated = false;
 };
 
 /**
@@ -116,9 +113,8 @@ class SfmDataIORunnable : public QObject, public QRunnable
 {
     Q_OBJECT
 public:
-    explicit SfmDataIORunnable(const QUrl& sfmDataPath, aliceVision::sfmData::SfMData* sfmData)
+    explicit SfmDataIORunnable(const QUrl& sfmDataPath)
         : _sfmDataPath(sfmDataPath)
-        , _sfmData(sfmData)
     {
     }
 
@@ -128,11 +124,10 @@ public:
     /**
      * @brief  Emitted when sfmData have been loaded and sfmData objects created.
      */
-    Q_SIGNAL void resultReady();
+    Q_SIGNAL void resultReady(aliceVision::sfmData::SfMData* sfmData);
 
 private:
     const QUrl _sfmDataPath;
-    aliceVision::sfmData::SfMData* _sfmData;
 };
 
 } // namespace qtAliceVision

@@ -95,17 +95,15 @@ public:
     void setStatus(Status status);
 
 private:
-    // inputs
+    /// Private members
+
     QUrl _featureFolder;
     QVariantList _viewIds;
     QVariantList _describerTypes;
 
-    bool _needReload = false;
-
-    // internal data
     FeaturesPerViewPerDesc* _featuresPerViewPerDesc = nullptr;
 
-    /// status
+    bool _needReload = false;
     Status _status = MFeatures::None;
 };
 

@@ -13,25 +13,23 @@ namespace qtAliceVision
 
 void TracksIORunnable::run()
 {
-    using namespace aliceVision;
-
-    std::unique_ptr<track::TracksMap> tracks(new track::TracksMap());
-    std::unique_ptr<track::TracksPerView> tracksPerView(new track::TracksPerView());
+    aliceVision::track::TracksMap* tracks = new aliceVision::track::TracksMap;
+    aliceVision::track::TracksPerView* tracksPerView = new aliceVision::track::TracksPerView;
     try
     {
-        matching::PairwiseMatches pairwiseMatches;
-        if (!matching::Load(pairwiseMatches,
-                            /*viewsKeysFilter=*/{}, {_matchingFolder.toLocalFile().toStdString()},
-                            /*descTypes=*/{},
-                            /*maxNbMatches=*/0,
-                            /*minNbMatches=*/0))
+        aliceVision::matching::PairwiseMatches pairwiseMatches;
+        if (!aliceVision::matching::Load(pairwiseMatches,
+                                         /*viewsKeysFilter=*/{}, {_matchingFolder.toLocalFile().toStdString()},
+                                         /*descTypes=*/{},
+                                         /*maxNbMatches=*/0,
+                                         /*minNbMatches=*/0))
         {
             qDebug() << "[QtAliceVision] Failed to load matches: " << _matchingFolder << ".";
         }
-        track::TracksBuilder tracksBuilder;
+        aliceVision::track::TracksBuilder tracksBuilder;
         tracksBuilder.build(pairwiseMatches);
         tracksBuilder.exportToSTL(*tracks);
-        track::computeTracksPerView(*tracks, *tracksPerView);
+        aliceVision::track::computeTracksPerView(*tracks, *tracksPerView);
     }
     catch (std::exception& e)
     {
@@ -40,7 +38,7 @@ void TracksIORunnable::run()
                  << e.what();
     }
 
-    Q_EMIT resultReady(tracks.release(), tracksPerView.release());
+    Q_EMIT resultReady(tracks, tracksPerView);
 }
 
 MTracks::MTracks()
@@ -50,32 +48,32 @@ MTracks::MTracks()
 
 MTracks::~MTracks()
 {
-    setStatus(None);
-}
+    if (_tracks) delete _tracks;
+    if (_tracksPerView) delete _tracksPerView;
 
-void MTracks::clear()
-{
-    if (_tracks)
-        _tracks->clear();
-    if (_tracksPerView)
-        _tracksPerView->clear();
-    qInfo() << "[QtAliceVision] MTracks clear";
-    Q_EMIT tracksChanged();
+    setStatus(None);
 }
 
 void MTracks::load()
 {
+    _needReload = false;
+
+    if (_status == Loading)
+    {
+        qDebug("[QtAliceVision] Tracks: Unable to load, a load event is already running.");
+        _needReload = true;
+        return;
+    }
+
     qDebug() << "MTracks::load _matchingFolder: " << _matchingFolder;
     if (_matchingFolder.isEmpty())
     {
         setStatus(None);
-        clear();
         return;
     }
     if (!QFileInfo::exists(_matchingFolder.toLocalFile()))
     {
         setStatus(Error);
-        clear();
         return;
     }
 
@@ -90,9 +88,33 @@ void MTracks::load()
 
 void MTracks::onReady(aliceVision::track::TracksMap* tracks, aliceVision::track::TracksPerView* tracksPerView)
 {
-    setStatus(Loading);
-    _tracks.reset(tracks);
-    _tracksPerView.reset(tracksPerView);
+    if (_needReload)
+    {
+        if (tracks) delete tracks;
+        if (tracksPerView) delete tracksPerView;
+
+        setStatus(None);
+        load();
+        return;
+    }
+
+    if (tracks && tracksPerView)
+    {
+        if (_tracks) delete _tracks;
+        if (_tracksPerView) delete _tracksPerView;
+
+        _tracks = tracks;
+        _tracksPerView = tracksPerView;
+    }
+    else if (tracks)
+    {
+        delete tracks;
+    }
+    else if (tracksPerView)
+    {
+        delete tracksPerView;
+    }
+    
     setStatus(Ready);
 }
 

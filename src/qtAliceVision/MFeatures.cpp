@@ -73,12 +73,9 @@ MFeatures::MFeatures()
 
 MFeatures::~MFeatures()
 {
-    setStatus(None);
+    if (_featuresPerViewPerDesc) delete _featuresPerViewPerDesc;
 
-    if (_featuresPerViewPerDesc)
-    {
-        delete _featuresPerViewPerDesc;
-    }
+    setStatus(None);
 }
 
 void MFeatures::load()
@@ -144,6 +141,8 @@ void MFeatures::onFeaturesReady(FeaturesPerViewPerDesc* featuresPerViewPerDesc)
 {
     if (_needReload)
     {
+        if (featuresPerViewPerDesc) delete featuresPerViewPerDesc;
+
         setStatus(None);
         load();
         return;
@@ -151,10 +150,7 @@ void MFeatures::onFeaturesReady(FeaturesPerViewPerDesc* featuresPerViewPerDesc)
 
     if (featuresPerViewPerDesc)
     {
-        if (_featuresPerViewPerDesc)
-        {
-            delete _featuresPerViewPerDesc;
-        }
+        if (_featuresPerViewPerDesc) delete _featuresPerViewPerDesc;
 
         _featuresPerViewPerDesc = featuresPerViewPerDesc;
     }
