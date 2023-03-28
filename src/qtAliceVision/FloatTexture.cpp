@@ -20,7 +20,7 @@ FloatTexture::~FloatTexture()
     }
 }
 
-void FloatTexture::setImage(QSharedPointer<FloatImage>& image)
+void FloatTexture::setImage(std::shared_ptr<FloatImage>& image)
 {
     _srcImage = image;
     _textureSize = {_srcImage->Width(), _srcImage->Height()};

@@ -7,65 +7,52 @@
 #include <QSGTexture>
 #include <QThreadPool>
 
-#include <aliceVision/image/Image.hpp>
-#include <aliceVision/image/convertion.hpp>
-#include <aliceVision/image/io.hpp>
-#include <aliceVision/image/resampling.hpp>
+#include <cmath>
+#include <algorithm>
 
 namespace qtAliceVision
 {
 
-FloatImageIORunnable::FloatImageIORunnable(const QUrl& path, int downscaleLevel, QObject* parent)
-    : QObject(parent)
-    , _path(path)
-    , _downscaleLevel(downscaleLevel)
-{
-}
+FloatImageIORunnable::FloatImageIORunnable(const QUrl& path, aliceVision::image::ImageCache* cache,
+                                           int downscaleLevel, QObject* parent)
+    : QObject(parent), _path(path), _cache(cache), _downscaleLevel(downscaleLevel)
+{}
 
 void FloatImageIORunnable::run()
 {
     using namespace aliceVision;
-    QSharedPointer<FloatImage> result;
+    std::shared_ptr<FloatImage> result = nullptr;
     QSize sourceSize(0, 0);
     QVariantMap qmetadata;
 
     try
     {
         const auto path = _path.toLocalFile().toUtf8().toStdString();
-        FloatImage image;
-        image::readImage(path, image,
-                         image::EImageColorSpace::LINEAR); // linear: sRGB conversion is done in display shader
 
-        sourceSize = QSize(image.Width(), image.Height());
-
-        // ensure it fits in GPU memory
-        if (FloatTexture::maxTextureSize() != -1)
-        {
-            const auto maxTextureSize = FloatTexture::maxTextureSize();
-            while (maxTextureSize != -1 && (image.Width() > maxTextureSize || image.Height() > maxTextureSize))
-            {
-                FloatImage tmp;
-                aliceVision::image::ImageHalfSample(image, tmp);
-                image = std::move(tmp);
-            }
-        }
-
-        // ensure it fits in RAM memory
-        for (int i = 0; i < _downscaleLevel; i++)
-        {
-            FloatImage tmp;
-            aliceVision::image::ImageHalfSample(image, tmp);
-            image = std::move(tmp);
-        }
-
-        // load metadata as well
-        const auto metadata = image::readImageMetadata(path);
+        // load metadata and image dimensions
+        int width, height;
+        const auto metadata = image::readImageMetadata(path, width, height);
+        
         for (const auto& item : metadata)
         {
             qmetadata[QString::fromStdString(item.name().string())] = QString::fromStdString(item.get_string());
         }
 
-        result = QSharedPointer<FloatImage>(new FloatImage(std::move(image)));
+        sourceSize = QSize(width, height);
+
+        // load image
+        int pyramidLevel = _downscaleLevel;
+        const float maxTextureSize = static_cast<float>(FloatTexture::maxTextureSize());
+        const float maxDimension = static_cast<float>(std::max(width, height));
+        if (maxTextureSize > 0 && maxDimension > maxTextureSize)
+        {
+            pyramidLevel +=
+                static_cast<int>(std::ceil(std::log2(maxDimension / maxTextureSize)));
+        }
+        int downscale = 1 << pyramidLevel;
+        std::shared_ptr<FloatImage> image = _cache->get<image::RGBAfColor>(path, downscale);
+
+        result = image;
     }
     catch (std::exception& e)
     {
@@ -102,9 +89,15 @@ FloatImageViewer::FloatImageViewer(QQuickItem* parent)
 
     connect(&_surface, &Surface::subdivisionsChanged, this, &FloatImageViewer::update);
     connect(&_surface, &Surface::verticesChanged, this, &FloatImageViewer::update);
+
+    // Initialize image cache
+    _cache = new aliceVision::image::ImageCache(1024.f, 1024.f * 4.f, aliceVision::image::EImageColorSpace::LINEAR);
 }
 
-FloatImageViewer::~FloatImageViewer() {}
+FloatImageViewer::~FloatImageViewer()
+{
+    if (_cache) delete _cache;
+}
 
 // LOADING FUNCTIONS
 void FloatImageViewer::setLoading(bool loading)
@@ -144,7 +137,7 @@ void FloatImageViewer::reload()
         setLoading(true);
 
         // async load from file
-        auto ioRunnable = new FloatImageIORunnable(_source, _downscaleLevel);
+        auto ioRunnable = new FloatImageIORunnable(_source, _cache, _downscaleLevel);
         connect(ioRunnable, &FloatImageIORunnable::resultReady, this, &FloatImageViewer::onResultReady);
         QThreadPool::globalInstance()->start(ioRunnable);
     }
@@ -154,7 +147,7 @@ void FloatImageViewer::reload()
     }
 }
 
-void FloatImageViewer::onResultReady(QSharedPointer<FloatImage> image, QSize sourceSize, const QVariantMap& metadata)
+void FloatImageViewer::onResultReady(std::shared_ptr<FloatImage> image, QSize sourceSize, const QVariantMap& metadata)
 {
     setLoading(false);
 

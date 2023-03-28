@@ -4,13 +4,14 @@
 #include "ShaderImageViewer.hpp"
 #include "Surface.hpp"
 
+#include <aliceVision/image/all.hpp>
+
 #include <QQuickItem>
 #include <QRunnable>
 #include <QSGGeometryNode>
 #include <QSGSimpleMaterial>
 #include <QUrl>
 
-#include <QSharedPointer>
 #include <QVariant>
 #include <QVector4D>
 
@@ -28,18 +29,19 @@ class FloatImageIORunnable : public QObject, public QRunnable
     Q_OBJECT
 
 public:
-    explicit FloatImageIORunnable(const QUrl& path, int downscaleLevel = 0, QObject* parent = nullptr);
+    explicit FloatImageIORunnable(const QUrl& path, aliceVision::image::ImageCache* cache,
+                                  int downscaleLevel = 0, QObject* parent = nullptr);
 
     /// Load image at path
     Q_SLOT void run() override;
 
     /// Emitted when the image is loaded
-    Q_SIGNAL void resultReady(QSharedPointer<qtAliceVision::FloatImage> image, QSize sourceSize,
-                              const QVariantMap& metadata);
+    Q_SIGNAL void resultReady(std::shared_ptr<qtAliceVision::FloatImage> image, QSize sourceSize, const QVariantMap& metadata);
 
 private:
     QUrl _path;
     int _downscaleLevel;
+    aliceVision::image::ImageCache* _cache = nullptr;
 };
 
 /**
@@ -144,8 +146,7 @@ private:
     /// Reload image from source
     void reload();
     /// Handle result from asynchronous file loading
-    Q_SLOT void onResultReady(QSharedPointer<qtAliceVision::FloatImage> image, QSize sourceSize,
-                              const QVariantMap& metadata);
+    Q_SLOT void onResultReady(std::shared_ptr<qtAliceVision::FloatImage> image, QSize sourceSize, const QVariantMap& metadata);
     /// Custom QSGNode update
     QSGNode* updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePaintNodeData* data) override;
 
@@ -161,7 +162,7 @@ private:
 
     bool _imageChanged = false;
     EChannelMode _channelMode;
-    QSharedPointer<FloatImage> _image;
+    std::shared_ptr<FloatImage> _image;
     QRectF _boundingRect;
     QSize _textureSize;
     QSize _sourceSize = QSize(0, 0);
@@ -177,9 +178,11 @@ private:
     bool _canBeHovered = false;
 
     bool _cropFisheye = false;
+
+    aliceVision::image::ImageCache* _cache = nullptr;
 };
 
 } // namespace qtAliceVision
 
 Q_DECLARE_METATYPE(qtAliceVision::FloatImage)
-Q_DECLARE_METATYPE(QSharedPointer<qtAliceVision::FloatImage>)
+Q_DECLARE_METATYPE(std::shared_ptr<qtAliceVision::FloatImage>)

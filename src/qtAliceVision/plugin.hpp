@@ -51,7 +51,7 @@ public:
         qmlRegisterType<PanoramaViewer>(uri, 1, 0, "PanoramaViewer");
         qRegisterMetaType<QPointF>("QPointF");
         qRegisterMetaType<FloatImage>();
-        qRegisterMetaType<QSharedPointer<FloatImage>>();
+        qRegisterMetaType<std::shared_ptr<FloatImage>>();
 
         qRegisterMetaType<Surface*>("Surface*");
     }
