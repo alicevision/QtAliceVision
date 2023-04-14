@@ -2,7 +2,7 @@
 
 #include "FloatTexture.hpp"
 #include "ShaderImageViewer.hpp"
-#include "Surface.hpp"
+#include "SequenceCache.hpp"
 
 #include <aliceVision/image/all.hpp>
 
@@ -16,37 +16,13 @@
 #include <QVector4D>
 
 #include <memory>
-#include <string>
 
 namespace qtAliceVision
 {
 
 /**
- * @brief QRunnable object dedicated to load image using AliceVision.
- */
-class FloatImageIORunnable : public QObject, public QRunnable
-{
-    Q_OBJECT
-
-public:
-    explicit FloatImageIORunnable(const QUrl& path, aliceVision::image::ImageCache* cache,
-                                  int downscaleLevel = 0, QObject* parent = nullptr);
-
-    /// Load image at path
-    Q_SLOT void run() override;
-
-    /// Emitted when the image is loaded
-    Q_SIGNAL void resultReady(std::shared_ptr<qtAliceVision::FloatImage> image, QSize sourceSize, const QVariantMap& metadata);
-
-private:
-    QUrl _path;
-    int _downscaleLevel;
-    aliceVision::image::ImageCache* _cache = nullptr;
-};
-
-/**
- * @brief Load and display image.
- */
+    * @brief Load and display image.
+    */
 class FloatImageViewer : public QQuickItem
 {
 
@@ -77,6 +53,8 @@ class FloatImageViewer : public QQuickItem
     Q_PROPERTY(Surface* surface READ getSurfacePtr NOTIFY surfaceChanged)
 
     Q_PROPERTY(bool cropFisheye READ getCropFisheye WRITE setCropFisheye NOTIFY isCropFisheyeChanged)
+
+    Q_PROPERTY(QVariantList sequence MEMBER _sequence WRITE setSequence NOTIFY sequenceChanged)
 
 public:
     explicit FloatImageViewer(QQuickItem* parent = nullptr);
@@ -136,17 +114,19 @@ public:
     Q_SIGNAL void canBeHoveredChanged();
     Q_SIGNAL void sfmRequiredChanged();
     Q_SIGNAL void fisheyeCircleParametersChanged();
+    Q_SIGNAL void sequenceChanged();
 
     // Q_INVOKABLE
     Q_INVOKABLE QVector4D pixelValueAt(int x, int y);
 
     Surface* getSurfacePtr() { return &_surface; }
 
+    void setSequence(QVariantList seq);
+
 private:
     /// Reload image from source
     void reload();
-    /// Handle result from asynchronous file loading
-    Q_SLOT void onResultReady(std::shared_ptr<qtAliceVision::FloatImage> image, QSize sourceSize, const QVariantMap& metadata);
+
     /// Custom QSGNode update
     QSGNode* updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePaintNodeData* data) override;
 
@@ -179,7 +159,8 @@ private:
 
     bool _cropFisheye = false;
 
-    aliceVision::image::ImageCache* _cache = nullptr;
+    SequenceCache _cache;
+    QVariantList _sequence;
 };
 
 } // namespace qtAliceVision

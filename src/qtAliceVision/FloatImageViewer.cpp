@@ -9,58 +9,11 @@
 
 #include <cmath>
 #include <algorithm>
+#include <string>
+#include <vector>
 
 namespace qtAliceVision
 {
-
-FloatImageIORunnable::FloatImageIORunnable(const QUrl& path, aliceVision::image::ImageCache* cache,
-                                           int downscaleLevel, QObject* parent)
-    : QObject(parent), _path(path), _cache(cache), _downscaleLevel(downscaleLevel)
-{}
-
-void FloatImageIORunnable::run()
-{
-    using namespace aliceVision;
-    std::shared_ptr<FloatImage> result = nullptr;
-    QSize sourceSize(0, 0);
-    QVariantMap qmetadata;
-
-    try
-    {
-        const auto path = _path.toLocalFile().toUtf8().toStdString();
-
-        // load metadata and image dimensions
-        int width, height;
-        const auto metadata = image::readImageMetadata(path, width, height);
-        
-        for (const auto& item : metadata)
-        {
-            qmetadata[QString::fromStdString(item.name().string())] = QString::fromStdString(item.get_string());
-        }
-
-        sourceSize = QSize(width, height);
-
-        // load image
-        int pyramidLevel = _downscaleLevel;
-        const float maxTextureSize = static_cast<float>(FloatTexture::maxTextureSize());
-        const float maxDimension = static_cast<float>(std::max(width, height));
-        if (maxTextureSize > 0 && maxDimension > maxTextureSize)
-        {
-            pyramidLevel +=
-                static_cast<int>(std::ceil(std::log2(maxDimension / maxTextureSize)));
-        }
-        int downscale = 1 << pyramidLevel;
-        std::shared_ptr<FloatImage> image = _cache->get<image::RGBAfColor>(path, downscale);
-
-        result = image;
-    }
-    catch (std::exception& e)
-    {
-        qInfo() << "[QtAliceVision] Failed to load image: " << _path << "\n" << e.what();
-    }
-
-    Q_EMIT resultReady(result, sourceSize, qmetadata);
-}
 
 FloatImageViewer::FloatImageViewer(QQuickItem* parent)
     : QQuickItem(parent)
@@ -90,14 +43,12 @@ FloatImageViewer::FloatImageViewer(QQuickItem* parent)
     connect(&_surface, &Surface::subdivisionsChanged, this, &FloatImageViewer::update);
     connect(&_surface, &Surface::verticesChanged, this, &FloatImageViewer::update);
 
-    // Initialize image cache
-    _cache = new aliceVision::image::ImageCache(1024.f, 1024.f * 4.f, aliceVision::image::EImageColorSpace::LINEAR);
+    connect(&_cache, &SequenceCache::requestHandled, this, &FloatImageViewer::reload);
+
 }
 
 FloatImageViewer::~FloatImageViewer()
-{
-    if (_cache) delete _cache;
-}
+{}
 
 // LOADING FUNCTIONS
 void FloatImageViewer::setLoading(bool loading)
@@ -110,6 +61,20 @@ void FloatImageViewer::setLoading(bool loading)
     Q_EMIT loadingChanged();
 }
 
+void FloatImageViewer::setSequence(QVariantList seq)
+{
+    _sequence = seq;
+
+    std::vector<std::string> convert;
+    for (const auto& elt : _sequence)
+    {
+        convert.push_back(elt.toString().toStdString());
+    }
+    _cache.setSequence(convert);
+
+    Q_EMIT sequenceChanged();
+}
+
 void FloatImageViewer::reload()
 {
     if (_clearBeforeLoad)
@@ -118,12 +83,12 @@ void FloatImageViewer::reload()
         _imageChanged = true;
         Q_EMIT imageChanged();
     }
+
     _outdated = false;
+    if (_loading) _outdated = true;
 
     if (!_source.isValid())
     {
-        if (_loading)
-            _outdated = true;
         _image.reset();
         _imageChanged = true;
         _surface.clearVertices();
@@ -132,44 +97,30 @@ void FloatImageViewer::reload()
         return;
     }
 
-    if (!_loading)
-    {
-        setLoading(true);
+    // Send request to sequence cache
+    std::string path = _source.toLocalFile().toUtf8().toStdString();
+    auto response = _cache.request(path);
 
-        // async load from file
-        auto ioRunnable = new FloatImageIORunnable(_source, _cache, _downscaleLevel);
-        connect(ioRunnable, &FloatImageIORunnable::resultReady, this, &FloatImageViewer::onResultReady);
-        QThreadPool::globalInstance()->start(ioRunnable);
+    if (response.img)
+    {
+        setLoading(false);
+
+        _surface.setVerticesChanged(true);
+        _surface.setNeedToUseIntrinsic(true);
+        _image = response.img;
+        _imageChanged = true;
+        Q_EMIT imageChanged();
+
+        _sourceSize = response.dim;
+        Q_EMIT sourceSizeChanged();
+
+        _metadata = response.metadata;
+        Q_EMIT metadataChanged();
     }
     else
     {
-        _outdated = true;
+        setLoading(true);
     }
-}
-
-void FloatImageViewer::onResultReady(std::shared_ptr<FloatImage> image, QSize sourceSize, const QVariantMap& metadata)
-{
-    setLoading(false);
-
-    if (_outdated)
-    {
-        // another request has been made while io thread was working
-        _image.reset();
-        reload();
-        return;
-    }
-
-    _surface.setVerticesChanged(true);
-    _surface.setNeedToUseIntrinsic(true);
-    _image = image;
-    _imageChanged = true;
-    Q_EMIT imageChanged();
-
-    _sourceSize = sourceSize;
-    Q_EMIT sourceSizeChanged();
-
-    _metadata = metadata;
-    Q_EMIT metadataChanged();
 }
 
 QVector4D FloatImageViewer::pixelValueAt(int x, int y)
