@@ -40,6 +40,8 @@ public:
 
     void setSequence(const std::vector<std::string>& sequence);
 
+    std::vector<int> getCachedFrames() const;
+
 public:
 
     // Request management

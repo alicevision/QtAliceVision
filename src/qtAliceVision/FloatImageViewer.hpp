@@ -14,6 +14,7 @@
 
 #include <QVariant>
 #include <QVector4D>
+#include <QList>
 
 #include <memory>
 
@@ -55,6 +56,8 @@ class FloatImageViewer : public QQuickItem
     Q_PROPERTY(bool cropFisheye READ getCropFisheye WRITE setCropFisheye NOTIFY isCropFisheyeChanged)
 
     Q_PROPERTY(QVariantList sequence MEMBER _sequence WRITE setSequence NOTIFY sequenceChanged)
+
+    Q_PROPERTY(QVariantList cachedFrames READ getCachedFrames NOTIFY cachedFramesChanged)
 
 public:
     explicit FloatImageViewer(QQuickItem* parent = nullptr);
@@ -115,6 +118,7 @@ public:
     Q_SIGNAL void sfmRequiredChanged();
     Q_SIGNAL void fisheyeCircleParametersChanged();
     Q_SIGNAL void sequenceChanged();
+    Q_SIGNAL void cachedFramesChanged();
 
     // Q_INVOKABLE
     Q_INVOKABLE QVector4D pixelValueAt(int x, int y);
@@ -122,6 +126,8 @@ public:
     Surface* getSurfacePtr() { return &_surface; }
 
     void setSequence(QVariantList seq);
+
+    QVariantList getCachedFrames() const;
 
 private:
     /// Reload image from source

@@ -28,6 +28,21 @@ void SequenceCache::setSequence(const std::vector<std::string>& sequence)
     std::sort(_sequence.begin(), _sequence.end());
 }
 
+std::vector<int> SequenceCache::getCachedFrames() const
+{
+    std::vector<int> cached;
+
+    for (int frame = 0; frame < _sequence.size(); ++frame)
+    {
+        if (_cache->contains<aliceVision::image::RGBAfColor>(_sequence[frame].path, _sequence[frame].downscale))
+        {
+            cached.push_back(frame);
+        }
+    }
+
+    return cached;
+}
+
 SequenceCache::Response SequenceCache::request(const std::string& path)
 {
     // Initialize empty response

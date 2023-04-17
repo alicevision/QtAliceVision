@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <string>
 #include <vector>
+#include <utility>
 
 namespace qtAliceVision
 {
@@ -75,6 +76,20 @@ void FloatImageViewer::setSequence(QVariantList seq)
     Q_EMIT sequenceChanged();
 }
 
+QVariantList FloatImageViewer::getCachedFrames() const
+{
+    QVariantList frames;
+
+    std::vector<int> cached = _cache.getCachedFrames();
+
+    for (int frame : cached)
+    {
+        frames.append(frame);
+    }
+
+    return frames;
+}
+
 void FloatImageViewer::reload()
 {
     if (_clearBeforeLoad)
@@ -116,6 +131,8 @@ void FloatImageViewer::reload()
 
         _metadata = response.metadata;
         Q_EMIT metadataChanged();
+
+        Q_EMIT cachedFramesChanged();
     }
     else
     {
