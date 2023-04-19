@@ -137,7 +137,8 @@ SequenceCache::Response SequenceCache::request(const std::string& path)
 
         // Start prefetching thread
         auto ioRunnable = new PrefetchingIORunnable(_cache, toLoad);
-        connect(ioRunnable, &PrefetchingIORunnable::resultReady, this, &SequenceCache::onResultReady);
+        connect(ioRunnable, &PrefetchingIORunnable::progressed, this, &SequenceCache::onPrefetchingProgressed);
+        connect(ioRunnable, &PrefetchingIORunnable::done, this, &SequenceCache::onPrefetchingDone);
         QThreadPool::globalInstance()->start(ioRunnable);
     }
 
@@ -160,7 +161,12 @@ SequenceCache::Response SequenceCache::request(const std::string& path)
     return response;
 }
 
-void SequenceCache::onResultReady()
+void SequenceCache::onPrefetchingProgressed()
+{
+    Q_EMIT requestHandled();
+}
+
+void SequenceCache::onPrefetchingDone()
 {
     // Update internal state
     _loading = false;
@@ -220,6 +226,8 @@ void PrefetchingIORunnable::run()
 {
     using namespace std::chrono_literals;
 
+    auto tRef = std::chrono::high_resolution_clock::now();
+
     // Load images from disk to cache
     for (const auto& data : _toLoad)
     {
@@ -228,10 +236,19 @@ void PrefetchingIORunnable::run()
 
         // wait a few milliseconds in case another thread needs to query the cache
         std::this_thread::sleep_for(1ms);
+
+        // regularly send progress signals
+        auto tNow = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> diff = tNow - tRef;
+        if (diff.count() > 1.)
+        {
+            tRef = tNow;
+            Q_EMIT progressed();
+        }
     }
 
     // Notify main thread that loading is done
-    Q_EMIT resultReady();
+    Q_EMIT done();
 }
 
 } // namespace qtAliceVision

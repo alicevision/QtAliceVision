@@ -71,7 +71,9 @@ public:
 
     Response request(const std::string& path);
 
-    Q_SLOT void onResultReady();
+    Q_SLOT void onPrefetchingProgressed();
+
+    Q_SLOT void onPrefetchingDone();
 
     Q_SIGNAL void requestHandled();
 
@@ -121,7 +123,9 @@ public:
 
     Q_SLOT void run() override;
 
-    Q_SIGNAL void resultReady();
+    Q_SIGNAL void progressed();
+
+    Q_SIGNAL void done();
 
 private:
 

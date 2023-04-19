@@ -131,13 +131,13 @@ void FloatImageViewer::reload()
 
         _metadata = response.metadata;
         Q_EMIT metadataChanged();
-
-        Q_EMIT cachedFramesChanged();
     }
     else
     {
         setLoading(true);
     }
+
+    Q_EMIT cachedFramesChanged();
 }
 
 QVector4D FloatImageViewer::pixelValueAt(int x, int y)
