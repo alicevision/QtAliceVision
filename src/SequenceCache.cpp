@@ -3,6 +3,7 @@
 #include <aliceVision/system/MemoryInfo.hpp>
 
 #include <QThreadPool>
+#include <QPoint>
 
 #include <algorithm>
 #include <cmath>
@@ -79,11 +80,30 @@ std::vector<int> SequenceCache::getCachedFrames() const
 {
     std::vector<int> cached;
 
+    int regionStart, regionEnd;
+    bool regionOpen = false;
     for (int frame = 0; frame < _sequence.size(); ++frame)
     {
         if (_cache->contains<aliceVision::image::RGBAfColor>(_sequence[frame].path, 1))
         {
-            cached.push_back(frame);
+            if (regionOpen)
+            {
+                regionEnd = frame;
+            }
+            else
+            {
+                regionStart = frame;
+                regionEnd = frame;
+                regionOpen = true;
+            }
+        }
+        else
+        {
+            if (regionOpen)
+            {
+                cached.append(QPoint(regionStart, regionEnd));
+                regionOpen = false;
+            }
         }
     }
 
