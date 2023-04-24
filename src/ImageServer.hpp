@@ -5,6 +5,7 @@
 #include <QSize>
 #include <QVariant>
 #include <QMap>
+#include <QMetaType>
 
 #include <string>
 #include <memory>
@@ -36,6 +37,8 @@ public:
 	virtual Response request(const std::string& path) = 0;
 
 };
+
+Q_DECLARE_METATYPE(Response)
 
 } // namespace imageio
 } // namespace qtAliceVision
