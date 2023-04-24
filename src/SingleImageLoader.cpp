@@ -26,6 +26,7 @@ Response SingleImageLoader::request(const std::string& path)
 	if (!_loading)
 	{
 		_loading = true;
+		_nextPath = path;
 
 		auto ioRunnable = new SingleImageLoadingIORunnable(path);
         connect(ioRunnable, &SingleImageLoadingIORunnable::done, this, &SingleImageLoader::onSingleImageLoadingDone);
@@ -35,11 +36,11 @@ Response SingleImageLoader::request(const std::string& path)
 	return Response();
 }
 
-void SingleImageLoader::onSingleImageLoadingDone(std::string path, Response response)
+void SingleImageLoader::onSingleImageLoadingDone(Response response)
 {
 	_loading = false;
 
-	_path = path;
+	_path = _nextPath;
 	_response = response;
 
 	Q_EMIT requestHandled();
@@ -73,8 +74,10 @@ void SingleImageLoadingIORunnable::run()
     response.img = std::make_shared<aliceVision::image::Image<aliceVision::image::RGBAfColor>>();
     aliceVision::image::readImage(_path, *(response.img), aliceVision::image::EImageColorSpace::LINEAR);
 
-    Q_EMIT done(_path, response);
+    Q_EMIT done(response);
 }
 
 } // namespace imageio
 } // namespace qtAliceVision
+
+#include "SingleImageLoader.moc"

@@ -44,7 +44,8 @@ FloatImageViewer::FloatImageViewer(QQuickItem* parent)
     connect(&_surface, &Surface::verticesChanged, this, &FloatImageViewer::update);
 
     connect(&_sequenceCache, &imageio::SequenceCache::requestHandled, this, &FloatImageViewer::reload);
-
+    connect(&_singleImageLoader, &imageio::SingleImageLoader::requestHandled, this, &FloatImageViewer::reload);
+    connect(this, &FloatImageViewer::useSequenceChanged, this, &FloatImageViewer::reload);
 }
 
 FloatImageViewer::~FloatImageViewer()
@@ -95,9 +96,10 @@ void FloatImageViewer::reload()
         return;
     }
 
-    // Send request to sequence cache
+    // Send request
     std::string path = _source.toLocalFile().toUtf8().toStdString();
-    auto response = _sequenceCache.request(path);
+
+    auto response = _useSequence ? _sequenceCache.request(path) : _singleImageLoader.request(path);
 
     if (response.img)
     {

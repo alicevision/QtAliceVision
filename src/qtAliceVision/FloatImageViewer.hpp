@@ -3,6 +3,7 @@
 #include "FloatTexture.hpp"
 #include "ShaderImageViewer.hpp"
 #include "SequenceCache.hpp"
+#include "SingleImageLoader.hpp"
 
 #include <aliceVision/image/all.hpp>
 
@@ -57,6 +58,8 @@ class FloatImageViewer : public QQuickItem
     Q_PROPERTY(QVariantList sequence WRITE setSequence NOTIFY sequenceChanged)
 
     Q_PROPERTY(QVariantList cachedFrames READ getCachedFrames NOTIFY cachedFramesChanged)
+
+    Q_PROPERTY(bool useSequence MEMBER _useSequence NOTIFY useSequenceChanged)
 
 public:
     explicit FloatImageViewer(QQuickItem* parent = nullptr);
@@ -118,6 +121,7 @@ public:
     Q_SIGNAL void fisheyeCircleParametersChanged();
     Q_SIGNAL void sequenceChanged();
     Q_SIGNAL void cachedFramesChanged();
+    Q_SIGNAL void useSequenceChanged();
 
     // Q_INVOKABLE
     Q_INVOKABLE QVector4D pixelValueAt(int x, int y);
@@ -165,6 +169,8 @@ private:
     bool _cropFisheye = false;
 
     imageio::SequenceCache _sequenceCache;
+    imageio::SingleImageLoader _singleImageLoader;
+    bool _useSequence = true;
 };
 
 } // namespace qtAliceVision

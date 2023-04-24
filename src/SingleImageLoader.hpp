@@ -30,7 +30,7 @@ public:
 
 	Response request(const std::string& path) override;
 
-	Q_SLOT void onSingleImageLoadingDone(std::string path, Response response);
+	Q_SLOT void onSingleImageLoadingDone(Response response);
 
 	Q_SIGNAL void requestHandled();
 
@@ -41,6 +41,7 @@ private:
 	Response _response;
 
 	bool _loading;
+	std::string _nextPath;
 
 };
 
@@ -56,7 +57,7 @@ public:
 
 	Q_SLOT void run() override;
 
-	Q_SIGNAL void done(std::string path, Response response);
+	Q_SIGNAL void done(Response response);
 
 private:
 
