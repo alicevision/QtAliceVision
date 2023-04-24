@@ -3,6 +3,7 @@
 #include <aliceVision/system/MemoryInfo.hpp>
 
 #include <QThreadPool>
+#include <QString>
 #include <QPoint>
 
 #include <algorithm>
