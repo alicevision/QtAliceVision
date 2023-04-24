@@ -12,8 +12,10 @@ SequenceCache::SequenceCache(QObject* parent) :
     QObject(parent)
 {
     _cache = new aliceVision::image::ImageCache(1024.f, 1024.f, aliceVision::image::EImageColorSpace::LINEAR);
-    _extentPrefetch = 10;
+    _extentPrefetch = 30;
     _regionPrefetch = std::make_pair(0, 0);
+    _extentSafe = 20;
+    _regionSafe = std::make_pair(0, 0);
     _loading = false;
 }
 
@@ -48,17 +50,30 @@ SequenceCache::Response SequenceCache::request(const std::string& path)
     // Initialize empty response
     Response response;
 
-    // Check if we are already loading an image
-    if (_loading)
-    {
-        return response;
-    }
-
     // Retrieve frame number corresponding to the requested image in the sequence
     int frame = getFrame(path);
     if (frame < 0)
     {
         return response;
+    }
+
+    // Request falls outside of safe region
+    if ((frame < _regionSafe.first || frame > _regionSafe.second) && !_loading)
+    {
+        // Update internal state
+        _loading = true;
+        _nextRegionPrefetch = getRegion(frame, _extentPrefetch);
+        _nextRegionSafe = getRegion(frame, _extentSafe);
+
+        // Gather images to load
+        std::vector<std::string> toLoad(
+            _sequence.begin() + _nextRegionPrefetch.first,
+            _sequence.begin() + _nextRegionPrefetch.second);
+
+        // Start prefetching thread
+        auto ioRunnable = new PrefetchingIORunnable(_cache, toLoad, _maxResolution);
+        connect(ioRunnable, &PrefetchingIORunnable::resultReady, this, &SequenceCache::onResultReady);
+        QThreadPool::globalInstance()->start(ioRunnable);
     }
 
     // Image is in prefetching region, therefore it must already be cached
@@ -80,21 +95,7 @@ SequenceCache::Response SequenceCache::request(const std::string& path)
 
         return response;
     }
-
-    // Update internal state
-    _loading = true;
-
-    // Gather images to load
-    _regionPrefetch = getRegion(frame, _extentPrefetch);
-    std::vector<std::string> toLoad(
-        _sequence.begin() + _regionPrefetch.first,
-        _sequence.begin() + _regionPrefetch.second);
-
-    // Start prefetching thread
-    auto ioRunnable = new PrefetchingIORunnable(_cache, toLoad);
-    connect(ioRunnable, &PrefetchingIORunnable::resultReady, this, &SequenceCache::onResultReady);
-    QThreadPool::globalInstance()->start(ioRunnable);
-
+    
     return response;
 }
 
@@ -102,6 +103,8 @@ void SequenceCache::onResultReady()
 {
     // Update internal state
     _loading = false;
+    _regionPrefetch = _nextRegionPrefetch;
+    _regionSafe = _nextRegionSafe;
 
     // Notify clients that a request has been handled
     Q_EMIT requestHandled();

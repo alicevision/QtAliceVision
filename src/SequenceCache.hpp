@@ -73,7 +73,12 @@ private:
     int _extentPrefetch;
     std::pair<int, int> _regionPrefetch;
 
+    int _extentSafe;
+    std::pair<int, int> _regionSafe;
+
     bool _loading;
+    std::pair<int, int> _nextRegionPrefetch;
+    std::pair<int, int> _nextRegionSafe;
 
 private:
 
