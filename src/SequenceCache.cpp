@@ -1,11 +1,14 @@
 #include "SequenceCache.hpp"
 
+#include <aliceVision/system/MemoryInfo.hpp>
+
 #include <QThreadPool>
 
 #include <algorithm>
 #include <cmath>
 #include <thread>
 #include <chrono>
+#include <iostream>
 
 
 namespace qtAliceVision {
@@ -13,11 +16,22 @@ namespace qtAliceVision {
 SequenceCache::SequenceCache(QObject* parent) :
     QObject(parent)
 {
-    _cache = new aliceVision::image::ImageCache(1024.f, 1024.f, aliceVision::image::EImageColorSpace::LINEAR);
+    const auto memInfo = aliceVision::system::getMemoryInfo();
+    std::cout << memInfo << std::endl;
+
+    const double availableRam = static_cast<double>(memInfo.availableRam);
+    const double cacheRatio = 0.25;
+    const double cacheRam = cacheRatio * availableRam;
+
+    const double factorConvertMiB = 1024. * 1024.;
+    const float fCacheRam = static_cast<float>(cacheRam / factorConvertMiB);
+    _cache = new aliceVision::image::ImageCache(fCacheRam, fCacheRam, aliceVision::image::EImageColorSpace::LINEAR);
+    std::cout << _cache->toString() << std::endl;
+
     _extentPrefetch = 30;
-    _regionPrefetch = std::make_pair(0, 0);
     _extentSafe = 20;
-    _regionSafe = std::make_pair(0, 0);
+    clearRegions();
+
     _loading = false;
 }
 
@@ -57,6 +71,8 @@ void SequenceCache::setSequence(const std::vector<std::string>& paths)
     std::sort(_sequence.begin(), _sequence.end(), [](const FrameData& d1, const FrameData& d2) {
         return d1.path < d2.path;
     });
+
+    clearRegions();
 }
 
 std::vector<int> SequenceCache::getCachedFrames() const
@@ -164,6 +180,12 @@ std::pair<int, int> SequenceCache::getRegion(int frame, int extent) const
     }
 
     return std::make_pair(start, end);
+}
+
+void SequenceCache::clearRegions()
+{
+    _regionPrefetch = std::make_pair(-1, -1);
+    _regionSafe = std::make_pair(-1, -1);
 }
 
 PrefetchingIORunnable::PrefetchingIORunnable(aliceVision::image::ImageCache* cache,

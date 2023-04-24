@@ -101,6 +101,8 @@ private:
 
     std::pair<int, int> getRegion(int frame, int extent) const;
 
+    void clearRegions();
+
 };
 
 /**
