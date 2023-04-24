@@ -10,20 +10,19 @@
 #include <QRunnable>
 #include <QSGGeometryNode>
 #include <QSGSimpleMaterial>
-#include <QUrl>
-
 #include <QVariant>
 #include <QVector4D>
 #include <QList>
 
 #include <memory>
+#include <string>
 
 namespace qtAliceVision
 {
 
 /**
-    * @brief Load and display image.
-    */
+ * @brief Load and display image.
+ */
 class FloatImageViewer : public QQuickItem
 {
 
@@ -55,7 +54,7 @@ class FloatImageViewer : public QQuickItem
 
     Q_PROPERTY(bool cropFisheye READ getCropFisheye WRITE setCropFisheye NOTIFY isCropFisheyeChanged)
 
-    Q_PROPERTY(QVariantList sequence MEMBER _sequence WRITE setSequence NOTIFY sequenceChanged)
+    Q_PROPERTY(QVariantList sequence WRITE setSequence NOTIFY sequenceChanged)
 
     Q_PROPERTY(QVariantList cachedFrames READ getCachedFrames NOTIFY cachedFramesChanged)
 
@@ -165,8 +164,7 @@ private:
 
     bool _cropFisheye = false;
 
-    SequenceCache _cache;
-    QVariantList _sequence;
+    imageio::SequenceCache _sequenceCache;
 };
 
 } // namespace qtAliceVision

@@ -9,7 +9,6 @@
 
 #include <cmath>
 #include <algorithm>
-#include <string>
 #include <vector>
 #include <utility>
 
@@ -44,7 +43,7 @@ FloatImageViewer::FloatImageViewer(QQuickItem* parent)
     connect(&_surface, &Surface::subdivisionsChanged, this, &FloatImageViewer::update);
     connect(&_surface, &Surface::verticesChanged, this, &FloatImageViewer::update);
 
-    connect(&_cache, &SequenceCache::requestHandled, this, &FloatImageViewer::reload);
+    connect(&_sequenceCache, &imageio::SequenceCache::requestHandled, this, &FloatImageViewer::reload);
 
 }
 
@@ -64,14 +63,14 @@ void FloatImageViewer::setLoading(bool loading)
 
 void FloatImageViewer::setSequence(const QVariantList& paths)
 {
-    _cache.setSequence(paths);
+    _sequenceCache.setSequence(paths);
 
     Q_EMIT sequenceChanged();
 }
 
 QVariantList FloatImageViewer::getCachedFrames() const
 {
-    return _cache.getCachedFrames();
+    return _sequenceCache.getCachedFrames();
 }
 
 void FloatImageViewer::reload()
@@ -98,7 +97,7 @@ void FloatImageViewer::reload()
 
     // Send request to sequence cache
     std::string path = _source.toLocalFile().toUtf8().toStdString();
-    auto response = _cache.request(path);
+    auto response = _sequenceCache.request(path);
 
     if (response.img)
     {

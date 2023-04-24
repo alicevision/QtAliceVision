@@ -1,5 +1,7 @@
 #pragma once
 
+#include "ImageServer.hpp"
+
 #include <aliceVision/image/all.hpp>
 
 #include <QObject>
@@ -17,6 +19,7 @@
 
 
 namespace qtAliceVision {
+namespace imageio {
 
 /**
  * @brief Utility struct for manipulating various information about a given frame.
@@ -45,7 +48,7 @@ struct FrameData {
  * Such strategy makes sense under the assumption that the sequence order is meaningful for clients,
  * i.e. that if an image is queried then it is likely that the next queries will be close in the sequence.
  */
-class SequenceCache : public QObject {
+class SequenceCache : public QObject, public ImageServer {
 
     Q_OBJECT
 
@@ -63,17 +66,7 @@ public:
 
     // Request management
 
-    struct Response {
-
-        std::shared_ptr<aliceVision::image::Image<aliceVision::image::RGBAfColor>> img = nullptr;
-
-        QSize dim;
-
-        QVariantMap metadata;
-
-    };
-
-    Response request(const std::string& path);
+    Response request(const std::string& path) override;
 
     Q_SLOT void onPrefetchingProgressed(int reqFrame);
 
@@ -137,4 +130,5 @@ private:
 
 };
 
+} // namespace imageio
 } // namespace qtAliceVision

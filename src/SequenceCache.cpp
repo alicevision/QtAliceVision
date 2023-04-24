@@ -13,6 +13,7 @@
 
 
 namespace qtAliceVision {
+namespace imageio {
 
 SequenceCache::SequenceCache(QObject* parent) :
     QObject(parent)
@@ -112,7 +113,7 @@ QVariantList SequenceCache::getCachedFrames() const
     return cached;
 }
 
-SequenceCache::Response SequenceCache::request(const std::string& path)
+Response SequenceCache::request(const std::string& path)
 {
     // Initialize empty response
     Response response;
@@ -292,6 +293,7 @@ void PrefetchingIORunnable::run()
     Q_EMIT done(_reqFrame);
 }
 
+} // namespace imageio
 } // namespace qtAliceVision
 
 #include "SequenceCache.moc"
