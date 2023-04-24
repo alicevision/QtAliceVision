@@ -142,22 +142,16 @@ SequenceCache::Response SequenceCache::request(const std::string& path)
         QThreadPool::globalInstance()->start(ioRunnable);
     }
 
-    // Image is in prefetching region, therefore it must already be cached
-    if (frame >= _regionPrefetch.first && frame <= _regionPrefetch.second)
-    {
-        // retrieve frame data
-        const FrameData& data = _sequence[frame];
-        
-        // retrieve image from cache
-        response.img = _cache->get<aliceVision::image::RGBAfColor>(data.path, 1);
-
-        // retrieve metadata
-        response.dim = data.dim;
-        response.metadata = data.metadata;
-
-        return response;
-    }
+    // retrieve frame data
+    const FrameData& data = _sequence[frame];
     
+    // retrieve image from cache
+    response.img = _cache->get<aliceVision::image::RGBAfColor>(data.path, 1, true);
+
+    // retrieve metadata
+    response.dim = data.dim;
+    response.metadata = data.metadata;
+
     return response;
 }
 
