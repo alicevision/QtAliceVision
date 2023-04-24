@@ -17,6 +17,19 @@
 namespace qtAliceVision {
 
 /**
+ * @brief Utility struct for manipulating various information about a given frame.
+ */
+struct FrameData {
+
+    std::string path;
+
+    QSize dim;
+
+    QVariantMap metadata;
+
+};
+
+/**
  * @brief Image caching system for loading image sequences from disk.
  * 
  * Given a sequence of images (ordered by filename), the SequenceCache works as an image server:
@@ -38,7 +51,7 @@ public:
 
     ~SequenceCache();
 
-    void setSequence(const std::vector<std::string>& sequence);
+    void setSequence(const std::vector<std::string>& paths);
 
     std::vector<int> getCachedFrames() const;
 
@@ -66,7 +79,7 @@ private:
 
     // Member variables
 
-    std::vector<std::string> _sequence;
+    std::vector<FrameData> _sequence;
 
     aliceVision::image::ImageCache* _cache;
 
@@ -100,7 +113,7 @@ class PrefetchingIORunnable : public QObject, public QRunnable {
 public:
 
     PrefetchingIORunnable(aliceVision::image::ImageCache* cache,
-                          const std::vector<std::string>& toLoad);
+                          const std::vector<FrameData>& toLoad);
 
     ~PrefetchingIORunnable();
 
@@ -112,7 +125,7 @@ private:
 
     aliceVision::image::ImageCache* _cache;
 
-    std::vector<std::string> _toLoad;
+    std::vector<FrameData> _toLoad;
 
 };
 

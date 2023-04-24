@@ -21,13 +21,40 @@ SequenceCache::SequenceCache(QObject* parent) :
 
 SequenceCache::~SequenceCache()
 {
+    // free memory occupied by image cache
     if (_cache) delete _cache;
 }
 
-void SequenceCache::setSequence(const std::vector<std::string>& sequence)
+void SequenceCache::setSequence(const std::vector<std::string>& paths)
 {
-    _sequence = sequence;
-    std::sort(_sequence.begin(), _sequence.end());
+    _sequence.clear();
+
+    for (size_t i = 0; i < paths.size(); ++i)
+    {
+        // initialize frame data
+        FrameData data;
+        data.path = paths[i];
+
+        // retrieve metadata from disk
+        int width, height;
+        auto metadata = aliceVision::image::readImageMetadata(data.path, width, height);
+
+        // store original image dimensions
+        data.dim = QSize(width, height);
+
+        // copy metadata into a QVariantMap
+        for (const auto& item : metadata)
+        {
+            data.metadata[QString::fromStdString(item.name().string())] = QString::fromStdString(item.get_string());
+        }
+
+        _sequence.push_back(data);
+    }
+
+    // sort sequence by filepaths
+    std::sort(_sequence.begin(), _sequence.end(), [](const FrameData& d1, const FrameData& d2) {
+        return d1.path < d2.path;
+    });
 }
 
 std::vector<int> SequenceCache::getCachedFrames() const
@@ -36,7 +63,7 @@ std::vector<int> SequenceCache::getCachedFrames() const
 
     for (int frame = 0; frame < _sequence.size(); ++frame)
     {
-        if (_cache->contains<aliceVision::image::RGBAfColor>(_sequence[frame].path, _sequence[frame].downscale))
+        if (_cache->contains<aliceVision::image::RGBAfColor>(_sequence[frame].path, 1))
         {
             cached.push_back(frame);
         }
@@ -66,12 +93,12 @@ SequenceCache::Response SequenceCache::request(const std::string& path)
         _nextRegionSafe = getRegion(frame, _extentSafe);
 
         // Gather images to load
-        std::vector<std::string> toLoad(
+        std::vector<FrameData> toLoad(
             _sequence.begin() + _nextRegionPrefetch.first,
             _sequence.begin() + _nextRegionPrefetch.second);
 
         // Start prefetching thread
-        auto ioRunnable = new PrefetchingIORunnable(_cache, toLoad, _maxResolution);
+        auto ioRunnable = new PrefetchingIORunnable(_cache, toLoad);
         connect(ioRunnable, &PrefetchingIORunnable::resultReady, this, &SequenceCache::onResultReady);
         QThreadPool::globalInstance()->start(ioRunnable);
     }
@@ -79,19 +106,15 @@ SequenceCache::Response SequenceCache::request(const std::string& path)
     // Image is in prefetching region, therefore it must already be cached
     if (frame >= _regionPrefetch.first && frame <= _regionPrefetch.second)
     {
-        // retrieve image from cache
-        response.img = _cache->get<aliceVision::image::RGBAfColor>(path);
-
-        // load metadata and image dimensions
-        int width, height;
-        const auto metadata = aliceVision::image::readImageMetadata(path, width, height);
-
-        response.dim = QSize(width, height);
+        // retrieve frame data
+        const FrameData& data = _sequence[frame];
         
-        for (const auto& item : metadata)
-        {
-            response.metadata[QString::fromStdString(item.name().string())] = QString::fromStdString(item.get_string());
-        }
+        // retrieve image from cache
+        response.img = _cache->get<aliceVision::image::RGBAfColor>(data.path, 1);
+
+        // retrieve metadata
+        response.dim = data.dim;
+        response.metadata = data.metadata;
 
         return response;
     }
@@ -114,7 +137,7 @@ int SequenceCache::getFrame(const std::string& path) const
 {
     for (int idx = 0; idx < _sequence.size(); ++idx)
     {
-        if (_sequence[idx] == path)
+        if (_sequence[idx].path == path)
         {
             return idx;
         }
@@ -142,7 +165,7 @@ std::pair<int, int> SequenceCache::getRegion(int frame, int extent) const
 }
 
 PrefetchingIORunnable::PrefetchingIORunnable(aliceVision::image::ImageCache* cache,
-                                             const std::vector<std::string>& toLoad) :
+                                             const std::vector<FrameData>& toLoad) :
     _cache(cache), _toLoad(toLoad)
 {}
 
@@ -152,9 +175,10 @@ PrefetchingIORunnable::~PrefetchingIORunnable()
 void PrefetchingIORunnable::run()
 {
     // Load images from disk to cache
-    for (const auto& path : _toLoad)
+    for (const auto& data : _toLoad)
     {
-        _cache->get<aliceVision::image::RGBAfColor>(path);
+        // load image
+        _cache->get<aliceVision::image::RGBAfColor>(data.path, 1);
     }
 
     // Notify main thread that loading is done
