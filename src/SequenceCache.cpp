@@ -21,6 +21,7 @@ SequenceCache::SequenceCache(QObject* parent) :
     std::cout << memInfo << std::endl;
 
     const double availableRam = static_cast<double>(memInfo.availableRam);
+    //const double availableRam = 1024. * 1024. * 1024.;
     const double cacheRatio = 0.25;
     const double cacheRam = cacheRatio * availableRam;
 
@@ -146,7 +147,9 @@ SequenceCache::Response SequenceCache::request(const std::string& path)
     const FrameData& data = _sequence[frame];
     
     // retrieve image from cache
-    response.img = _cache->get<aliceVision::image::RGBAfColor>(data.path, 1, true);
+    const bool cachedOnly = true;
+    const bool lazyCleaning = false;
+    response.img = _cache->get<aliceVision::image::RGBAfColor>(data.path, 1, cachedOnly, lazyCleaning);
 
     // retrieve metadata
     response.dim = data.dim;
@@ -226,7 +229,9 @@ void PrefetchingIORunnable::run()
     for (const auto& data : _toLoad)
     {
         // load image
-        _cache->get<aliceVision::image::RGBAfColor>(data.path, 1);
+        const bool cachedOnly = false;
+        const bool lazyCleaning = false;
+        _cache->get<aliceVision::image::RGBAfColor>(data.path, 1, cachedOnly, lazyCleaning);
 
         // wait a few milliseconds in case another thread needs to query the cache
         std::this_thread::sleep_for(1ms);
