@@ -125,7 +125,7 @@ public:
 
     Surface* getSurfacePtr() { return &_surface; }
 
-    void setSequence(QVariantList seq);
+    void setSequence(const QVariantList& paths);
 
     QVariantList getCachedFrames() const;
 

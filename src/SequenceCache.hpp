@@ -7,11 +7,13 @@
 #include <QSize>
 #include <QVariant>
 #include <QMap>
+#include <QList>
 
 #include <string>
 #include <vector>
 #include <utility>
 #include <memory>
+#include <cstdint>
 
 
 namespace qtAliceVision {
@@ -26,6 +28,8 @@ struct FrameData {
     QSize dim;
 
     QVariantMap metadata;
+
+    int frame;
 
 };
 
@@ -51,9 +55,9 @@ public:
 
     ~SequenceCache();
 
-    void setSequence(const std::vector<std::string>& paths);
+    void setSequence(const QVariantList& paths);
 
-    std::vector<int> getCachedFrames() const;
+    QVariantList getCachedFrames() const;
 
 public:
 
@@ -71,9 +75,9 @@ public:
 
     Response request(const std::string& path);
 
-    Q_SLOT void onPrefetchingProgressed();
+    Q_SLOT void onPrefetchingProgressed(int reqFrame);
 
-    Q_SLOT void onPrefetchingDone();
+    Q_SLOT void onPrefetchingDone(int reqFrame);
 
     Q_SIGNAL void requestHandled();
 
@@ -85,15 +89,9 @@ private:
 
     aliceVision::image::ImageCache* _cache;
 
-    int _extentPrefetch;
-    std::pair<int, int> _regionPrefetch;
-
-    int _extentSafe;
     std::pair<int, int> _regionSafe;
 
     bool _loading;
-    std::pair<int, int> _nextRegionPrefetch;
-    std::pair<int, int> _nextRegionSafe;
 
 private:
 
@@ -102,8 +100,6 @@ private:
     int getFrame(const std::string& path) const;
 
     std::pair<int, int> getRegion(int frame, int extent) const;
-
-    void clearRegions();
 
 };
 
@@ -117,21 +113,27 @@ class PrefetchingIORunnable : public QObject, public QRunnable {
 public:
 
     PrefetchingIORunnable(aliceVision::image::ImageCache* cache,
-                          const std::vector<FrameData>& toLoad);
+                          const std::vector<FrameData>& toLoad,
+                          int reqFrame,
+                          double fillRatio);
 
     ~PrefetchingIORunnable();
 
     Q_SLOT void run() override;
 
-    Q_SIGNAL void progressed();
+    Q_SIGNAL void progressed(int reqFrame);
 
-    Q_SIGNAL void done();
+    Q_SIGNAL void done(int reqFrame);
 
 private:
 
     aliceVision::image::ImageCache* _cache;
 
     std::vector<FrameData> _toLoad;
+
+    int _reqFrame;
+
+    uint64_t _toFill;
 
 };
 

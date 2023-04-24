@@ -62,32 +62,16 @@ void FloatImageViewer::setLoading(bool loading)
     Q_EMIT loadingChanged();
 }
 
-void FloatImageViewer::setSequence(QVariantList seq)
+void FloatImageViewer::setSequence(const QVariantList& paths)
 {
-    _sequence = seq;
-
-    std::vector<std::string> convert;
-    for (const auto& elt : _sequence)
-    {
-        convert.push_back(elt.toString().toStdString());
-    }
-    _cache.setSequence(convert);
+    _cache.setSequence(paths);
 
     Q_EMIT sequenceChanged();
 }
 
 QVariantList FloatImageViewer::getCachedFrames() const
 {
-    QVariantList frames;
-
-    std::vector<int> cached = _cache.getCachedFrames();
-
-    for (int frame : cached)
-    {
-        frames.append(frame);
-    }
-
-    return frames;
+    return _cache.getCachedFrames();
 }
 
 void FloatImageViewer::reload()
