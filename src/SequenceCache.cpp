@@ -4,6 +4,8 @@
 
 #include <algorithm>
 #include <cmath>
+#include <thread>
+#include <chrono>
 
 
 namespace qtAliceVision {
@@ -174,11 +176,16 @@ PrefetchingIORunnable::~PrefetchingIORunnable()
 
 void PrefetchingIORunnable::run()
 {
+    using namespace std::chrono_literals;
+
     // Load images from disk to cache
     for (const auto& data : _toLoad)
     {
         // load image
         _cache->get<aliceVision::image::RGBAfColor>(data.path, 1);
+
+        // wait a few milliseconds in case another thread needs to query the cache
+        std::this_thread::sleep_for(1ms);
     }
 
     // Notify main thread that loading is done
