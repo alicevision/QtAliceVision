@@ -4,7 +4,7 @@
 
 
 namespace qtAliceVision {
-namespace imageio {
+namespace imgserve {
 
 SingleImageLoader::SingleImageLoader(QObject* parent) : 
 	QObject(parent)
@@ -84,7 +84,7 @@ void SingleImageLoadingIORunnable::run()
     Q_EMIT done(QString::fromStdString(_path), response);
 }
 
-} // namespace imageio
+} // namespace imgserve
 } // namespace qtAliceVision
 
 #include "SingleImageLoader.moc"

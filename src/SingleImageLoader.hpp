@@ -10,7 +10,7 @@
 
 
 namespace qtAliceVision {
-namespace imageio {
+namespace imgserve {
 
 /**
  * @brief Image server that can load a single image at a time.
@@ -95,5 +95,5 @@ private:
 
 };
 
-} // namespace imageio
+} // namespace imgserve
 } // namespace qtAliceVision

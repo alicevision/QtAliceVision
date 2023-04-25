@@ -14,7 +14,7 @@
 
 
 namespace qtAliceVision {
-namespace imageio {
+namespace imgserve {
 
 SequenceCache::SequenceCache(QObject* parent) :
     QObject(parent)
@@ -328,7 +328,7 @@ void PrefetchingIORunnable::run()
     Q_EMIT done(_reqFrame);
 }
 
-} // namespace imageio
+} // namespace imgserve
 } // namespace qtAliceVision
 
 #include "SequenceCache.moc"

@@ -43,8 +43,8 @@ FloatImageViewer::FloatImageViewer(QQuickItem* parent)
     connect(&_surface, &Surface::subdivisionsChanged, this, &FloatImageViewer::update);
     connect(&_surface, &Surface::verticesChanged, this, &FloatImageViewer::update);
 
-    connect(&_sequenceCache, &imageio::SequenceCache::requestHandled, this, &FloatImageViewer::reload);
-    connect(&_singleImageLoader, &imageio::SingleImageLoader::requestHandled, this, &FloatImageViewer::reload);
+    connect(&_sequenceCache, &imgserve::SequenceCache::requestHandled, this, &FloatImageViewer::reload);
+    connect(&_singleImageLoader, &imgserve::SingleImageLoader::requestHandled, this, &FloatImageViewer::reload);
     connect(this, &FloatImageViewer::sequenceChanged, this, &FloatImageViewer::reload);
     connect(this, &FloatImageViewer::useSequenceChanged, this, &FloatImageViewer::reload);
 }

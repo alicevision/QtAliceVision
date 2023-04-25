@@ -19,7 +19,7 @@
 
 
 namespace qtAliceVision {
-namespace imageio {
+namespace imgserve {
 
 /**
  * @brief Utility struct for manipulating various information about a given frame.
@@ -193,5 +193,5 @@ private:
 
 };
 
-} // namespace imageio
+} // namespace imgserve
 } // namespace qtAliceVision

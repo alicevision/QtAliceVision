@@ -12,7 +12,7 @@
 
 
 namespace qtAliceVision {
-namespace imageio {
+namespace imgserve {
 
 /**
  * @brief Utility structure to encapsulate the response to an image loading request.
@@ -48,5 +48,5 @@ public:
 // for usage in signals and slots
 Q_DECLARE_METATYPE(Response)
 
-} // namespace imageio
+} // namespace imgserve
 } // namespace qtAliceVision

@@ -168,8 +168,8 @@ private:
 
     bool _cropFisheye = false;
 
-    imageio::SequenceCache _sequenceCache;
-    imageio::SingleImageLoader _singleImageLoader;
+    imgserve::SequenceCache _sequenceCache;
+    imgserve::SingleImageLoader _singleImageLoader;
     bool _useSequence = true;
 };
 

@@ -57,7 +57,7 @@ public:
         qRegisterMetaType<QPointF>("QPointF");
         qRegisterMetaType<FloatImage>();
         qRegisterMetaType<std::shared_ptr<FloatImage>>();
-        qRegisterMetaType<imageio::Response>();
+        qRegisterMetaType<imgserve::Response>();
 
         qRegisterMetaType<Surface*>("Surface*");
     }
