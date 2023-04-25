@@ -37,7 +37,7 @@ struct FrameData {
 };
 
 /**
- * @brief Image caching system for loading image sequences from disk.
+ * @brief Image server with a caching system for loading image sequences from disk.
  * 
  * Given a sequence of images (ordered by filename), the SequenceCache works as an image server:
  * it receives requests from clients (in the form of a filepath)
@@ -54,45 +54,89 @@ class SequenceCache : public QObject, public ImageServer {
 
 public:
 
+    // Constructors and destructor
+
     explicit SequenceCache(QObject* parent = nullptr);
 
     ~SequenceCache();
 
+public:
+
+    // Data manipulation for the Qt property system
+
+    /**
+     * @brief Set the current image sequence.
+     * @param[in] paths unordered list of image filepaths
+     * @note this method takes care of sorting and initializing the sequence
+     */
     void setSequence(const QVariantList& paths);
 
+    /**
+     * @brief Get the frames in the sequence that are currently cached.
+     * @return a list of intervals, each one describing a range of cached frames
+     * @note we use QPoints to represent the intervals (x: range start, y: range end)
+     */
     QVariantList getCachedFrames() const;
 
 public:
 
     // Request management
 
+    /// If the image requested falls outside a certain region of cached images,
+    /// this method will launch a worker thread to prefetch new images from disk.
     Response request(const std::string& path) override;
 
+    /**
+     * @brief Slot called every time the prefetching thread progressed.
+     * @param[in] reqFrame the frame initially requested when the worker thread was started
+     */
     Q_SLOT void onPrefetchingProgressed(int reqFrame);
 
+    /**
+     * @brief Slot called when the prefetching thread is finished.
+     * @param[in] reqFrame the frame initially requested when the worker thread was started
+     */
     Q_SLOT void onPrefetchingDone(int reqFrame);
 
+    /**
+     * @brief Signal emitted when the prefetching thread is done and a previous request has been handled.
+     */
     Q_SIGNAL void requestHandled();
 
 private:
 
     // Member variables
 
+    /// Ordered sequence of frames.
     std::vector<FrameData> _sequence;
 
+    /// Image cache.
     aliceVision::image::ImageCache* _cache;
 
+    /// Frame interval used to decide if a prefetching thread should be launched.
     std::pair<int, int> _regionSafe;
 
+    /// Keep track of whether or not there is an active worker thread.
     bool _loading;
 
 private:
 
     // Utility methods
 
+    /**
+     * @brief Retrieve frame number corresponding to an image in the sequence.
+     * @param[in] path filepath of an image in the sequence
+     * @return frame number of the queried image if it is in the sequence, otherwise -1
+     */
     int getFrame(const std::string& path) const;
 
-    std::pair<int, int> getRegion(int frame, int extent) const;
+    /**
+     * @brief Build a frame interval in the sequence.
+     * @param[in] frame central frame of the interval
+     * @param[in] extent interval half-size
+     * @return an interval of size 2*extent that fits in the sequence and contains the given frame
+     */
+    std::pair<int, int> buildRegion(int frame, int extent) const;
 
 };
 
@@ -105,6 +149,12 @@ class PrefetchingIORunnable : public QObject, public QRunnable {
 
 public:
 
+    /**
+     * @param[in] cache pointer to image cache to fill
+     * @param[in] toLoad sequence frames to load from disk
+     * @param[in] reqFrame initially requested frame
+     * @param[in] fillRatio proportion of cache capacity that can be filled
+     */
     PrefetchingIORunnable(aliceVision::image::ImageCache* cache,
                           const std::vector<FrameData>& toLoad,
                           int reqFrame,
@@ -112,20 +162,33 @@ public:
 
     ~PrefetchingIORunnable();
 
+    /// Main method for loading images from disk to cache in a worker thread.
     Q_SLOT void run() override;
 
+    /**
+     * @brief Signal emitted regularly during prefetching when progress is made.
+     * @param[in] reqFrame initially requested frame
+     */
     Q_SIGNAL void progressed(int reqFrame);
 
+    /**
+     * @brief Signal emitted when prefetching is finished.
+     * @param[in] reqFrame initially requested frame
+     */
     Q_SIGNAL void done(int reqFrame);
 
 private:
 
+    /// Image cache to fill.
     aliceVision::image::ImageCache* _cache;
 
+    /// Frames to load in cache.
     std::vector<FrameData> _toLoad;
 
+    /// Initially requested frame, used as central point for loading order.
     int _reqFrame;
 
+    /// Maximum memory that can be filled.
     uint64_t _toFill;
 
 };

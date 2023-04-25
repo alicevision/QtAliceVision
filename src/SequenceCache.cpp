@@ -19,61 +19,70 @@ namespace imageio {
 SequenceCache::SequenceCache(QObject* parent) :
     QObject(parent)
 {
+    // Retrieve memory information from system
     const auto memInfo = aliceVision::system::getMemoryInfo();
     std::cout << memInfo << std::endl;
 
+    // Compute proportion of RAM that can be dedicated to image caching
+    // For now we use 30% of available RAM
     const double availableRam = static_cast<double>(memInfo.availableRam);
-    const double cacheRatio = 0.5;
+    const double cacheRatio = 0.3;
     const double cacheRam = cacheRatio * availableRam;
 
+    // Initialize image cache
     const double factorConvertMiB = 1024. * 1024.;
     const float fCacheRam = static_cast<float>(cacheRam / factorConvertMiB);
     _cache = new aliceVision::image::ImageCache(fCacheRam, fCacheRam, aliceVision::image::EImageColorSpace::LINEAR);
     std::cout << _cache->toString() << std::endl;
 
+    // Initialize internal state
     _regionSafe = std::make_pair(-1, -1);
     _loading = false;
 }
 
 SequenceCache::~SequenceCache()
 {
-    // free memory occupied by image cache
+    // Free memory occupied by image cache
     if (_cache) delete _cache;
 }
 
 void SequenceCache::setSequence(const QVariantList& paths)
 {
+    // Clear internal state
     _sequence.clear();
     _regionSafe = std::make_pair(-1, -1);
+    _loading = false;
 
+    // Fill sequence vector
     for (const auto& var : paths)
     {
-        // initialize frame data
+        // Initialize frame data
         FrameData data;
         data.path = var.toString().toStdString();
 
-        // retrieve metadata from disk
+        // Retrieve metadata from disk
         int width, height;
         auto metadata = aliceVision::image::readImageMetadata(data.path, width, height);
 
-        // store original image dimensions
+        // Store original image dimensions
         data.dim = QSize(width, height);
 
-        // copy metadata into a QVariantMap
+        // Copy metadata into a QVariantMap
         for (const auto& item : metadata)
         {
             data.metadata[QString::fromStdString(item.name().string())] = QString::fromStdString(item.get_string());
         }
 
+        // Add to sequence
         _sequence.push_back(data);
     }
 
-    // sort sequence by filepaths
-    std::sort(_sequence.begin(), _sequence.end(), [](const FrameData& d1, const FrameData& d2) {
-        return d1.path < d2.path;
+    // Sort sequence by filepaths
+    std::sort(_sequence.begin(), _sequence.end(), [](const FrameData& lhs, const FrameData& rhs) {
+        return lhs.path < rhs.path;
     });
 
-    // assign frame numbers
+    // Assign frame numbers
     for (size_t i = 0; i < _sequence.size(); ++i)
     {
         _sequence[i].frame = static_cast<int>(i);
@@ -82,14 +91,19 @@ void SequenceCache::setSequence(const QVariantList& paths)
 
 QVariantList SequenceCache::getCachedFrames() const
 {
-    QVariantList cached;
+    QVariantList intervals;
 
+    // Accumulator variables
     auto region = std::make_pair(-1, -1);
     bool regionOpen = false;
+
+    // Build cached frames intervals
     for (int frame = 0; frame < _sequence.size(); ++frame)
     {
+        // Check if current frame is in cache
         if (_cache->contains<aliceVision::image::RGBAfColor>(_sequence[frame].path, 1))
         {
+            // Either grow currently open region or create a new region
             if (regionOpen)
             {
                 region.second = frame;
@@ -103,15 +117,22 @@ QVariantList SequenceCache::getCachedFrames() const
         }
         else
         {
+            // Close currently open region
             if (regionOpen)
             {
-                cached.append(QPoint(region.first, region.second));
+                intervals.append(QPoint(region.first, region.second));
                 regionOpen = false;
             }
         }
     }
 
-    return cached;
+    // Last region may still be open
+    if (regionOpen)
+    {
+        intervals.append(QPoint(region.first, region.second));
+    }
+
+    return intervals;
 }
 
 Response SequenceCache::request(const std::string& path)
@@ -123,6 +144,7 @@ Response SequenceCache::request(const std::string& path)
     int frame = getFrame(path);
     if (frame < 0)
     {
+        // Empty response
         return response;
     }
 
@@ -135,23 +157,25 @@ Response SequenceCache::request(const std::string& path)
         // Gather images to load
         std::vector<FrameData> toLoad = _sequence;
 
-        // Start prefetching thread
-        const double fillRatio = 0.75;
+        // For now fill the allow worker thread to fill the whole cache capacity
+        const double fillRatio = 1.;
+
+        // Create new runnable and launch it in worker thread (managed by Qt thread pool)
         auto ioRunnable = new PrefetchingIORunnable(_cache, toLoad, frame, fillRatio);
         connect(ioRunnable, &PrefetchingIORunnable::progressed, this, &SequenceCache::onPrefetchingProgressed);
         connect(ioRunnable, &PrefetchingIORunnable::done, this, &SequenceCache::onPrefetchingDone);
         QThreadPool::globalInstance()->start(ioRunnable);
     }
 
-    // retrieve frame data
+    // Retrieve frame data
     const FrameData& data = _sequence[frame];
     
-    // retrieve image from cache
+    // Retrieve image from cache
     const bool cachedOnly = true;
     const bool lazyCleaning = false;
     response.img = _cache->get<aliceVision::image::RGBAfColor>(data.path, 1, cachedOnly, lazyCleaning);
 
-    // retrieve metadata
+    // Retrieve metadata
     response.dim = data.dim;
     response.metadata = data.metadata;
 
@@ -160,6 +184,7 @@ Response SequenceCache::request(const std::string& path)
 
 void SequenceCache::onPrefetchingProgressed(int)
 {
+    // Notify listeners that cache content has changed
     Q_EMIT requestHandled();
 }
 
@@ -172,6 +197,7 @@ void SequenceCache::onPrefetchingDone(int reqFrame)
     auto regionCached = std::make_pair(-1, -1);
     for (int frame = reqFrame; frame >= 0; --frame)
     {
+        // Grow region on the left as much as possible
         if (_cache->contains<aliceVision::image::RGBAfColor>(_sequence[frame].path, 1))
         {
             regionCached.first = frame;
@@ -183,6 +209,7 @@ void SequenceCache::onPrefetchingDone(int reqFrame)
     }
     for (int frame = reqFrame; frame < _sequence.size(); ++frame)
     {
+        // Grow region on the right as much as possible
         if (_cache->contains<aliceVision::image::RGBAfColor>(_sequence[frame].path, 1))
         {
             regionCached.second = frame;
@@ -194,9 +221,11 @@ void SequenceCache::onPrefetchingDone(int reqFrame)
     }
 
     // Update safe region
+    // Here we define safe region to cover 80% of cached region
+    // The remaining 20% serves to anticipate prefetching
     const int extentCached = (regionCached.second - regionCached.first) / 2;
     const int extentSafe = static_cast<int>(static_cast<double>(extentCached) * 0.8);
-    _regionSafe = getRegion(reqFrame, extentSafe);
+    _regionSafe = buildRegion(reqFrame, extentSafe);
 
     // Notify clients that a request has been handled
     Q_EMIT requestHandled();
@@ -204,6 +233,7 @@ void SequenceCache::onPrefetchingDone(int reqFrame)
 
 int SequenceCache::getFrame(const std::string& path) const
 {
+    // Go through frames until we find a matching filepath
     for (int idx = 0; idx < _sequence.size(); ++idx)
     {
         if (_sequence[idx].path == path)
@@ -211,14 +241,18 @@ int SequenceCache::getFrame(const std::string& path) const
             return idx;
         }
     }
+
+    // No match found
     return -1;
 }
 
-std::pair<int, int> SequenceCache::getRegion(int frame, int extent) const
+std::pair<int, int> SequenceCache::buildRegion(int frame, int extent) const
 {
+    // Initialize region equally around central frame
     int start = frame - extent;
     int end = frame + extent;
 
+    // Adjust to sequence bounds
     if (start < 0)
     {
         start = 0;
@@ -249,38 +283,38 @@ void PrefetchingIORunnable::run()
 {
     using namespace std::chrono_literals;
 
-    // timer for sending progress signals
+    // Timer for sending progress signals
     auto tRef = std::chrono::high_resolution_clock::now();
 
-    // processing order:
-    // sort frames by distance to request frame
+    // Processing order:
+    // Sort frames by distance to request frame
     std::sort(_toLoad.begin(), _toLoad.end(), [this](const FrameData& lhs, const FrameData& rhs) {
         return std::abs(lhs.frame - _reqFrame) < std::abs(rhs.frame - _reqFrame);
     });
 
-    // accumulator variable to keep track of cache capacity filled with loaded images
+    // Accumulator variable to keep track of cache capacity filled with loaded images
     uint64_t filled = 0;
 
     // Load images from disk to cache
     for (const auto& data : _toLoad)
     {
-        // checked if image size does not exceed limit
+        // Check if image size does not exceed limit
         uint64_t memSize = static_cast<uint64_t>(data.dim.width()) * static_cast<uint64_t>(data.dim.height()) * 16;
         if (filled + memSize > _toFill)
         {
             break;
         }
 
-        // load image
+        // Load image in cache
         const bool cachedOnly = false;
         const bool lazyCleaning = false;
         _cache->get<aliceVision::image::RGBAfColor>(data.path, 1, cachedOnly, lazyCleaning);
         filled += memSize;
 
-        // wait a few milliseconds in case another thread needs to query the cache
+        // Wait a few milliseconds in case another thread needs to query the cache
         std::this_thread::sleep_for(1ms);
 
-        // regularly send progress signals
+        // Regularly send progress signals
         auto tNow = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> diff = tNow - tRef;
         if (diff.count() > 1.)

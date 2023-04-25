@@ -1,7 +1,6 @@
 #include "SingleImageLoader.hpp"
 
 #include <QThreadPool>
-#include <QString>
 
 
 namespace qtAliceVision {
@@ -10,6 +9,7 @@ namespace imageio {
 SingleImageLoader::SingleImageLoader(QObject* parent) : 
 	QObject(parent)
 {
+	// Initialize internal state
 	_loading = false;
 }
 
@@ -18,31 +18,37 @@ SingleImageLoader::~SingleImageLoader()
 
 Response SingleImageLoader::request(const std::string& path)
 {
+	// Check if requested image matches currently loaded image
 	if (path == _path)
 	{
 		return _response;
 	}
 
+	// If there is not already a worker thread
+	// start a new one using the currently requested image
 	if (!_loading)
 	{
+		// Update internal state
 		_loading = true;
-		_nextPath = path;
 
+		// Create new runnable and launch it in worker thread (managed by Qt thread pool)
 		auto ioRunnable = new SingleImageLoadingIORunnable(path);
         connect(ioRunnable, &SingleImageLoadingIORunnable::done, this, &SingleImageLoader::onSingleImageLoadingDone);
         QThreadPool::globalInstance()->start(ioRunnable);
 	}
 
+	// Empty response
 	return Response();
 }
 
-void SingleImageLoader::onSingleImageLoadingDone(Response response)
+void SingleImageLoader::onSingleImageLoadingDone(QString path, Response response)
 {
+	// Update internal state
 	_loading = false;
-
-	_path = _nextPath;
+	_path = path.toStdString();
 	_response = response;
 
+	// Notify listeners that an image has been loaded
 	Q_EMIT requestHandled();
 }
 
@@ -57,24 +63,25 @@ void SingleImageLoadingIORunnable::run()
 {
 	Response response;
 
-	// retrieve metadata from disk
+	// Retrieve metadata from disk
     int width, height;
     auto metadata = aliceVision::image::readImageMetadata(_path, width, height);
 
-    // store original image dimensions
+    // Store original image dimensions
     response.dim = QSize(width, height);
 
-    // copy metadata into a QVariantMap
+    // Copy metadata into a QVariantMap
     for (const auto& item : metadata)
     {
         response.metadata[QString::fromStdString(item.name().string())] = QString::fromStdString(item.get_string());
     }
 
-    // load image
+    // Load image
     response.img = std::make_shared<aliceVision::image::Image<aliceVision::image::RGBAfColor>>();
     aliceVision::image::readImage(_path, *(response.img), aliceVision::image::EImageColorSpace::LINEAR);
 
-    Q_EMIT done(response);
+    // Notify listeners that loading is finished
+    Q_EMIT done(QString::fromStdString(_path), response);
 }
 
 } // namespace imageio

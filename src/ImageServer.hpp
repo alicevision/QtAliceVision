@@ -15,7 +15,7 @@ namespace qtAliceVision {
 namespace imageio {
 
 /**
- * @brief Utility structure to encapsulate the response to an image request.
+ * @brief Utility structure to encapsulate the response to an image loading request.
  */
 struct Response {
 
@@ -28,16 +28,24 @@ struct Response {
 };
 
 /**
- * @brief Interface for image server classes.
+ * @brief Interface for loading images from disk.
  */
 class ImageServer {
 
 public:
 
+	/**
+	 * @brief Request an image stored on disk with its metadata.
+	 * @note this is a pure virtual method
+	 * @param[in] path image's filepath on disk
+	 * @return a response to the request containing a pointer to the image and the image's metadata
+	 */
 	virtual Response request(const std::string& path) = 0;
 
 };
 
+// Make Response struct known to QMetaType
+// for usage in signals and slots
 Q_DECLARE_METATYPE(Response)
 
 } // namespace imageio

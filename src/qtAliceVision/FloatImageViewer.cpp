@@ -45,6 +45,7 @@ FloatImageViewer::FloatImageViewer(QQuickItem* parent)
 
     connect(&_sequenceCache, &imageio::SequenceCache::requestHandled, this, &FloatImageViewer::reload);
     connect(&_singleImageLoader, &imageio::SingleImageLoader::requestHandled, this, &FloatImageViewer::reload);
+    connect(this, &FloatImageViewer::sequenceChanged, this, &FloatImageViewer::reload);
     connect(this, &FloatImageViewer::useSequenceChanged, this, &FloatImageViewer::reload);
 }
 
