@@ -44,9 +44,9 @@ public:
 
 };
 
-// Make Response struct known to QMetaType
-// for usage in signals and slots
-Q_DECLARE_METATYPE(Response)
-
 } // namespace imgserve
 } // namespace qtAliceVision
+
+// Make Response struct known to QMetaType
+// for usage in signals and slots
+Q_DECLARE_METATYPE(qtAliceVision::imgserve::Response)

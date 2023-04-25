@@ -10,7 +10,6 @@
 #include <cmath>
 #include <thread>
 #include <chrono>
-#include <iostream>
 
 
 namespace qtAliceVision {
@@ -21,7 +20,6 @@ SequenceCache::SequenceCache(QObject* parent) :
 {
     // Retrieve memory information from system
     const auto memInfo = aliceVision::system::getMemoryInfo();
-    std::cout << memInfo << std::endl;
 
     // Compute proportion of RAM that can be dedicated to image caching
     // For now we use 30% of available RAM
@@ -33,7 +31,6 @@ SequenceCache::SequenceCache(QObject* parent) :
     const double factorConvertMiB = 1024. * 1024.;
     const float fCacheRam = static_cast<float>(cacheRam / factorConvertMiB);
     _cache = new aliceVision::image::ImageCache(fCacheRam, fCacheRam, aliceVision::image::EImageColorSpace::LINEAR);
-    std::cout << _cache->toString() << std::endl;
 
     // Initialize internal state
     _regionSafe = std::make_pair(-1, -1);
@@ -98,10 +95,12 @@ QVariantList SequenceCache::getCachedFrames() const
     bool regionOpen = false;
 
     // Build cached frames intervals
-    for (int frame = 0; frame < _sequence.size(); ++frame)
+    for (std::size_t i = 0; i < _sequence.size(); ++i)
     {
+        const int frame = static_cast<int>(i);
+
         // Check if current frame is in cache
-        if (_cache->contains<aliceVision::image::RGBAfColor>(_sequence[frame].path, 1))
+        if (_cache->contains<aliceVision::image::RGBAfColor>(_sequence[i].path, 1))
         {
             // Either grow currently open region or create a new region
             if (regionOpen)
@@ -168,7 +167,8 @@ Response SequenceCache::request(const std::string& path)
     }
 
     // Retrieve frame data
-    const FrameData& data = _sequence[frame];
+    const std::size_t idx = static_cast<std::size_t>(frame);
+    const FrameData& data = _sequence[idx];
     
     // Retrieve image from cache
     const bool cachedOnly = true;
@@ -197,8 +197,10 @@ void SequenceCache::onPrefetchingDone(int reqFrame)
     auto regionCached = std::make_pair(-1, -1);
     for (int frame = reqFrame; frame >= 0; --frame)
     {
+        const std::size_t idx = static_cast<std::size_t>(frame);
+
         // Grow region on the left as much as possible
-        if (_cache->contains<aliceVision::image::RGBAfColor>(_sequence[frame].path, 1))
+        if (_cache->contains<aliceVision::image::RGBAfColor>(_sequence[idx].path, 1))
         {
             regionCached.first = frame;
         }
@@ -207,10 +209,12 @@ void SequenceCache::onPrefetchingDone(int reqFrame)
             break;
         }
     }
-    for (int frame = reqFrame; frame < _sequence.size(); ++frame)
+    for (int frame = reqFrame; frame < static_cast<int>(_sequence.size()); ++frame)
     {
+        const std::size_t idx = static_cast<std::size_t>(frame);
+
         // Grow region on the right as much as possible
-        if (_cache->contains<aliceVision::image::RGBAfColor>(_sequence[frame].path, 1))
+        if (_cache->contains<aliceVision::image::RGBAfColor>(_sequence[idx].path, 1))
         {
             regionCached.second = frame;
         }
@@ -258,7 +262,7 @@ std::pair<int, int> SequenceCache::buildRegion(int frame, int extent) const
         start = 0;
         end = std::min(static_cast<int>(_sequence.size()) - 1, 2 * extent);
     }
-    else if (end >= _sequence.size())
+    else if (end >= static_cast<int>(_sequence.size()))
     {
         end = static_cast<int>(_sequence.size()) - 1;
         start = std::max(0, static_cast<int>(_sequence.size()) - 1 - 2 * extent);
