@@ -36,7 +36,7 @@ bool Painter::ensureGeometry(QSGNode* node) const
     {
         auto root = new QSGGeometryNode;
 
-        auto geometry = new QSGGeometry(QSGGeometry::defaultAttributes_Point2D(), 0);
+        auto geometry = new QSGGeometry(QSGGeometry::defaultAttributes_Point2D(), 0, 0, QSGGeometry::UnsignedIntType);
         geometry->setIndexDataPattern(QSGGeometry::StaticPattern);
         geometry->setVertexDataPattern(QSGGeometry::StaticPattern);
 
@@ -125,8 +125,8 @@ void Painter::drawPoints(QSGNode* node, const std::string& layer, const std::vec
     material->setColor(color);
 }
 
-void Painter::drawLines(QSGNode* node, const std::string& layer, const std::vector<QLineF>& lines, const QColor& color,
-                        float lineWidth) const
+void Painter::drawLines(QSGNode* node, const std::string& layer, const std::vector<QPointF>& points,
+                        const QColor& color, float lineWidth) const
 {
     auto* root = getGeometryNode(node, layer);
     if (!root)
@@ -137,7 +137,7 @@ void Painter::drawLines(QSGNode* node, const std::string& layer, const std::vect
 
     root->markDirty(QSGNode::DirtyGeometry);
     auto geometry = root->geometry();
-    geometry->allocate(static_cast<int>(lines.size()) * 2, 0);
+    geometry->allocate(static_cast<int>(points.size()), 0);
 
     geometry->setDrawingMode(QSGGeometry::DrawLines);
     geometry->setLineWidth(lineWidth);
@@ -149,11 +149,10 @@ void Painter::drawLines(QSGNode* node, const std::string& layer, const std::vect
         return;
     }
 
-    for (std::size_t i = 0; i < lines.size(); i++)
+    for (std::size_t i = 0; i < points.size(); i++)
     {
-        const QLineF& l = lines[i];
-        vertices[2 * i].set(static_cast<float>(l.x1()), static_cast<float>(l.y1()));
-        vertices[2 * i + 1].set(static_cast<float>(l.x2()), static_cast<float>(l.y2()));
+        const QPointF& p = points[i];
+        vertices[i].set(static_cast<float>(p.x()), static_cast<float>(p.y()));
     }
 
     auto* material = static_cast<QSGFlatColorMaterial*>(root->material());

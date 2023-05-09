@@ -206,7 +206,7 @@ void FeaturesViewer::paintFeaturesAsSquares(const PaintParams& params, QSGNode* 
 
 void FeaturesViewer::paintFeaturesAsOrientedSquares(const PaintParams& params, QSGNode* node)
 {
-    std::vector<QLineF> lines;
+    std::vector<QPointF> points;
 
     const auto currentViewFeaturesIt = _mreconstruction.featureDatasPerView.find(_currentViewId);
     if (currentViewFeaturesIt == _mreconstruction.featureDatasPerView.end())
@@ -241,17 +241,19 @@ void FeaturesViewer::paintFeaturesAsOrientedSquares(const PaintParams& params, Q
             QTransform().translate(feature.x, feature.y).rotateRadians(radAngle).translate(-feature.x, -feature.y);
 
         // create lines, each vertice has to be duplicated (A->B, B->C, C->D, D->A) since we use GL_LINES
-        std::vector<QPointF> points = {t.map(tl), t.map(tr), t.map(br), t.map(bl), t.map(tl)};
-        for (unsigned int k = 0; k < points.size(); ++k)
+        std::vector<QPointF> corners = {t.map(tl), t.map(tr), t.map(br), t.map(bl)};
+        for (unsigned int k = 0; k < corners.size(); ++k)
         {
-            lines.emplace_back(points[k], points[(k + 1) % points.size()]);
+            points.emplace_back(corners[k]);
+            points.emplace_back(corners[(k + 1) % corners.size()]);
         }
         // orientation line: up vector (0, 1)
         auto o2 = t.map(rect.center() - QPointF(0.0f, radius)); // rotate end point
-        lines.emplace_back(rect.center(), o2);
+        points.emplace_back(rect.center());
+        points.emplace_back(o2);
     }
 
-    painter.drawLines(node, "features", lines, _featureColor, 2.f);
+    painter.drawLines(node, "features", points, _featureColor, 2.f);
 }
 
 void FeaturesViewer::updatePaintTracks(const PaintParams& params, QSGNode* node)
@@ -291,11 +293,11 @@ void FeaturesViewer::updatePaintTracks(const PaintParams& params, QSGNode* node)
 
     std::vector<QPointF> trackEndpoints;
     std::vector<QPointF> highlightPoints;
-    std::vector<QLineF> trackLines_reconstruction_none;
-    std::vector<QLineF> trackLines_reconstruction_partial_outliers;
-    std::vector<QLineF> trackLines_reconstruction_partial_inliers;
-    std::vector<QLineF> trackLines_reconstruction_full;
-    std::vector<QLineF> trackLines_gaps;
+    std::vector<QPointF> trackLines_reconstruction_none;
+    std::vector<QPointF> trackLines_reconstruction_partial_outliers;
+    std::vector<QPointF> trackLines_reconstruction_partial_inliers;
+    std::vector<QPointF> trackLines_reconstruction_full;
+    std::vector<QPointF> trackLines_gaps;
     std::vector<QPointF> trackPoints_outliers;
     std::vector<QPointF> trackPoints_inliers;
 
@@ -365,31 +367,35 @@ void FeaturesViewer::updatePaintTracks(const PaintParams& params, QSGNode* node)
                     ? QPointF(previousFeature.rx, previousFeature.ry) : QPointF(previousFeature.x, previousFeature.y);
                 const QPointF curPoint = (_display3dTracks && currentFeatureInlier)
                     ? QPointF(currentFeature.rx, currentFeature.ry) : QPointF(currentFeature.x, currentFeature.y);
-                const QLineF line = QLineF(prevPoint, curPoint);
 
                 // track line
                 if (!contiguous)
                 {
-                    trackLines_gaps.push_back(line);
+                    trackLines_gaps.push_back(prevPoint);
+                    trackLines_gaps.push_back(curPoint);
                 }
                 else if (!trackHasInliers && !_trackInliersFilter)
                 {
-                    trackLines_reconstruction_none.push_back(line);
+                    trackLines_reconstruction_none.push_back(prevPoint);
+                    trackLines_reconstruction_none.push_back(curPoint);
                 }
                 else if (!trackFullyReconstructed)
                 {
                     if (inliers)
                     {
-                        trackLines_reconstruction_partial_inliers.push_back(line);
+                        trackLines_reconstruction_partial_inliers.push_back(prevPoint);
+                        trackLines_reconstruction_partial_inliers.push_back(curPoint);
                     }
                     else
                     {
-                        trackLines_reconstruction_partial_outliers.push_back(line);
+                        trackLines_reconstruction_partial_outliers.push_back(prevPoint);
+                        trackLines_reconstruction_partial_outliers.push_back(curPoint);
                     }
                 }
                 else if (trackFullyReconstructed)
                 {
-                    trackLines_reconstruction_full.push_back(line);
+                    trackLines_reconstruction_full.push_back(prevPoint);
+                    trackLines_reconstruction_full.push_back(curPoint);
                 }
 
                 // highlight point
@@ -536,7 +542,7 @@ void FeaturesViewer::updatePaintLandmarks(const PaintParams& params, QSGNode* no
     }
 
     std::vector<QPointF> points;
-    std::vector<QLineF> lines;
+    std::vector<QPointF> lines;
 
     const auto currentViewFeaturesIt = _mreconstruction.featureDatasPerView.find(_currentViewId);
     if (currentViewFeaturesIt == _mreconstruction.featureDatasPerView.end())
@@ -558,7 +564,8 @@ void FeaturesViewer::updatePaintLandmarks(const PaintParams& params, QSGNode* no
             continue;
         }
 
-        lines.emplace_back(feature.x, feature.y, feature.rx, feature.ry);
+        lines.emplace_back(feature.x, feature.y);
+        lines.emplace_back(feature.rx, feature.ry);
         points.emplace_back(feature.rx, feature.ry);
     }
 

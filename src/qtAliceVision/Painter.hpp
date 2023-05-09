@@ -1,7 +1,6 @@
 #pragma once
 
 #include <QColor>
-#include <QLineF>
 #include <QPointF>
 #include <QSGGeometryNode>
 #include <QSGNode>
@@ -51,11 +50,11 @@ public:
      * @brief Clear a layer and draw lines on it.
      * @param node Scene graph node in which the drawing occurs.
      * @param layer Layer name.
-     * @param lines 2D lines to draw.
+     * @param points Line corners as 2D points.
      * @param color Lines color (same for all lines).
      * @param lineWidth Lines width (same for all lines).
      */
-    void drawLines(QSGNode* node, const std::string& layer, const std::vector<QLineF>& lines, const QColor& color,
+    void drawLines(QSGNode* node, const std::string& layer, const std::vector<QPointF>& points, const QColor& color,
                    float lineWidth) const;
 
     /**
