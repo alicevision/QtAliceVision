@@ -4,9 +4,11 @@
 
 #include <QQuickItem>
 #include <QRunnable>
-#include <QUrl>
+#include <QList>
+#include <QVariant>
 
 #include <string>
+#include <vector>
 
 namespace qtAliceVision
 {
@@ -29,7 +31,7 @@ class MTracks : public QObject
     /// Data properties
 
     // Path to folder containing the matches
-    Q_PROPERTY(QUrl matchingFolder MEMBER _matchingFolder NOTIFY matchingFolderChanged)
+    Q_PROPERTY(QVariantList matchingFolders MEMBER _matchingFolders NOTIFY matchingFoldersChanged)
 
     /// Status
 
@@ -62,7 +64,7 @@ public:
 
     /// Signals
 
-    Q_SIGNAL void matchingFolderChanged();
+    Q_SIGNAL void matchingFoldersChanged();
     Q_SIGNAL void tracksChanged();
     Q_SIGNAL void statusChanged(Status status);
 
@@ -81,7 +83,7 @@ public:
 private:
     /// Private members
 
-    QUrl _matchingFolder;
+    QVariantList _matchingFolders;
 
     aliceVision::track::TracksMap* _tracks = nullptr;
     aliceVision::track::TracksPerView* _tracksPerView = nullptr;
@@ -98,8 +100,8 @@ class TracksIORunnable : public QObject, public QRunnable
     Q_OBJECT
 
 public:
-    explicit TracksIORunnable(const QUrl& matchingFolder)
-        : _matchingFolder(matchingFolder)
+    explicit TracksIORunnable(const std::vector<std::string>& folders)
+        : _folders(folders)
     {
     }
 
@@ -109,7 +111,7 @@ public:
                               aliceVision::track::TracksPerView* tracksPerView);
 
 private:
-    const QUrl _matchingFolder;
+    std::vector<std::string> _folders;
 };
 
 } // namespace qtAliceVision

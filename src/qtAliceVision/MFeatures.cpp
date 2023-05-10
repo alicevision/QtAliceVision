@@ -32,11 +32,11 @@ void FeaturesIORunnable::run()
     std::vector<std::vector<std::unique_ptr<aliceVision::feature::Regions>>> regionsPerViewPerDesc;
     bool loaded
         = aliceVision::sfm::loadFeaturesPerDescPerView(
-            regionsPerViewPerDesc, _viewIds, {_folder}, imageDescriberTypes);
+            regionsPerViewPerDesc, _viewIds, _folders, imageDescriberTypes);
 
     if (!loaded)
     {
-        qWarning() << "[QtAliceVision] Features: Failed to load features from folder: " << _folder.c_str();
+        qWarning() << "[QtAliceVision] Features: Failed to load features";
         delete featuresPerViewPerDesc;
         Q_EMIT resultReady(nullptr);
         return;
@@ -66,7 +66,7 @@ void FeaturesIORunnable::run()
 MFeatures::MFeatures()
 {
     // trigger features reload events
-    connect(this, &MFeatures::featureFolderChanged, this, &MFeatures::load);
+    connect(this, &MFeatures::featureFoldersChanged, this, &MFeatures::load);
     connect(this, &MFeatures::describerTypesChanged, this, &MFeatures::load);
     connect(this, &MFeatures::viewIdsChanged, this, &MFeatures::load);
 }
@@ -96,7 +96,7 @@ void MFeatures::load()
         return;
     }
 
-    if (_featureFolder.isEmpty())
+    if (_featureFolders.empty())
     {
         qDebug("[QtAliceVision] Features: Unable to load, no feature folder given.");
         setStatus(None);
@@ -115,7 +115,11 @@ void MFeatures::load()
     // load features from file in a seperate thread
     qDebug("[QtAliceVision] Features: Load features from file in a seperate thread.");
 
-    std::string featureFolder = _featureFolder.toLocalFile().toStdString();
+    std::vector<std::string> folders;
+    for (const auto& var : _featureFolders)
+    {
+        folders.push_back(var.toString().toStdString());
+    }
 
     std::vector<aliceVision::IndexT> viewIds;
     for (const auto& var : _viewIds)
@@ -130,7 +134,7 @@ void MFeatures::load()
     }
 
     FeaturesIORunnable* ioRunnable =
-        new FeaturesIORunnable(featureFolder, viewIds, describerTypes);
+        new FeaturesIORunnable(folders, viewIds, describerTypes);
     
     connect(ioRunnable, &FeaturesIORunnable::resultReady, this, &MFeatures::onFeaturesReady);
 

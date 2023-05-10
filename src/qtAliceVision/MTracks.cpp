@@ -7,6 +7,7 @@
 #include <QDebug>
 #include <QFileInfo>
 #include <QThreadPool>
+#include <QString>
 
 namespace qtAliceVision
 {
@@ -19,12 +20,13 @@ void TracksIORunnable::run()
     {
         aliceVision::matching::PairwiseMatches pairwiseMatches;
         if (!aliceVision::matching::Load(pairwiseMatches,
-                                         /*viewsKeysFilter=*/{}, {_matchingFolder.toLocalFile().toStdString()},
+                                         /*viewsKeysFilter=*/{},
+                                         /*folders=*/_folders,
                                          /*descTypes=*/{},
                                          /*maxNbMatches=*/0,
                                          /*minNbMatches=*/0))
         {
-            qDebug() << "[QtAliceVision] Failed to load matches: " << _matchingFolder << ".";
+            qDebug() << "[QtAliceVision] Failed to load matches";
         }
         aliceVision::track::TracksBuilder tracksBuilder;
         tracksBuilder.build(pairwiseMatches);
@@ -33,7 +35,7 @@ void TracksIORunnable::run()
     }
     catch (std::exception& e)
     {
-        qDebug() << "[QtAliceVision] Failed to load matches: " << _matchingFolder << "."
+        qDebug() << "[QtAliceVision] Error when loading matches: "
                  << "\n"
                  << e.what();
     }
@@ -43,7 +45,7 @@ void TracksIORunnable::run()
 
 MTracks::MTracks()
 {
-    connect(this, &MTracks::matchingFolderChanged, this, &MTracks::load);
+    connect(this, &MTracks::matchingFoldersChanged, this, &MTracks::load);
 }
 
 MTracks::~MTracks()
@@ -65,23 +67,24 @@ void MTracks::load()
         return;
     }
 
-    qDebug() << "MTracks::load _matchingFolder: " << _matchingFolder;
-    if (_matchingFolder.isEmpty())
+    if (_matchingFolders.empty())
     {
         setStatus(None);
         return;
     }
-    if (!QFileInfo::exists(_matchingFolder.toLocalFile()))
-    {
-        setStatus(Error);
-        return;
-    }
 
     setStatus(Loading);
-    qDebug() << "MTracks::load Start loading _matchingFolder: " << _matchingFolder;
 
     // load matches from file in a seperate thread
-    TracksIORunnable* ioRunnable = new TracksIORunnable(_matchingFolder);
+    qDebug("[QtAliceVision] Features: Load matches from file in a seperate thread.");
+
+    std::vector<std::string> folders;
+    for (const auto& var : _matchingFolders)
+    {
+        folders.push_back(var.toString().toStdString());
+    }
+
+    TracksIORunnable* ioRunnable = new TracksIORunnable(folders);
     connect(ioRunnable, &TracksIORunnable::resultReady, this, &MTracks::onReady);
     QThreadPool::globalInstance()->start(ioRunnable);
 }

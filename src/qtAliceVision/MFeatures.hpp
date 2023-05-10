@@ -5,7 +5,6 @@
 
 #include <QObject>
 #include <QRunnable>
-#include <QUrl>
 #include <QVariantList>
 #include <QVariantMap>
 
@@ -42,7 +41,7 @@ class MFeatures : public QObject
     /// Data properties
 
     // Path to folder containing the features
-    Q_PROPERTY(QUrl featureFolder MEMBER _featureFolder NOTIFY featureFolderChanged)
+    Q_PROPERTY(QVariantList featureFolders MEMBER _featureFolders NOTIFY featureFoldersChanged)
     // View IDs to load
     Q_PROPERTY(QVariantList viewIds MEMBER _viewIds NOTIFY viewIdsChanged)
     // Describer types to load
@@ -71,7 +70,7 @@ public:
 
     /// Signals
 
-    Q_SIGNAL void featureFolderChanged();
+    Q_SIGNAL void featureFoldersChanged();
     Q_SIGNAL void describerTypesChanged();
     Q_SIGNAL void viewIdsChanged();
     Q_SIGNAL void featuresChanged();
@@ -97,7 +96,7 @@ public:
 private:
     /// Private members
 
-    QUrl _featureFolder;
+    QVariantList _featureFolders;
     QVariantList _viewIds;
     QVariantList _describerTypes;
 
@@ -115,10 +114,10 @@ class FeaturesIORunnable : public QObject, public QRunnable
     Q_OBJECT
 
 public:
-    FeaturesIORunnable(const std::string& folder,
+    FeaturesIORunnable(const std::vector<std::string>& folders,
                        const std::vector<aliceVision::IndexT>& viewIds,
                        const std::vector<std::string>& describerTypes)
-        : _folder(folder), _viewIds(viewIds), _describerTypes(describerTypes)
+        : _folders(folders), _viewIds(viewIds), _describerTypes(describerTypes)
     {
     }
 
@@ -134,7 +133,7 @@ public:
     Q_SIGNAL void resultReady(FeaturesPerViewPerDesc* featuresPerViewPerDesc);
 
 private:
-    std::string _folder;
+    std::vector<std::string> _folders;
     std::vector<aliceVision::IndexT> _viewIds;
     std::vector<std::string> _describerTypes;
 };
