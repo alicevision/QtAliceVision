@@ -43,14 +43,4 @@ find_package(AliceVision REQUIRED)
 
 
 # Builds
-if(BUILD_IMAGEIO)
-	add_subdirectory(src/qtAliceVisionImageIO)
-endif()
-
-if(BUILD_DEPTHMAPENTITY)
-	add_subdirectory(src/depthMapEntity)
-endif()
-
-if(BUILD_SFM)
-	add_subdirectory(src)
-endif()
+add_subdirectory(src)

@@ -1,20 +1,19 @@
 #pragma once
 
-#include <QtCharts/QLineSeries>
-#include <QQuickItem>
+#include <QList>
 #include <QObject>
+#include <QPointF>
+#include <QQuickItem>
 #include <QRunnable>
 #include <QUrl>
-#include <QList>
-#include <QPointF>
+#include <QtCharts/QLineSeries>
 
-#include <MSfMData.hpp>
-#include <MFeature.hpp>
 #include <aliceVision/sfm/sfmStatistics.hpp>
 #include <aliceVision/utils/Histogram.hpp>
+#include <MSfMData.hpp>
 
-
-namespace qtAliceVision {
+namespace qtAliceVision
+{
 
 QT_CHARTS_USE_NAMESPACE
 
@@ -41,8 +40,8 @@ class MViewStats : public QObject
 public:
     MViewStats()
     {
-         connect(this, &MViewStats::sfmDataChanged, this, &MViewStats::computeViewStats);
-         connect(this, &MViewStats::viewIdChanged, this, &MViewStats::computeViewStats);
+        connect(this, &MViewStats::sfmDataChanged, this, &MViewStats::computeViewStats);
+        connect(this, &MViewStats::viewIdChanged, this, &MViewStats::computeViewStats);
     }
     MViewStats& operator=(const MViewStats& other) = default;
     ~MViewStats() override = default;
@@ -65,7 +64,6 @@ public:
     MSfMData* getMSfmData() { return _msfmData; }
     void setMSfmData(qtAliceVision::MSfMData* sfmData);
 
-
 private:
     aliceVision::utils::Histogram<double> _residualHistogramFull;
     aliceVision::utils::Histogram<double> _residualHistogramView;
@@ -84,6 +82,6 @@ private:
     aliceVision::IndexT _viewId = aliceVision::UndefinedIndexT;
 };
 
-}
+} // namespace qtAliceVision
 
-Q_DECLARE_METATYPE(QPointF)   // for usage in signals/slots/properties
+Q_DECLARE_METATYPE(QPointF) // for usage in signals/slots/properties

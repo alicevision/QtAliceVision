@@ -1,13 +1,12 @@
 #pragma once
 
-#include <aliceVision/types.hpp>
 #include <aliceVision/image/Image.hpp>
 #include <aliceVision/image/pixelTypes.hpp>
+#include <aliceVision/types.hpp>
 
 #include <QSGTexture>
 
 #include <QSharedPointer>
-
 
 namespace qtAliceVision
 {
@@ -25,17 +24,14 @@ public:
 
     int textureId() const override;
 
-    QSize textureSize() const override
-    {
-        return _textureSize;
-    }
+    QSize textureSize() const override { return _textureSize; }
 
     bool hasAlphaChannel() const override { return true; }
 
     bool hasMipmaps() const override { return mipmapFiltering() != QSGTexture::None; }
 
     void setImage(QSharedPointer<FloatImage>& image);
-    const FloatImage &image() { return *_srcImage; }
+    const FloatImage& image() { return *_srcImage; }
 
     void bind() override;
 
@@ -46,10 +42,7 @@ public:
      *
      * @return -1 if unknown else the max size of a texture
      */
-    static int maxTextureSize()
-    {
-        return _maxTextureSize;
-    }
+    static int maxTextureSize() { return _maxTextureSize; }
 
 private:
     bool isValid() const;
@@ -67,4 +60,4 @@ private:
     static int _maxTextureSize;
 };
 
-}  // ns qtAliceVision
+} // namespace qtAliceVision

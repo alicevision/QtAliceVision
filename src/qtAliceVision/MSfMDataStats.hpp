@@ -1,24 +1,24 @@
 #pragma once
 
-#include <QtCharts/QLineSeries>
-#include <QtCharts/QBoxSet>
 #include <QObject>
 #include <QRunnable>
 #include <QUrl>
+#include <QtCharts/QBoxSet>
+#include <QtCharts/QLineSeries>
 
+#include <aliceVision/sfm/sfmStatistics.hpp>
 #include <aliceVision/sfmData/SfMData.hpp>
+#include <aliceVision/track/Track.hpp>
+#include <aliceVision/utils/Histogram.hpp>
 #include <MSfMData.hpp>
 #include <MTracks.hpp>
-#include <MFeature.hpp>
-#include <aliceVision/sfm/sfmStatistics.hpp>
-#include <aliceVision/utils/Histogram.hpp>
-#include <aliceVision/track/Track.hpp>
 
-namespace qtAliceVision {
+namespace qtAliceVision
+{
 
 QT_CHARTS_USE_NAMESPACE
 
-class MSfMDataStats: public QObject
+class MSfMDataStats : public QObject
 {
     Q_OBJECT
 
@@ -42,11 +42,11 @@ class MSfMDataStats: public QObject
 public:
     MSfMDataStats()
     {
-         connect(this, &MSfMDataStats::sfmDataChanged, this, &MSfMDataStats::computeGlobalSfMStats);
-         connect(this, &MSfMDataStats::tracksChanged, this, &MSfMDataStats::computeGlobalTracksStats);
-         connect(this, &MSfMDataStats::sfmDataChanged, this, &MSfMDataStats::computeGlobalTracksStats);
-         connect(this, &MSfMDataStats::sfmStatsChanged, this, &MSfMDataStats::axisChanged);
-         connect(this, &MSfMDataStats::tracksStatsChanged, this, &MSfMDataStats::axisChanged);
+        connect(this, &MSfMDataStats::sfmDataChanged, this, &MSfMDataStats::computeGlobalSfMStats);
+        connect(this, &MSfMDataStats::tracksChanged, this, &MSfMDataStats::computeGlobalTracksStats);
+        connect(this, &MSfMDataStats::sfmDataChanged, this, &MSfMDataStats::computeGlobalTracksStats);
+        connect(this, &MSfMDataStats::sfmStatsChanged, this, &MSfMDataStats::axisChanged);
+        connect(this, &MSfMDataStats::tracksStatsChanged, this, &MSfMDataStats::axisChanged);
     }
     MSfMDataStats& operator=(const MSfMDataStats& other) = default;
     ~MSfMDataStats() override;
@@ -107,4 +107,4 @@ private:
     std::vector<double> _nbTracksPerView;
 };
 
-}
+} // namespace qtAliceVision

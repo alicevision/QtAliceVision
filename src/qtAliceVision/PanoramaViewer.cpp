@@ -3,20 +3,19 @@
 #include "FloatTexture.hpp"
 #include "ShaderImageViewer.hpp"
 
-#include <QSGGeometryNode>
 #include <QSGGeometry>
+#include <QSGGeometryNode>
 #include <QSGSimpleMaterial>
 #include <QSGSimpleMaterialShader>
 #include <QSGTexture>
 #include <QThreadPool>
 
-#include <aliceVision/image/Image.hpp>
-#include <aliceVision/image/resampling.hpp>
-#include <aliceVision/image/io.hpp>
 #include <aliceVision/camera/cameraUndistortImage.hpp>
+#include <aliceVision/image/Image.hpp>
+#include <aliceVision/image/io.hpp>
+#include <aliceVision/image/resampling.hpp>
 
 #include <aliceVision/system/MemoryInfo.hpp>
-
 
 namespace qtAliceVision
 {
@@ -29,9 +28,7 @@ PanoramaViewer::PanoramaViewer(QQuickItem* parent)
     connect(this, &PanoramaViewer::sfmDataChanged, this, &PanoramaViewer::msfmDataUpdate);
 }
 
-PanoramaViewer::~PanoramaViewer()
-{
-}
+PanoramaViewer::~PanoramaViewer() {}
 
 void PanoramaViewer::computeDownscale()
 {
@@ -40,7 +37,8 @@ void PanoramaViewer::computeDownscale()
 
     int totalSizeImages = 0;
     for (const auto& view : _msfmData->rawData().getViews())
-        totalSizeImages += int(static_cast<double>((view.second->getWidth() * view.second->getHeight()) * 4) / std::pow(10, 6));
+        totalSizeImages +=
+            int(static_cast<double>((view.second->getWidth() * view.second->getHeight()) * 4) / std::pow(10, 6));
 
     // Downscale = 4 by default
     _downscale = 4;
@@ -77,7 +75,8 @@ void PanoramaViewer::setMSfmData(MSfMData* sfmData)
     }
     _msfmData = sfmData;
 
-    if (!_msfmData) return;
+    if (!_msfmData)
+        return;
 
     if (_msfmData != nullptr)
     {
@@ -96,4 +95,4 @@ void PanoramaViewer::setMSfmData(MSfMData* sfmData)
     }
 }
 
-}  // qtAliceVision
+} // namespace qtAliceVision

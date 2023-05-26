@@ -1,8 +1,8 @@
 #include "plugin.hpp"
 #include "QtAliceVisionImageIOHandler.hpp"
 
-#include <QFileDevice>
 #include <QDebug>
+#include <QFileDevice>
 
 #include <aliceVision/image/io.hpp>
 
@@ -15,7 +15,7 @@ QtAliceVisionImageIOPlugin::QtAliceVisionImageIOPlugin()
     qDebug("[QtAliceVisionImageIO] init supported extensions.");
 
     std::vector<std::string> extensions = image::getSupportedExtensions();
-    for(auto& ext: extensions)
+    for (auto& ext : extensions)
     {
         QString format(ext.c_str());
         format.remove('.');
@@ -25,24 +25,22 @@ QtAliceVisionImageIOPlugin::QtAliceVisionImageIOPlugin()
     qInfo() << "[QtAliceVisionImageIO] Plugin Initialized";
 }
 
-QtAliceVisionImageIOPlugin::~QtAliceVisionImageIOPlugin()
-{
-}
+QtAliceVisionImageIOPlugin::~QtAliceVisionImageIOPlugin() {}
 
-QImageIOPlugin::Capabilities QtAliceVisionImageIOPlugin::capabilities(QIODevice *device, const QByteArray &format) const
+QImageIOPlugin::Capabilities QtAliceVisionImageIOPlugin::capabilities(QIODevice* device, const QByteArray& format) const
 {
     QFileDevice* d = dynamic_cast<QFileDevice*>(device);
-    if(!d)
+    if (!d)
         return QImageIOPlugin::Capabilities();
 
     const std::string path = d->fileName().toStdString();
-    if(path.empty() || path[0] == ':')
+    if (path.empty() || path[0] == ':')
         return QImageIOPlugin::Capabilities();
 
 #ifdef QT_ALICEVISIONIMAGEIO_USE_FORMATS_BLACKLIST
     // For performance sake, let Qt handle natively some formats.
     static const QStringList blacklist{"jpeg", "jpg", "png", "ico"};
-    if(blacklist.contains(format, Qt::CaseSensitivity::CaseInsensitive))
+    if (blacklist.contains(format, Qt::CaseSensitivity::CaseInsensitive))
     {
         return QImageIOPlugin::Capabilities();
     }
@@ -57,9 +55,9 @@ QImageIOPlugin::Capabilities QtAliceVisionImageIOPlugin::capabilities(QIODevice 
     return QImageIOPlugin::Capabilities();
 }
 
-QImageIOHandler *QtAliceVisionImageIOPlugin::create(QIODevice *device, const QByteArray &format) const
+QImageIOHandler* QtAliceVisionImageIOPlugin::create(QIODevice* device, const QByteArray& format) const
 {
-    QtAliceVisionImageIOHandler *handler = new QtAliceVisionImageIOHandler;
+    QtAliceVisionImageIOHandler* handler = new QtAliceVisionImageIOHandler;
     handler->setDevice(device);
     handler->setFormat(format);
     return handler;

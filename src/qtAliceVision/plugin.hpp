@@ -2,17 +2,16 @@
 
 #include "FeaturesViewer.hpp"
 #include "FloatImageViewer.hpp"
-#include "PanoramaViewer.hpp"
-#include "Surface.hpp"
-#include "MViewStats.hpp"
+#include "MFeatures.hpp"
 #include "MSfMDataStats.hpp"
 #include "MTracks.hpp"
-#include "MFeatures.hpp"
-#include <QtQml>
+#include "MViewStats.hpp"
+#include "PanoramaViewer.hpp"
+#include "Surface.hpp"
 #include <QQmlExtensionPlugin>
+#include <QtQml>
 
 #include <aliceVision/system/Logger.hpp>
-
 
 namespace qtAliceVision
 {
@@ -21,7 +20,6 @@ class QtAliceVisionPlugin : public QQmlExtensionPlugin
 {
     Q_OBJECT
     Q_PLUGIN_METADATA(IID "qtAliceVision.qmlPlugin")
-
 
 public:
     void initializeEngine(QQmlEngine* engine, const char* uri) override
@@ -42,12 +40,11 @@ public:
         qmlRegisterType<MTracks>(uri, 1, 0, "MTracks");
         qmlRegisterType<MViewStats>(uri, 1, 0, "MViewStats");
         qmlRegisterType<MSfMDataStats>(uri, 1, 0, "MSfMDataStats");
-        qmlRegisterUncreatableType<MFeature>(uri, 1, 0, "MFeature", "Cannot create Feature instances from QML.");
-        qRegisterMetaType<QList<MFeature*>>( "QList<MFeature*>" ); // for usage in signals/slots
         qRegisterMetaType<QList<QPointF*>>("QList<QPointF*>");
         qRegisterMetaType<QQmlListProperty<QPointF>>("QQmlListProperty<QPointF>");
-        qRegisterMetaType<aliceVision::sfmData::SfMData>( "QSharedPtr<aliceVision::sfmData::SfMData>" ); // for usage in signals/slots
-        qRegisterMetaType<size_t>("size_t"); // for usage in signals/slots
+        qRegisterMetaType<aliceVision::sfmData::SfMData>(
+            "QSharedPtr<aliceVision::sfmData::SfMData>"); // for usage in signals/slots
+        qRegisterMetaType<size_t>("size_t");              // for usage in signals/slots
 
         qmlRegisterType<FloatImageViewer>(uri, 1, 0, "FloatImageViewer");
         qmlRegisterType<Surface>(uri, 1, 0, "Surface");
@@ -60,4 +57,4 @@ public:
     }
 };
 
-} // namespace
+} // namespace qtAliceVision
