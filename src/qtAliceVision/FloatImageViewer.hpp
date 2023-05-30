@@ -1,6 +1,7 @@
 #pragma once
 
 #include "FloatTexture.hpp"
+#include "Surface.hpp"
 #include "ShaderImageViewer.hpp"
 #include "SequenceCache.hpp"
 #include "SingleImageLoader.hpp"

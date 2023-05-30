@@ -11,6 +11,8 @@ set(PLUGIN_SOURCES
     MSfMDataStats.cpp
     PanoramaViewer.cpp
     Painter.cpp
+    SequenceCache.cpp
+    SingleImageLoader.cpp
     )
 
 set(PLUGIN_HEADERS
@@ -27,6 +29,9 @@ set(PLUGIN_HEADERS
     Surface.hpp
     ShaderImageViewer.hpp
     Painter.hpp
+    ImageServer.hpp
+    SequenceCache.hpp
+    SingleImageLoader.hpp
     )
 
 set(PLUGIN_MOCS
@@ -36,6 +41,8 @@ set(PLUGIN_MOCS
     MViewStats.hpp
     MTracks.hpp
     MSfMDataStats.hpp
+    SequenceCache.hpp
+    SingleImageLoader.hpp
     )
 
 
