@@ -2,6 +2,9 @@
 
 #include <QThreadPool>
 
+#include <stdexcept>
+#include <iostream>
+
 
 namespace qtAliceVision {
 namespace imgserve {
@@ -63,22 +66,30 @@ void SingleImageLoadingIORunnable::run()
 {
 	Response response;
 
-	// Retrieve metadata from disk
-    int width, height;
-    auto metadata = aliceVision::image::readImageMetadata(_path, width, height);
-
-    // Store original image dimensions
-    response.dim = QSize(width, height);
-
-    // Copy metadata into a QVariantMap
-    for (const auto& item : metadata)
+    try
     {
-        response.metadata[QString::fromStdString(item.name().string())] = QString::fromStdString(item.get_string());
-    }
+        // Retrieve metadata from disk
+        int width, height;
+        auto metadata = aliceVision::image::readImageMetadata(_path, width, height);
 
-    // Load image
-    response.img = std::make_shared<aliceVision::image::Image<aliceVision::image::RGBAfColor>>();
-    aliceVision::image::readImage(_path, *(response.img), aliceVision::image::EImageColorSpace::LINEAR);
+        // Store original image dimensions
+        response.dim = QSize(width, height);
+
+        // Copy metadata into a QVariantMap
+        for (const auto& item : metadata)
+        {
+            response.metadata[QString::fromStdString(item.name().string())] = QString::fromStdString(item.get_string());
+        }
+
+        // Load image
+        response.img = std::make_shared<aliceVision::image::Image<aliceVision::image::RGBAfColor>>();
+        aliceVision::image::readImage(_path, *(response.img), aliceVision::image::EImageColorSpace::LINEAR);
+    }
+    catch (const std::runtime_error& e)
+    {
+        // Log error message
+        std::cerr << e.what() << std::endl;
+    }
 
     // Notify listeners that loading is finished
     Q_EMIT done(QString::fromStdString(_path), response);

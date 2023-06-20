@@ -10,6 +10,8 @@
 #include <cmath>
 #include <thread>
 #include <chrono>
+#include <stdexcept>
+#include <iostream>
 
 
 namespace qtAliceVision {
@@ -53,25 +55,33 @@ void SequenceCache::setSequence(const QVariantList& paths)
     // Fill sequence vector
     for (const auto& var : paths)
     {
-        // Initialize frame data
-        FrameData data;
-        data.path = var.toString().toStdString();
-
-        // Retrieve metadata from disk
-        int width, height;
-        auto metadata = aliceVision::image::readImageMetadata(data.path, width, height);
-
-        // Store original image dimensions
-        data.dim = QSize(width, height);
-
-        // Copy metadata into a QVariantMap
-        for (const auto& item : metadata)
+        try
         {
-            data.metadata[QString::fromStdString(item.name().string())] = QString::fromStdString(item.get_string());
-        }
+            // Initialize frame data
+            FrameData data;
+            data.path = var.toString().toStdString();
 
-        // Add to sequence
-        _sequence.push_back(data);
+            // Retrieve metadata from disk
+            int width, height;
+            auto metadata = aliceVision::image::readImageMetadata(data.path, width, height);
+
+            // Store original image dimensions
+            data.dim = QSize(width, height);
+
+            // Copy metadata into a QVariantMap
+            for (const auto& item : metadata)
+            {
+                data.metadata[QString::fromStdString(item.name().string())] = QString::fromStdString(item.get_string());
+            }
+
+            // Add to sequence
+            _sequence.push_back(data);
+        }
+        catch (const std::runtime_error& e)
+        {
+            // Log error
+            std::cerr << e.what() << std::endl;
+        }
     }
 
     // Sort sequence by filepaths
@@ -310,10 +320,18 @@ void PrefetchingIORunnable::run()
         }
 
         // Load image in cache
-        const bool cachedOnly = false;
-        const bool lazyCleaning = false;
-        _cache->get<aliceVision::image::RGBAfColor>(data.path, 1, cachedOnly, lazyCleaning);
-        filled += memSize;
+        try
+        {
+            const bool cachedOnly = false;
+            const bool lazyCleaning = false;
+            _cache->get<aliceVision::image::RGBAfColor>(data.path, 1, cachedOnly, lazyCleaning);
+            filled += memSize;
+        }
+        catch (const std::runtime_error& e)
+        {
+            // Log error message
+            std::cerr << e.what() << std::endl;
+        }
 
         // Wait a few milliseconds in case another thread needs to query the cache
         std::this_thread::sleep_for(1ms);
