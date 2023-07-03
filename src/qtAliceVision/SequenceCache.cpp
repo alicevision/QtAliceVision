@@ -84,11 +84,6 @@ void SequenceCache::setSequence(const QVariantList& paths)
         }
     }
 
-    // Sort sequence by filepaths
-    std::sort(_sequence.begin(), _sequence.end(), [](const FrameData& lhs, const FrameData& rhs) {
-        return lhs.path < rhs.path;
-    });
-
     // Assign frame numbers
     for (size_t i = 0; i < _sequence.size(); ++i)
     {

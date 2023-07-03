@@ -67,7 +67,7 @@ public:
     /**
      * @brief Set the current image sequence.
      * @param[in] paths unordered list of image filepaths
-     * @note this method takes care of sorting and initializing the sequence
+     * @note the sequence order will not be changed
      */
     void setSequence(const QVariantList& paths);
 
