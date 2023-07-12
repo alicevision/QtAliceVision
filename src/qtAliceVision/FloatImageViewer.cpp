@@ -7,73 +7,13 @@
 #include <QSGTexture>
 #include <QThreadPool>
 
-#include <aliceVision/image/Image.hpp>
-#include <aliceVision/image/convertion.hpp>
-#include <aliceVision/image/io.hpp>
-#include <aliceVision/image/resampling.hpp>
+#include <cmath>
+#include <algorithm>
+#include <vector>
+#include <utility>
 
 namespace qtAliceVision
 {
-
-FloatImageIORunnable::FloatImageIORunnable(const QUrl& path, int downscaleLevel, QObject* parent)
-    : QObject(parent)
-    , _path(path)
-    , _downscaleLevel(downscaleLevel)
-{
-}
-
-void FloatImageIORunnable::run()
-{
-    using namespace aliceVision;
-    QSharedPointer<FloatImage> result;
-    QSize sourceSize(0, 0);
-    QVariantMap qmetadata;
-
-    try
-    {
-        const auto path = _path.toLocalFile().toUtf8().toStdString();
-        FloatImage image;
-        image::readImage(path, image,
-                         image::EImageColorSpace::LINEAR); // linear: sRGB conversion is done in display shader
-
-        sourceSize = QSize(image.Width(), image.Height());
-
-        // ensure it fits in GPU memory
-        if (FloatTexture::maxTextureSize() != -1)
-        {
-            const auto maxTextureSize = FloatTexture::maxTextureSize();
-            while (maxTextureSize != -1 && (image.Width() > maxTextureSize || image.Height() > maxTextureSize))
-            {
-                FloatImage tmp;
-                aliceVision::image::ImageHalfSample(image, tmp);
-                image = std::move(tmp);
-            }
-        }
-
-        // ensure it fits in RAM memory
-        for (int i = 0; i < _downscaleLevel; i++)
-        {
-            FloatImage tmp;
-            aliceVision::image::ImageHalfSample(image, tmp);
-            image = std::move(tmp);
-        }
-
-        // load metadata as well
-        const auto metadata = image::readImageMetadata(path);
-        for (const auto& item : metadata)
-        {
-            qmetadata[QString::fromStdString(item.name().string())] = QString::fromStdString(item.get_string());
-        }
-
-        result = QSharedPointer<FloatImage>(new FloatImage(std::move(image)));
-    }
-    catch (std::exception& e)
-    {
-        qInfo() << "[QtAliceVision] Failed to load image: " << _path << "\n" << e.what();
-    }
-
-    Q_EMIT resultReady(result, sourceSize, qmetadata);
-}
 
 FloatImageViewer::FloatImageViewer(QQuickItem* parent)
     : QQuickItem(parent)
@@ -102,9 +42,15 @@ FloatImageViewer::FloatImageViewer(QQuickItem* parent)
 
     connect(&_surface, &Surface::subdivisionsChanged, this, &FloatImageViewer::update);
     connect(&_surface, &Surface::verticesChanged, this, &FloatImageViewer::update);
+
+    connect(&_sequenceCache, &imgserve::SequenceCache::requestHandled, this, &FloatImageViewer::reload);
+    connect(&_singleImageLoader, &imgserve::SingleImageLoader::requestHandled, this, &FloatImageViewer::reload);
+    connect(this, &FloatImageViewer::sequenceChanged, this, &FloatImageViewer::reload);
+    connect(this, &FloatImageViewer::useSequenceChanged, this, &FloatImageViewer::reload);
 }
 
-FloatImageViewer::~FloatImageViewer() {}
+FloatImageViewer::~FloatImageViewer()
+{}
 
 // LOADING FUNCTIONS
 void FloatImageViewer::setLoading(bool loading)
@@ -117,6 +63,18 @@ void FloatImageViewer::setLoading(bool loading)
     Q_EMIT loadingChanged();
 }
 
+void FloatImageViewer::setSequence(const QVariantList& paths)
+{
+    _sequenceCache.setSequence(paths);
+
+    Q_EMIT sequenceChanged();
+}
+
+QVariantList FloatImageViewer::getCachedFrames() const
+{
+    return _sequenceCache.getCachedFrames();
+}
+
 void FloatImageViewer::reload()
 {
     if (_clearBeforeLoad)
@@ -125,12 +83,12 @@ void FloatImageViewer::reload()
         _imageChanged = true;
         Q_EMIT imageChanged();
     }
+
     _outdated = false;
+    if (_loading) _outdated = true;
 
     if (!_source.isValid())
     {
-        if (_loading)
-            _outdated = true;
         _image.reset();
         _imageChanged = true;
         _surface.clearVertices();
@@ -139,44 +97,35 @@ void FloatImageViewer::reload()
         return;
     }
 
-    if (!_loading)
-    {
-        setLoading(true);
+    // Send request
+    imgserve::RequestData reqData;
+    reqData.path = _source.toLocalFile().toUtf8().toStdString();
+    reqData.downscale = 1 << _downscaleLevel;
 
-        // async load from file
-        auto ioRunnable = new FloatImageIORunnable(_source, _downscaleLevel);
-        connect(ioRunnable, &FloatImageIORunnable::resultReady, this, &FloatImageViewer::onResultReady);
-        QThreadPool::globalInstance()->start(ioRunnable);
+    imgserve::ResponseData response = _useSequence ? _sequenceCache.request(reqData) : _singleImageLoader.request(reqData);
+
+    if (response.img)
+    {
+        setLoading(false);
+
+        _surface.setVerticesChanged(true);
+        _surface.setNeedToUseIntrinsic(true);
+        _image = response.img;
+        _imageChanged = true;
+        Q_EMIT imageChanged();
+
+        _sourceSize = response.dim;
+        Q_EMIT sourceSizeChanged();
+
+        _metadata = response.metadata;
+        Q_EMIT metadataChanged();
     }
     else
     {
-        _outdated = true;
-    }
-}
-
-void FloatImageViewer::onResultReady(QSharedPointer<FloatImage> image, QSize sourceSize, const QVariantMap& metadata)
-{
-    setLoading(false);
-
-    if (_outdated)
-    {
-        // another request has been made while io thread was working
-        _image.reset();
-        reload();
-        return;
+        setLoading(true);
     }
 
-    _surface.setVerticesChanged(true);
-    _surface.setNeedToUseIntrinsic(true);
-    _image = image;
-    _imageChanged = true;
-    Q_EMIT imageChanged();
-
-    _sourceSize = sourceSize;
-    Q_EMIT sourceSizeChanged();
-
-    _metadata = metadata;
-    Q_EMIT metadataChanged();
+    Q_EMIT cachedFramesChanged();
 }
 
 QVector4D FloatImageViewer::pixelValueAt(int x, int y)

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ImageServer.hpp"
 #include "FeaturesViewer.hpp"
 #include "FloatImageViewer.hpp"
 #include "MFeatures.hpp"
@@ -8,10 +9,14 @@
 #include "MViewStats.hpp"
 #include "PanoramaViewer.hpp"
 #include "Surface.hpp"
-#include <QQmlExtensionPlugin>
-#include <QtQml>
+#include "MFeatures.hpp"
 
 #include <aliceVision/system/Logger.hpp>
+
+#include <QtQml>
+#include <QQmlExtensionPlugin>
+
+#include <memory>
 
 namespace qtAliceVision
 {
@@ -51,9 +56,12 @@ public:
         qmlRegisterType<PanoramaViewer>(uri, 1, 0, "PanoramaViewer");
         qRegisterMetaType<QPointF>("QPointF");
         qRegisterMetaType<FloatImage>();
-        qRegisterMetaType<QSharedPointer<FloatImage>>();
+        qRegisterMetaType<std::shared_ptr<FloatImage>>();
 
         qRegisterMetaType<Surface*>("Surface*");
+
+        qRegisterMetaType<imgserve::ResponseData>("ResponseData");
+        qRegisterMetaType<imgserve::ResponseData>("imgserve::ResponseData");
     }
 };
 
