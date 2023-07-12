@@ -139,13 +139,13 @@ QVariantList SequenceCache::getCachedFrames() const
     return intervals;
 }
 
-Response SequenceCache::request(const std::string& path)
+ResponseData SequenceCache::request(const RequestData& reqData)
 {
     // Initialize empty response
-    Response response;
+    ResponseData response;
 
     // Retrieve frame number corresponding to the requested image in the sequence
-    int frame = getFrame(path);
+    int frame = getFrame(reqData.path);
     if (frame < 0)
     {
         // Empty response

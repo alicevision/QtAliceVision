@@ -84,7 +84,7 @@ public:
 
     /// If the image requested falls outside a certain region of cached images,
     /// this method will launch a worker thread to prefetch new images from disk.
-    Response request(const std::string& path) override;
+    ResponseData request(const RequestData& reqData) override;
 
     /**
      * @brief Slot called every time the prefetching thread progressed.

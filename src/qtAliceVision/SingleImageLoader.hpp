@@ -33,14 +33,14 @@ public:
 
 	/// If the image requested cannot be retrieved immediatly,
 	/// this method will launch a worker thread to load it from disk.
-	Response request(const std::string& path) override;
+	ResponseData request(const RequestData& reqData) override;
 
 	/**
 	 * @brief Slot called when the loading thread is done.
 	 * @param[in] path filepath of the loaded image
-	 * @param[in] response a Response instance containing the data loaded from disk
+	 * @param[in] response a ResponseData instance containing the data loaded from disk
 	 */
-	Q_SLOT void onSingleImageLoadingDone(QString path, Response response);
+	Q_SLOT void onSingleImageLoadingDone(QString path, ResponseData response);
 
 	/**
 	 * @brief Signal emitted when the loading thread is done and a previous request has been handled.
@@ -55,7 +55,7 @@ private:
 	std::string _path;
 
 	/// Currently loaded image and its metadata.
-	Response _response;
+	ResponseData _response;
 
 	/// Keep track of whether or not there is an active worker thread.
 	bool _loading;
@@ -74,7 +74,7 @@ public:
 	/**
 	 * @param[in] path filepath of the image to load
 	 */
-	explicit SingleImageLoadingIORunnable(const std::string& path);
+	explicit SingleImageLoadingIORunnable(const RequestData& reqData);
 
 	~SingleImageLoadingIORunnable();
 
@@ -84,14 +84,14 @@ public:
 	/**
 	 * @brief Signal emitted when image loading is finished.
 	 * @param[in] path filepath of the loaded image
-	 * @param[in] response a Response instance containing the data loaded from disk
+	 * @param[in] response a ResponseData instance containing the data loaded from disk
 	 */
-	Q_SIGNAL void done(QString path, Response response);
+	Q_SIGNAL void done(QString path, ResponseData response);
 
 private:
 
-	/// Filepath of image to load.
-	std::string _path;
+	/// Request data of image to load.
+	RequestData _reqData;
 
 };
 

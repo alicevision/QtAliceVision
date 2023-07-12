@@ -60,8 +60,8 @@ public:
 
         qRegisterMetaType<Surface*>("Surface*");
 
-        qRegisterMetaType<imgserve::Response>("Response");
-        qRegisterMetaType<imgserve::Response>("imgserve::Response");
+        qRegisterMetaType<imgserve::ResponseData>("ResponseData");
+        qRegisterMetaType<imgserve::ResponseData>("imgserve::ResponseData");
     }
 };
 

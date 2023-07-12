@@ -19,10 +19,10 @@ SingleImageLoader::SingleImageLoader(QObject* parent) :
 SingleImageLoader::~SingleImageLoader()
 {}
 
-Response SingleImageLoader::request(const std::string& path)
+ResponseData SingleImageLoader::request(const RequestData& reqData)
 {
 	// Check if requested image matches currently loaded image
-	if (path == _path)
+	if (reqData.path == _path)
 	{
 		return _response;
 	}
@@ -35,16 +35,16 @@ Response SingleImageLoader::request(const std::string& path)
 		_loading = true;
 
 		// Create new runnable and launch it in worker thread (managed by Qt thread pool)
-		auto ioRunnable = new SingleImageLoadingIORunnable(path);
+		auto ioRunnable = new SingleImageLoadingIORunnable(reqData);
         connect(ioRunnable, &SingleImageLoadingIORunnable::done, this, &SingleImageLoader::onSingleImageLoadingDone);
         QThreadPool::globalInstance()->start(ioRunnable);
 	}
 
 	// Empty response
-	return Response();
+	return ResponseData();
 }
 
-void SingleImageLoader::onSingleImageLoadingDone(QString path, Response response)
+void SingleImageLoader::onSingleImageLoadingDone(QString path, ResponseData response)
 {
 	// Update internal state
 	_loading = false;
@@ -55,8 +55,8 @@ void SingleImageLoader::onSingleImageLoadingDone(QString path, Response response
 	Q_EMIT requestHandled();
 }
 
-SingleImageLoadingIORunnable::SingleImageLoadingIORunnable(const std::string& path) : 
-	_path(path)
+SingleImageLoadingIORunnable::SingleImageLoadingIORunnable(const RequestData& reqData) : 
+	_reqData(reqData)
 {}
 
 SingleImageLoadingIORunnable::~SingleImageLoadingIORunnable()
@@ -64,13 +64,13 @@ SingleImageLoadingIORunnable::~SingleImageLoadingIORunnable()
 
 void SingleImageLoadingIORunnable::run()
 {
-	Response response;
+	ResponseData response;
 
     try
     {
         // Retrieve metadata from disk
         int width, height;
-        auto metadata = aliceVision::image::readImageMetadata(_path, width, height);
+        auto metadata = aliceVision::image::readImageMetadata(_reqData.path, width, height);
 
         // Store original image dimensions
         response.dim = QSize(width, height);
@@ -83,7 +83,7 @@ void SingleImageLoadingIORunnable::run()
 
         // Load image
         response.img = std::make_shared<aliceVision::image::Image<aliceVision::image::RGBAfColor>>();
-        aliceVision::image::readImage(_path, *(response.img), aliceVision::image::EImageColorSpace::LINEAR);
+        aliceVision::image::readImage(_reqData.path, *(response.img), aliceVision::image::EImageColorSpace::LINEAR);
     }
     catch (const std::runtime_error& e)
     {
@@ -92,7 +92,7 @@ void SingleImageLoadingIORunnable::run()
     }
 
     // Notify listeners that loading is finished
-    Q_EMIT done(QString::fromStdString(_path), response);
+    Q_EMIT done(QString::fromStdString(_reqData.path), response);
 }
 
 } // namespace imgserve

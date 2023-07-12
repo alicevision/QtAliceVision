@@ -41,7 +41,7 @@ public:
     MSfMData* getMSfmData() { return _msfmData; }
     void setMSfmData(MSfMData* sfmData);
 
-    void msfmDataUpdate() { computeDownscale(); }
+    Q_SLOT void msfmDataUpdate() { computeDownscale(); }
 
 public:
     Q_SIGNAL void sourceSizeChanged();

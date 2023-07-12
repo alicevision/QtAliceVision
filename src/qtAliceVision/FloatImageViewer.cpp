@@ -98,9 +98,10 @@ void FloatImageViewer::reload()
     }
 
     // Send request
-    std::string path = _source.toLocalFile().toUtf8().toStdString();
+    imgserve::RequestData reqData;
+    reqData.path = _source.toLocalFile().toUtf8().toStdString();
 
-    auto response = _useSequence ? _sequenceCache.request(path) : _singleImageLoader.request(path);
+    imgserve::ResponseData response = _useSequence ? _sequenceCache.request(reqData) : _singleImageLoader.request(reqData);
 
     if (response.img)
     {
