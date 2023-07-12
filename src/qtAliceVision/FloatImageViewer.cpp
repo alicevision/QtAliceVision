@@ -100,6 +100,7 @@ void FloatImageViewer::reload()
     // Send request
     imgserve::RequestData reqData;
     reqData.path = _source.toLocalFile().toUtf8().toStdString();
+    reqData.downscale = 1 << _downscaleLevel;
 
     imgserve::ResponseData response = _useSequence ? _sequenceCache.request(reqData) : _singleImageLoader.request(reqData);
 

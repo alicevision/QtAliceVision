@@ -84,6 +84,12 @@ void SingleImageLoadingIORunnable::run()
         // Load image
         response.img = std::make_shared<aliceVision::image::Image<aliceVision::image::RGBAfColor>>();
         aliceVision::image::readImage(_reqData.path, *(response.img), aliceVision::image::EImageColorSpace::LINEAR);
+
+        // Apply downscale
+        if (_reqData.downscale > 1)
+        {
+            aliceVision::imageAlgo::resizeImage(_reqData.downscale, *(response.img));
+        }
     }
     catch (const std::runtime_error& e)
     {
