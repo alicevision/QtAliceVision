@@ -63,11 +63,11 @@ private:
     void visitAbcObject(const Alembic::Abc::IObject&, QEntity* parent);
 
     QQmlListProperty<CameraLocatorEntity> cameras() {
-        return {this, _cameras};
+        return {this, &_cameras};
     }
 
     QQmlListProperty<PointCloudEntity> pointClouds() {
-        return {this, _pointClouds};
+        return {this, &_pointClouds};
     }
 
 public:

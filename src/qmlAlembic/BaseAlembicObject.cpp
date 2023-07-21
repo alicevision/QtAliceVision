@@ -22,9 +22,11 @@ void BaseAlembicObject::fillUserProperties(const Alembic::Abc::ICompoundProperty
 
 void BaseAlembicObject::setTransform(const Alembic::Abc::M44d& mat)
 {
-    QMatrix4x4 qmat(mat[0][0], mat[1][0], mat[2][0], mat[3][0], mat[0][1], mat[1][1], mat[2][1],
-                    mat[3][1], mat[0][2], mat[1][2], mat[2][2], mat[3][2], mat[0][3], mat[1][3],
-                    mat[2][3], mat[3][3]);
+    QMatrix4x4 qmat(
+        static_cast<float>(mat[0][0]), static_cast<float>(mat[1][0]), static_cast<float>(mat[2][0]), static_cast<float>(mat[3][0]),
+        static_cast<float>(mat[0][1]), static_cast<float>(mat[1][1]), static_cast<float>(mat[2][1]), static_cast<float>(mat[3][1]),
+        static_cast<float>(mat[0][2]), static_cast<float>(mat[1][2]), static_cast<float>(mat[2][2]), static_cast<float>(mat[3][2]),
+        static_cast<float>(mat[0][3]), static_cast<float>(mat[1][3]), static_cast<float>(mat[2][3]), static_cast<float>(mat[3][3]));
     _transform->setMatrix(qmat);
 }
 
