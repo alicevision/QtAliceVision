@@ -7,10 +7,12 @@ project(QtAliceVisionPlugin LANGUAGES CXX VERSION 0.1.0)
 option(BUILD_IMAGEIO "Build qtAliceVisionImageIO plugin" ON)
 option(BUILD_DEPTHMAPENTITY "Build depthMapEntity plugin" ON)
 option(BUILD_SFM "Build qtAliceVision plugin" ON)
+option(BUILD_ALEMBIC "Build qmlAlembic plugin" ON)
 
 message(STATUS "BUILD_IMAGEIO: ${BUILD_IMAGEIO}")
 message(STATUS "BUILD_DEPTHMAPENTITY: ${BUILD_DEPTHMAPENTITY}")
 message(STATUS "BUILD_SFM: ${BUILD_SFM}")
+message(STATUS "BUILD_ALEMBIC: ${BUILD_ALEMBIC}")
 
 
 # CMake Find modules

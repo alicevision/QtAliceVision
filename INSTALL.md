@@ -6,8 +6,12 @@ QtAliceVision requires:
 * [Qt5](https://www.qt.io/) (== 5.15.2, make sure to use the **same version** as the target application)
 * [AliceVision](https://github.com/aliceVision/AliceVision)
 * [OpenImageIO](https://github.com/https://github.com/OpenImageIO/oiio) (>= 2.1) - with OpenEXR support for depthmaps visualization
+* [Alembic](https://github.com/alembic/alembic) (>= 1.7)
 * [CMake](https://cmake.org/) (>= 3.11)
 * On Windows platform: Microsoft Visual Studio (>= 2019)
+
+> **Note for Windows**:
+We recommend using [VCPKG](https://github.com/Microsoft/vcpkg) to get Alembic. Qt can either be installed with VCPKG or the official installer.
 
 
 ## Build instructions
@@ -32,7 +36,8 @@ nmake install
 ```bash
 export QT_DIR=/path/to/qt/5.15.2/gcc_64
 export OPENIMAGEIO_DIR=/path/to/oiio/install
-cmake .. -DAliceVision_DIR=$AV_DIR -DOPENIMAGEIO_LIBRARY_DIR_HINTS:PATH=$OPENIMAGEIO_DIR/lib/ -DOPENIMAGEIO_INCLUDE_DIR:PATH=$OPENIMAGEIO_DIR/include/ -DCMAKE_PREFIX_PATH=$QT_DIR -DCMAKE_INSTALL_PREFIX=<INSTALL_PATH> -DCMAKE_BUILD_TYPE=Release
+export ALEMBIC_DIR=/path/to/alembic/config
+cmake .. -DAliceVision_DIR=$AV_DIR -DOPENIMAGEIO_LIBRARY_DIR_HINTS:PATH=$OPENIMAGEIO_DIR/lib/ -DOPENIMAGEIO_INCLUDE_DIR:PATH=$OPENIMAGEIO_DIR/include/ -DAlembic_DIR=$ALEMBIC_DIR -DCMAKE_PREFIX_PATH=$QT_DIR -DCMAKE_INSTALL_PREFIX=<INSTALL_PATH> -DCMAKE_BUILD_TYPE=Release
 make install
 ```
 

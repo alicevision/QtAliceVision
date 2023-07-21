@@ -9,3 +9,7 @@ endif()
 if(BUILD_SFM)
     add_subdirectory(qtAliceVision)
 endif()
+
+if(BUILD_ALEMBIC)
+    add_subdirectory(qmlAlembic)
+endif()
