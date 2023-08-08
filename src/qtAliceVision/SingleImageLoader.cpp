@@ -22,7 +22,7 @@ SingleImageLoader::~SingleImageLoader()
 ResponseData SingleImageLoader::request(const RequestData& reqData)
 {
 	// Check if requested image matches currently loaded image
-	if (reqData.path == _path)
+	if (reqData.path == _request.path && reqData.downscale == _request.downscale)
 	{
 		return _response;
 	}
@@ -44,11 +44,11 @@ ResponseData SingleImageLoader::request(const RequestData& reqData)
 	return ResponseData();
 }
 
-void SingleImageLoader::onSingleImageLoadingDone(QString path, ResponseData response)
+void SingleImageLoader::onSingleImageLoadingDone(RequestData reqData, ResponseData response)
 {
 	// Update internal state
 	_loading = false;
-	_path = path.toStdString();
+	_request = reqData;
 	_response = response;
 
 	// Notify listeners that an image has been loaded
@@ -98,7 +98,7 @@ void SingleImageLoadingIORunnable::run()
     }
 
     // Notify listeners that loading is finished
-    Q_EMIT done(QString::fromStdString(_reqData.path), response);
+    Q_EMIT done(_reqData, response);
 }
 
 } // namespace imgserve
