@@ -43,8 +43,8 @@ FloatImageViewer::FloatImageViewer(QQuickItem* parent)
     connect(&_surface, &Surface::subdivisionsChanged, this, &FloatImageViewer::update);
     connect(&_surface, &Surface::verticesChanged, this, &FloatImageViewer::update);
 
-    connect(&_sequenceCache, &imgserve::SequenceCache::requestHandled, this, &FloatImageViewer::reload);
     connect(&_singleImageLoader, &imgserve::SingleImageLoader::requestHandled, this, &FloatImageViewer::reload);
+    connect(&_sequenceCache, &imgserve::SequenceCache::requestHandled, this, &FloatImageViewer::reload);
     connect(this, &FloatImageViewer::sequenceChanged, this, &FloatImageViewer::reload);
     connect(this, &FloatImageViewer::useSequenceChanged, this, &FloatImageViewer::reload);
 }
@@ -66,7 +66,13 @@ void FloatImageViewer::setLoading(bool loading)
 void FloatImageViewer::setSequence(const QVariantList& paths)
 {
     _sequenceCache.setSequence(paths);
+    Q_EMIT sequenceChanged();
+}
 
+void FloatImageViewer::setTargetSize(int size)
+{
+    _sequenceCache.setTargetSize(size);
+    Q_EMIT targetSizeChanged();
     Q_EMIT sequenceChanged();
 }
 
@@ -354,7 +360,7 @@ void FloatImageViewer::updatePaintSurface(QSGGeometryNode* root, QSGSimpleMateri
         quint16* indices = root->geometry()->indexDataAsUShort();
 
         // Update surface
-        _surface.update(vertices, indices, _textureSize, _downscaleLevel);
+        _surface.update(vertices, indices, _sourceSize, _downscaleLevel);
 
         root->geometry()->markIndexDataDirty();
         root->geometry()->markVertexDataDirty();

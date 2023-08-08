@@ -34,6 +34,8 @@ struct FrameData {
 
     int frame;
 
+    int downscale;
+
 };
 
 /**
@@ -70,6 +72,12 @@ public:
      * @note the sequence order will not be changed
      */
     void setSequence(const QVariantList& paths);
+
+    /**
+     * @brief Set the target size for the images in the sequence.
+     * @param[in] size target size
+     */
+    void setTargetSize(int size);
 
     /**
      * @brief Get the frames in the sequence that are currently cached.
@@ -118,6 +126,9 @@ private:
 
     /// Keep track of whether or not there is an active worker thread.
     bool _loading;
+
+    /// Target size used to compute downscale
+    int _targetSize;
 
 private:
 
