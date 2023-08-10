@@ -22,6 +22,8 @@ public:
                                                         "Cannot create CameraLocatorEntity instances from QML.");
         qmlRegisterUncreatableType<PointCloudEntity>(uri, 2, 0, "PointCloudEntity",
                                                         "Cannot create PointCloudEntity instances from QML.");
+        qmlRegisterUncreatableType<ObservationsEntity>(uri, 2, 0, "ObservationsEntity",
+                                                     "Cannot create ObservationsEntity instances from QML.");
     }
 };
 

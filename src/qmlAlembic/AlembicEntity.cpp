@@ -2,6 +2,7 @@
 #include "IOThread.hpp"
 #include "CameraLocatorEntity.hpp"
 #include "PointCloudEntity.hpp"
+#include "ObservationsEntity.hpp"
 #include <Qt3DRender/QEffect>
 #include <Qt3DRender/QTechnique>
 #include <Qt3DRender/QRenderPass>
@@ -24,6 +25,10 @@ AlembicEntity::AlembicEntity(Qt3DCore::QNode* parent)
 {
     connect(_ioThread.get(), &IOThread::finished, this, &AlembicEntity::onIOThreadFinished);
     createMaterials();
+
+    // trigger display repaint events of observations
+    connect(this, &AlembicEntity::viewIdChanged, this, &AlembicEntity::updateObservations);
+    connect(this, &AlembicEntity::viewer2DInfoChanged, this, &AlembicEntity::updateObservations);
 }
 
 void AlembicEntity::setSource(const QUrl& value)
@@ -54,12 +59,36 @@ void AlembicEntity::setLocatorScale(const float& value)
     Q_EMIT locatorScaleChanged();
 }
 
+void AlembicEntity::setViewId(const int& value)
+{
+    if (_viewId == value)
+        return;
+    _viewId = value;
+    Q_EMIT viewIdChanged();
+}
+
+void AlembicEntity::setViewer2DInfo(const QVariantMap& value)
+{
+    if (_viewer2DInfo == value)
+        return;
+    _viewer2DInfo = value;
+    Q_EMIT viewer2DInfoChanged();
+}
+
 void AlembicEntity::scaleLocators() const
 {
     for(auto* entity : _cameras)
     {
         for(auto* transform : entity->findChildren<Qt3DCore::QTransform*>())
             transform->setScale(_locatorScale);
+    }
+}
+
+void AlembicEntity::updateObservations() const
+{
+    for (auto* entity : _observations)
+    {
+        entity->update(_viewId, _viewer2DInfo);
     }
 }
 
@@ -129,6 +158,7 @@ void AlembicEntity::clear()
         removeComponent(component);
     _cameras.clear();
     _pointClouds.clear();
+    _observations.clear();
 }
 
 // private
@@ -160,9 +190,12 @@ void AlembicEntity::onIOThreadFinished()
         // store pointers to cameras and point clouds
         _cameras = findChildren<CameraLocatorEntity*>();
         _pointClouds = findChildren<PointCloudEntity*>();
+        _observations = findChildren<ObservationsEntity*>();
 
         // perform initial locator scaling
         scaleLocators();
+
+        updateObservations();
 
         setStatus(AlembicEntity::Ready);
     }
@@ -174,6 +207,7 @@ void AlembicEntity::onIOThreadFinished()
     _ioThread->clear();
     Q_EMIT camerasChanged();
     Q_EMIT pointCloudsChanged();
+    Q_EMIT observationsChanged();
 }
 
 // private
@@ -182,18 +216,25 @@ void AlembicEntity::visitAbcObject(const Alembic::Abc::IObject& iObj, QEntity* p
     using namespace Alembic::Abc;
     using namespace Alembic::AbcGeom;
 
-    const auto createEntity = [&](const IObject&) -> BaseAlembicObject* {
+    const auto createEntities = [&](const IObject&) -> std::vector<BaseAlembicObject*> {
         const MetaData& md = iObj.getMetaData();
 
         if(IPoints::matches(md))
         {
+            std::vector<BaseAlembicObject*> entities(2);
             IPoints points(iObj, Alembic::Abc::kWrapExisting);
-            PointCloudEntity* entity = new PointCloudEntity(parent);
-            entity->setData(iObj);
-            entity->addComponent(_cloudMaterial);
-            entity->fillArbProperties(points.getSchema().getArbGeomParams());
-            entity->fillUserProperties(points.getSchema().getUserProperties());
-            return entity;
+            PointCloudEntity* entity0 = new PointCloudEntity(parent);
+            entity0->setData(iObj);
+            entity0->addComponent(_cloudMaterial);
+            entity0->fillArbProperties(points.getSchema().getArbGeomParams());
+            entity0->fillUserProperties(points.getSchema().getUserProperties());
+            entities[0] = entity0;
+            ObservationsEntity* entity1 = new ObservationsEntity(_source.toLocalFile().toStdString(), parent);
+            entity1->setData(iObj);
+            entity1->fillArbProperties(points.getSchema().getArbGeomParams());
+            entity1->fillUserProperties(points.getSchema().getUserProperties());
+            entities[1] = entity1;
+            return entities;
         }
         else if(IXform::matches(md))
         {
@@ -204,7 +245,7 @@ void AlembicEntity::visitAbcObject(const Alembic::Abc::IObject& iObj, QEntity* p
             entity->setTransform(xs.getMatrix());
             entity->fillArbProperties(xform.getSchema().getArbGeomParams());
             entity->fillUserProperties(xform.getSchema().getUserProperties());
-            return entity;
+            return {entity};
         }
         else if(ICamera::matches(md))
         {
@@ -213,12 +254,12 @@ void AlembicEntity::visitAbcObject(const Alembic::Abc::IObject& iObj, QEntity* p
             entity->addComponent(_cameraMaterial);
             entity->fillArbProperties(cam.getSchema().getArbGeomParams());
             entity->fillUserProperties(cam.getSchema().getUserProperties());
-            return entity;
+            return {entity};
         }
         else
         {
             // fallback: create empty object to preserve hierarchy
-            return new BaseAlembicObject(parent);
+            return {new BaseAlembicObject(parent)};
         }
     };
 
@@ -235,12 +276,17 @@ void AlembicEntity::visitAbcObject(const Alembic::Abc::IObject& iObj, QEntity* p
         }
     }
 
-    BaseAlembicObject* entity = createEntity(iObj);
-    entity->setObjectName(iObj.getName().c_str());
+    std::vector<BaseAlembicObject*> entities = createEntities(iObj);
 
-    // visit children
-    for(size_t i = 0; i < iObj.getNumChildren(); i++)
-        visitAbcObject(iObj.getChild(i), entity);
+    for (int j = 0; j < entities.size(); j++)
+    {
+        auto entity = entities[j];
+        entity->setObjectName((iObj.getName() + std::to_string(j)).c_str());
+
+        // visit children
+        for (size_t i = 0; i < iObj.getNumChildren(); i++)
+            visitAbcObject(iObj.getChild(i), entity);
+    }
 }
 
 } // namespace
