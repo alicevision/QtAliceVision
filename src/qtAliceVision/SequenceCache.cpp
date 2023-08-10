@@ -12,10 +12,14 @@
 #include <chrono>
 #include <stdexcept>
 #include <iostream>
+#include <atomic>
 
 
 namespace qtAliceVision {
 namespace imgserve {
+
+// Flag for aborting the prefetching worker thread from the main thread
+std::atomic_bool abortPrefetching = false;
 
 SequenceCache::SequenceCache(QObject* parent) :
     QObject(parent)
@@ -51,6 +55,9 @@ void SequenceCache::setSequence(const QVariantList& paths)
     // Clear internal state
     _sequence.clear();
     _regionSafe = std::make_pair(-1, -1);
+
+    // Stop any ongoing prefetching
+    abortPrefetching = true;
 
     // Fill sequence vector
     int frameCounter = 0;
@@ -120,6 +127,9 @@ void SequenceCache::setTargetSize(int size)
     {
         // Clear internal state
         _regionSafe = std::make_pair(-1, -1);
+
+        // Stop any ongoing prefetching
+        abortPrefetching = true;
     }
 }
 
@@ -187,6 +197,9 @@ ResponseData SequenceCache::request(const RequestData& reqData)
     // Request falls outside of safe region
     if ((frame < _regionSafe.first || frame > _regionSafe.second) && !_loading)
     {
+        // Turn off abort flag
+        abortPrefetching = false;
+
         // Update internal state
         _loading = true;
 
@@ -346,6 +359,14 @@ void PrefetchingIORunnable::run()
     // Load images from disk to cache
     for (const auto& data : _toLoad)
     {
+        // Check if main thread wants to abort prefetching
+        if (abortPrefetching)
+        {
+            abortPrefetching = false;
+            Q_EMIT done(_reqFrame);
+            return;
+        }
+
         // Check if image size does not exceed limit
         uint64_t memSize =
             static_cast<uint64_t>(data.dim.width() / data.downscale)
