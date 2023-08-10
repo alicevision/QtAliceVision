@@ -46,6 +46,14 @@ SequenceCache::SequenceCache(QObject* parent) :
 
 SequenceCache::~SequenceCache()
 {
+    // Check if a worker thread is currently active
+    if (_loading)
+    {
+        // Worker thread will return on next iteration
+        abortPrefetching = true;
+        QThreadPool::globalInstance()->waitForDone();
+    }
+
     // Free memory occupied by image cache
     if (_cache) delete _cache;
 }
