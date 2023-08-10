@@ -51,7 +51,6 @@ void SequenceCache::setSequence(const QVariantList& paths)
     // Clear internal state
     _sequence.clear();
     _regionSafe = std::make_pair(-1, -1);
-    _loading = false;
 
     // Fill sequence vector
     int frameCounter = 0;
@@ -99,21 +98,28 @@ void SequenceCache::setSequence(const QVariantList& paths)
 
 void SequenceCache::setTargetSize(int size)
 {
-    // Clear internal state
-    _regionSafe = std::make_pair(-1, -1);
-    _loading = false;
-
     // Update target size
     _targetSize = size;
 
     // Update downscale for each frame
+    bool refresh = false;
     for (auto& data : _sequence)
     {
         // Compute downscale
         const int maxDim = std::max(data.dim.width(), data.dim.height());
         const int level = static_cast<int>(std::floor(
             std::log2(static_cast<double>(maxDim) / static_cast<double>(_targetSize))));
-        data.downscale = 1 << std::max(level, 0);
+        const int downscale = 1 << std::max(level, 0);
+
+        refresh = refresh || (data.downscale != downscale);
+
+        data.downscale = downscale;
+    }
+
+    if (refresh)
+    {
+        // Clear internal state
+        _regionSafe = std::make_pair(-1, -1);
     }
 }
 
@@ -256,11 +262,18 @@ void SequenceCache::onPrefetchingDone(int reqFrame)
     }
 
     // Update safe region
-    // Here we define safe region to cover 80% of cached region
-    // The remaining 20% serves to anticipate prefetching
-    const int extentCached = (regionCached.second - regionCached.first) / 2;
-    const int extentSafe = static_cast<int>(static_cast<double>(extentCached) * 0.8);
-    _regionSafe = buildRegion(reqFrame, extentSafe);
+    if (regionCached == std::make_pair(-1, -1))
+    {
+        _regionSafe = std::make_pair(-1, -1);
+    }
+    else
+    {
+        // Here we define safe region to cover 80% of cached region
+        // The remaining 20% serves to anticipate prefetching
+        const int extentCached = (regionCached.second - regionCached.first) / 2;
+        const int extentSafe = static_cast<int>(static_cast<double>(extentCached) * 0.8);
+        _regionSafe = buildRegion(reqFrame, extentSafe);
+    }
 
     // Notify clients that a request has been handled
     Q_EMIT requestHandled();
