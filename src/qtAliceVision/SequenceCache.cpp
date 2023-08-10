@@ -56,9 +56,6 @@ void SequenceCache::setSequence(const QVariantList& paths)
     _sequence.clear();
     _regionSafe = std::make_pair(-1, -1);
 
-    // Stop any ongoing prefetching
-    abortPrefetching = true;
-
     // Fill sequence vector
     int frameCounter = 0;
     for (const auto& var : paths)
@@ -127,9 +124,6 @@ void SequenceCache::setTargetSize(int size)
     {
         // Clear internal state
         _regionSafe = std::make_pair(-1, -1);
-
-        // Stop any ongoing prefetching
-        abortPrefetching = true;
     }
 }
 
@@ -194,10 +188,31 @@ ResponseData SequenceCache::request(const RequestData& reqData)
         return response;
     }
 
+    // Retrieve frame data
+    const std::size_t idx = static_cast<std::size_t>(frame);
+    const FrameData& data = _sequence[idx];
+    
+    // Retrieve image from cache
+    const bool cachedOnly = true;
+    const bool lazyCleaning = false;
+    response.img = _cache->get<aliceVision::image::RGBAfColor>(data.path, data.downscale, cachedOnly, lazyCleaning);
+
+    // Retrieve metadata
+    response.dim = data.dim;
+    response.metadata = data.metadata;
+
+    // Requested image is not in cache
+    // and there is already a prefetching thread running
+    if (!response.img && _loading)
+    {
+        // Abort prefetching to avoid waiting until current worker thread is done
+        abortPrefetching = true;
+    }
+
     // Request falls outside of safe region
     if ((frame < _regionSafe.first || frame > _regionSafe.second) && !_loading)
     {
-        // Turn off abort flag
+        // Make sur abort flag is off before launching a new prefetching thread
         abortPrefetching = false;
 
         // Update internal state
@@ -215,19 +230,6 @@ ResponseData SequenceCache::request(const RequestData& reqData)
         connect(ioRunnable, &PrefetchingIORunnable::done, this, &SequenceCache::onPrefetchingDone);
         QThreadPool::globalInstance()->start(ioRunnable);
     }
-
-    // Retrieve frame data
-    const std::size_t idx = static_cast<std::size_t>(frame);
-    const FrameData& data = _sequence[idx];
-    
-    // Retrieve image from cache
-    const bool cachedOnly = true;
-    const bool lazyCleaning = false;
-    response.img = _cache->get<aliceVision::image::RGBAfColor>(data.path, data.downscale, cachedOnly, lazyCleaning);
-
-    // Retrieve metadata
-    response.dim = data.dim;
-    response.metadata = data.metadata;
 
     return response;
 }
