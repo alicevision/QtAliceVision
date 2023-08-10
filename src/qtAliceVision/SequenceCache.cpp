@@ -98,6 +98,9 @@ void SequenceCache::setSequence(const QVariantList& paths)
             std::cerr << e.what() << std::endl;
         }
     }
+
+    // Notify listeners that sequence content has changed
+    Q_EMIT contentChanged();
 }
 
 void SequenceCache::setTargetSize(int size)
@@ -124,6 +127,9 @@ void SequenceCache::setTargetSize(int size)
     {
         // Clear internal state
         _regionSafe = std::make_pair(-1, -1);
+
+        // Notify listeners that sequence content has changed
+        Q_EMIT contentChanged();
     }
 }
 

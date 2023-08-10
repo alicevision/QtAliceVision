@@ -45,7 +45,7 @@ FloatImageViewer::FloatImageViewer(QQuickItem* parent)
 
     connect(&_singleImageLoader, &imgserve::SingleImageLoader::requestHandled, this, &FloatImageViewer::reload);
     connect(&_sequenceCache, &imgserve::SequenceCache::requestHandled, this, &FloatImageViewer::reload);
-    connect(this, &FloatImageViewer::sequenceChanged, this, &FloatImageViewer::reload);
+    connect(&_sequenceCache, &imgserve::SequenceCache::contentChanged, this, &FloatImageViewer::reload);
     connect(this, &FloatImageViewer::useSequenceChanged, this, &FloatImageViewer::reload);
 }
 
@@ -73,7 +73,6 @@ void FloatImageViewer::setTargetSize(int size)
 {
     _sequenceCache.setTargetSize(size);
     Q_EMIT targetSizeChanged();
-    Q_EMIT sequenceChanged();
 }
 
 QVariantList FloatImageViewer::getCachedFrames() const

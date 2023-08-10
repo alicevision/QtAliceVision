@@ -111,6 +111,11 @@ public:
      */
     Q_SIGNAL void requestHandled();
 
+    /**
+     * @brief Signal emitted when sequence content has been modified.
+     */
+    Q_SIGNAL void contentChanged();
+
 private:
 
     // Member variables
