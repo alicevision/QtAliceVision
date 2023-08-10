@@ -359,7 +359,8 @@ void FloatImageViewer::updatePaintSurface(QSGGeometryNode* root, QSGSimpleMateri
         quint16* indices = root->geometry()->indexDataAsUShort();
 
         // Update surface
-        _surface.update(vertices, indices, _sourceSize, _downscaleLevel);
+        const QSize surfaceSize = _surface.isPanoramaViewerEnabled() ? _textureSize : _sourceSize;
+        _surface.update(vertices, indices, surfaceSize, _downscaleLevel);
 
         root->geometry()->markIndexDataDirty();
         root->geometry()->markVertexDataDirty();
