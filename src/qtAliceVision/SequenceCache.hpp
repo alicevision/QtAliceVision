@@ -74,6 +74,12 @@ public:
     void setSequence(const QVariantList& paths);
 
     /**
+     * @brief Toggle on/off interactive prefetching.
+     * @param[in] interactive new value for interactive prefetching flag
+     */
+    void setInteractivePrefetching(bool interactive);
+
+    /**
      * @brief Set the target size for the images in the sequence.
      * @param[in] size target size
      */
@@ -131,6 +137,9 @@ private:
 
     /// Keep track of whether or not there is an active worker thread.
     bool _loading;
+
+    /// Allow main thread to abort the prefetching thread and restart a centered around a more accurate location
+    bool _interactivePrefetching;
 
     /// Target size used to compute downscale
     int _targetSize;

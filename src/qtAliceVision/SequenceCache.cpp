@@ -41,6 +41,7 @@ SequenceCache::SequenceCache(QObject* parent) :
     // Initialize internal state
     _regionSafe = std::make_pair(-1, -1);
     _loading = false;
+    _interactivePrefetching = true;
     _targetSize = 1000;
 }
 
@@ -109,6 +110,11 @@ void SequenceCache::setSequence(const QVariantList& paths)
 
     // Notify listeners that sequence content has changed
     Q_EMIT contentChanged();
+}
+
+void SequenceCache::setInteractivePrefetching(bool interactive)
+{
+    _interactivePrefetching = interactive;
 }
 
 void SequenceCache::setTargetSize(int size)
@@ -217,7 +223,7 @@ ResponseData SequenceCache::request(const RequestData& reqData)
 
     // Requested image is not in cache
     // and there is already a prefetching thread running
-    if (!response.img && _loading)
+    if (!response.img && _loading && _interactivePrefetching)
     {
         // Abort prefetching to avoid waiting until current worker thread is done
         abortPrefetching = true;

@@ -133,6 +133,12 @@ void FloatImageViewer::reload()
     Q_EMIT cachedFramesChanged();
 }
 
+void FloatImageViewer::playback(bool active)
+{
+    // Turn off interactive prefetching when playback is ON
+    _sequenceCache.setInteractivePrefetching(!active);
+}
+
 QVector4D FloatImageViewer::pixelValueAt(int x, int y)
 {
     if (!_image)

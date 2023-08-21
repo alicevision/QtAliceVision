@@ -127,6 +127,7 @@ public:
 
     // Q_INVOKABLE
     Q_INVOKABLE QVector4D pixelValueAt(int x, int y);
+    Q_INVOKABLE void playback(bool active);
 
     Surface* getSurfacePtr() { return &_surface; }
 
