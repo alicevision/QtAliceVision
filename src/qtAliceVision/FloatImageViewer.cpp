@@ -259,12 +259,12 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
             newTextureSize = texture->textureSize();
 
             // Crop the image to only display what is inside the fisheye circle
-            const aliceVision::camera::EquiDistant* intrinsicEquiDistant = _surface.getIntrinsicEquiDistant();
-            if (_cropFisheye && intrinsicEquiDistant)
+            const aliceVision::camera::Equidistant* intrinsicEquidistant = _surface.getIntrinsicEquidistant();
+            if (_cropFisheye && intrinsicEquidistant)
             {
-                const aliceVision::Vec3 fisheyeCircleParams(intrinsicEquiDistant->getCircleCenterX(),
-                                                            intrinsicEquiDistant->getCircleCenterY(),
-                                                            intrinsicEquiDistant->getCircleRadius());
+                const aliceVision::Vec3 fisheyeCircleParams(intrinsicEquidistant->getCircleCenterX(),
+                                                            intrinsicEquidistant->getCircleCenterY(),
+                                                            intrinsicEquidistant->getCircleRadius());
 
                 const double width = _image->Width() * pow(2.0, _downscaleLevel);
                 const double height = _image->Height() * pow(2.0, _downscaleLevel);
