@@ -149,7 +149,7 @@ public:
         Q_EMIT verticesChanged();
     }
 
-    const aliceVision::camera::EquiDistant* getIntrinsicEquiDistant() const;
+    const aliceVision::camera::Equidistant* getIntrinsicEquidistant() const;
 
 private:
     aliceVision::camera::IntrinsicBase* getIntrinsicFromViewId(unsigned int viewId) const;

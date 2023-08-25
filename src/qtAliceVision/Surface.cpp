@@ -142,7 +142,7 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
         pose = _msfmData->rawData().getPose(view);
     }
 
-    aliceVision::camera::EquiDistant* eqcam = dynamic_cast<aliceVision::camera::EquiDistant*>(intrinsic);
+    aliceVision::camera::Equidistant* eqcam = dynamic_cast<aliceVision::camera::Equidistant*>(intrinsic);
     aliceVision::Vec2 center = {0, 0};
     double radius = std::numeric_limits<double>::max();
 
@@ -402,7 +402,7 @@ QPointF Surface::getPrincipalPoint()
 
     if (intrinsic && aliceVision::camera::isPinhole(intrinsic->getType()))
     {
-        ppCorrection = dynamic_cast<aliceVision::camera::IntrinsicsScaleOffset&>(*intrinsic).getOffset();
+        ppCorrection = dynamic_cast<aliceVision::camera::IntrinsicScaleOffset&>(*intrinsic).getOffset();
     }
 
     return {ppCorrection.x(), ppCorrection.y()};
@@ -665,7 +665,7 @@ aliceVision::camera::IntrinsicBase* Surface::getIntrinsicFromViewId(unsigned int
     return intrinsic;
 }
 
-const aliceVision::camera::EquiDistant* Surface::getIntrinsicEquiDistant() const
+const aliceVision::camera::Equidistant* Surface::getIntrinsicEquidistant() const
 {
     const aliceVision::camera::IntrinsicBase* intrinsic = getIntrinsicFromViewId(_idView);
     if (!intrinsic)
@@ -674,10 +674,10 @@ const aliceVision::camera::EquiDistant* Surface::getIntrinsicEquiDistant() const
     }
 
     // Load equidistant intrinsic (the intrinsic for full circle fisheye cameras)
-    const aliceVision::camera::EquiDistant* intrinsicEquiDistant =
-        dynamic_cast<const aliceVision::camera::EquiDistant*>(intrinsic);
+    const aliceVision::camera::Equidistant* intrinsicEquidistant =
+        dynamic_cast<const aliceVision::camera::Equidistant*>(intrinsic);
 
-    return intrinsicEquiDistant;
+    return intrinsicEquidistant;
 }
 
 } // namespace qtAliceVision
