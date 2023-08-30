@@ -75,11 +75,11 @@ void ObservationsEntity::setData(const Alembic::Abc::IObject& iObj)
 
     auto* tcEntity = new QEntity(this);
     tcEntity->addComponent(tcGeometry);
-    tcEntity->addComponent(createMaterial(0, 1, 0, .7f));
+    tcEntity->addComponent(createMaterial(0, 1, 0, 1));
 
     auto* rcEntity = new QEntity(this);
     rcEntity->addComponent(rcGeometry);
-    rcEntity->addComponent(createMaterial(0, 0, 1, .7f));
+    rcEntity->addComponent(createMaterial(0, 0, 1, 1));
 }
 
 void ObservationsEntity::update(const IndexT& viewId, const QVariantMap& viewer2DInfo)

@@ -28,6 +28,7 @@ AlembicEntity::AlembicEntity(Qt3DCore::QNode* parent)
 
     // trigger display repaint events of observations
     connect(this, &AlembicEntity::viewIdChanged, this, &AlembicEntity::updateObservations);
+    connect(this, &AlembicEntity::displayObservationsChanged, this, &AlembicEntity::updateObservations);
     connect(this, &AlembicEntity::viewer2DInfoChanged, this, &AlembicEntity::updateObservations);
 }
 
@@ -67,6 +68,14 @@ void AlembicEntity::setViewId(const int& value)
     Q_EMIT viewIdChanged();
 }
 
+void AlembicEntity::setDisplayObservations(const bool& value)
+{
+    if (_displayObservations == value)
+        return;
+    _displayObservations = value;
+    Q_EMIT displayObservationsChanged();
+}
+
 void AlembicEntity::setViewer2DInfo(const QVariantMap& value)
 {
     if (_viewer2DInfo == value)
@@ -89,6 +98,8 @@ void AlembicEntity::updateObservations() const
     for (auto* entity : _observations)
     {
         entity->update(_viewId, _viewer2DInfo);
+        if (entity->isEnabled() != _displayObservations)
+            entity->setEnabled(_displayObservations);
     }
 }
 
