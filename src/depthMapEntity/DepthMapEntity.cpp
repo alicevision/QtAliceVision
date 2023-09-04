@@ -47,7 +47,7 @@ void DepthMapEntity::setSource(const QUrl& value)
 
     if (!value.isValid())
     {
-        qDebug() << "[DepthMapEntity] Invalid source";
+        qDebug() << "[DepthMapEntity] Invalid source: " << value;
         _status = DepthMapEntity::Error;
         return;
     }
@@ -70,7 +70,7 @@ void DepthMapEntity::setSource(const QUrl& value)
     }
     else
     {
-        qWarning () << "[DepthMapEntity] Source filename must contain depthMap or simMap";
+        qWarning () << "[DepthMapEntity] Source filename must contain depthMap or simMap: " << filename;
         _status = DepthMapEntity::Error;
         return;
     }
@@ -253,31 +253,88 @@ void DepthMapEntity::loadDepthMap()
     oiio::ImageSpec inSpec = image::readImageSpec(depthMapPath);
 
     Point3d CArr;
-    const oiio::ParamValue* cParam = inSpec.find_attribute("AliceVision:CArr");
-    if (cParam)
+    oiio::ParamValue* cParam = inSpec.find_attribute("AliceVision:CArr");
+    if (!cParam)
     {
-        qDebug() << "[DepthMapEntity] CArr: " << cParam->nvalues();
-        std::copy_n(static_cast<const double*>(cParam->data()), 3, CArr.m);
+        qWarning() << "[DepthMapEntity] Missing metadata CArr.";
+        _status = DepthMapEntity::Error;
+        return;
+    }
+    
+    qDebug() << "[DepthMapEntity] CArr: "
+        << " nvalues: " << cParam->nvalues()
+        << ", type: " << cParam->type().c_str()
+        << ", basetype: " << cParam->type().basetype
+        << ", aggregate: " << cParam->type().aggregate
+        << ", vecsemantics: " << cParam->type().vecsemantics
+        << ", arraylen: " << cParam->type().arraylen
+        ;
+
+    if(cParam->type().aggregate != oiio::TypeDesc::AGGREGATE::VEC3)
+    {
+        qWarning() << "[DepthMapEntity] Metadata CArr: Type error (aggregate: " << cParam->type().aggregate << ")";
+        _status = DepthMapEntity::Error;
+        return;
+    }
+    if(cParam->type().basetype == oiio::TypeDesc::BASETYPE::DOUBLE)
+    {
+        std::copy_n(static_cast<const double*>(cParam->data()), 9, CArr.m);
+    }
+    else if(cParam->type().basetype == oiio::TypeDesc::BASETYPE::FLOAT)
+    {
+        const float* d = static_cast<const float*>(cParam->data());
+        for(int i = 0; i < 9; ++i)
+        {
+            CArr.m[i] = d[i];
+        }
     }
     else
     {
-        qDebug() << "[DepthMapEntity] Missing metadata CArr.";
+        qWarning() << "[DepthMapEntity] Metadata CArr: Data type error (basetype: " << cParam->type().basetype << ")";
         _status = DepthMapEntity::Error;
         return;
     }
 
     Matrix3x3 iCamArr;
-    const oiio::ParamValue* icParam =
-        inSpec.find_attribute("AliceVision:iCamArr", oiio::TypeDesc(oiio::TypeDesc::DOUBLE, oiio::TypeDesc::MATRIX33));
+    oiio::ParamValue* icParam =
+        inSpec.find_attribute("AliceVision:iCamArr");
 
-    if (icParam)
+    if (!icParam)
     {
-        qDebug() << "[DepthMapEntity] iCamArr: " << icParam->nvalues();
+        qWarning() << "[DepthMapEntity] Missing metadata iCamArr.";
+        _status = DepthMapEntity::Error;
+        return;
+    }
+
+    qDebug() << "[DepthMapEntity] iCamArr: "
+        << " nvalues: " << icParam->nvalues()
+        << ", type: " << icParam->type().c_str()
+        << ", basetype: " << icParam->type().basetype
+        << ", aggregate: " << icParam->type().aggregate
+        << ", vecsemantics: " << icParam->type().vecsemantics
+        << ", arraylen: " << icParam->type().arraylen
+        ;
+    if(icParam->type().aggregate != oiio::TypeDesc::AGGREGATE::MATRIX33)
+    {
+        qWarning() << "[DepthMapEntity] Metadata iCamArr: Type error (aggregate: " << icParam->type().aggregate << ")";
+        _status = DepthMapEntity::Error;
+        return;
+    }
+    if(icParam->type().basetype == oiio::TypeDesc::BASETYPE::DOUBLE)
+    {
         std::copy_n(static_cast<const double*>(icParam->data()), 9, iCamArr.m);
+    }
+    else if(icParam->type().basetype == oiio::TypeDesc::BASETYPE::FLOAT)
+    {
+        const float* d = static_cast<const float*>(icParam->data());
+        for(int i = 0; i < 9; ++i)
+        {
+            iCamArr.m[i] = d[i];
+        }
     }
     else
     {
-        qDebug() << "[DepthMapEntity] Missing metadata iCamArr.";
+        qWarning() << "[DepthMapEntity] Metadata iCamArr: Data type error (basetype: " << icParam->type().basetype << ")";
         _status = DepthMapEntity::Error;
         return;
     }
