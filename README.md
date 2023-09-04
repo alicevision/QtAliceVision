@@ -20,6 +20,7 @@ Currently available:
   - [X] Alembic 3D visualization
     - Point clouds
     - Cameras
+    - Landmark observations
   - [X] OIIO backend
     - Read RAW images from DSLRs
     - Read intermediate files of the [AliceVision](https://github.com/alicevision/AliceVision) framework stored in EXR format
