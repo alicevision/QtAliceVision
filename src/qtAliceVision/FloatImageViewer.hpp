@@ -18,6 +18,7 @@
 
 #include <memory>
 #include <string>
+#include <algorithm>
 
 namespace qtAliceVision
 {
@@ -58,9 +59,12 @@ class FloatImageViewer : public QQuickItem
 
     Q_PROPERTY(QVariantList sequence WRITE setSequence NOTIFY sequenceChanged)
 
+    Q_PROPERTY(int targetSize WRITE setTargetSize NOTIFY targetSizeChanged)
+
     Q_PROPERTY(QVariantList cachedFrames READ getCachedFrames NOTIFY cachedFramesChanged)
 
     Q_PROPERTY(bool useSequence MEMBER _useSequence NOTIFY useSequenceChanged)
+
 
 public:
     explicit FloatImageViewer(QQuickItem* parent = nullptr);
@@ -80,12 +84,8 @@ public:
         if (level == _downscaleLevel)
             return;
 
-        // Level [0;3]
-        if (level < 0 && level > 6)
-            level = 4;
-        _downscaleLevel = level;
-        reload();
-        // Q_EMIT downscaleLevelChanged();
+        _downscaleLevel = std::max(0, level);
+        Q_EMIT downscaleLevelChanged();
     }
 
     enum class EChannelMode : quint8
@@ -121,15 +121,19 @@ public:
     Q_SIGNAL void sfmRequiredChanged();
     Q_SIGNAL void fisheyeCircleParametersChanged();
     Q_SIGNAL void sequenceChanged();
+    Q_SIGNAL void targetSizeChanged();
     Q_SIGNAL void cachedFramesChanged();
     Q_SIGNAL void useSequenceChanged();
 
     // Q_INVOKABLE
     Q_INVOKABLE QVector4D pixelValueAt(int x, int y);
+    Q_INVOKABLE void playback(bool active);
 
     Surface* getSurfacePtr() { return &_surface; }
 
     void setSequence(const QVariantList& paths);
+
+    void setTargetSize(int size);
 
     QVariantList getCachedFrames() const;
 

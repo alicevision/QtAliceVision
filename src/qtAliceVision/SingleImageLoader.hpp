@@ -37,10 +37,10 @@ public:
 
 	/**
 	 * @brief Slot called when the loading thread is done.
-	 * @param[in] path filepath of the loaded image
+	 * @param[in] reqData request data used to create the loading thread
 	 * @param[in] response a ResponseData instance containing the data loaded from disk
 	 */
-	Q_SLOT void onSingleImageLoadingDone(QString path, ResponseData response);
+	Q_SLOT void onSingleImageLoadingDone(RequestData reqData, ResponseData response);
 
 	/**
 	 * @brief Signal emitted when the loading thread is done and a previous request has been handled.
@@ -51,10 +51,10 @@ private:
 
 	// Member variables
 
-	/// Filepath of currently loaded image.
-	std::string _path;
+	/// Latest request data.
+	RequestData _request;
 
-	/// Currently loaded image and its metadata.
+	/// Latest response data.
 	ResponseData _response;
 
 	/// Keep track of whether or not there is an active worker thread.
@@ -83,10 +83,10 @@ public:
 
 	/**
 	 * @brief Signal emitted when image loading is finished.
-	 * @param[in] path filepath of the loaded image
+	 * @param[in] reqData request data used to create the loading thread
 	 * @param[in] response a ResponseData instance containing the data loaded from disk
 	 */
-	Q_SIGNAL void done(QString path, ResponseData response);
+	Q_SIGNAL void done(RequestData reqData, ResponseData response);
 
 private:
 

@@ -34,6 +34,8 @@ struct FrameData {
 
     int frame;
 
+    int downscale;
+
 };
 
 /**
@@ -72,6 +74,18 @@ public:
     void setSequence(const QVariantList& paths);
 
     /**
+     * @brief Toggle on/off interactive prefetching.
+     * @param[in] interactive new value for interactive prefetching flag
+     */
+    void setInteractivePrefetching(bool interactive);
+
+    /**
+     * @brief Set the target size for the images in the sequence.
+     * @param[in] size target size
+     */
+    void setTargetSize(int size);
+
+    /**
      * @brief Get the frames in the sequence that are currently cached.
      * @return a list of intervals, each one describing a range of cached frames
      * @note we use QPoints to represent the intervals (x: range start, y: range end)
@@ -103,6 +117,11 @@ public:
      */
     Q_SIGNAL void requestHandled();
 
+    /**
+     * @brief Signal emitted when sequence content has been modified.
+     */
+    Q_SIGNAL void contentChanged();
+
 private:
 
     // Member variables
@@ -118,6 +137,12 @@ private:
 
     /// Keep track of whether or not there is an active worker thread.
     bool _loading;
+
+    /// Allow main thread to abort the prefetching thread and restart a centered around a more accurate location
+    bool _interactivePrefetching;
+
+    /// Target size used to compute downscale
+    int _targetSize;
 
 private:
 

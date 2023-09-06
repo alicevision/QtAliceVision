@@ -12,10 +12,14 @@
 #include <chrono>
 #include <stdexcept>
 #include <iostream>
+#include <atomic>
 
 
 namespace qtAliceVision {
 namespace imgserve {
+
+// Flag for aborting the prefetching worker thread from the main thread
+std::atomic_bool abortPrefetching = false;
 
 SequenceCache::SequenceCache(QObject* parent) :
     QObject(parent)
@@ -37,10 +41,20 @@ SequenceCache::SequenceCache(QObject* parent) :
     // Initialize internal state
     _regionSafe = std::make_pair(-1, -1);
     _loading = false;
+    _interactivePrefetching = true;
+    _targetSize = 1000;
 }
 
 SequenceCache::~SequenceCache()
 {
+    // Check if a worker thread is currently active
+    if (_loading)
+    {
+        // Worker thread will return on next iteration
+        abortPrefetching = true;
+        QThreadPool::globalInstance()->waitForDone();
+    }
+
     // Free memory occupied by image cache
     if (_cache) delete _cache;
 }
@@ -50,9 +64,9 @@ void SequenceCache::setSequence(const QVariantList& paths)
     // Clear internal state
     _sequence.clear();
     _regionSafe = std::make_pair(-1, -1);
-    _loading = false;
 
     // Fill sequence vector
+    int frameCounter = 0;
     for (const auto& var : paths)
     {
         try
@@ -74,8 +88,18 @@ void SequenceCache::setSequence(const QVariantList& paths)
                 data.metadata[QString::fromStdString(item.name().string())] = QString::fromStdString(item.get_string());
             }
 
+            // Compute downscale
+            const int maxDim = std::max(width, height);
+            const int level = static_cast<int>(std::floor(
+                std::log2(static_cast<double>(maxDim) / static_cast<double>(_targetSize))));
+            data.downscale = 1 << std::max(level, 0);
+
+            // Set frame number
+            data.frame = frameCounter;
+
             // Add to sequence
             _sequence.push_back(data);
+            ++frameCounter;
         }
         catch (const std::runtime_error& e)
         {
@@ -84,10 +108,42 @@ void SequenceCache::setSequence(const QVariantList& paths)
         }
     }
 
-    // Assign frame numbers
-    for (size_t i = 0; i < _sequence.size(); ++i)
+    // Notify listeners that sequence content has changed
+    Q_EMIT contentChanged();
+}
+
+void SequenceCache::setInteractivePrefetching(bool interactive)
+{
+    _interactivePrefetching = interactive;
+}
+
+void SequenceCache::setTargetSize(int size)
+{
+    // Update target size
+    _targetSize = size;
+
+    // Update downscale for each frame
+    bool refresh = false;
+    for (auto& data : _sequence)
     {
-        _sequence[i].frame = static_cast<int>(i);
+        // Compute downscale
+        const int maxDim = std::max(data.dim.width(), data.dim.height());
+        const int level = static_cast<int>(std::floor(
+            std::log2(static_cast<double>(maxDim) / static_cast<double>(_targetSize))));
+        const int downscale = 1 << std::max(level, 0);
+
+        refresh = refresh || (data.downscale != downscale);
+
+        data.downscale = downscale;
+    }
+
+    if (refresh)
+    {
+        // Clear internal state
+        _regionSafe = std::make_pair(-1, -1);
+
+        // Notify listeners that sequence content has changed
+        Q_EMIT contentChanged();
     }
 }
 
@@ -105,7 +161,7 @@ QVariantList SequenceCache::getCachedFrames() const
         const int frame = static_cast<int>(i);
 
         // Check if current frame is in cache
-        if (_cache->contains<aliceVision::image::RGBAfColor>(_sequence[i].path, 1))
+        if (_cache->contains<aliceVision::image::RGBAfColor>(_sequence[i].path, _sequence[i].downscale))
         {
             // Either grow currently open region or create a new region
             if (regionOpen)
@@ -152,9 +208,33 @@ ResponseData SequenceCache::request(const RequestData& reqData)
         return response;
     }
 
+    // Retrieve frame data
+    const std::size_t idx = static_cast<std::size_t>(frame);
+    const FrameData& data = _sequence[idx];
+    
+    // Retrieve image from cache
+    const bool cachedOnly = true;
+    const bool lazyCleaning = false;
+    response.img = _cache->get<aliceVision::image::RGBAfColor>(data.path, data.downscale, cachedOnly, lazyCleaning);
+
+    // Retrieve metadata
+    response.dim = data.dim;
+    response.metadata = data.metadata;
+
+    // Requested image is not in cache
+    // and there is already a prefetching thread running
+    if (!response.img && _loading && _interactivePrefetching)
+    {
+        // Abort prefetching to avoid waiting until current worker thread is done
+        abortPrefetching = true;
+    }
+
     // Request falls outside of safe region
     if ((frame < _regionSafe.first || frame > _regionSafe.second) && !_loading)
     {
+        // Make sur abort flag is off before launching a new prefetching thread
+        abortPrefetching = false;
+
         // Update internal state
         _loading = true;
 
@@ -170,19 +250,6 @@ ResponseData SequenceCache::request(const RequestData& reqData)
         connect(ioRunnable, &PrefetchingIORunnable::done, this, &SequenceCache::onPrefetchingDone);
         QThreadPool::globalInstance()->start(ioRunnable);
     }
-
-    // Retrieve frame data
-    const std::size_t idx = static_cast<std::size_t>(frame);
-    const FrameData& data = _sequence[idx];
-    
-    // Retrieve image from cache
-    const bool cachedOnly = true;
-    const bool lazyCleaning = false;
-    response.img = _cache->get<aliceVision::image::RGBAfColor>(data.path, 1, cachedOnly, lazyCleaning);
-
-    // Retrieve metadata
-    response.dim = data.dim;
-    response.metadata = data.metadata;
 
     return response;
 }
@@ -205,7 +272,7 @@ void SequenceCache::onPrefetchingDone(int reqFrame)
         const std::size_t idx = static_cast<std::size_t>(frame);
 
         // Grow region on the left as much as possible
-        if (_cache->contains<aliceVision::image::RGBAfColor>(_sequence[idx].path, 1))
+        if (_cache->contains<aliceVision::image::RGBAfColor>(_sequence[idx].path, _sequence[idx].downscale))
         {
             regionCached.first = frame;
         }
@@ -219,7 +286,7 @@ void SequenceCache::onPrefetchingDone(int reqFrame)
         const std::size_t idx = static_cast<std::size_t>(frame);
 
         // Grow region on the right as much as possible
-        if (_cache->contains<aliceVision::image::RGBAfColor>(_sequence[idx].path, 1))
+        if (_cache->contains<aliceVision::image::RGBAfColor>(_sequence[idx].path, _sequence[idx].downscale))
         {
             regionCached.second = frame;
         }
@@ -230,11 +297,18 @@ void SequenceCache::onPrefetchingDone(int reqFrame)
     }
 
     // Update safe region
-    // Here we define safe region to cover 80% of cached region
-    // The remaining 20% serves to anticipate prefetching
-    const int extentCached = (regionCached.second - regionCached.first) / 2;
-    const int extentSafe = static_cast<int>(static_cast<double>(extentCached) * 0.8);
-    _regionSafe = buildRegion(reqFrame, extentSafe);
+    if (regionCached == std::make_pair(-1, -1))
+    {
+        _regionSafe = std::make_pair(-1, -1);
+    }
+    else
+    {
+        // Here we define safe region to cover 80% of cached region
+        // The remaining 20% serves to anticipate prefetching
+        const int extentCached = (regionCached.second - regionCached.first) / 2;
+        const int extentSafe = static_cast<int>(static_cast<double>(extentCached) * 0.8);
+        _regionSafe = buildRegion(reqFrame, extentSafe);
+    }
 
     // Notify clients that a request has been handled
     Q_EMIT requestHandled();
@@ -307,8 +381,19 @@ void PrefetchingIORunnable::run()
     // Load images from disk to cache
     for (const auto& data : _toLoad)
     {
+        // Check if main thread wants to abort prefetching
+        if (abortPrefetching)
+        {
+            abortPrefetching = false;
+            Q_EMIT done(_reqFrame);
+            return;
+        }
+
         // Check if image size does not exceed limit
-        uint64_t memSize = static_cast<uint64_t>(data.dim.width()) * static_cast<uint64_t>(data.dim.height()) * 16;
+        uint64_t memSize =
+            static_cast<uint64_t>(data.dim.width() / data.downscale)
+            * static_cast<uint64_t>(data.dim.height() / data.downscale)
+            * 16;
         if (filled + memSize > _toFill)
         {
             break;
@@ -319,7 +404,7 @@ void PrefetchingIORunnable::run()
         {
             const bool cachedOnly = false;
             const bool lazyCleaning = false;
-            _cache->get<aliceVision::image::RGBAfColor>(data.path, 1, cachedOnly, lazyCleaning);
+            _cache->get<aliceVision::image::RGBAfColor>(data.path, data.downscale, cachedOnly, lazyCleaning);
             filled += memSize;
         }
         catch (const std::runtime_error& e)

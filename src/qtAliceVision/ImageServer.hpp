@@ -58,6 +58,7 @@ public:
 } // namespace imgserve
 } // namespace qtAliceVision
 
-// Make ResponseData struct known to QMetaType
+// Make RequestData and ResponseData struct known to QMetaType
 // for usage in signals and slots
+Q_DECLARE_METATYPE(qtAliceVision::imgserve::RequestData)
 Q_DECLARE_METATYPE(qtAliceVision::imgserve::ResponseData)
