@@ -15,11 +15,11 @@ struct LandmarkPerView
 {
     LandmarkPerView() = default;
 
-    LandmarkPerView(const IndexT& landmarkId, const sfmData::Landmark& landmark,
-                    const sfmData::Observation& observation)
-        : landmarkId(landmarkId)
-        , landmark(landmark)
-        , observation(observation)
+    LandmarkPerView(const IndexT& landmarkId_, const sfmData::Landmark& landmark_,
+                    const sfmData::Observation& observation_)
+        : landmarkId(landmarkId_)
+        , landmark(landmark_)
+        , observation(observation_)
     {
     }
 
