@@ -17,12 +17,12 @@ public:
     explicit ObservationsEntity(std::string source, Qt3DCore::QNode* parent = nullptr);
     ~ObservationsEntity() override = default;
 
-    void setData(const Alembic::Abc::IObject&);
+    void setData();
     void update(const aliceVision::IndexT& viewId, const QVariantMap& viewer2DInfo);
 
 private:
 
-    void fillBytesData(const Alembic::Abc::IObject& iObj, QByteArray& positionData);
+    void fillBytesData(QByteArray& positionData);
     void fillLandmarksPerViews();
 
     // file path to SfM data

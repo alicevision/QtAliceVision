@@ -4,7 +4,7 @@
 #include <Qt3DRender/QBuffer>
 #include <Qt3DExtras/QPhongAlphaMaterial>
 
-#include <aliceVision/sfmDataIO/AlembicImporter.cpp>
+#include <aliceVision/sfmDataIO/sfmDataIO.hpp>
 
 using namespace Qt3DRender;
 using namespace aliceVision;
@@ -55,14 +55,14 @@ ObservationsEntity::ObservationsEntity(std::string source, Qt3DCore::QNode* pare
     fillLandmarksPerViews();
 }
 
-void ObservationsEntity::setData(const Alembic::Abc::IObject& iObj)
+void ObservationsEntity::setData()
 {
     // contains the 3D coordinates of vertices in space in the following order:
     // - the landmarks
     // - the view cameras
     QByteArray positionData;
 
-    fillBytesData(iObj, positionData);
+    fillBytesData(positionData);
 
     // contains the connections between the selected view and its corresponding
     // observed landmarks
@@ -152,31 +152,36 @@ void ObservationsEntity::fillLandmarksPerViews()
     }
 }
 
-void ObservationsEntity::fillBytesData(const Alembic::Abc::IObject& iObj, QByteArray& positionData)
+void ObservationsEntity::fillBytesData(QByteArray& positionData)
 {
-     using namespace Alembic::Abc;
-     using namespace Alembic::AbcGeom;
-     using sfmDataIO::AV_UInt32ArraySamplePtr;
-
-     IPoints points(iObj, kWrapExisting);
-     IPointsSchema schema = points.getSchema();
-
      // -------------- read position data ----------------------
 
-     P3fArraySamplePtr positionsLandmarks = schema.getValue().getPositions();
-     const auto& nLandmarks = positionsLandmarks->size();
+     const auto& nLandmarks = _sfmData.getLandmarks().size();
      const auto& nViews = _sfmData.getViews().size();
      positionData.resize(static_cast<int>((nLandmarks + nViews) * 3 * sizeof(float)));
+     size_t nObservations = 0;
      // copy positions of landmarks
-     memcpy(positionData.data(), (const char*)positionsLandmarks->get(), nLandmarks * 3 * sizeof(float));
+     {
+         auto* positionsIt = positionData.data();
+         for (const auto& landIt : _sfmData.getLandmarks())
+         {
+             aliceVision::Vec3f x = landIt.second.X.cast<float>();
+             // graphics to open-gl coordinates system
+             x.z() *= -1;
+             x.y() *= -1;
+             memcpy(positionsIt, reinterpret_cast<char*>(x.data()), 3 * sizeof(float));
+             positionsIt += 3 * sizeof(float);
+             nObservations += landIt.second.observations.size();
+         }
+     }
      // copy positions of view cameras and construct _viewId2vertexPos
      {
-          auto* positionsIt = positionData.data();
-          uint viewPosIdx = static_cast<uint>(nLandmarks);
-          // view camera positions are added after landmarks'
-          positionsIt += 3 * sizeof(float) * nLandmarks;
-          for (const auto& viewIt : _sfmData.getViews())
-          {
+         auto* positionsIt = positionData.data();
+         uint viewPosIdx = static_cast<uint>(nLandmarks);
+         // view camera positions are added after landmarks'
+         positionsIt += 3 * sizeof(float) * nLandmarks;
+         for (const auto& viewIt : _sfmData.getViews())
+         {
              _viewId2vertexPos[viewIt.first] = viewPosIdx++;
              aliceVision::Vec3f center = _sfmData.getPose(*viewIt.second).getTransform().center().cast<float>();
              // graphics to open-gl coordinates system
@@ -184,32 +189,27 @@ void ObservationsEntity::fillBytesData(const Alembic::Abc::IObject& iObj, QByteA
              center.y() *= -1;
              memcpy(positionsIt, reinterpret_cast<char*>(center.data()), 3 * sizeof(float));
              positionsIt += 3 * sizeof(float);
-          }
+         }
      }
 
      // -------------- read Tc index data ----------------------
 
      {
-          ICompoundProperty userProps = aliceVision::sfmDataIO::getAbcUserProperties(schema);
-          AV_UInt32ArraySamplePtr sampleVisibilitySize(userProps, "mvg_visibilitySize");
-          AV_UInt32ArraySamplePtr sampleVisibilityViewId(userProps, "mvg_visibilityViewId");
-
-         _indexBytesByLandmark.resize(static_cast<int>(2 * sizeof(uint) * sampleVisibilityViewId.size()));
-         _landmarkId2IndexRange.resize(sampleVisibilityViewId.size());
+         _indexBytesByLandmark.resize(static_cast<int>(2 * sizeof(uint) * nObservations));
+         _landmarkId2IndexRange.resize(nLandmarks);
          uint* indices = reinterpret_cast<uint*>(_indexBytesByLandmark.data());
          uint offset = 0;
          size_t obsGlobalIndex = 0;
-         for (uint point3d_i = 0; point3d_i < sampleVisibilitySize.size(); ++point3d_i)
+         for (const auto& landIt : _sfmData.getLandmarks())
          {
-             // Number of observation for this 3d point
-             const size_t visibilitySize = sampleVisibilitySize[point3d_i];
-             const auto& delta = static_cast<uint>(visibilitySize * 2);
-             _landmarkId2IndexRange[point3d_i] = std::pair<uint, uint>(offset, delta);
+             const auto& delta = static_cast<uint>(landIt.second.observations.size() * 2);
+             _landmarkId2IndexRange[landIt.first] = std::pair<uint, uint>(offset, delta);
              offset += delta;
-             for (size_t obs_i = 0; obs_i < visibilitySize; ++obs_i, ++obsGlobalIndex)
+             for (const auto& obsIt : landIt.second.observations)
              {
-                 *indices++ = point3d_i;
-                 *indices++ = _viewId2vertexPos.at(static_cast<IndexT>(sampleVisibilityViewId[obsGlobalIndex]));
+                *indices++ = landIt.first;
+                *indices++ = _viewId2vertexPos.at(obsIt.first);
+                ++obsGlobalIndex;
              }
          }
      }

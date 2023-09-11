@@ -241,7 +241,7 @@ void AlembicEntity::visitAbcObject(const Alembic::Abc::IObject& iObj, QEntity* p
             entity0->fillUserProperties(points.getSchema().getUserProperties());
             entities[0] = entity0;
             ObservationsEntity* entity1 = new ObservationsEntity(_source.toLocalFile().toStdString(), parent);
-            entity1->setData(iObj);
+            entity1->setData();
             entity1->fillArbProperties(points.getSchema().getArbGeomParams());
             entity1->fillUserProperties(points.getSchema().getUserProperties());
             entities[1] = entity1;
