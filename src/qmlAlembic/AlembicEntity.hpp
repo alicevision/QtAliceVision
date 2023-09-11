@@ -49,7 +49,7 @@ public:
     Q_SLOT const QUrl& source() const { return _source; }
     Q_SLOT float pointSize() const { return _pointSize; }
     Q_SLOT float locatorScale() const { return _locatorScale; }
-    Q_SLOT float viewId() const { return _viewId; }
+    Q_SLOT int viewId() const { return _viewId; }
     Q_SLOT bool displayObservations() const { return _displayObservations; }
     Q_SLOT QVariantMap viewer2DInfo() const { return _viewer2DInfo; }
     Q_SLOT void setSource(const QUrl& source);

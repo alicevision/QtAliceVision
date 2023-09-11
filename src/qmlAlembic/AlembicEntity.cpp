@@ -97,7 +97,7 @@ void AlembicEntity::updateObservations() const
 {
     for (auto* entity : _observations)
     {
-        entity->update(_viewId, _viewer2DInfo);
+        entity->update(static_cast<aliceVision::IndexT>(_viewId), _viewer2DInfo);
         if (entity->isEnabled() != _displayObservations)
             entity->setEnabled(_displayObservations);
     }
@@ -289,7 +289,7 @@ void AlembicEntity::visitAbcObject(const Alembic::Abc::IObject& iObj, QEntity* p
 
     std::vector<BaseAlembicObject*> entities = createEntities(iObj);
 
-    for (int j = 0; j < entities.size(); j++)
+    for (size_t j = 0; j < entities.size(); j++)
     {
         auto entity = entities[j];
         entity->setObjectName((iObj.getName() + std::to_string(j)).c_str());
