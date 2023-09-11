@@ -27,9 +27,7 @@ ObservationsEntity::ObservationsEntity(std::string source, Qt3DCore::QNode* pare
     using sfmDataIO::ESfMData;
 
     // read relevant SfM data
-    sfmDataIO::Load(_sfmData, _source, ESfMData(
-        ESfMData::VIEWS | ESfMData::EXTRINSICS | ESfMData::STRUCTURE | 
-        ESfMData::OBSERVATIONS | ESfMData::OBSERVATIONS_WITH_FEATURES));
+    sfmDataIO::Load(_sfmData, _source, ESfMData::ALL);
 
     // populate _landmarksPerView from the read SfM data
     fillLandmarksPerViews();
@@ -70,7 +68,8 @@ void ObservationsEntity::update(const IndexT& viewId, const QVariantMap& viewer2
     size_t rcIndexCount = 0;
 
     const auto& it = _landmarksPerView.find(viewId);
-    if (it != _landmarksPerView.end())
+    const auto& setValidViewIds = _sfmData.getValidViews();
+    if (it != _landmarksPerView.end() && setValidViewIds.find(viewId) != setValidViewIds.end())
     {
         // 2D view bounds
         const float& scale = viewer2DInfo["scale"].toFloat();
@@ -137,7 +136,7 @@ void ObservationsEntity::fillBytesData(QByteArray& positionData)
      // -------------- read position data ----------------------
 
      const auto& nLandmarks = _sfmData.getLandmarks().size();
-     const auto& nViews = _sfmData.getViews().size();
+     const auto& nViews = _sfmData.getValidViews().size();
      positionData.resize(static_cast<int>((nLandmarks + nViews) * 3 * sizeof(float)));
      size_t nObservations = 0;
      // copy positions of landmarks
@@ -160,10 +159,10 @@ void ObservationsEntity::fillBytesData(QByteArray& positionData)
          uint viewPosIdx = static_cast<uint>(nLandmarks);
          // view camera positions are added after landmarks'
          positionsIt += 3 * sizeof(float) * nLandmarks;
-         for (const auto& viewIt : _sfmData.getViews())
+         for (const auto& viewId : _sfmData.getValidViews())
          {
-             _viewId2vertexPos[viewIt.first] = viewPosIdx++;
-             aliceVision::Vec3f center = _sfmData.getPose(*viewIt.second).getTransform().center().cast<float>();
+             _viewId2vertexPos[viewId] = viewPosIdx++;
+             aliceVision::Vec3f center = _sfmData.getPose(_sfmData.getView(viewId)).getTransform().center().cast<float>();
              // graphics to open-gl coordinates system
              center.z() *= -1;
              center.y() *= -1;
@@ -188,7 +187,15 @@ void ObservationsEntity::fillBytesData(QByteArray& positionData)
              for (const auto& obsIt : landIt.second.observations)
              {
                 *indices++ = landIt.first;
-                *indices++ = _viewId2vertexPos.at(obsIt.first);
+                const auto& pos = _viewId2vertexPos.find(obsIt.first);
+                if (pos != _viewId2vertexPos.end())
+                {
+                    *indices++ = pos->second;
+                }
+                else
+                {
+                    *indices++ = landIt.first;
+                }
                 ++obsGlobalIndex;
              }
          }
