@@ -3,11 +3,30 @@
 #include "BaseAlembicObject.hpp"
 #include <aliceVision/sfmData/SfMData.hpp>
 
+using namespace aliceVision;
 
 namespace abcentity
 {
 
-struct LandmarkPerView;
+/**
+ * @brief encapsulates sufficient and fast retrievable information on a landmark observed by a view
+ */
+struct LandmarkPerView
+{
+    LandmarkPerView() = default;
+
+    LandmarkPerView(const IndexT& landmarkId, const sfmData::Landmark& landmark,
+                    const sfmData::Observation& observation)
+        : landmarkId(landmarkId)
+        , landmark(landmark)
+        , observation(observation)
+    {
+    }
+
+    const uint& landmarkId;
+    const sfmData::Landmark& landmark;
+    const sfmData::Observation& observation;
+};
 
 class ObservationsEntity : public BaseAlembicObject
 {
@@ -18,7 +37,7 @@ public:
     ~ObservationsEntity() override = default;
 
     void setData();
-    void update(const aliceVision::IndexT& viewId, const QVariantMap& viewer2DInfo);
+    void update(const IndexT& viewId, const QVariantMap& viewer2DInfo);
 
 private:
 
@@ -34,12 +53,12 @@ private:
     // in _indexBytesByLandmark for a landmark
     std::vector<std::pair<uint, uint>> _landmarkId2IndexRange;
     // maps view id to index of the corresponding position for a view camera in position data
-    std::map<aliceVision::IndexT, uint> _viewId2vertexPos;
-    aliceVision::sfmData::SfMData _sfmData;
+    std::map<IndexT, uint> _viewId2vertexPos;
+    sfmData::SfMData _sfmData;
     // maps view id to a pair containing:
     // - the total number of observations of all landmarks observed by this view
     // - a vector of LandmarkPerView structures corresponding to the landmarks observed by this view
-    stl::flat_map<aliceVision::IndexT, std::pair<size_t, std::vector<LandmarkPerView>>> _landmarksPerView;
+    stl::flat_map<IndexT, std::pair<size_t, std::vector<LandmarkPerView>>> _landmarksPerView;
 };
 
 } // namespace

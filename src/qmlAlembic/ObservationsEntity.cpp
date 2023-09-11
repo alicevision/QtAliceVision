@@ -15,26 +15,6 @@ namespace abcentity
 static const auto& TC_INDEX_ATTRIBUTE_NAME = "Tc-observations indices";
 static const auto& RC_INDEX_ATTRIBUTE_NAME = "Rc-observations indices";
 
-/**
- * @brief encapsulates sufficient and fast retrievable information on a landmark observed by a view
- */
-struct LandmarkPerView
-{
-    LandmarkPerView() = default;
-
-    LandmarkPerView(const IndexT& landmarkId, const sfmData::Landmark& landmark,
-                    const sfmData::Observation& observation)
-        : landmarkId(landmarkId)
-        , landmark(landmark)
-        , observation(observation)
-    {
-    }
-
-    const uint& landmarkId;
-    const sfmData::Landmark& landmark;
-    const sfmData::Observation& observation;
-};
-
 // helper functions
 
 QGeometryRenderer* createGeometryRenderer(const QByteArray& positionData, const std::string& indexAttributeName);
