@@ -38,7 +38,7 @@ void PanoramaViewer::computeDownscale()
     int totalSizeImages = 0;
     for (const auto& view : _msfmData->rawData().getViews())
         totalSizeImages +=
-            int(static_cast<double>((view.second->getWidth() * view.second->getHeight()) * 4) / std::pow(10, 6));
+            int(static_cast<double>((view.second->getImage().getWidth() * view.second->getImage().getHeight()) * 4) / std::pow(10, 6));
 
     // Downscale = 4 by default
     _downscale = 4;

@@ -74,7 +74,7 @@ void MSfMData::load()
 
 QString MSfMData::getUrlFromViewId(int viewId)
 {
-    return QString::fromUtf8(_sfmData->getView(aliceVision::IndexT(viewId)).getImagePath().c_str());
+    return QString::fromUtf8(_sfmData->getView(aliceVision::IndexT(viewId)).getImage().getImagePath().c_str());
 }
 
 void MSfMData::onSfmDataReady(aliceVision::sfmData::SfMData* sfmData)
