@@ -20,7 +20,7 @@
 #include <aliceVision/mvsData/Matrix3x3.hpp>
 #include <aliceVision/mvsData/Point2d.hpp>
 #include <aliceVision/mvsData/Point3d.hpp>
-#include <aliceVision/mvsData/jetColorMap.hpp>
+#include <aliceVision/image/jetColorMap.hpp>
 #include <aliceVision/numeric/numeric.hpp>
 
 #include <cmath>
