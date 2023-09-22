@@ -5,6 +5,7 @@ set(PLUGIN_SOURCES
     CameraLocatorEntity.cpp
     IOThread.cpp
     PointCloudEntity.cpp
+    ObservationsEntity.cpp
     )
 
 set(PLUGIN_HEADERS
@@ -13,6 +14,7 @@ set(PLUGIN_HEADERS
     CameraLocatorEntity.hpp
     IOThread.hpp
     PointCloudEntity.hpp
+    ObservationsEntity.hpp
     plugin.hpp
     )
 
@@ -49,8 +51,9 @@ target_link_libraries(alembicEntityQmlPlugin
     Qt5::3DCore
     Qt5::3DRender
     Alembic::Alembic
-    PRIVATE
     Qt5::3DExtras
+    aliceVision_sfmData
+    aliceVision_sfmDataIO
     )
 
 set_target_properties(alembicEntityQmlPlugin
