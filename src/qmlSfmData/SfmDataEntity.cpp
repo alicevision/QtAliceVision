@@ -187,10 +187,10 @@ void SfmDataEntity::onIOThreadFinished()
         entity->setObjectName(std::to_string(pv.first).c_str());
     }
 
-    scaleLocators();
-
     _cameras = findChildren<CameraLocatorEntity*>();
     _pointClouds = findChildren<PointCloudEntity*>();
+
+    scaleLocators();
     
     setStatus(SfmDataEntity::Ready);
 
