@@ -72,15 +72,15 @@ MTracks {
 
 ```js
 FeaturesViewer {
-    colorOffset: 0
-    describerType: "sift"
-    featureFolder: "/path/to/features/folder"
-    mTracks: tracks
-    viewId: 101245654
-    color: “blue”
-    landmarkColor: “red”
-    displayMode: FeaturesViewer.Points
-    mSfmData: sfmData
+  colorOffset: 0
+  describerType: "sift"
+  featureFolder: "/path/to/features/folder"
+  mTracks: tracks
+  viewId: 101245654
+  color: “blue”
+  landmarkColor: “red”
+  displayMode: FeaturesViewer.Points
+  mSfmData: sfmData
 }
 ```
 
@@ -128,16 +128,29 @@ Scene3D {
 }
 ```
 
- - Create a `AlembicEntity` to display point clouds and cameras in a 3D viewer:
+ - Create a `AlembicEntity` to display .abc point clouds and cameras in a 3D viewer:
 
 ```js
 import AlembicEntity 1.0
 
 Scene3D {
   AlembicEntity {
-    url: "myfile.abc"
+    source: "myfile.abc"
   }
 }
+```
+
+ - Create a `SfmDataEntity` to display point clouds (in .abc, .sfm or .json format) and cameras in a 3D viewer:
+
+```js
+import SfmDataEntity 1.0
+
+Scene3D {
+  SfmDataEntity {
+    source: "/path/to/pointcloud.sfm"
+  }
+}
+
 ```
 
 ### OpenImageIO backend
