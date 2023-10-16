@@ -31,7 +31,7 @@ SfmDataEntity::SfmDataEntity(Qt3DCore::QNode* parent)
 
 void SfmDataEntity::setSource(const QUrl& value)
 {
-    if(_source == value)
+    if (_source == value)
         return;
     _source = value;
     loadSfmData();
@@ -40,7 +40,7 @@ void SfmDataEntity::setSource(const QUrl& value)
 
 void SfmDataEntity::setPointSize(const float& value)
 {
-    if(_pointSize == value)
+    if (_pointSize == value)
     {
         return;
     }
@@ -54,7 +54,7 @@ void SfmDataEntity::setPointSize(const float& value)
 
 void SfmDataEntity::setLocatorScale(const float& value)
 {
-    if(_locatorScale == value)
+    if (_locatorScale == value)
     {
         return;
     }
@@ -69,7 +69,7 @@ void SfmDataEntity::scaleLocators() const
 {
     for (auto* entity : _cameras)
     {
-        for(auto* transform : entity->findChildren<Qt3DCore::QTransform*>())
+        for (auto* transform : entity->findChildren<Qt3DCore::QTransform*>())
         {
             transform->setScale(_locatorScale);
         }
@@ -132,16 +132,16 @@ void SfmDataEntity::clear()
 {
     // clear entity (remove direct children & all components)
     auto entities = findChildren<QEntity*>(QString(), Qt::FindDirectChildrenOnly);
-    for(auto entity : entities)
+    for (auto entity : entities)
     {
         entity->setParent((QNode*)nullptr);
         entity->deleteLater();
     }
-    for(auto& component : components())
+    for (auto& component : components())
     {
         removeComponent(component);
     }
-    
+
     _cameras.clear();
     _pointClouds.clear();
 }
@@ -151,7 +151,7 @@ void SfmDataEntity::loadSfmData()
 {
     clear();
 
-    if(_source.isEmpty())
+    if (_source.isEmpty())
     {
         setStatus(SfmDataEntity::None);
         return;
@@ -176,7 +176,7 @@ void SfmDataEntity::onIOThreadFinished()
 
     for (const auto & pv : sfmData.getViews())
     {
-        if(!sfmData.isPoseAndIntrinsicDefined(pv.second.get()))
+        if (!sfmData.isPoseAndIntrinsicDefined(pv.second.get()))
         {
             continue;
         }
@@ -191,13 +191,13 @@ void SfmDataEntity::onIOThreadFinished()
     _pointClouds = findChildren<PointCloudEntity*>();
 
     scaleLocators();
-    
+
     setStatus(SfmDataEntity::Ready);
 
     _ioThread->clear();
-    
+
     Q_EMIT pointCloudsChanged();
     Q_EMIT camerasChanged();
 }
 
-} // namespace
+}  // namespace sfmdataentity

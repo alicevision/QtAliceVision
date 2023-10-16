@@ -51,29 +51,12 @@ public:
     Status status() const { return _status; }
 
     void setStatus(Status status) {
-        if(status == _status)
+        if (status == _status)
             return;
         _status = status;
         Q_EMIT statusChanged(_status);
     }
 
-private:
-    /// Delete all child entities/components
-    void clear();
-    void loadSfmData();
-    void createMaterials();
-
-    QQmlListProperty<CameraLocatorEntity> cameras() 
-    {
-        return {this, &_cameras};
-    }
-
-    QQmlListProperty<PointCloudEntity> pointClouds() 
-    {
-        return {this, &_pointClouds};
-    }
-
-public:
     Q_SIGNAL void sourceChanged();
     Q_SIGNAL void camerasChanged();
     Q_SIGNAL void pointSizeChanged();
@@ -90,6 +73,21 @@ protected:
     void onIOThreadFinished();
 
 private:
+    /// Delete all child entities/components
+    void clear();
+    void loadSfmData();
+    void createMaterials();
+
+    QQmlListProperty<CameraLocatorEntity> cameras()
+    {
+        return {this, &_cameras};
+    }
+
+    QQmlListProperty<PointCloudEntity> pointClouds()
+    {
+        return {this, &_pointClouds};
+    }
+
     Status _status = SfmDataEntity::None;
     QUrl _source;
     bool _skipHidden = false;
@@ -103,4 +101,4 @@ private:
     std::unique_ptr<IOThread> _ioThread;
 };
 
-} // namespace
+}  // namespace sfmdataentity

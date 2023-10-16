@@ -17,10 +17,9 @@ class CameraLocatorEntity : public Qt3DCore::QEntity
 public:
     explicit CameraLocatorEntity(const aliceVision::IndexT & viewId, Qt3DCore::QNode* = nullptr);
     ~CameraLocatorEntity() override = default;
-    
-    void setTransform(const Eigen::Matrix4d & );
 
-public:
+    void setTransform(const Eigen::Matrix4d &);
+
     Q_SIGNAL void viewIdChanged();
 
 private:
@@ -28,4 +27,4 @@ private:
     aliceVision::IndexT _viewId;
 };
 
-} // namespace
+}  // namespace sfmdataentity

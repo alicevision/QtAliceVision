@@ -14,12 +14,15 @@ void IOThread::read(const QUrl& source)
 void IOThread::run()
 {
     // ensure file exists and is valid
-    if(!_source.isValid() || !QFile::exists(_source.toLocalFile()))
+    if (!_source.isValid() || !QFile::exists(_source.toLocalFile()))
         return;
-    QMutexLocker lock(&_mutex);
-    
 
-    if (!aliceVision::sfmDataIO::Load(_sfmData, _source.toLocalFile().toStdString(), aliceVision::sfmDataIO::ESfMData(aliceVision::sfmDataIO::ESfMData::VIEWS | aliceVision::sfmDataIO::ESfMData::INTRINSICS | aliceVision::sfmDataIO::ESfMData::EXTRINSICS |aliceVision::sfmDataIO::ESfMData::STRUCTURE)))
+    QMutexLocker lock(&_mutex);
+    if (!aliceVision::sfmDataIO::Load(_sfmData, _source.toLocalFile().toStdString(),
+                                      aliceVision::sfmDataIO::ESfMData(aliceVision::sfmDataIO::ESfMData::VIEWS |
+                                                                       aliceVision::sfmDataIO::ESfMData::INTRINSICS |
+                                                                       aliceVision::sfmDataIO::ESfMData::EXTRINSICS |
+                                                                       aliceVision::sfmDataIO::ESfMData::STRUCTURE)))
     {
         qDebug() << "[QtAliceVision] Failed to load sfmData: " << _source << ".";
     }
@@ -28,7 +31,6 @@ void IOThread::run()
 void IOThread::clear()
 {
     QMutexLocker lock(&_mutex);
-
     _sfmData = aliceVision::sfmData::SfMData();
 }
 
@@ -39,4 +41,4 @@ const aliceVision::sfmData::SfMData & IOThread::getSfmData() const
     return _sfmData;
 }
 
-}
+}  // namespace sfmdataentity

@@ -14,9 +14,7 @@ class PointCloudEntity : public Qt3DCore::QEntity
 public:
     explicit PointCloudEntity(Qt3DCore::QNode* = nullptr);
     ~PointCloudEntity() override = default;
-
-public:
     void setData(const aliceVision::sfmData::Landmarks & landmarks);
 };
 
-} // namespace
+}  // namespace sfmdataentity

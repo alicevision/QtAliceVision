@@ -4,7 +4,7 @@ set(PLUGIN_SOURCES
     SfmDataEntity.cpp
     CameraLocatorEntity.cpp
     PointCloudEntity.cpp
-    )
+)
 
 set(PLUGIN_HEADERS
     IOThread.hpp
@@ -12,8 +12,7 @@ set(PLUGIN_HEADERS
     SfmDataEntity.hpp
     CameraLocatorEntity.hpp
     PointCloudEntity.hpp
-    )
-
+)
 
 # Qt module dependency
 find_package(Qt5 COMPONENTS Qml REQUIRED)
@@ -21,21 +20,17 @@ find_package(Qt5 COMPONENTS 3DCore REQUIRED)
 find_package(Qt5 COMPONENTS 3DRender REQUIRED)
 find_package(Qt5 COMPONENTS 3DExtras REQUIRED)
 
-
-
 # Target properties
 add_library(sfmDataEntityQmlPlugin SHARED ${PLUGIN_SOURCES} ${PLUGIN_HEADERS})
 
 if(MSVC)
     target_compile_options(sfmDataEntityQmlPlugin PUBLIC /W4)
 else()
-    target_compile_options(sfmDataEntityQmlPlugin PUBLIC -Wall -Wextra -Wconversion -Wsign-conversion -Wshadow -Wpedantic)
+    target_compile_options(sfmDataEntityQmlPlugin
+        PUBLIC
+        -Wall -Wextra -Wconversion -Wsign-conversion -Wshadow -Wpedantic
+    )
 endif()
-
-# target_include_directories(sfmDataEntityQmlPlugin
-#     PUBLIC
-#     ${ILMBASE_INCLUDE_DIR}
-#     )
 
 target_link_libraries(sfmDataEntityQmlPlugin
     PUBLIC
@@ -48,16 +43,15 @@ target_link_libraries(sfmDataEntityQmlPlugin
         aliceVision_system
     PRIVATE
         Qt5::3DExtras
-    )
+)
 
 set_target_properties(sfmDataEntityQmlPlugin
-        PROPERTIES
-        DEBUG_POSTFIX "d"
-        FOLDER "sfmDataEntityQmlPlugin"
-        SOVERSION ${PROJECT_VERSION_MAJOR}
-        VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}"
-        )
-
+    PROPERTIES
+    DEBUG_POSTFIX "d"
+    FOLDER "sfmDataEntityQmlPlugin"
+    SOVERSION ${PROJECT_VERSION_MAJOR}
+    VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}"
+)
 
 # Install settings
 install(FILES "qmldir"

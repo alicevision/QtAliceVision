@@ -16,11 +16,13 @@ public:
     void registerTypes(const char* uri) override
     {
         Q_ASSERT(uri == QLatin1String("SfmDataEntity"));
-        
+
         qmlRegisterType<SfmDataEntity>(uri, 1, 0, "SfmDataEntity");
-        qmlRegisterUncreatableType<CameraLocatorEntity>(uri, 1, 0, "CameraLocatorEntity", "Cannot create CameraLocatorEntity instances from QML.");
-        qmlRegisterUncreatableType<PointCloudEntity>(uri, 1, 0, "PointCloudEntity", "Cannot create PointCloudEntity instances from QML.");
+        qmlRegisterUncreatableType<CameraLocatorEntity>(uri, 1, 0, "CameraLocatorEntity",
+                                                        "Cannot create CameraLocatorEntity instances from QML.");
+        qmlRegisterUncreatableType<PointCloudEntity>(uri, 1, 0, "PointCloudEntity",
+                                                     "Cannot create PointCloudEntity instances from QML.");
     }
 };
 
-} // namespace
+}  // namespace sfmdataentity

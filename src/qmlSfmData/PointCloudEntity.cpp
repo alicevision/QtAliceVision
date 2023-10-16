@@ -21,7 +21,6 @@ void PointCloudEntity::setData(const aliceVision::sfmData::Landmarks & landmarks
     auto customMeshRenderer = new QGeometryRenderer;
     auto customGeometry = new QGeometry;
 
-    
     std::vector<float> points;
     std::vector<float> colors;
     for (const auto & l : landmarks)
@@ -35,9 +34,7 @@ void PointCloudEntity::setData(const aliceVision::sfmData::Landmarks & landmarks
         colors.push_back(static_cast<float>(l.second.rgb(2) / 255.0f));
     }
 
-    int npoints = landmarks.size();
-
-    
+    int npoints = static_cast<int>(landmarks.size());
 
     // vertices buffer
     QByteArray positionData((const char*)points.data(), npoints * 3 * static_cast<int>(sizeof(float)));
@@ -57,9 +54,8 @@ void PointCloudEntity::setData(const aliceVision::sfmData::Landmarks & landmarks
 
     // read color data
     auto colorDataBuffer = new QBuffer;
-    QByteArray colorData((const char*)colors.data(), static_cast<int>(npoints * 3 * sizeof(float)));
+    QByteArray colorData((const char*)colors.data(), npoints * 3 * static_cast<int>(sizeof(float)));
     colorDataBuffer->setData(colorData);
-
 
     // colors buffer
     auto colorAttribute = new QAttribute;
@@ -85,5 +81,4 @@ void PointCloudEntity::setData(const aliceVision::sfmData::Landmarks & landmarks
     addComponent(customMeshRenderer);
 }
 
-
-} // namespace
+}  // namespace sfmdataentity

@@ -24,28 +24,27 @@ CameraLocatorEntity::CameraLocatorEntity(const aliceVision::IndexT & viewId, Qt3
 
     // vertices buffer
     QVector<float> points = {
-            // Coord system
-            0.f,  0.f,  0.f,  0.5f,  0.0f,  0.0f, // X
-            0.f,  0.f,  0.f,  0.0f,  -0.5f,  0.0f, // Y
-            0.f,  0.f,  0.f,  0.0f,  0.0f,  -0.5f, // Z
+        // Coord system
+        0.f,  0.f,  0.f,  0.5f,  0.0f,  0.0f,  // X
+        0.f,  0.f,  0.f,  0.0f,  -0.5f,  0.0f,  // Y
+        0.f,  0.f,  0.f,  0.0f,  0.0f,  -0.5f,  // Z
 
-            // Pyramid
-            0.f,  0.f,  0.f,  -0.3f, 0.2f,  -0.3f, // TL
-            0.f,  0.f,  0.f,  -0.3f, -0.2f, -0.3f, // BL
-            0.f,  0.f,  0.f,   0.3f, -0.2f, -0.3f, // BR
-            0.f,  0.f,  0.f,   0.3f,  0.2f, -0.3f, // TR
+        // Pyramid
+        0.f,  0.f,  0.f,  -0.3f, 0.2f,  -0.3f,  // TL
+        0.f,  0.f,  0.f,  -0.3f, -0.2f, -0.3f,  // BL
+        0.f,  0.f,  0.f,   0.3f, -0.2f, -0.3f,  // BR
+        0.f,  0.f,  0.f,   0.3f,  0.2f, -0.3f,  // TR
 
-            // Image plane
-            -0.3f, -0.2f, -0.3f,  -0.3f, 0.2f, -0.3f, // L
-            -0.3f, 0.2f, -0.3f,   0.3f, 0.2f, -0.3f, // B
-            0.3f, 0.2f, -0.3f,   0.3f,  -0.2f, -0.3f, // R
-            0.3f,  -0.2f, -0.3f,  -0.3f,  -0.2f, -0.3f, // T
+        // Image plane
+        -0.3f, -0.2f, -0.3f,  -0.3f, 0.2f, -0.3f,  // L
+        -0.3f, 0.2f, -0.3f,   0.3f, 0.2f, -0.3f,  // B
+        0.3f, 0.2f, -0.3f,   0.3f,  -0.2f, -0.3f,  // R
+        0.3f,  -0.2f, -0.3f,  -0.3f,  -0.2f, -0.3f,  // T
 
-            // Camera Up
-            -0.3f,  0.2f, -0.3f,  0.0f,  0.25f, -0.3f, // L
-            0.3f,  0.2f, -0.3f,  0.0f,  0.25f, -0.3f, // R
-        };
-
+        // Camera Up
+        -0.3f,  0.2f, -0.3f,  0.0f,  0.25f, -0.3f,  // L
+        0.3f,  0.2f, -0.3f,  0.0f,  0.25f, -0.3f,  // R
+    };
 
     QByteArray positionData((const char*)points.data(), points.size() * static_cast<int>(sizeof(float)));
     auto vertexDataBuffer = new QBuffer;
@@ -64,9 +63,9 @@ CameraLocatorEntity::CameraLocatorEntity(const aliceVision::IndexT & viewId, Qt3
     // colors buffer
     QVector<float> colors {
         // Coord system
-        1.f, 0.f, 0.f, 1.f, 0.f, 0.f, // R
-        0.f, 1.f, 0.f, 0.f, 1.f, 0.f, // G
-        0.f, 0.f, 1.f, 0.f, 0.f, 1.f, // B
+        1.f, 0.f, 0.f, 1.f, 0.f, 0.f,  // R
+        0.f, 1.f, 0.f, 0.f, 1.f, 0.f,  // G
+        0.f, 0.f, 1.f, 0.f, 0.f, 1.f,  // B
         // Pyramid
         1.f, 1.f, 1.f, 1.f, 1.f, 1.f,
         1.f, 1.f, 1.f, 1.f, 1.f, 1.f,
@@ -80,7 +79,7 @@ CameraLocatorEntity::CameraLocatorEntity(const aliceVision::IndexT & viewId, Qt3
         // Camera Up direction
         1.f, 1.f, 1.f, 1.f, 1.f, 1.f,
         1.f, 1.f, 1.f, 1.f, 1.f, 1.f,
-        };
+    };
 
     QByteArray colorData((const char*)colors.data(), colors.size() * static_cast<int>(sizeof(float)));
     auto colorDataBuffer = new QBuffer;
@@ -110,7 +109,7 @@ CameraLocatorEntity::CameraLocatorEntity(const aliceVision::IndexT & viewId, Qt3
 
 
 void CameraLocatorEntity::setTransform(const Eigen::Matrix4d & T)
-{   
+{
     Eigen::Matrix4d M;
     M.setIdentity();
     M(1, 1) = -1;
@@ -119,12 +118,19 @@ void CameraLocatorEntity::setTransform(const Eigen::Matrix4d & T)
     Eigen::Matrix4d mat = (M * T * M).inverse();
 
     QMatrix4x4 qmat(
-        static_cast<float>(mat(0, 0)), static_cast<float>(mat(0, 1)), static_cast<float>(mat(0, 2)), static_cast<float>(mat(0, 3)),
-        static_cast<float>(mat(1, 0)), static_cast<float>(mat(1, 1)), static_cast<float>(mat(1, 2)), static_cast<float>(mat(1, 3)),
-        static_cast<float>(mat(2, 0)), static_cast<float>(mat(2, 1)), static_cast<float>(mat(2, 2)), static_cast<float>(mat(2, 3)),
-        static_cast<float>(mat(3, 0)), static_cast<float>(mat(3, 1)), static_cast<float>(mat(3, 2)), static_cast<float>(mat(3, 3)));
+        static_cast<float>(mat(0, 0)), static_cast<float>(mat(0, 1)),
+        static_cast<float>(mat(0, 2)), static_cast<float>(mat(0, 3)),
+
+        static_cast<float>(mat(1, 0)), static_cast<float>(mat(1, 1)),
+        static_cast<float>(mat(1, 2)), static_cast<float>(mat(1, 3)),
+
+        static_cast<float>(mat(2, 0)), static_cast<float>(mat(2, 1)),
+        static_cast<float>(mat(2, 2)), static_cast<float>(mat(2, 3)),
+
+        static_cast<float>(mat(3, 0)), static_cast<float>(mat(3, 1)),
+        static_cast<float>(mat(3, 2)), static_cast<float>(mat(3, 3)));
 
     _transform->setMatrix(qmat);
 }
 
-}
+}  // namespace sfmdataentity
