@@ -30,9 +30,9 @@ void PointCloudEntity::setData(const aliceVision::sfmData::Landmarks & landmarks
         points.push_back(static_cast<float>(- l.second.X(1)));
         points.push_back(static_cast<float>(- l.second.X(2)));
 
-        colors.push_back(static_cast<float>(l.second.rgb(0)));
-        colors.push_back(static_cast<float>(l.second.rgb(1)));
-        colors.push_back(static_cast<float>(l.second.rgb(2)));
+        colors.push_back(static_cast<float>(l.second.rgb(0) / 255.0f));
+        colors.push_back(static_cast<float>(l.second.rgb(1) / 255.0f));
+        colors.push_back(static_cast<float>(l.second.rgb(2) / 255.0f));
     }
 
     int npoints = landmarks.size();
