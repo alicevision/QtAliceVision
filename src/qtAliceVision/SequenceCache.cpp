@@ -2,7 +2,7 @@
 
 #include <aliceVision/system/MemoryInfo.hpp>
 
-#include <QThreadPool>
+
 #include <QString>
 #include <QPoint>
 
@@ -52,7 +52,7 @@ SequenceCache::~SequenceCache()
     {
         // Worker thread will return on next iteration
         abortPrefetching = true;
-        QThreadPool::globalInstance()->waitForDone();
+        _threadPool.waitForDone();
     }
 
     // Free memory occupied by image cache
@@ -60,53 +60,63 @@ SequenceCache::~SequenceCache()
 }
 
 void SequenceCache::setSequence(const QVariantList& paths)
-{
-    // Clear internal state
-    _sequence.clear();
-    _regionSafe = std::make_pair(-1, -1);
-
-    // Fill sequence vector
-    int frameCounter = 0;
-    for (const auto& var : paths)
+{   
+    _lockSequence.lock();
     {
-        try
+        _sequenceId++;
+
+        abortPrefetching = true;
+        _threadPool.waitForDone();
+        abortPrefetching = false;
+
+        // Clear internal state
+        _sequence.clear();
+        _regionSafe = std::make_pair(-1, -1);
+
+        // Fill sequence vector
+        int frameCounter = 0;
+        for (const auto& var : paths)
         {
-            // Initialize frame data
-            FrameData data;
-            data.path = var.toString().toStdString();
-
-            // Retrieve metadata from disk
-            int width, height;
-            auto metadata = aliceVision::image::readImageMetadata(data.path, width, height);
-
-            // Store original image dimensions
-            data.dim = QSize(width, height);
-
-            // Copy metadata into a QVariantMap
-            for (const auto& item : metadata)
+            try
             {
-                data.metadata[QString::fromStdString(item.name().string())] = QString::fromStdString(item.get_string());
+                // Initialize frame data
+                FrameData data;
+                data.path = var.toString().toStdString();
+
+                // Retrieve metadata from disk
+                int width, height;
+                auto metadata = aliceVision::image::readImageMetadata(data.path, width, height);
+
+                // Store original image dimensions
+                data.dim = QSize(width, height);
+
+                // Copy metadata into a QVariantMap
+                for (const auto& item : metadata)
+                {
+                    data.metadata[QString::fromStdString(item.name().string())] = QString::fromStdString(item.get_string());
+                }
+
+                // Compute downscale
+                const int maxDim = std::max(width, height);
+                const int level = static_cast<int>(std::floor(
+                    std::log2(static_cast<double>(maxDim) / static_cast<double>(_targetSize))));
+                data.downscale = 1 << std::max(level, 0);
+
+                // Set frame number
+                data.frame = frameCounter;
+
+                // Add to sequence
+                _sequence.push_back(data);
+                ++frameCounter;
             }
-
-            // Compute downscale
-            const int maxDim = std::max(width, height);
-            const int level = static_cast<int>(std::floor(
-                std::log2(static_cast<double>(maxDim) / static_cast<double>(_targetSize))));
-            data.downscale = 1 << std::max(level, 0);
-
-            // Set frame number
-            data.frame = frameCounter;
-
-            // Add to sequence
-            _sequence.push_back(data);
-            ++frameCounter;
-        }
-        catch (const std::runtime_error& e)
-        {
-            // Log error
-            std::cerr << e.what() << std::endl;
+            catch (const std::runtime_error& e)
+            {
+                // Log error
+                std::cerr << e.what() << std::endl;
+            }
         }
     }
+    _lockSequence.unlock();
 
     // Notify listeners that sequence content has changed
     Q_EMIT contentChanged();
@@ -245,10 +255,10 @@ ResponseData SequenceCache::request(const RequestData& reqData)
         const double fillRatio = 1.;
 
         // Create new runnable and launch it in worker thread (managed by Qt thread pool)
-        auto ioRunnable = new PrefetchingIORunnable(_cache, toLoad, frame, fillRatio);
+        auto ioRunnable = new PrefetchingIORunnable(_cache, toLoad, frame, fillRatio, _sequenceId.loadAcquire());
         connect(ioRunnable, &PrefetchingIORunnable::progressed, this, &SequenceCache::onPrefetchingProgressed);
         connect(ioRunnable, &PrefetchingIORunnable::done, this, &SequenceCache::onPrefetchingDone);
-        QThreadPool::globalInstance()->start(ioRunnable);
+        _threadPool.start(ioRunnable);
     }
 
     return response;
@@ -260,55 +270,79 @@ void SequenceCache::onPrefetchingProgressed(int)
     Q_EMIT requestHandled();
 }
 
-void SequenceCache::onPrefetchingDone(int reqFrame)
+void SequenceCache::onPrefetchingDone(int sequenceId, int reqFrame)
 {
-    // Update internal state
-    _loading = false;
-
-    // Retrieve cached region around requested frame
-    auto regionCached = std::make_pair(-1, -1);
-    for (int frame = reqFrame; frame >= 0; --frame)
+    //Make sure the fetching concerns the actual sequence Id
+    bool exitOld = false;
+    _lockSequence.lock();
+    if (sequenceId != _sequenceId)
+    {   
+        exitOld = true;
+    }
+    if (reqFrame >= _sequence.size())
     {
-        const std::size_t idx = static_cast<std::size_t>(frame);
+        exitOld = true;
+    }
+    _lockSequence.unlock();
 
-        // Grow region on the left as much as possible
-        if (_cache->contains<aliceVision::image::RGBAfColor>(_sequence[idx].path, _sequence[idx].downscale))
+    if (exitOld)
+    {
+        return;
+    }
+
+    
+
+    _lockSequence.lock();
+    {
+        // Update internal state
+        _loading = false;
+
+        // Retrieve cached region around requested frame
+        auto regionCached = std::make_pair(-1, -1);
+        for (int frame = reqFrame; frame >= 0; --frame)
         {
-            regionCached.first = frame;
+            const std::size_t idx = static_cast<std::size_t>(frame);
+
+            // Grow region on the left as much as possible
+            if (_cache->contains<aliceVision::image::RGBAfColor>(_sequence[idx].path, _sequence[idx].downscale))
+            {
+                regionCached.first = frame;
+            }
+            else
+            {
+                break;
+            }
+        }
+        for (int frame = reqFrame; frame < static_cast<int>(_sequence.size()); ++frame)
+        {
+            const std::size_t idx = static_cast<std::size_t>(frame);
+
+            // Grow region on the right as much as possible
+            if (_cache->contains<aliceVision::image::RGBAfColor>(_sequence[idx].path, _sequence[idx].downscale))
+            {
+                regionCached.second = frame;
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        // Update safe region
+        if (regionCached == std::make_pair(-1, -1))
+        {
+            _regionSafe = std::make_pair(-1, -1);
         }
         else
         {
-            break;
+            // Here we define safe region to cover 80% of cached region
+            // The remaining 20% serves to anticipate prefetching
+            const int extentCached = (regionCached.second - regionCached.first) / 2;
+            const int extentSafe = static_cast<int>(static_cast<double>(extentCached) * 0.8);
+            _regionSafe = buildRegion(reqFrame, extentSafe);
         }
     }
-    for (int frame = reqFrame; frame < static_cast<int>(_sequence.size()); ++frame)
-    {
-        const std::size_t idx = static_cast<std::size_t>(frame);
-
-        // Grow region on the right as much as possible
-        if (_cache->contains<aliceVision::image::RGBAfColor>(_sequence[idx].path, _sequence[idx].downscale))
-        {
-            regionCached.second = frame;
-        }
-        else
-        {
-            break;
-        }
-    }
-
-    // Update safe region
-    if (regionCached == std::make_pair(-1, -1))
-    {
-        _regionSafe = std::make_pair(-1, -1);
-    }
-    else
-    {
-        // Here we define safe region to cover 80% of cached region
-        // The remaining 20% serves to anticipate prefetching
-        const int extentCached = (regionCached.second - regionCached.first) / 2;
-        const int extentSafe = static_cast<int>(static_cast<double>(extentCached) * 0.8);
-        _regionSafe = buildRegion(reqFrame, extentSafe);
-    }
+    _lockSequence.unlock();
 
     // Notify clients that a request has been handled
     Q_EMIT requestHandled();
@@ -353,8 +387,9 @@ std::pair<int, int> SequenceCache::buildRegion(int frame, int extent) const
 PrefetchingIORunnable::PrefetchingIORunnable(aliceVision::image::ImageCache* cache,
                                              const std::vector<FrameData>& toLoad,
                                              int reqFrame,
-                                             double fillRatio) :
-    _cache(cache), _toLoad(toLoad), _reqFrame(reqFrame)
+                                             double fillRatio,
+                                             int sequenceId) :
+    _cache(cache), _toLoad(toLoad), _reqFrame(reqFrame), _sequenceId(sequenceId)
 {
     _toFill = static_cast<uint64_t>(static_cast<double>(_cache->info().capacity) * fillRatio);
 }
@@ -385,7 +420,7 @@ void PrefetchingIORunnable::run()
         if (abortPrefetching)
         {
             abortPrefetching = false;
-            Q_EMIT done(_reqFrame);
+            Q_EMIT done(_sequenceId, _reqFrame);
             return;
         }
 
@@ -427,7 +462,7 @@ void PrefetchingIORunnable::run()
     }
 
     // Notify main thread that loading is done
-    Q_EMIT done(_reqFrame);
+    Q_EMIT done(_sequenceId, _reqFrame);
 }
 
 } // namespace imgserve

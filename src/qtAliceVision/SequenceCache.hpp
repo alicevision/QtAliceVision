@@ -10,6 +10,9 @@
 #include <QVariant>
 #include <QMap>
 #include <QList>
+#include <QThreadPool>
+#include <QAtomicInt>
+#include <QMutex>
 
 #include <string>
 #include <vector>
@@ -108,9 +111,10 @@ public:
 
     /**
      * @brief Slot called when the prefetching thread is finished.
+     * @param[in] sequenceId the sequenceId initially used when the worker thread was started
      * @param[in] reqFrame the frame initially requested when the worker thread was started
      */
-    Q_SLOT void onPrefetchingDone(int reqFrame);
+    Q_SLOT void onPrefetchingDone(int sequenceId, int reqFrame);
 
     /**
      * @brief Signal emitted when the prefetching thread is done and a previous request has been handled.
@@ -143,6 +147,15 @@ private:
 
     /// Target size used to compute downscale
     int _targetSize;
+
+    /// Local threadpool
+    QThreadPool _threadPool;
+
+    /// Current sequence id
+    QAtomicInt _sequenceId;
+
+    /// sequence mutex
+    QMutex _lockSequence;
 
 private:
 
@@ -179,11 +192,13 @@ public:
      * @param[in] toLoad sequence frames to load from disk
      * @param[in] reqFrame initially requested frame
      * @param[in] fillRatio proportion of cache capacity that can be filled
+     * @param[in] sequenceId sequenceId to memorize
      */
     PrefetchingIORunnable(aliceVision::image::ImageCache* cache,
                           const std::vector<FrameData>& toLoad,
                           int reqFrame,
-                          double fillRatio);
+                          double fillRatio,
+                          int sequenceId);
 
     ~PrefetchingIORunnable();
 
@@ -198,9 +213,10 @@ public:
 
     /**
      * @brief Signal emitted when prefetching is finished.
+     * @param[in] sequenceId sequenceId at the time of launch
      * @param[in] reqFrame initially requested frame
      */
-    Q_SIGNAL void done(int reqFrame);
+    Q_SIGNAL void done(int sequenceId, int reqFrame);
 
 private:
 
@@ -216,6 +232,8 @@ private:
     /// Maximum memory that can be filled.
     uint64_t _toFill;
 
+    /// Sequence id
+    int _sequenceId;
 };
 
 } // namespace imgserve
