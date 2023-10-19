@@ -283,10 +283,12 @@ void SequenceCache::onPrefetchingDone(int sequenceId, int reqFrame)
     {
         exitOld = true;
     }
+    _loading = false;
     _lockSequence.unlock();
 
     if (exitOld)
     {
+        Q_EMIT requestHandled();
         return;
     }
 
@@ -294,9 +296,6 @@ void SequenceCache::onPrefetchingDone(int sequenceId, int reqFrame)
 
     _lockSequence.lock();
     {
-        // Update internal state
-        _loading = false;
-
         // Retrieve cached region around requested frame
         auto regionCached = std::make_pair(-1, -1);
         for (int frame = reqFrame; frame >= 0; --frame)
