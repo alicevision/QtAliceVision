@@ -128,18 +128,6 @@ Scene3D {
 }
 ```
 
- - Create a `AlembicEntity` to display .abc point clouds and cameras in a 3D viewer:
-
-```js
-import AlembicEntity 1.0
-
-Scene3D {
-  AlembicEntity {
-    source: "myfile.abc"
-  }
-}
-```
-
  - Create a `SfmDataEntity` to display point clouds (in .abc, .sfm or .json format) and cameras in a 3D viewer:
 
 ```js
