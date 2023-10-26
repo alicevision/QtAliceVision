@@ -10,11 +10,10 @@
 #include <algorithm>
 #include <limits>
 
-namespace qtAliceVision
-{
+namespace qtAliceVision {
 
 FeaturesViewer::FeaturesViewer(QQuickItem* parent)
-    : QQuickItem(parent)
+  : QQuickItem(parent)
 {
     setFlag(QQuickItem::ItemHasContents, true);
 
@@ -51,9 +50,7 @@ FeaturesViewer::FeaturesViewer(QQuickItem* parent)
     connect(this, &FeaturesViewer::reconstructionChanged, this, &FeaturesViewer::update);
 }
 
-FeaturesViewer::~FeaturesViewer()
-{
-}
+FeaturesViewer::~FeaturesViewer() {}
 
 void FeaturesViewer::setMFeatures(MFeatures* features)
 {
@@ -237,8 +234,7 @@ void FeaturesViewer::paintFeaturesAsOrientedSquares(const PaintParams& params, Q
         // compute angle: use feature angle and remove self rotation
         const auto radAngle = -feature.orientation - qDegreesToRadians(rotation());
         // generate a QTransform that represent this rotation
-        const auto t =
-            QTransform().translate(feature.x, feature.y).rotateRadians(radAngle).translate(-feature.x, -feature.y);
+        const auto t = QTransform().translate(feature.x, feature.y).rotateRadians(radAngle).translate(-feature.x, -feature.y);
 
         // create lines, each vertice has to be duplicated (A->B, B->C, C->D, D->A) since we use GL_LINES
         std::vector<QPointF> corners = {t.map(tl), t.map(tr), t.map(br), t.map(bl)};
@@ -248,7 +244,7 @@ void FeaturesViewer::paintFeaturesAsOrientedSquares(const PaintParams& params, Q
             points.emplace_back(corners[(k + 1) % corners.size()]);
         }
         // orientation line: up vector (0, 1)
-        auto o2 = t.map(rect.center() - QPointF(0.0f, radius)); // rotate end point
+        auto o2 = t.map(rect.center() - QPointF(0.0f, radius));  // rotate end point
         points.emplace_back(rect.center());
         points.emplace_back(o2);
     }
@@ -260,7 +256,7 @@ void FeaturesViewer::updatePaintTracks(const PaintParams& params, QSGNode* node)
 {
     qDebug() << "[QtAliceVision] FeaturesViewer: Update paint " << _describerType << " tracks.";
 
-    if  (!_displayTracks || !params.haveValidFeatures || !params.haveValidTracks || !params.haveValidLandmarks)
+    if (!_displayTracks || !params.haveValidFeatures || !params.haveValidTracks || !params.haveValidLandmarks)
     {
         painter.clearLayer(node, "trackEndpoints");
         painter.clearLayer(node, "highlightPoints");
@@ -281,13 +277,14 @@ void FeaturesViewer::updatePaintTracks(const PaintParams& params, QSGNode* node)
     }
     catch (std::exception& e)
     {
-        qWarning() << "[QtAliceVision] FeaturesViewer: Failed to retrieve the current frame id." << "\n" << e.what();
+        qWarning() << "[QtAliceVision] FeaturesViewer: Failed to retrieve the current frame id."
+                   << "\n"
+                   << e.what();
     }
 
     if (currentFrameId == aliceVision::UndefinedIndexT)
     {
-        qInfo() << "[QtAliceVision] FeaturesViewer: Unable to update paint " << _describerType
-                << " tracks, can't find current frame id.";
+        qInfo() << "[QtAliceVision] FeaturesViewer: Unable to update paint " << _describerType << " tracks, can't find current frame id.";
         return;
     }
 
@@ -337,13 +334,13 @@ void FeaturesViewer::updatePaintTracks(const PaintParams& params, QSGNode* node)
         MReconstruction::FeatureData previousFeature;
         aliceVision::IndexT previousFrameId = aliceVision::UndefinedIndexT;
         bool previousFeatureInlier = false;
-        
+
         for (const auto& elt : track.elements)
         {
             // check that frameId is in timeWindow if enabled
-            if (_enableTimeWindow && (_timeWindow >= 0)
-                && (elt.frameId < currentFrameId - static_cast<aliceVision::IndexT>(_timeWindow) ||
-                    elt.frameId > currentFrameId + static_cast<aliceVision::IndexT>(_timeWindow)))
+            if (_enableTimeWindow && (_timeWindow >= 0) &&
+                (elt.frameId < currentFrameId - static_cast<aliceVision::IndexT>(_timeWindow) ||
+                 elt.frameId > currentFrameId + static_cast<aliceVision::IndexT>(_timeWindow)))
             {
                 continue;
             }
@@ -363,10 +360,10 @@ void FeaturesViewer::updatePaintTracks(const PaintParams& params, QSGNode* node)
                 const bool inliers = previousFeatureInlier && currentFeatureInlier;
 
                 // geometry
-                const QPointF prevPoint = (_display3dTracks && previousFeatureInlier)
-                    ? QPointF(previousFeature.rx, previousFeature.ry) : QPointF(previousFeature.x, previousFeature.y);
-                const QPointF curPoint = (_display3dTracks && currentFeatureInlier)
-                    ? QPointF(currentFeature.rx, currentFeature.ry) : QPointF(currentFeature.x, currentFeature.y);
+                const QPointF prevPoint = (_display3dTracks && previousFeatureInlier) ? QPointF(previousFeature.rx, previousFeature.ry)
+                                                                                      : QPointF(previousFeature.x, previousFeature.y);
+                const QPointF curPoint = (_display3dTracks && currentFeatureInlier) ? QPointF(currentFeature.rx, currentFeature.ry)
+                                                                                    : QPointF(currentFeature.x, currentFeature.y);
 
                 // track line
                 if (!contiguous)
@@ -413,8 +410,7 @@ void FeaturesViewer::updatePaintTracks(const PaintParams& params, QSGNode* node)
 
                 // track points
                 // current point
-                if (_trackDisplayMode == WithAllMatches ||
-                    (elt.frameId == currentFrameId && _trackDisplayMode == WithCurrentMatches))
+                if (_trackDisplayMode == WithAllMatches || (elt.frameId == currentFrameId && _trackDisplayMode == WithCurrentMatches))
                 {
                     if (currentFeatureInlier)
                     {
@@ -441,7 +437,6 @@ void FeaturesViewer::updatePaintTracks(const PaintParams& params, QSGNode* node)
 
                 if (_displayTrackEndpoints)
                 {
-
                     // draw global start point
                     if (previousFrameId == startFrameId)
                     {
@@ -474,13 +469,10 @@ void FeaturesViewer::updatePaintTracks(const PaintParams& params, QSGNode* node)
     painter.drawTriangles(node, "trackEndpoints", trackEndpoints, _endpointColor);
     painter.drawPoints(node, "highlightPoints", highlightPoints, QColor(255, 255, 255), 6.f);
     painter.drawLines(node, "trackLines_reconstruction_none", trackLines_reconstruction_none, _featureColor, 2.f);
-    painter.drawLines(node, "trackLines_reconstruction_partial_outliers", trackLines_reconstruction_partial_outliers,
-                      _matchColor, 2.f);
-    painter.drawLines(node, "trackLines_reconstruction_partial_inliers", trackLines_reconstruction_partial_inliers,
-                      _landmarkColor, 2.f);
+    painter.drawLines(node, "trackLines_reconstruction_partial_outliers", trackLines_reconstruction_partial_outliers, _matchColor, 2.f);
+    painter.drawLines(node, "trackLines_reconstruction_partial_inliers", trackLines_reconstruction_partial_inliers, _landmarkColor, 2.f);
     painter.drawLines(node, "trackLines_reconstruction_full", trackLines_reconstruction_full, _landmarkColor, 5.f);
-    painter.drawLines(node, "trackLines_gaps", trackLines_gaps,
-                      _trackContiguousFilter ? QColor(0, 0, 0, 0) : QColor(50, 50, 50), 2.f);
+    painter.drawLines(node, "trackLines_gaps", trackLines_gaps, _trackContiguousFilter ? QColor(0, 0, 0, 0) : QColor(50, 50, 50), 2.f);
     painter.drawPoints(node, "trackPoints_outliers", trackPoints_outliers, _matchColor, 4.f);
     painter.drawPoints(node, "trackPoints_inliers", trackPoints_inliers, _landmarkColor, 4.f);
 }
@@ -533,7 +525,7 @@ void FeaturesViewer::updatePaintLandmarks(const PaintParams& params, QSGNode* no
 {
     qDebug() << "[QtAliceVision] FeaturesViewer: Update paint " << _describerType << " landmarks.";
 
-    if  (!_displayLandmarks || !params.haveValidFeatures || !params.haveValidTracks || !params.haveValidLandmarks)
+    if (!_displayLandmarks || !params.haveValidFeatures || !params.haveValidTracks || !params.haveValidLandmarks)
     {
         // nothing to draw or something is not ready
         painter.clearLayer(node, "reprojectionErrors");
@@ -577,17 +569,14 @@ void FeaturesViewer::updatePaintLandmarks(const PaintParams& params, QSGNode* no
 
 void FeaturesViewer::initializePaintParams(PaintParams& params)
 {
-    params.haveValidFeatures = _mfeatures ?
-        _mfeatures->rawDataPtr() != nullptr && _mfeatures->status() == MFeatures::Ready : false;
+    params.haveValidFeatures = _mfeatures ? _mfeatures->rawDataPtr() != nullptr && _mfeatures->status() == MFeatures::Ready : false;
 
     if (!params.haveValidFeatures)
         return;
 
-    params.haveValidTracks = _mtracks ?
-        _mtracks->tracksPtr() != nullptr && _mtracks->status() == MTracks::Ready : false;
-    
-    params.haveValidLandmarks = _msfmdata ?
-        _msfmdata->rawDataPtr() != nullptr && _msfmdata->status() == MSfMData::Ready : false;
+    params.haveValidTracks = _mtracks ? _mtracks->tracksPtr() != nullptr && _mtracks->status() == MTracks::Ready : false;
+
+    params.haveValidLandmarks = _msfmdata ? _msfmdata->rawDataPtr() != nullptr && _msfmdata->status() == MSfMData::Ready : false;
 
     const float minFeatureScale = _mreconstruction.minFeatureScale;
     const float difFeatureScale = _mreconstruction.maxFeatureScale - minFeatureScale;
@@ -598,7 +587,7 @@ void FeaturesViewer::initializePaintParams(PaintParams& params)
 
 QSGNode* FeaturesViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePaintNodeData* data)
 {
-    (void)data; // Fix "unused parameter" warnings; should be replaced by [[maybe_unused]] when C++17 is supported
+    (void)data;  // Fix "unused parameter" warnings; should be replaced by [[maybe_unused]] when C++17 is supported
     PaintParams params;
     initializePaintParams(params);
 
@@ -631,15 +620,12 @@ void FeaturesViewer::updateReconstruction()
 
     // check validity of the different data sources
 
-    bool validFeatures = _mfeatures ?
-        _mfeatures->rawDataPtr() != nullptr && _mfeatures->status() == MFeatures::Ready : false;
-    
-    bool validTracks = _mtracks ?
-        _mtracks->tracksPtr() != nullptr && _mtracks->status() == MTracks::Ready : false;
-    
-    bool validLandmarks = _msfmdata ?
-        _msfmdata->rawDataPtr() != nullptr && _msfmdata->status() == MSfMData::Ready : false;
-    
+    bool validFeatures = _mfeatures ? _mfeatures->rawDataPtr() != nullptr && _mfeatures->status() == MFeatures::Ready : false;
+
+    bool validTracks = _mtracks ? _mtracks->tracksPtr() != nullptr && _mtracks->status() == MTracks::Ready : false;
+
+    bool validLandmarks = _msfmdata ? _msfmdata->rawDataPtr() != nullptr && _msfmdata->status() == MSfMData::Ready : false;
+
     // features
 
     if (validFeatures)
@@ -654,7 +640,7 @@ void FeaturesViewer::updateReconstruction()
 
         float minScale = std::numeric_limits<float>::max();
         float maxScale = 0.f;
-        
+
         for (const auto& [viewId, features] : featuresPerView)
         {
             std::vector<MReconstruction::FeatureData> featureDatas;
@@ -726,7 +712,7 @@ void FeaturesViewer::updateReconstruction()
     }
 
     // tracks
-    
+
     if (validTracks)
     {
         const auto& tracks = _mtracks->tracks();
@@ -745,8 +731,7 @@ void FeaturesViewer::updateReconstruction()
 
             for (const auto& [viewId, featureId] : track.featPerView)
             {
-                const auto featureDatasIt =
-                    _mreconstruction.featureDatasPerView.find(static_cast<aliceVision::IndexT>(viewId));
+                const auto featureDatasIt = _mreconstruction.featureDatasPerView.find(static_cast<aliceVision::IndexT>(viewId));
                 if (featureDatasIt == _mreconstruction.featureDatasPerView.end())
                 {
                     continue;
@@ -785,10 +770,8 @@ void FeaturesViewer::updateReconstruction()
 
             trackData.averageScale /= static_cast<float>(track.featPerView.size());
 
-            std::sort(trackData.elements.begin(), trackData.elements.end(),
-                [](const auto& elt1, const auto& elt2){
-                    return elt1.frameId < elt2.frameId;
-                });
+            std::sort(
+              trackData.elements.begin(), trackData.elements.end(), [](const auto& elt1, const auto& elt2) { return elt1.frameId < elt2.frameId; });
 
             _mreconstruction.trackDatas.push_back(trackData);
         }
@@ -799,4 +782,4 @@ void FeaturesViewer::updateReconstruction()
     Q_EMIT reconstructionChanged();
 }
 
-} // namespace qtAliceVision
+}  // namespace qtAliceVision

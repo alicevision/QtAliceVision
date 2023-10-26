@@ -12,11 +12,10 @@
 #include <vector>
 #include <utility>
 
-namespace qtAliceVision
-{
+namespace qtAliceVision {
 
 FloatImageViewer::FloatImageViewer(QQuickItem* parent)
-    : QQuickItem(parent)
+  : QQuickItem(parent)
 {
     setFlag(QQuickItem::ItemHasContents, true);
 
@@ -49,8 +48,7 @@ FloatImageViewer::FloatImageViewer(QQuickItem* parent)
     connect(this, &FloatImageViewer::useSequenceChanged, this, &FloatImageViewer::reload);
 }
 
-FloatImageViewer::~FloatImageViewer()
-{}
+FloatImageViewer::~FloatImageViewer() {}
 
 // LOADING FUNCTIONS
 void FloatImageViewer::setLoading(bool loading)
@@ -75,10 +73,7 @@ void FloatImageViewer::setTargetSize(int size)
     Q_EMIT targetSizeChanged();
 }
 
-QVariantList FloatImageViewer::getCachedFrames() const
-{
-    return _sequenceCache.getCachedFrames();
-}
+QVariantList FloatImageViewer::getCachedFrames() const { return _sequenceCache.getCachedFrames(); }
 
 void FloatImageViewer::reload()
 {
@@ -90,7 +85,8 @@ void FloatImageViewer::reload()
     }
 
     _outdated = false;
-    if (_loading) _outdated = true;
+    if (_loading)
+        _outdated = true;
 
     if (!_source.isValid())
     {
@@ -159,7 +155,7 @@ QVector4D FloatImageViewer::pixelValueAt(int x, int y)
 
 QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePaintNodeData* data)
 {
-    (void)data; // Fix "unused parameter" warnings; should be replaced by [[maybe_unused]] when C++17 is supported
+    (void)data;  // Fix "unused parameter" warnings; should be replaced by [[maybe_unused]] when C++17 is supported
     QVector4D channelOrder(0.f, 1.f, 2.f, 3.f);
 
     QSGGeometryNode* root = static_cast<QSGGeometryNode*>(oldNode);
@@ -170,8 +166,7 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
     if (!root)
     {
         root = new QSGGeometryNode;
-        auto geometry = new QSGGeometry(QSGGeometry::defaultAttributes_TexturedPoint2D(), _surface.vertexCount(),
-                                        _surface.indexCount());
+        auto geometry = new QSGGeometry(QSGGeometry::defaultAttributes_TexturedPoint2D(), _surface.vertexCount(), _surface.indexCount());
         geometry->setDrawingMode(GL_TRIANGLES);
         geometry->setIndexDataPattern(QSGGeometry::StaticPattern);
         geometry->setVertexDataPattern(QSGGeometry::StaticPattern);
@@ -273,9 +268,8 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
             const aliceVision::camera::Equidistant* intrinsicEquidistant = _surface.getIntrinsicEquidistant();
             if (_cropFisheye && intrinsicEquidistant)
             {
-                const aliceVision::Vec3 fisheyeCircleParams(intrinsicEquidistant->getCircleCenterX(),
-                                                            intrinsicEquidistant->getCircleCenterY(),
-                                                            intrinsicEquidistant->getCircleRadius());
+                const aliceVision::Vec3 fisheyeCircleParams(
+                  intrinsicEquidistant->getCircleCenterX(), intrinsicEquidistant->getCircleCenterY(), intrinsicEquidistant->getCircleRadius());
 
                 const double width = _image->Width() * pow(2.0, _downscaleLevel);
                 const double height = _image->Height() * pow(2.0, _downscaleLevel);
@@ -286,8 +280,8 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
                 // Radius is converted in uv coordinates (0, 0.5)
                 const float radius = 0.5f * static_cast<float>(radiusInPercentage);
 
-                material->state()->fisheyeCircleCoord = QVector2D(static_cast<float>(fisheyeCircleParams.x() / width),
-                                                                  static_cast<float>(fisheyeCircleParams.y() / height));
+                material->state()->fisheyeCircleCoord =
+                  QVector2D(static_cast<float>(fisheyeCircleParams.x() / width), static_cast<float>(fisheyeCircleParams.y() / height));
                 material->state()->fisheyeCircleRadius = radius;
                 material->state()->aspectRatio = static_cast<float>(aspectRatio);
             }
@@ -344,8 +338,7 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
     return root;
 }
 
-void FloatImageViewer::updatePaintSurface(QSGGeometryNode* root, QSGSimpleMaterial<ShaderData>* material,
-                                          QSGGeometry* geometryLine)
+void FloatImageViewer::updatePaintSurface(QSGGeometryNode* root, QSGSimpleMaterial<ShaderData>* material, QSGGeometry* geometryLine)
 {
     // Highlight
     if (_canBeHovered)
@@ -382,4 +375,4 @@ void FloatImageViewer::updatePaintSurface(QSGGeometryNode* root, QSGSimpleMateri
     root->childAtIndex(0)->markDirty(QSGNode::DirtyGeometry | QSGNode::DirtyMaterial);
 }
 
-} // namespace qtAliceVision
+}  // namespace qtAliceVision

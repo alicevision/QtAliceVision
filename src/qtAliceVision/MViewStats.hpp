@@ -12,8 +12,7 @@
 #include <aliceVision/utils/Histogram.hpp>
 #include <MSfMData.hpp>
 
-namespace qtAliceVision
-{
+namespace qtAliceVision {
 
 QT_CHARTS_USE_NAMESPACE
 
@@ -37,7 +36,7 @@ class MViewStats : public QObject
     /// max AxisY value for scale histogram
     Q_PROPERTY(double observationsScaleMaxAxisY MEMBER _observationsScaleMaxAxisY NOTIFY viewStatsChanged)
 
-public:
+  public:
     MViewStats()
     {
         connect(this, &MViewStats::sfmDataChanged, this, &MViewStats::computeViewStats);
@@ -64,7 +63,7 @@ public:
     MSfMData* getMSfmData() { return _msfmData; }
     void setMSfmData(qtAliceVision::MSfMData* sfmData);
 
-private:
+  private:
     aliceVision::utils::Histogram<double> _residualHistogramFull;
     aliceVision::utils::Histogram<double> _residualHistogramView;
     aliceVision::utils::Histogram<double> _observationsLengthsHistogramFull;
@@ -82,6 +81,6 @@ private:
     aliceVision::IndexT _viewId = aliceVision::UndefinedIndexT;
 };
 
-} // namespace qtAliceVision
+}  // namespace qtAliceVision
 
-Q_DECLARE_METATYPE(QPointF) // for usage in signals/slots/properties
+Q_DECLARE_METATYPE(QPointF)  // for usage in signals/slots/properties

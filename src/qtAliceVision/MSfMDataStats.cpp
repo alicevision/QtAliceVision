@@ -4,8 +4,7 @@
 
 #include <ctime>
 
-namespace qtAliceVision
-{
+namespace qtAliceVision {
 
 void MSfMDataStats::fillLandmarksPerViewSerie(QXYSeries* landmarksPerView)
 {
@@ -185,8 +184,7 @@ void MSfMDataStats::fillObservationsLengthsMinPerViewSerie(QXYSeries* observatio
 {
     if (observationsLengthsPerView == nullptr)
     {
-        qInfo()
-            << "[QtAliceVision] MSfMDataStats::fillObservationsLengthsMinPerViewSerie: no observationsLengthsPerView";
+        qInfo() << "[QtAliceVision] MSfMDataStats::fillObservationsLengthsMinPerViewSerie: no observationsLengthsPerView";
         return;
     }
     observationsLengthsPerView->clear();
@@ -207,8 +205,7 @@ void MSfMDataStats::fillObservationsLengthsMaxPerViewSerie(QXYSeries* observatio
 {
     if (observationsLengthsPerView == nullptr)
     {
-        qInfo()
-            << "[QtAliceVision] MSfMDataStats::fillObservationsLengthsMaxPerViewSerie: no observationsLengthsPerView";
+        qInfo() << "[QtAliceVision] MSfMDataStats::fillObservationsLengthsMaxPerViewSerie: no observationsLengthsPerView";
         return;
     }
     observationsLengthsPerView->clear();
@@ -229,8 +226,7 @@ void MSfMDataStats::fillObservationsLengthsMeanPerViewSerie(QXYSeries* observati
 {
     if (observationsLengthsPerView == nullptr)
     {
-        qInfo()
-            << "[QtAliceVision] MSfMDataStats::fillObservationsLengthsMeanPerViewSerie: no observationsLengthsPerView";
+        qInfo() << "[QtAliceVision] MSfMDataStats::fillObservationsLengthsMeanPerViewSerie: no observationsLengthsPerView";
         return;
     }
     observationsLengthsPerView->clear();
@@ -368,9 +364,14 @@ void MSfMDataStats::computeGlobalSfMStats()
     // Residuals Per View graph
     {
         _residualsPerViewMaxAxisX = 0;
-        sfm::computeResidualsPerView(_msfmData->rawData(), _residualsPerViewMaxAxisX, _nbResidualsPerViewMin,
-                                     _nbResidualsPerViewMax, _nbResidualsPerViewMean, _nbResidualsPerViewMedian,
-                                     _nbResidualsPerViewFirstQuartile, _nbResidualsPerViewThirdQuartile);
+        sfm::computeResidualsPerView(_msfmData->rawData(),
+                                     _residualsPerViewMaxAxisX,
+                                     _nbResidualsPerViewMin,
+                                     _nbResidualsPerViewMax,
+                                     _nbResidualsPerViewMean,
+                                     _nbResidualsPerViewMedian,
+                                     _nbResidualsPerViewFirstQuartile,
+                                     _nbResidualsPerViewThirdQuartile);
         _residualsPerViewMaxAxisY = 0.0;
 
         for (std::size_t i = 0; i < _nbResidualsPerViewMin.size(); ++i)
@@ -378,12 +379,9 @@ void MSfMDataStats::computeGlobalSfMStats()
             _residualsPerViewMaxAxisY = round(std::max(_residualsPerViewMaxAxisY, double(_nbResidualsPerViewMin[i])));
             _residualsPerViewMaxAxisY = round(std::max(_residualsPerViewMaxAxisY, double(_nbResidualsPerViewMax[i])));
             _residualsPerViewMaxAxisY = round(std::max(_residualsPerViewMaxAxisY, double(_nbResidualsPerViewMean[i])));
-            _residualsPerViewMaxAxisY =
-                round(std::max(_residualsPerViewMaxAxisY, double(_nbResidualsPerViewMedian[i])));
-            _residualsPerViewMaxAxisY =
-                round(std::max(_residualsPerViewMaxAxisY, double(_nbResidualsPerViewFirstQuartile[i])));
-            _residualsPerViewMaxAxisY =
-                round(std::max(_residualsPerViewMaxAxisY, double(_nbResidualsPerViewThirdQuartile[i])));
+            _residualsPerViewMaxAxisY = round(std::max(_residualsPerViewMaxAxisY, double(_nbResidualsPerViewMedian[i])));
+            _residualsPerViewMaxAxisY = round(std::max(_residualsPerViewMaxAxisY, double(_nbResidualsPerViewFirstQuartile[i])));
+            _residualsPerViewMaxAxisY = round(std::max(_residualsPerViewMaxAxisY, double(_nbResidualsPerViewThirdQuartile[i])));
         }
     }
 
@@ -392,26 +390,27 @@ void MSfMDataStats::computeGlobalSfMStats()
     // Observations Lengths Per View graph
     {
         _observationsLengthsPerViewMaxAxisX = 0;
-        sfm::computeObservationsLengthsPerView(
-            _msfmData->rawData(), _observationsLengthsPerViewMaxAxisX, _nbObservationsLengthsPerViewMin,
-            _nbObservationsLengthsPerViewMax, _nbObservationsLengthsPerViewMean, _nbObservationsLengthsPerViewMedian,
-            _nbObservationsLengthsPerViewFirstQuartile, _nbObservationsLengthsPerViewThirdQuartile);
+        sfm::computeObservationsLengthsPerView(_msfmData->rawData(),
+                                               _observationsLengthsPerViewMaxAxisX,
+                                               _nbObservationsLengthsPerViewMin,
+                                               _nbObservationsLengthsPerViewMax,
+                                               _nbObservationsLengthsPerViewMean,
+                                               _nbObservationsLengthsPerViewMedian,
+                                               _nbObservationsLengthsPerViewFirstQuartile,
+                                               _nbObservationsLengthsPerViewThirdQuartile);
         _observationsLengthsPerViewMaxAxisY = 0.0;
 
         for (std::size_t i = 0; i < _nbObservationsLengthsPerViewMin.size(); ++i)
         {
+            _observationsLengthsPerViewMaxAxisY = round(std::max(_observationsLengthsPerViewMaxAxisY, double(_nbObservationsLengthsPerViewMin[i])));
+            _observationsLengthsPerViewMaxAxisY = round(std::max(_observationsLengthsPerViewMaxAxisY, double(_nbObservationsLengthsPerViewMax[i])));
+            _observationsLengthsPerViewMaxAxisY = round(std::max(_observationsLengthsPerViewMaxAxisY, double(_nbObservationsLengthsPerViewMean[i])));
             _observationsLengthsPerViewMaxAxisY =
-                round(std::max(_observationsLengthsPerViewMaxAxisY, double(_nbObservationsLengthsPerViewMin[i])));
+              round(std::max(_observationsLengthsPerViewMaxAxisY, double(_nbObservationsLengthsPerViewMedian[i])));
             _observationsLengthsPerViewMaxAxisY =
-                round(std::max(_observationsLengthsPerViewMaxAxisY, double(_nbObservationsLengthsPerViewMax[i])));
+              round(std::max(_observationsLengthsPerViewMaxAxisY, double(_nbObservationsLengthsPerViewFirstQuartile[i])));
             _observationsLengthsPerViewMaxAxisY =
-                round(std::max(_observationsLengthsPerViewMaxAxisY, double(_nbObservationsLengthsPerViewMean[i])));
-            _observationsLengthsPerViewMaxAxisY =
-                round(std::max(_observationsLengthsPerViewMaxAxisY, double(_nbObservationsLengthsPerViewMedian[i])));
-            _observationsLengthsPerViewMaxAxisY = round(
-                std::max(_observationsLengthsPerViewMaxAxisY, double(_nbObservationsLengthsPerViewFirstQuartile[i])));
-            _observationsLengthsPerViewMaxAxisY = round(
-                std::max(_observationsLengthsPerViewMaxAxisY, double(_nbObservationsLengthsPerViewThirdQuartile[i])));
+              round(std::max(_observationsLengthsPerViewMaxAxisY, double(_nbObservationsLengthsPerViewThirdQuartile[i])));
         }
     }
 
@@ -431,8 +430,7 @@ void MSfMDataStats::computeGlobalTracksStats()
     }
     if (_mTracks->status() != MTracks::Ready)
     {
-        qInfo() << "[QtAliceVision] MSfMDataStats::computeGlobalTracksStats: Tracks is not ready: "
-                << _mTracks->status();
+        qInfo() << "[QtAliceVision] MSfMDataStats::computeGlobalTracksStats: Tracks is not ready: " << _mTracks->status();
         return;
     }
     if (_mTracks->tracks().empty())
@@ -447,8 +445,7 @@ void MSfMDataStats::computeGlobalTracksStats()
     }
     if (_msfmData->status() != MSfMData::Ready)
     {
-        qInfo() << "[QtAliceVision] MSfMDataStats::computeGlobalTracksStats: SfMData is not ready: "
-                << _msfmData->status();
+        qInfo() << "[QtAliceVision] MSfMDataStats::computeGlobalTracksStats: SfMData is not ready: " << _msfmData->status();
         return;
     }
 
@@ -522,4 +519,4 @@ void MSfMDataStats::setMTracks(qtAliceVision::MTracks* tracks)
     Q_EMIT tracksChanged();
 }
 
-} // namespace qtAliceVision
+}  // namespace qtAliceVision

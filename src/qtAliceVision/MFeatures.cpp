@@ -15,8 +15,7 @@
 #include <memory>
 #include <limits>
 
-namespace qtAliceVision
-{
+namespace qtAliceVision {
 
 void FeaturesIORunnable::run()
 {
@@ -25,14 +24,11 @@ void FeaturesIORunnable::run()
     std::vector<aliceVision::feature::EImageDescriberType> imageDescriberTypes;
     for (const auto& descType : _describerTypes)
     {
-        imageDescriberTypes.emplace_back(
-            aliceVision::feature::EImageDescriberType_stringToEnum(descType));
+        imageDescriberTypes.emplace_back(aliceVision::feature::EImageDescriberType_stringToEnum(descType));
     }
 
     std::vector<std::vector<std::unique_ptr<aliceVision::feature::Regions>>> regionsPerViewPerDesc;
-    bool loaded
-        = aliceVision::sfm::loadFeaturesPerDescPerView(
-            regionsPerViewPerDesc, _viewIds, _folders, imageDescriberTypes);
+    bool loaded = aliceVision::sfm::loadFeaturesPerDescPerView(regionsPerViewPerDesc, _viewIds, _folders, imageDescriberTypes);
 
     if (!loaded)
     {
@@ -46,15 +42,13 @@ void FeaturesIORunnable::run()
     {
         const auto& descTypeStr = _describerTypes.at(dIdx);
 
-        const std::vector<std::unique_ptr<aliceVision::feature::Regions>>& regionsPerView =
-            regionsPerViewPerDesc.at(static_cast<uint>(dIdx));
+        const std::vector<std::unique_ptr<aliceVision::feature::Regions>>& regionsPerView = regionsPerViewPerDesc.at(static_cast<uint>(dIdx));
 
         for (std::size_t vIdx = 0; vIdx < _viewIds.size(); ++vIdx)
         {
             const auto& viewId = _viewIds.at(vIdx);
 
-            qDebug() << "[QtAliceVision] Features: Load " << descTypeStr
-                     << " from viewId: " << viewId << ".";
+            qDebug() << "[QtAliceVision] Features: Load " << descTypeStr << " from viewId: " << viewId << ".";
 
             (*featuresPerViewPerDesc)[descTypeStr][viewId] = regionsPerView.at(vIdx)->Features();
         }
@@ -73,7 +67,8 @@ MFeatures::MFeatures()
 
 MFeatures::~MFeatures()
 {
-    if (_featuresPerViewPerDesc) delete _featuresPerViewPerDesc;
+    if (_featuresPerViewPerDesc)
+        delete _featuresPerViewPerDesc;
 
     setStatus(None);
 }
@@ -133,9 +128,8 @@ void MFeatures::load()
         describerTypes.push_back(var.toString().toStdString());
     }
 
-    FeaturesIORunnable* ioRunnable =
-        new FeaturesIORunnable(folders, viewIds, describerTypes);
-    
+    FeaturesIORunnable* ioRunnable = new FeaturesIORunnable(folders, viewIds, describerTypes);
+
     connect(ioRunnable, &FeaturesIORunnable::resultReady, this, &MFeatures::onFeaturesReady);
 
     QThreadPool::globalInstance()->start(ioRunnable);
@@ -145,7 +139,8 @@ void MFeatures::onFeaturesReady(FeaturesPerViewPerDesc* featuresPerViewPerDesc)
 {
     if (_needReload)
     {
-        if (featuresPerViewPerDesc) delete featuresPerViewPerDesc;
+        if (featuresPerViewPerDesc)
+            delete featuresPerViewPerDesc;
 
         setStatus(None);
         load();
@@ -154,7 +149,8 @@ void MFeatures::onFeaturesReady(FeaturesPerViewPerDesc* featuresPerViewPerDesc)
 
     if (featuresPerViewPerDesc)
     {
-        if (_featuresPerViewPerDesc) delete _featuresPerViewPerDesc;
+        if (_featuresPerViewPerDesc)
+            delete _featuresPerViewPerDesc;
 
         _featuresPerViewPerDesc = featuresPerViewPerDesc;
     }
@@ -210,6 +206,6 @@ int MFeatures::nbFeatures(QString describerType, int viewId) const
     return static_cast<int>(features.size());
 }
 
-} // namespace qtAliceVision
+}  // namespace qtAliceVision
 
 #include "MFeatures.moc"

@@ -10,8 +10,7 @@
 #include <Qt3DRender/QMaterial>
 #include <Qt3DRender/QParameter>
 
-namespace depthMapEntity
-{
+namespace depthMapEntity {
 
 class DepthMapEntity : public Qt3DCore::QEntity
 {
@@ -24,7 +23,7 @@ class DepthMapEntity : public Qt3DCore::QEntity
     Q_PROPERTY(bool displayColor READ displayColor WRITE setDisplayColor NOTIFY displayColorChanged)
     Q_PROPERTY(float pointSize READ pointSize WRITE setPointSize NOTIFY pointSizeChanged)
 
-public:
+  public:
     // Identical to SceneLoader.Status
     enum Status
     {
@@ -45,7 +44,7 @@ public:
         Unknown
     };
 
-public:
+  public:
     Q_SLOT const QUrl& source() const { return _source; }
     Q_SLOT void setSource(const QUrl&);
 
@@ -68,19 +67,19 @@ public:
     Q_SLOT float pointSize() const { return _pointSize; }
     Q_SLOT void setPointSize(const float& value);
 
-private:
+  private:
     void loadDepthMap();
     void createMaterials();
     void updateMaterial();
 
-public:
+  public:
     Q_SIGNAL void sourceChanged();
     Q_SIGNAL void statusChanged(Status status);
     Q_SIGNAL void displayModeChanged();
     Q_SIGNAL void displayColorChanged();
     Q_SIGNAL void pointSizeChanged();
 
-private:
+  private:
     Status _status = DepthMapEntity::None;
     QUrl _source;
     QUrl _depthMapSource;
@@ -95,4 +94,4 @@ private:
     Qt3DRender::QMaterial* _currentMaterial = nullptr;
     Qt3DRender::QGeometryRenderer* _meshRenderer = nullptr;
 };
-} // namespace depthMapEntity
+}  // namespace depthMapEntity

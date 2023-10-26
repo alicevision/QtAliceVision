@@ -28,13 +28,12 @@
 
 using namespace aliceVision;
 
-namespace depthMapEntity
-{
+namespace depthMapEntity {
 
 DepthMapEntity::DepthMapEntity(Qt3DCore::QNode* parent)
-    : Qt3DCore::QEntity(parent)
-    , _displayMode(DisplayMode::Unknown)
-    , _pointSizeParameter(new Qt3DRender::QParameter)
+  : Qt3DCore::QEntity(parent),
+    _displayMode(DisplayMode::Unknown),
+    _pointSizeParameter(new Qt3DRender::QParameter)
 {
     qDebug() << "[DepthMapEntity] DepthMapEntity";
     createMaterials();
@@ -59,18 +58,16 @@ void DepthMapEntity::setSource(const QUrl& value)
     if (filename.contains("depthMap"))
     {
         _depthMapSource = _source;
-        _simMapSource =
-            QUrl::fromLocalFile(QFileInfo(fileInfo.dir(), filename.replace("depthMap", "simMap")).filePath());
+        _simMapSource = QUrl::fromLocalFile(QFileInfo(fileInfo.dir(), filename.replace("depthMap", "simMap")).filePath());
     }
     else if (filename.contains("simMap"))
     {
         _simMapSource = _source;
-        _depthMapSource =
-            QUrl::fromLocalFile(QFileInfo(fileInfo.dir(), filename.replace("simMap", "depthMap")).filePath());
+        _depthMapSource = QUrl::fromLocalFile(QFileInfo(fileInfo.dir(), filename.replace("simMap", "depthMap")).filePath());
     }
     else
     {
-        qWarning () << "[DepthMapEntity] Source filename must contain depthMap or simMap: " << filename;
+        qWarning() << "[DepthMapEntity] Source filename must contain depthMap or simMap: " << filename;
         _status = DepthMapEntity::Error;
         return;
     }
@@ -237,9 +234,12 @@ void DepthMapEntity::loadDepthMap()
     const std::string depthMapPath = _depthMapSource.toLocalFile().toStdString();
     qDebug() << "[DepthMapEntity] Load depth map: " << _depthMapSource.toLocalFile();
     image::Image<float> depthMap;
-    try {
+    try
+    {
         image::readImage(depthMapPath, depthMap, image::EImageColorSpace::LINEAR);
-    } catch (const std::runtime_error& error) {
+    }
+    catch (const std::runtime_error& error)
+    {
         qCritical() << "[DepthMapEntity] Could not load depth map:" << error.what();
         _status = DepthMapEntity::Error;
         return;
@@ -260,30 +260,26 @@ void DepthMapEntity::loadDepthMap()
         _status = DepthMapEntity::Error;
         return;
     }
-    
-    qDebug() << "[DepthMapEntity] CArr: "
-        << " nvalues: " << cParam->nvalues()
-        << ", type: " << cParam->type().c_str()
-        << ", basetype: " << cParam->type().basetype
-        << ", aggregate: " << cParam->type().aggregate
-        << ", vecsemantics: " << cParam->type().vecsemantics
-        << ", arraylen: " << cParam->type().arraylen
-        ;
 
-    if(cParam->type().aggregate != oiio::TypeDesc::AGGREGATE::VEC3)
+    qDebug() << "[DepthMapEntity] CArr: "
+             << " nvalues: " << cParam->nvalues() << ", type: " << cParam->type().c_str() << ", basetype: " << cParam->type().basetype
+             << ", aggregate: " << cParam->type().aggregate << ", vecsemantics: " << cParam->type().vecsemantics
+             << ", arraylen: " << cParam->type().arraylen;
+
+    if (cParam->type().aggregate != oiio::TypeDesc::AGGREGATE::VEC3)
     {
         qWarning() << "[DepthMapEntity] Metadata CArr: Type error (aggregate: " << cParam->type().aggregate << ")";
         _status = DepthMapEntity::Error;
         return;
     }
-    if(cParam->type().basetype == oiio::TypeDesc::BASETYPE::DOUBLE)
+    if (cParam->type().basetype == oiio::TypeDesc::BASETYPE::DOUBLE)
     {
         std::copy_n(static_cast<const double*>(cParam->data()), 9, CArr.m);
     }
-    else if(cParam->type().basetype == oiio::TypeDesc::BASETYPE::FLOAT)
+    else if (cParam->type().basetype == oiio::TypeDesc::BASETYPE::FLOAT)
     {
         const float* d = static_cast<const float*>(cParam->data());
-        for(int i = 0; i < 9; ++i)
+        for (int i = 0; i < 9; ++i)
         {
             CArr.m[i] = d[i];
         }
@@ -296,8 +292,7 @@ void DepthMapEntity::loadDepthMap()
     }
 
     Matrix3x3 iCamArr;
-    oiio::ParamValue* icParam =
-        inSpec.find_attribute("AliceVision:iCamArr");
+    oiio::ParamValue* icParam = inSpec.find_attribute("AliceVision:iCamArr");
 
     if (!icParam)
     {
@@ -307,27 +302,23 @@ void DepthMapEntity::loadDepthMap()
     }
 
     qDebug() << "[DepthMapEntity] iCamArr: "
-        << " nvalues: " << icParam->nvalues()
-        << ", type: " << icParam->type().c_str()
-        << ", basetype: " << icParam->type().basetype
-        << ", aggregate: " << icParam->type().aggregate
-        << ", vecsemantics: " << icParam->type().vecsemantics
-        << ", arraylen: " << icParam->type().arraylen
-        ;
-    if(icParam->type().aggregate != oiio::TypeDesc::AGGREGATE::MATRIX33)
+             << " nvalues: " << icParam->nvalues() << ", type: " << icParam->type().c_str() << ", basetype: " << icParam->type().basetype
+             << ", aggregate: " << icParam->type().aggregate << ", vecsemantics: " << icParam->type().vecsemantics
+             << ", arraylen: " << icParam->type().arraylen;
+    if (icParam->type().aggregate != oiio::TypeDesc::AGGREGATE::MATRIX33)
     {
         qWarning() << "[DepthMapEntity] Metadata iCamArr: Type error (aggregate: " << icParam->type().aggregate << ")";
         _status = DepthMapEntity::Error;
         return;
     }
-    if(icParam->type().basetype == oiio::TypeDesc::BASETYPE::DOUBLE)
+    if (icParam->type().basetype == oiio::TypeDesc::BASETYPE::DOUBLE)
     {
         std::copy_n(static_cast<const double*>(icParam->data()), 9, iCamArr.m);
     }
-    else if(icParam->type().basetype == oiio::TypeDesc::BASETYPE::FLOAT)
+    else if (icParam->type().basetype == oiio::TypeDesc::BASETYPE::FLOAT)
     {
         const float* d = static_cast<const float*>(icParam->data());
-        for(int i = 0; i < 9; ++i)
+        for (int i = 0; i < 9; ++i)
         {
             iCamArr.m[i] = d[i];
         }
@@ -346,9 +337,12 @@ void DepthMapEntity::loadDepthMap()
     {
         const std::string simMapPath = _simMapSource.toLocalFile().toStdString();
         qDebug() << "[DepthMapEntity] Load sim map: " << _simMapSource.toLocalFile();
-        try {
+        try
+        {
             image::readImage(simMapPath, simMap, image::EImageColorSpace::LINEAR);
-        } catch (const std::runtime_error& error) {
+        }
+        catch (const std::runtime_error& error)
+        {
             qWarning() << "[DepthMapEntity] Sim map could not be loaded:" << error.what();
         }
     }
@@ -377,8 +371,7 @@ void DepthMapEntity::loadDepthMap()
             if (!std::isfinite(depthValue) || depthValue <= 0.f)
                 continue;
 
-            Point3d p =
-                CArr + (iCamArr * Point2d(static_cast<double>(x), static_cast<double>(y))).normalize() * depthValue;
+            Point3d p = CArr + (iCamArr * Point2d(static_cast<double>(x), static_cast<double>(y))).normalize() * depthValue;
             Vec3f position(static_cast<float>(p.x), static_cast<float>(-p.y), static_cast<float>(-p.z));
 
             indexPerPixel[static_cast<std::size_t>(y * depthMap.Width() + x)] = static_cast<int>(positions.size());
@@ -458,13 +451,11 @@ void DepthMapEntity::loadDepthMap()
     }
 
     QBuffer* vertexBuffer = new QBuffer;
-    QByteArray trianglesData(reinterpret_cast<const char*>(&triangles[0]),
-                             static_cast<int>(triangles.size() * sizeof(Vec3f)));
+    QByteArray trianglesData(reinterpret_cast<const char*>(&triangles[0]), static_cast<int>(triangles.size() * sizeof(Vec3f)));
     vertexBuffer->setData(trianglesData);
 
     QBuffer* normalBuffer = new QBuffer;
-    QByteArray normalsData(reinterpret_cast<const char*>(&normals[0]),
-                           static_cast<int>(normals.size() * sizeof(Vec3f)));
+    QByteArray normalsData(reinterpret_cast<const char*>(&normals[0]), static_cast<int>(normals.size() * sizeof(Vec3f)));
     normalBuffer->setData(normalsData);
 
     QAttribute* positionAttribute = new QAttribute(this);
@@ -501,13 +492,11 @@ void DepthMapEntity::loadDepthMap()
 
     // read color data
     QBuffer* colorDataBuffer = new QBuffer;
-    QByteArray colorData(reinterpret_cast<const char*>(colorsFlat[0].data()),
-                         static_cast<int>(colorsFlat.size() * 3 * sizeof(float)));
+    QByteArray colorData(reinterpret_cast<const char*>(colorsFlat[0].data()), static_cast<int>(colorsFlat.size() * 3 * sizeof(float)));
     colorDataBuffer->setData(colorData);
 
     QAttribute* colorAttribute = new QAttribute;
-    qDebug() << "[DepthMapEntity] Qt3DRender::QAttribute::defaultColorAttributeName(): "
-             << Qt3DRender::QAttribute::defaultColorAttributeName();
+    qDebug() << "[DepthMapEntity] Qt3DRender::QAttribute::defaultColorAttributeName(): " << Qt3DRender::QAttribute::defaultColorAttributeName();
     colorAttribute->setName(Qt3DRender::QAttribute::defaultColorAttributeName());
     colorAttribute->setAttributeType(QAttribute::VertexAttribute);
     colorAttribute->setBuffer(colorDataBuffer);
@@ -530,4 +519,4 @@ void DepthMapEntity::loadDepthMap()
     qDebug() << "[DepthMapEntity] Mesh Renderer added";
 }
 
-} // namespace depthMapEntity
+}  // namespace depthMapEntity

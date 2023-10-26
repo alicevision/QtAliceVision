@@ -11,8 +11,7 @@
 #include <aliceVision/camera/IntrinsicBase.hpp>
 #include <aliceVision/sfmData/SfMData.hpp>
 
-namespace qtAliceVision
-{
+namespace qtAliceVision {
 
 /**
  * @brief Discretization of FloatImageViewer surface
@@ -43,7 +42,7 @@ class Surface : public QObject
     Q_PROPERTY(double pitch READ getPitch WRITE setPitch NOTIFY anglesChanged)
     Q_PROPERTY(double roll READ getRoll WRITE setRoll NOTIFY anglesChanged)
 
-public:
+  public:
     Surface(int subdivisions = 12, QObject* parent = nullptr);
     Surface& operator=(const Surface& other) = default;
     ~Surface();
@@ -151,14 +150,15 @@ public:
 
     const aliceVision::camera::Equidistant* getIntrinsicEquidistant() const;
 
-private:
+  private:
     aliceVision::camera::IntrinsicBase* getIntrinsicFromViewId(unsigned int viewId) const;
 
-    void computeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize,
-                     int downscaleLevel = 0);
+    void computeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize, int downscaleLevel = 0);
 
-    void computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize textureSize,
-                             aliceVision::camera::IntrinsicBase* intrinsic, int downscaleLevel = 0);
+    void computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices,
+                             QSize textureSize,
+                             aliceVision::camera::IntrinsicBase* intrinsic,
+                             int downscaleLevel = 0);
 
     void computeIndicesGrid(quint16* indices);
 
@@ -173,7 +173,7 @@ private:
     // Get pitch / yaw / roll in radians and return degrees angle in the correct interval
     double getEulerAngleDegrees(double angleRadians);
 
-private:
+  private:
     const int _panoramaWidth = 3000;
     const int _panoramaHeight = 1500;
 
@@ -221,4 +221,4 @@ private:
     bool _isPanoramaRotating = false;
 };
 
-} // namespace qtAliceVision
+}  // namespace qtAliceVision

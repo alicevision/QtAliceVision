@@ -5,15 +5,13 @@
 #include <Qt3DRender/QBuffer>
 #include <Qt3DCore/QTransform>
 
-namespace sfmdataentity
-{
+namespace sfmdataentity {
 
 PointCloudEntity::PointCloudEntity(Qt3DCore::QNode* parent)
-    : Qt3DCore::QEntity(parent)
-{
-}
+  : Qt3DCore::QEntity(parent)
+{}
 
-void PointCloudEntity::setData(const aliceVision::sfmData::Landmarks & landmarks)
+void PointCloudEntity::setData(const aliceVision::sfmData::Landmarks& landmarks)
 {
     using namespace Qt3DRender;
 
@@ -23,11 +21,11 @@ void PointCloudEntity::setData(const aliceVision::sfmData::Landmarks & landmarks
 
     std::vector<float> points;
     std::vector<float> colors;
-    for (const auto & l : landmarks)
+    for (const auto& l : landmarks)
     {
         points.push_back(static_cast<float>(l.second.X(0)));
-        points.push_back(static_cast<float>(- l.second.X(1)));
-        points.push_back(static_cast<float>(- l.second.X(2)));
+        points.push_back(static_cast<float>(-l.second.X(1)));
+        points.push_back(static_cast<float>(-l.second.X(2)));
 
         colors.push_back(static_cast<float>(l.second.rgb(0) / 255.0f));
         colors.push_back(static_cast<float>(l.second.rgb(1) / 255.0f));

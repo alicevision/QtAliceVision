@@ -11,8 +11,7 @@
 #include <math.h>
 #include <memory>
 
-namespace qtAliceVision
-{
+namespace qtAliceVision {
 
 aliceVision::Vec2 toEquirectangular(const aliceVision::Vec3& spherical, int width, int height)
 {
@@ -26,7 +25,7 @@ aliceVision::Vec2 toEquirectangular(const aliceVision::Vec3& spherical, int widt
 }
 
 Surface::Surface(int subdivisions, QObject* parent)
-    : QObject(parent)
+  : QObject(parent)
 {
     updateSubdivisions(subdivisions);
     connect(this, &Surface::sfmDataChanged, this, &Surface::msfmDataUpdate);
@@ -46,8 +45,7 @@ void Surface::update(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, Q
 }
 
 // GRID METHODS
-void Surface::computeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize,
-                          int downscaleLevel)
+void Surface::computeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize, int downscaleLevel)
 {
     aliceVision::camera::IntrinsicBase* intrinsic = nullptr;
     bool verticesComputed = false;
@@ -113,17 +111,17 @@ void Surface::computeGrid(QSGGeometry* geometryLine)
             }
 
             // Vertical Lines
-            geometryLine->vertexDataAsPoint2D()[countPoint++].set(static_cast<float>(_vertices[index].x()),
-                                                                  static_cast<float>(_vertices[index].y()));
+            geometryLine->vertexDataAsPoint2D()[countPoint++].set(static_cast<float>(_vertices[index].x()), static_cast<float>(_vertices[index].y()));
             index++;
-            geometryLine->vertexDataAsPoint2D()[countPoint++].set(static_cast<float>(_vertices[index].x()),
-                                                                  static_cast<float>(_vertices[index].y()));
+            geometryLine->vertexDataAsPoint2D()[countPoint++].set(static_cast<float>(_vertices[index].x()), static_cast<float>(_vertices[index].y()));
         }
     }
 }
 
-void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize textureSize,
-                                  aliceVision::camera::IntrinsicBase* intrinsic, int downscaleLevel)
+void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices,
+                                  QSize textureSize,
+                                  aliceVision::camera::IntrinsicBase* intrinsic,
+                                  int downscaleLevel)
 {
     // Retrieve pose if Panorama Viewer is enable
     if (isPanoramaViewerEnabled() && intrinsic)
@@ -209,8 +207,7 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
                     // Image System Coordinates
                     aliceVision::Vec2 uvCoord(x, y);
                     const auto& transfromPose = pose.getTransform();
-                    _defaultSphereCoordinates.push_back(
-                        aliceVision::camera::applyIntrinsicExtrinsic(transfromPose, intrinsic, uvCoord));
+                    _defaultSphereCoordinates.push_back(aliceVision::camera::applyIntrinsicExtrinsic(transfromPose, intrinsic, uvCoord));
                 }
 
                 // Rotate Panorama if some rotation values exist
@@ -218,8 +215,7 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
                 rotatePanorama(sphereCoordinates);
 
                 // Compute pixel coordinates in the panorama coordinate system
-                aliceVision::Vec2 panoramaCoordinates =
-                    toEquirectangular(sphereCoordinates, _panoramaWidth, _panoramaHeight);
+                aliceVision::Vec2 panoramaCoordinates = toEquirectangular(sphereCoordinates, _panoramaWidth, _panoramaHeight);
 
                 // If image is on the seam
                 if (vertexIndex > 0 && j > 0)
@@ -238,8 +234,7 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices, QSize 
                         _vertexEnabled[i][j - 1] = false;
                     }
                 }
-                vertices[vertexIndex].set(static_cast<float>(panoramaCoordinates.x()),
-                                          static_cast<float>(panoramaCoordinates.y()), u, v);
+                vertices[vertexIndex].set(static_cast<float>(panoramaCoordinates.x()), static_cast<float>(panoramaCoordinates.y()), u, v);
             }
 
             // Default
@@ -595,19 +590,10 @@ void Surface::setViewerType(EViewerType type)
     Q_EMIT viewerTypeChanged();
 }
 
-bool Surface::isPanoramaViewerEnabled() const
-{
-    return _viewerType == EViewerType::PANORAMA;
-}
+bool Surface::isPanoramaViewerEnabled() const { return _viewerType == EViewerType::PANORAMA; }
 
-bool Surface::isDistortionViewerEnabled() const
-{
-    return _viewerType == EViewerType::DISTORTION;
-}
-bool Surface::isHDRViewerEnabled() const
-{
-    return _viewerType == EViewerType::HDR;
-}
+bool Surface::isDistortionViewerEnabled() const { return _viewerType == EViewerType::DISTORTION; }
+bool Surface::isHDRViewerEnabled() const { return _viewerType == EViewerType::HDR; }
 
 void Surface::setMSfmData(MSfMData* sfmData)
 {
@@ -674,10 +660,9 @@ const aliceVision::camera::Equidistant* Surface::getIntrinsicEquidistant() const
     }
 
     // Load equidistant intrinsic (the intrinsic for full circle fisheye cameras)
-    const aliceVision::camera::Equidistant* intrinsicEquidistant =
-        dynamic_cast<const aliceVision::camera::Equidistant*>(intrinsic);
+    const aliceVision::camera::Equidistant* intrinsicEquidistant = dynamic_cast<const aliceVision::camera::Equidistant*>(intrinsic);
 
     return intrinsicEquidistant;
 }
 
-} // namespace qtAliceVision
+}  // namespace qtAliceVision

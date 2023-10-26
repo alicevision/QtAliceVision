@@ -6,8 +6,7 @@
 
 #include <aliceVision/sfmDataIO/sfmDataIO.hpp>
 
-namespace qtAliceVision
-{
+namespace qtAliceVision {
 
 void SfmDataIORunnable::run()
 {
@@ -30,14 +29,12 @@ void SfmDataIORunnable::run()
     Q_EMIT resultReady(sfmData);
 }
 
-MSfMData::MSfMData()
-{
-    connect(this, &MSfMData::sfmDataPathChanged, this, &MSfMData::load);
-}
+MSfMData::MSfMData() { connect(this, &MSfMData::sfmDataPathChanged, this, &MSfMData::load); }
 
 MSfMData::~MSfMData()
 {
-    if (_sfmData) delete _sfmData;
+    if (_sfmData)
+        delete _sfmData;
 
     setStatus(None);
 }
@@ -81,7 +78,8 @@ void MSfMData::onSfmDataReady(aliceVision::sfmData::SfMData* sfmData)
 {
     if (_needReload)
     {
-        if (sfmData) delete sfmData;
+        if (sfmData)
+            delete sfmData;
 
         setStatus(None);
         load();
@@ -90,7 +88,8 @@ void MSfMData::onSfmDataReady(aliceVision::sfmData::SfMData* sfmData)
 
     if (sfmData)
     {
-        if (_sfmData) delete _sfmData;
+        if (_sfmData)
+            delete _sfmData;
 
         _sfmData = sfmData;
     }
@@ -145,10 +144,12 @@ int MSfMData::nbLandmarks(QString describerType, int viewId) const
     auto descType = aliceVision::feature::EImageDescriberType_stringToEnum(describerType.toStdString());
     for (const auto& [_, landmark] : landmarks)
     {
-        if (landmark.descType != descType) continue;
+        if (landmark.descType != descType)
+            continue;
 
         const auto observationIt = landmark.observations.find(viewId);
-        if (observationIt == landmark.observations.end()) continue;
+        if (observationIt == landmark.observations.end())
+            continue;
 
         ++count;
     }
@@ -156,6 +157,6 @@ int MSfMData::nbLandmarks(QString describerType, int viewId) const
     return count;
 }
 
-} // namespace qtAliceVision
+}  // namespace qtAliceVision
 
 #include "MSfMData.moc"

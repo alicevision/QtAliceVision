@@ -5,66 +5,63 @@
 #include <stdexcept>
 #include <iostream>
 
-
 namespace qtAliceVision {
 namespace imgserve {
 
-SingleImageLoader::SingleImageLoader(QObject* parent) : 
-	QObject(parent)
+SingleImageLoader::SingleImageLoader(QObject* parent)
+  : QObject(parent)
 {
-	// Initialize internal state
-	_loading = false;
+    // Initialize internal state
+    _loading = false;
 }
 
-SingleImageLoader::~SingleImageLoader()
-{}
+SingleImageLoader::~SingleImageLoader() {}
 
 ResponseData SingleImageLoader::request(const RequestData& reqData)
 {
-	// Check if requested image matches currently loaded image
-	if (reqData.path == _request.path && reqData.downscale == _request.downscale)
-	{
-		return _response;
-	}
+    // Check if requested image matches currently loaded image
+    if (reqData.path == _request.path && reqData.downscale == _request.downscale)
+    {
+        return _response;
+    }
 
-	// If there is not already a worker thread
-	// start a new one using the currently requested image
-	if (!_loading)
-	{
-		// Update internal state
-		_loading = true;
+    // If there is not already a worker thread
+    // start a new one using the currently requested image
+    if (!_loading)
+    {
+        // Update internal state
+        _loading = true;
 
-		// Create new runnable and launch it in worker thread (managed by Qt thread pool)
-		auto ioRunnable = new SingleImageLoadingIORunnable(reqData);
+        // Create new runnable and launch it in worker thread (managed by Qt thread pool)
+        auto ioRunnable = new SingleImageLoadingIORunnable(reqData);
         connect(ioRunnable, &SingleImageLoadingIORunnable::done, this, &SingleImageLoader::onSingleImageLoadingDone);
         QThreadPool::globalInstance()->start(ioRunnable);
-	}
+    }
 
-	// Empty response
-	return ResponseData();
+    // Empty response
+    return ResponseData();
 }
 
 void SingleImageLoader::onSingleImageLoadingDone(RequestData reqData, ResponseData response)
 {
-	// Update internal state
-	_loading = false;
-	_request = reqData;
-	_response = response;
+    // Update internal state
+    _loading = false;
+    _request = reqData;
+    _response = response;
 
-	// Notify listeners that an image has been loaded
-	Q_EMIT requestHandled();
+    // Notify listeners that an image has been loaded
+    Q_EMIT requestHandled();
 }
 
-SingleImageLoadingIORunnable::SingleImageLoadingIORunnable(const RequestData& reqData) : 
-	_reqData(reqData)
+SingleImageLoadingIORunnable::SingleImageLoadingIORunnable(const RequestData& reqData)
+  : _reqData(reqData)
 {}
 
-SingleImageLoadingIORunnable::~SingleImageLoadingIORunnable()
-{}
+SingleImageLoadingIORunnable::~SingleImageLoadingIORunnable() {}
 
 void SingleImageLoadingIORunnable::run()
 {
-	ResponseData response;
+    ResponseData response;
 
     try
     {
@@ -101,7 +98,7 @@ void SingleImageLoadingIORunnable::run()
     Q_EMIT done(_reqData, response);
 }
 
-} // namespace imgserve
-} // namespace qtAliceVision
+}  // namespace imgserve
+}  // namespace qtAliceVision
 
 #include "SingleImageLoader.moc"

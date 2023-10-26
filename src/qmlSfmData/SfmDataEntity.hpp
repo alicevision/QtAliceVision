@@ -10,8 +10,7 @@
 
 #include <iostream>
 
-namespace sfmdataentity
-{
+namespace sfmdataentity {
 class PointCloudEntity;
 class CameraLocatorEntity;
 class IOThread;
@@ -28,13 +27,14 @@ class SfmDataEntity : public Qt3DCore::QEntity
 
     Q_PROPERTY(Status status READ status NOTIFY statusChanged)
 
-public:
+  public:
     // Identical to SceneLoader.Status
-    enum Status {
-            None = 0,
-            Loading,
-            Ready,
-            Error
+    enum Status
+    {
+        None = 0,
+        Loading,
+        Ready,
+        Error
     };
     Q_ENUM(Status)
 
@@ -50,7 +50,8 @@ public:
 
     Status status() const { return _status; }
 
-    void setStatus(Status status) {
+    void setStatus(Status status)
+    {
         if (status == _status)
             return;
         _status = status;
@@ -66,27 +67,21 @@ public:
     Q_SIGNAL void statusChanged(Status status);
     Q_SIGNAL void skipHiddenChanged();
 
-protected:
+  protected:
     /// Scale child locators
     void scaleLocators() const;
 
     void onIOThreadFinished();
 
-private:
+  private:
     /// Delete all child entities/components
     void clear();
     void loadSfmData();
     void createMaterials();
 
-    QQmlListProperty<CameraLocatorEntity> cameras()
-    {
-        return {this, &_cameras};
-    }
+    QQmlListProperty<CameraLocatorEntity> cameras() { return {this, &_cameras}; }
 
-    QQmlListProperty<PointCloudEntity> pointClouds()
-    {
-        return {this, &_pointClouds};
-    }
+    QQmlListProperty<PointCloudEntity> pointClouds() { return {this, &_pointClouds}; }
 
     Status _status = SfmDataEntity::None;
     QUrl _source;

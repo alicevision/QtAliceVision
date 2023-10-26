@@ -6,8 +6,7 @@
 
 #include <QtDebug>
 
-namespace qtAliceVision
-{
+namespace qtAliceVision {
 int FloatTexture::_maxTextureSize = -1;
 
 FloatTexture::FloatTexture() {}
@@ -29,10 +28,7 @@ void FloatTexture::setImage(std::shared_ptr<FloatImage>& image)
     _mipmapsGenerated = false;
 }
 
-bool FloatTexture::isValid() const
-{
-    return _srcImage->Width() != 0 && _srcImage->Height() != 0;
-}
+bool FloatTexture::isValid() const { return _srcImage->Width() != 0 && _srcImage->Height() != 0; }
 
 int FloatTexture::textureId() const
 {
@@ -44,8 +40,7 @@ int FloatTexture::textureId() const
         }
         else if (_textureId == 0)
         {
-            QOpenGLContext::currentContext()->functions()->glGenTextures(1,
-                                                                         &const_cast<FloatTexture*>(this)->_textureId);
+            QOpenGLContext::currentContext()->functions()->glGenTextures(1, &const_cast<FloatTexture*>(this)->_textureId);
             return static_cast<int>(_textureId);
         }
     }
@@ -107,8 +102,7 @@ void FloatTexture::bind()
 
         updateBindOptions(_dirtyBindOptions);
 
-        funcs->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, _textureSize.width(), _textureSize.height(), 0, GL_RGBA,
-                            GL_FLOAT, _srcImage->data());
+        funcs->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, _textureSize.width(), _textureSize.height(), 0, GL_RGBA, GL_FLOAT, _srcImage->data());
 
         if (mipmapFiltering() != QSGTexture::None)
         {
@@ -127,4 +121,4 @@ void FloatTexture::bind()
     }
 }
 
-} // namespace qtAliceVision
+}  // namespace qtAliceVision

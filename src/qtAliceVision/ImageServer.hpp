@@ -10,53 +10,48 @@
 #include <string>
 #include <memory>
 
-
 namespace qtAliceVision {
 namespace imgserve {
 
 /**
  * @brief Utility structure to encapsulate an image loading request.
  */
-struct RequestData {
-
+struct RequestData
+{
     std::string path;
 
     int downscale = 1;
-
 };
 
 /**
  * @brief Utility structure to encapsulate the response to an image loading request.
  */
-struct ResponseData {
+struct ResponseData
+{
+    std::shared_ptr<aliceVision::image::Image<aliceVision::image::RGBAfColor>> img;
 
-	std::shared_ptr<aliceVision::image::Image<aliceVision::image::RGBAfColor>> img;
+    QSize dim;
 
-	QSize dim;
-
-	QVariantMap metadata;
-
+    QVariantMap metadata;
 };
 
 /**
  * @brief Interface for loading images from disk.
  */
-class ImageServer {
-
-public:
-
-	/**
-	 * @brief Request an image stored on disk with its metadata.
-	 * @note this is a pure virtual method
-	 * @param[in] path image's filepath on disk
-	 * @return a response to the request containing a pointer to the image and the image's metadata
-	 */
-	virtual ResponseData request(const RequestData& reqData) = 0;
-
+class ImageServer
+{
+  public:
+    /**
+     * @brief Request an image stored on disk with its metadata.
+     * @note this is a pure virtual method
+     * @param[in] path image's filepath on disk
+     * @return a response to the request containing a pointer to the image and the image's metadata
+     */
+    virtual ResponseData request(const RequestData& reqData) = 0;
 };
 
-} // namespace imgserve
-} // namespace qtAliceVision
+}  // namespace imgserve
+}  // namespace qtAliceVision
 
 // Make RequestData and ResponseData struct known to QMetaType
 // for usage in signals and slots

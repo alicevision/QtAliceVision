@@ -8,8 +8,7 @@
 
 #include <memory>
 
-namespace qtAliceVision
-{
+namespace qtAliceVision {
 
 using FloatImage = aliceVision::image::Image<aliceVision::image::RGBAfColor>;
 
@@ -18,7 +17,7 @@ using FloatImage = aliceVision::image::Image<aliceVision::image::RGBAfColor>;
  */
 class FloatTexture : public QSGTexture
 {
-public:
+  public:
     FloatTexture();
     ~FloatTexture() override;
 
@@ -31,7 +30,7 @@ public:
     bool hasMipmaps() const override { return mipmapFiltering() != QSGTexture::None; }
 
     void setImage(std::shared_ptr<FloatImage>& image);
-    const FloatImage &image() { return *_srcImage; }
+    const FloatImage& image() { return *_srcImage; }
 
     void bind() override;
 
@@ -44,10 +43,10 @@ public:
      */
     static int maxTextureSize() { return _maxTextureSize; }
 
-private:
+  private:
     bool isValid() const;
 
-private:
+  private:
     std::shared_ptr<FloatImage> _srcImage;
 
     unsigned int _textureId = 0;
@@ -60,4 +59,4 @@ private:
     static int _maxTextureSize;
 };
 
-} // namespace qtAliceVision
+}  // namespace qtAliceVision
