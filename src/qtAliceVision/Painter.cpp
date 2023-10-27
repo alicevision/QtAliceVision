@@ -4,13 +4,11 @@
 #include <QSGGeometry>
 #include <QtDebug>
 
-namespace qtAliceVision
-{
+namespace qtAliceVision {
 
 Painter::Painter(const std::vector<std::string>& layers)
-    : _layers(layers)
-{
-}
+  : _layers(layers)
+{}
 
 int Painter::layerIndex(const std::string& layer) const
 {
@@ -85,8 +83,7 @@ void Painter::clearLayer(QSGNode* node, const std::string& layer) const
     geometry->allocate(0, 0);
 }
 
-void Painter::drawPoints(QSGNode* node, const std::string& layer, const std::vector<QPointF>& points,
-                         const QColor& color, float pointSize) const
+void Painter::drawPoints(QSGNode* node, const std::string& layer, const std::vector<QPointF>& points, const QColor& color, float pointSize) const
 {
     auto* root = getGeometryNode(node, layer);
     if (!root)
@@ -125,8 +122,7 @@ void Painter::drawPoints(QSGNode* node, const std::string& layer, const std::vec
     material->setColor(color);
 }
 
-void Painter::drawLines(QSGNode* node, const std::string& layer, const std::vector<QPointF>& points,
-                        const QColor& color, float lineWidth) const
+void Painter::drawLines(QSGNode* node, const std::string& layer, const std::vector<QPointF>& points, const QColor& color, float lineWidth) const
 {
     auto* root = getGeometryNode(node, layer);
     if (!root)
@@ -165,8 +161,7 @@ void Painter::drawLines(QSGNode* node, const std::string& layer, const std::vect
     material->setColor(color);
 }
 
-void Painter::drawTriangles(QSGNode* node, const std::string& layer, const std::vector<QPointF>& points,
-                            const QColor& color) const
+void Painter::drawTriangles(QSGNode* node, const std::string& layer, const std::vector<QPointF>& points, const QColor& color) const
 {
     auto* root = getGeometryNode(node, layer);
     if (!root)
@@ -204,4 +199,4 @@ void Painter::drawTriangles(QSGNode* node, const std::string& layer, const std::
     material->setColor(color);
 }
 
-} // namespace qtAliceVision
+}  // namespace qtAliceVision

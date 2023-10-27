@@ -20,15 +20,13 @@
 #include <string>
 #include <algorithm>
 
-namespace qtAliceVision
-{
+namespace qtAliceVision {
 
 /**
  * @brief Load and display image.
  */
 class FloatImageViewer : public QQuickItem
 {
-
     Q_OBJECT
     // Q_PROPERTIES
     Q_PROPERTY(QUrl source MEMBER _source NOTIFY sourceChanged)
@@ -65,8 +63,7 @@ class FloatImageViewer : public QQuickItem
 
     Q_PROPERTY(bool useSequence MEMBER _useSequence NOTIFY useSequenceChanged)
 
-
-public:
+  public:
     explicit FloatImageViewer(QQuickItem* parent = nullptr);
     ~FloatImageViewer() override;
 
@@ -137,7 +134,7 @@ public:
 
     QVariantList getCachedFrames() const;
 
-private:
+  private:
     /// Reload image from source
     void reload();
 
@@ -178,7 +175,7 @@ private:
     bool _useSequence = true;
 };
 
-} // namespace qtAliceVision
+}  // namespace qtAliceVision
 
 Q_DECLARE_METATYPE(qtAliceVision::FloatImage)
 Q_DECLARE_METATYPE(std::shared_ptr<qtAliceVision::FloatImage>)

@@ -5,14 +5,14 @@
 
 class QtAliceVisionImageIOPlugin : public QImageIOPlugin
 {
-public:
+  public:
     Q_OBJECT
     Q_PLUGIN_METADATA(IID "org.qt-project.Qt.QImageIOHandlerFactoryInterface" FILE "QtAliceVisionImageIOPlugin.json")
 
-public:
+  public:
     QStringList _supportedExtensions;
 
-public:
+  public:
     QtAliceVisionImageIOPlugin();
     ~QtAliceVisionImageIOPlugin();
 

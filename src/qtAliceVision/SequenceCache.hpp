@@ -20,15 +20,14 @@
 #include <memory>
 #include <cstdint>
 
-
 namespace qtAliceVision {
 namespace imgserve {
 
 /**
  * @brief Utility struct for manipulating various information about a given frame.
  */
-struct FrameData {
-
+struct FrameData
+{
     std::string path;
 
     QSize dim;
@@ -38,35 +37,32 @@ struct FrameData {
     int frame;
 
     int downscale;
-
 };
 
 /**
  * @brief Image server with a caching system for loading image sequences from disk.
- * 
+ *
  * Given a sequence of images (ordered by filename), the SequenceCache works as an image server:
  * it receives requests from clients (in the form of a filepath)
  * and its purpose is to provide the corresponding images (if they exist in the sequence).
- * 
+ *
  * The SequenceCache takes advantage of the ordering of the sequence to load whole "regions" at once
  * (a region being a contiguous range of images from the sequence).
  * Such strategy makes sense under the assumption that the sequence order is meaningful for clients,
  * i.e. that if an image is queried then it is likely that the next queries will be close in the sequence.
  */
-class SequenceCache : public QObject, public ImageServer {
-
+class SequenceCache : public QObject, public ImageServer
+{
     Q_OBJECT
 
-public:
-
+  public:
     // Constructors and destructor
 
     explicit SequenceCache(QObject* parent = nullptr);
 
     ~SequenceCache();
 
-public:
-
+  public:
     // Data manipulation for the Qt property system
 
     /**
@@ -95,8 +91,7 @@ public:
      */
     QVariantList getCachedFrames() const;
 
-public:
-
+  public:
     // Request management
 
     /// If the image requested falls outside a certain region of cached images,
@@ -126,8 +121,7 @@ public:
      */
     Q_SIGNAL void contentChanged();
 
-private:
-
+  private:
     // Member variables
 
     /// Ordered sequence of frames.
@@ -157,8 +151,7 @@ private:
     /// sequence mutex
     QMutex _lockSequence;
 
-private:
-
+  private:
     // Utility methods
 
     /**
@@ -175,18 +168,16 @@ private:
      * @return an interval of size 2*extent that fits in the sequence and contains the given frame
      */
     std::pair<int, int> buildRegion(int frame, int extent) const;
-
 };
 
 /**
  * @brief Utility class for loading images from disk to cache asynchronously.
  */
-class PrefetchingIORunnable : public QObject, public QRunnable {
-
+class PrefetchingIORunnable : public QObject, public QRunnable
+{
     Q_OBJECT
 
-public:
-
+  public:
     /**
      * @param[in] cache pointer to image cache to fill
      * @param[in] toLoad sequence frames to load from disk
@@ -218,8 +209,7 @@ public:
      */
     Q_SIGNAL void done(int sequenceId, int reqFrame);
 
-private:
-
+  private:
     /// Image cache to fill.
     aliceVision::image::ImageCache* _cache;
 
@@ -236,5 +226,5 @@ private:
     int _sequenceId;
 };
 
-} // namespace imgserve
-} // namespace qtAliceVision
+}  // namespace imgserve
+}  // namespace qtAliceVision

@@ -8,8 +8,7 @@
 #include <string>
 #include <vector>
 
-namespace qtAliceVision
-{
+namespace qtAliceVision {
 
 /**
  * @brief Utility class for abstracting the painting mechanisms in the Qt scene graph.
@@ -21,7 +20,7 @@ namespace qtAliceVision
  */
 class Painter
 {
-public:
+  public:
     /**
      * @brief Construct a Painter object with the given layers.
      * @param layers Layer names ordered from first to last drawn.
@@ -43,8 +42,7 @@ public:
      * @param color Points color (same for all points).
      * @param pointSize Points size (same for all points).
      */
-    void drawPoints(QSGNode* node, const std::string& layer, const std::vector<QPointF>& points, const QColor& color,
-                    float pointSize) const;
+    void drawPoints(QSGNode* node, const std::string& layer, const std::vector<QPointF>& points, const QColor& color, float pointSize) const;
 
     /**
      * @brief Clear a layer and draw lines on it.
@@ -54,8 +52,7 @@ public:
      * @param color Lines color (same for all lines).
      * @param lineWidth Lines width (same for all lines).
      */
-    void drawLines(QSGNode* node, const std::string& layer, const std::vector<QPointF>& points, const QColor& color,
-                   float lineWidth) const;
+    void drawLines(QSGNode* node, const std::string& layer, const std::vector<QPointF>& points, const QColor& color, float lineWidth) const;
 
     /**
      * @brief Clear a layer and draw triangles on it.
@@ -64,10 +61,9 @@ public:
      * @param points Triangle corners as 2D points.
      * @param color Triangles color (same for all triangles).
      */
-    void drawTriangles(QSGNode* node, const std::string& layer, const std::vector<QPointF>& points,
-                       const QColor& color) const;
+    void drawTriangles(QSGNode* node, const std::string& layer, const std::vector<QPointF>& points, const QColor& color) const;
 
-private:
+  private:
     /// Layers stack, ordered from first to last drawn.
     std::vector<std::string> _layers;
 
@@ -94,4 +90,4 @@ private:
     QSGGeometryNode* getGeometryNode(QSGNode* node, const std::string& layer) const;
 };
 
-} // namespace qtAliceVision
+}  // namespace qtAliceVision

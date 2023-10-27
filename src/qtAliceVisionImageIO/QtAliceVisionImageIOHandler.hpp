@@ -5,7 +5,7 @@
 
 class QtAliceVisionImageIOHandler : public QImageIOHandler
 {
-public:
+  public:
     QtAliceVisionImageIOHandler();
     ~QtAliceVisionImageIOHandler();
 

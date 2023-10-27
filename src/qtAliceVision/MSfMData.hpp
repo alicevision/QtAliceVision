@@ -9,19 +9,18 @@
 #include <memory>
 #include <string>
 
-namespace qtAliceVision
-{
+namespace qtAliceVision {
 
 /**
  * @brief QObject wrapper around a SfMData.
- * 
+ *
  * Given a path to a SfMData file,
  * the role of an MSfMData instance is to load the SfMData from disk.
  * This task is done asynchronously to avoid freezing the UI.
- * 
+ *
  * MSfMData objects are accesible from QML
  * and can be manipulated through their properties.
- * 
+ *
  * Note:
  * a SfMData contains important information for linking together various reconstruction data, such as:
  * - views (and their corresponding frame ID)
@@ -46,7 +45,7 @@ class MSfMData : public QObject
 
     Q_PROPERTY(Status status READ status NOTIFY statusChanged)
 
-public:
+  public:
     /// Status enum
 
     enum Status
@@ -62,10 +61,10 @@ public:
     MSfMData& operator=(const MSfMData& other) = default;
     ~MSfMData() override;
 
-private:
+  private:
     MSfMData(const MSfMData& other);
 
-public:
+  public:
     /// Slots
 
     Q_SLOT void load();
@@ -83,7 +82,7 @@ public:
     Q_INVOKABLE QString getUrlFromViewId(int viewId);
     Q_INVOKABLE int nbLandmarks(QString describerType, int viewId) const;
 
-public:
+  public:
     const aliceVision::sfmData::SfMData& rawData() const { return *_sfmData; }
     aliceVision::sfmData::SfMData& rawData() { return *_sfmData; }
     const aliceVision::sfmData::SfMData* rawDataPtr() const { return _sfmData; }
@@ -95,7 +94,7 @@ public:
 
     QVariantList getViewsIds() const;
 
-private:
+  private:
     /// Private members
 
     QUrl _sfmDataPath;
@@ -112,11 +111,10 @@ private:
 class SfmDataIORunnable : public QObject, public QRunnable
 {
     Q_OBJECT
-public:
+  public:
     explicit SfmDataIORunnable(const QUrl& sfmDataPath)
-        : _sfmDataPath(sfmDataPath)
-    {
-    }
+      : _sfmDataPath(sfmDataPath)
+    {}
 
     /// Load SfM based on input parameters
     Q_SLOT void run() override;
@@ -126,8 +124,8 @@ public:
      */
     Q_SIGNAL void resultReady(aliceVision::sfmData::SfMData* sfmData);
 
-private:
+  private:
     const QUrl _sfmDataPath;
 };
 
-} // namespace qtAliceVision
+}  // namespace qtAliceVision

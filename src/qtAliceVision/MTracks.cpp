@@ -9,8 +9,7 @@
 #include <QThreadPool>
 #include <QString>
 
-namespace qtAliceVision
-{
+namespace qtAliceVision {
 
 void TracksIORunnable::run()
 {
@@ -43,15 +42,14 @@ void TracksIORunnable::run()
     Q_EMIT resultReady(tracks, tracksPerView);
 }
 
-MTracks::MTracks()
-{
-    connect(this, &MTracks::matchingFoldersChanged, this, &MTracks::load);
-}
+MTracks::MTracks() { connect(this, &MTracks::matchingFoldersChanged, this, &MTracks::load); }
 
 MTracks::~MTracks()
 {
-    if (_tracks) delete _tracks;
-    if (_tracksPerView) delete _tracksPerView;
+    if (_tracks)
+        delete _tracks;
+    if (_tracksPerView)
+        delete _tracksPerView;
 
     setStatus(None);
 }
@@ -93,8 +91,10 @@ void MTracks::onReady(aliceVision::track::TracksMap* tracks, aliceVision::track:
 {
     if (_needReload)
     {
-        if (tracks) delete tracks;
-        if (tracksPerView) delete tracksPerView;
+        if (tracks)
+            delete tracks;
+        if (tracksPerView)
+            delete tracksPerView;
 
         setStatus(None);
         load();
@@ -103,8 +103,10 @@ void MTracks::onReady(aliceVision::track::TracksMap* tracks, aliceVision::track:
 
     if (tracks && tracksPerView)
     {
-        if (_tracks) delete _tracks;
-        if (_tracksPerView) delete _tracksPerView;
+        if (_tracks)
+            delete _tracks;
+        if (_tracksPerView)
+            delete _tracksPerView;
 
         _tracks = tracks;
         _tracksPerView = tracksPerView;
@@ -117,7 +119,7 @@ void MTracks::onReady(aliceVision::track::TracksMap* tracks, aliceVision::track:
     {
         delete tracksPerView;
     }
-    
+
     setStatus(Ready);
 }
 
@@ -158,7 +160,8 @@ int MTracks::nbMatches(QString describerType, int viewId) const
     for (const auto& trackId : trackIds)
     {
         const auto trackIt = _tracks->find(trackId);
-        if (trackIt == _tracks->end()) continue;
+        if (trackIt == _tracks->end())
+            continue;
 
         const auto& track = trackIt->second;
         if (track.descType == descType)
@@ -170,6 +173,6 @@ int MTracks::nbMatches(QString describerType, int viewId) const
     return count;
 }
 
-} // namespace qtAliceVision
+}  // namespace qtAliceVision
 
 #include "MTracks.moc"

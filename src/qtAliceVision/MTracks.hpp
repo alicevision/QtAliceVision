@@ -10,17 +10,16 @@
 #include <string>
 #include <vector>
 
-namespace qtAliceVision
-{
+namespace qtAliceVision {
 
 /**
  * @brief QObject wrapper around Tracks.
- * 
+ *
  * Given a folder containing feature matches,
  * the role of an MTracks instance is to load the matches from disk
  * and build the corresponding tracks.
  * These tasks are done asynchronously to avoid freezing the UI.
- * 
+ *
  * MTracks objects are accessible from QML
  * and can be manipulated through their properties.
  */
@@ -37,7 +36,7 @@ class MTracks : public QObject
 
     Q_PROPERTY(Status status READ status NOTIFY statusChanged)
 
-public:
+  public:
     /// Status Enum
 
     enum Status
@@ -53,10 +52,10 @@ public:
     MTracks& operator=(const MTracks& other) = default;
     ~MTracks() override;
 
-private:
+  private:
     MTracks(const MTracks& other);
 
-public:
+  public:
     /// Slots
 
     Q_SLOT void load();
@@ -72,7 +71,7 @@ public:
 
     Q_INVOKABLE int nbMatches(QString describerType, int viewId) const;
 
-public:
+  public:
     const aliceVision::track::TracksMap* tracksPtr() const { return _tracks; }
     const aliceVision::track::TracksMap& tracks() const { return *_tracks; }
     const aliceVision::track::TracksPerView& tracksPerView() const { return *_tracksPerView; }
@@ -80,7 +79,7 @@ public:
     Status status() const { return _status; }
     void setStatus(Status status);
 
-private:
+  private:
     /// Private members
 
     QVariantList _matchingFolders;
@@ -99,19 +98,17 @@ class TracksIORunnable : public QObject, public QRunnable
 {
     Q_OBJECT
 
-public:
+  public:
     explicit TracksIORunnable(const std::vector<std::string>& folders)
-        : _folders(folders)
-    {
-    }
+      : _folders(folders)
+    {}
 
     Q_SLOT void run() override;
 
-    Q_SIGNAL void resultReady(aliceVision::track::TracksMap* tracks,
-                              aliceVision::track::TracksPerView* tracksPerView);
+    Q_SIGNAL void resultReady(aliceVision::track::TracksMap* tracks, aliceVision::track::TracksPerView* tracksPerView);
 
-private:
+  private:
     std::vector<std::string> _folders;
 };
 
-} // namespace qtAliceVision
+}  // namespace qtAliceVision

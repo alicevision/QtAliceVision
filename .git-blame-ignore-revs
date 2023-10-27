@@ -1,0 +1,12 @@
+# Reformat all plugins with latest clang-format rules
+a1969780d11ba0505b6ec99ddedf80e1917616ab
+# [qmlSfmData] Clean-up: Fix warnings and harmonize code
+acdea1b81afdfa7308d638f556d7ea4860a7f7f6
+# Clean-up: Remove trailing spaces
+74cfbfba88e2e26f3f1341f0aaa8a266196a1876
+# [DepthMapEntity] Remove trailing white spaces
+21a9bf2f258aeb15c6b1bba0d9bb7e431224fb35
+# Clean-up: Improve readability
+edc2d3135e38b9ce25216335f1b90c6b2f39e907
+# Clean-up: Remove trailing spaces
+f60668eb5c3d5b5684ab3c6168e45661bacf0ce4

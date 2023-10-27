@@ -24,15 +24,9 @@ inline const float& clamp(const float& v, const float& lo, const float& hi)
     return (v < lo) ? lo : (hi < v) ? hi : v;
 }
 
-inline unsigned short floatToUShort(float v)
-{
-    return static_cast<unsigned short>(clamp(v, 0.0f, 1.0f) * 65535);
-}
+inline unsigned short floatToUShort(float v) { return static_cast<unsigned short>(clamp(v, 0.0f, 1.0f) * 65535); }
 
-QtAliceVisionImageIOHandler::QtAliceVisionImageIOHandler()
-{
-    qDebug() << "[QtAliceVisionImageIO] QtAliceVisionImageIOHandler";
-}
+QtAliceVisionImageIOHandler::QtAliceVisionImageIOHandler() { qDebug() << "[QtAliceVisionImageIO] QtAliceVisionImageIOHandler"; }
 
 QtAliceVisionImageIOHandler::~QtAliceVisionImageIOHandler() {}
 
@@ -93,8 +87,8 @@ bool QtAliceVisionImageIOHandler::read(QImage* image)
     oiio::ImageSpec inSpec = aliceVision::image::readImageSpec(path);
     float pixelAspectRatio = inSpec.get_float_attribute("PixelAspectRatio", 1.0f);
 
-    qDebug() << "[QtAliceVisionImageIO] width:" << inSpec.width << ", height:" << inSpec.height
-             << ", nchannels:" << inSpec.nchannels << ", pixelAspectRatio:" << pixelAspectRatio;
+    qDebug() << "[QtAliceVisionImageIO] width:" << inSpec.width << ", height:" << inSpec.height << ", nchannels:" << inSpec.nchannels
+             << ", pixelAspectRatio:" << pixelAspectRatio;
 
     qDebug() << "[QtAliceVisionImageIO] create output QImage";
     QImage result(inSpec.width, inSpec.height, QImage::Format_RGB32);
@@ -210,12 +204,8 @@ void QtAliceVisionImageIOHandler::setOption(ImageOption option, const QVariant& 
     if (option == ScaledSize && value.isValid())
     {
         _scaledSize = value.value<QSize>();
-        qDebug() << "[QtAliceVisionImageIO] setOption scaledSize: " << _scaledSize.width() << "x"
-                 << _scaledSize.height();
+        qDebug() << "[QtAliceVisionImageIO] setOption scaledSize: " << _scaledSize.width() << "x" << _scaledSize.height();
     }
 }
 
-QByteArray QtAliceVisionImageIOHandler::name() const
-{
-    return "AliceVisionImageIO";
-}
+QByteArray QtAliceVisionImageIOHandler::name() const { return "AliceVisionImageIO"; }

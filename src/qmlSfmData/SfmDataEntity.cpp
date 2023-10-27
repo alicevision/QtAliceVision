@@ -16,14 +16,12 @@
 #include <Qt3DExtras/QPerVertexColorMaterial>
 #include <QFile>
 
-
-namespace sfmdataentity
-{
+namespace sfmdataentity {
 
 SfmDataEntity::SfmDataEntity(Qt3DCore::QNode* parent)
-    : Qt3DCore::QEntity(parent),
-      _pointSizeParameter(new Qt3DRender::QParameter),
-      _ioThread(new IOThread())
+  : Qt3DCore::QEntity(parent),
+    _pointSizeParameter(new Qt3DRender::QParameter),
+    _ioThread(new IOThread())
 {
     connect(_ioThread.get(), &IOThread::finished, this, &SfmDataEntity::onIOThreadFinished);
     createMaterials();
@@ -179,7 +177,7 @@ void SfmDataEntity::onIOThreadFinished()
     }
     else
     {
-        Qt3DCore::QEntity * root = new Qt3DCore::QEntity(this);
+        Qt3DCore::QEntity* root = new Qt3DCore::QEntity(this);
 
         {
             PointCloudEntity* entity = new PointCloudEntity(root);
@@ -187,7 +185,7 @@ void SfmDataEntity::onIOThreadFinished()
             entity->addComponent(_cloudMaterial);
         }
 
-        for (const auto & pv : sfmData.getViews())
+        for (const auto& pv : sfmData.getViews())
         {
             if (!sfmData.isPoseAndIntrinsicDefined(pv.second.get()))
             {

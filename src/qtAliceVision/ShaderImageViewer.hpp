@@ -8,10 +8,8 @@
 #include <QSGSimpleMaterialShader>
 #include <QSGTexture>
 
-namespace qtAliceVision
-{
-namespace
-{
+namespace qtAliceVision {
+namespace {
 struct ShaderData
 {
     float gamma = 1.f;
@@ -27,7 +25,7 @@ class ImageViewerShader : public QSGSimpleMaterialShader<ShaderData>
 {
     QSG_DECLARE_SIMPLE_SHADER(ImageViewerShader, ShaderData)
 
-public:
+  public:
     const char* vertexShader() const override
     {
         return "attribute highp vec4 vertex;               \n"
@@ -103,7 +101,7 @@ public:
         program()->setUniformValue(_textureId, 0);
     }
 
-private:
+  private:
     int _textureId = -1;
     int _gammaId = -1;
     int _gainId = -1;
@@ -113,6 +111,6 @@ private:
     int _aspectRatio = -1;
 };
 
-} // namespace
+}  // namespace
 
-} // namespace qtAliceVision
+}  // namespace qtAliceVision

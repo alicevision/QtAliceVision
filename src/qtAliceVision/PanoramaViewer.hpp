@@ -18,8 +18,7 @@
 #include <memory>
 #include <string>
 
-namespace qtAliceVision
-{
+namespace qtAliceVision {
 /**
  * @brief Displays a list of Float Images.
  */
@@ -32,7 +31,7 @@ class PanoramaViewer : public QQuickItem
 
     Q_PROPERTY(int downscale MEMBER _downscale NOTIFY downscaleChanged)
 
-public:
+  public:
     explicit PanoramaViewer(QQuickItem* parent = nullptr);
     ~PanoramaViewer() override;
 
@@ -43,7 +42,7 @@ public:
 
     Q_SLOT void msfmDataUpdate() { computeDownscale(); }
 
-public:
+  public:
     Q_SIGNAL void sourceSizeChanged();
 
     Q_SIGNAL void sfmDataChanged();
@@ -52,13 +51,13 @@ public:
 
     Q_SIGNAL void downscaleReady();
 
-private:
+  private:
     /// Custom QSGNode update
     QSGNode* updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePaintNodeData* data) override;
 
     void computeDownscale();
 
-private:
+  private:
     QSize _sourceSize = QSize(3000, 1500);
 
     MSfMData* _msfmData = nullptr;
@@ -66,6 +65,6 @@ private:
     int _downscale = 4;
 };
 
-} // namespace qtAliceVision
+}  // namespace qtAliceVision
 
 Q_DECLARE_METATYPE(QList<QPoint>)

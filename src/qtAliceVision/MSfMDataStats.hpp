@@ -13,8 +13,7 @@
 #include <MSfMData.hpp>
 #include <MTracks.hpp>
 
-namespace qtAliceVision
-{
+namespace qtAliceVision {
 
 QT_CHARTS_USE_NAMESPACE
 
@@ -39,7 +38,7 @@ class MSfMDataStats : public QObject
     /// max AxisY value for residuals per view histogram
     Q_PROPERTY(double observationsLengthsPerViewMaxAxisY MEMBER _observationsLengthsPerViewMaxAxisY NOTIFY axisChanged)
 
-public:
+  public:
     MSfMDataStats()
     {
         connect(this, &MSfMDataStats::sfmDataChanged, this, &MSfMDataStats::computeGlobalSfMStats);
@@ -81,7 +80,7 @@ public:
     MTracks* getMTracks() { return _mTracks; }
     void setMTracks(qtAliceVision::MTracks* tracks);
 
-private:
+  private:
     MSfMData* _msfmData = nullptr;
     MTracks* _mTracks = nullptr;
 
@@ -107,4 +106,4 @@ private:
     std::vector<double> _nbTracksPerView;
 };
 
-} // namespace qtAliceVision
+}  // namespace qtAliceVision

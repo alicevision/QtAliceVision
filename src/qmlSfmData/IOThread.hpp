@@ -6,9 +6,7 @@
 
 #include <aliceVision/sfmDataIO/sfmDataIO.hpp>
 
-
-namespace sfmdataentity
-{
+namespace sfmdataentity {
 
 /**
  * @brief Handle Alembic IO in a separate thread.
@@ -17,7 +15,7 @@ class IOThread : public QThread
 {
     Q_OBJECT
 
-public:
+  public:
     /// Read the given source. Starts the thread main loop.
     void read(const QUrl& source);
 
@@ -28,9 +26,9 @@ public:
     void clear();
 
     /// Get the sfmData
-    const aliceVision::sfmData::SfMData & getSfmData() const;
+    const aliceVision::sfmData::SfMData& getSfmData() const;
 
-private:
+  private:
     QUrl _source;
     mutable QMutex _mutex;
     aliceVision::sfmData::SfMData _sfmData;

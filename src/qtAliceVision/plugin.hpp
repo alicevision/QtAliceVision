@@ -18,15 +18,14 @@
 
 #include <memory>
 
-namespace qtAliceVision
-{
+namespace qtAliceVision {
 
 class QtAliceVisionPlugin : public QQmlExtensionPlugin
 {
     Q_OBJECT
     Q_PLUGIN_METADATA(IID "qtAliceVision.qmlPlugin")
 
-public:
+  public:
     void initializeEngine(QQmlEngine* engine, const char* uri) override
     {
         // Fix "unused parameter" warnings; should be replaced by [[maybe_unused]] when C++17 is supported
@@ -47,9 +46,8 @@ public:
         qmlRegisterType<MSfMDataStats>(uri, 1, 0, "MSfMDataStats");
         qRegisterMetaType<QList<QPointF*>>("QList<QPointF*>");
         qRegisterMetaType<QQmlListProperty<QPointF>>("QQmlListProperty<QPointF>");
-        qRegisterMetaType<aliceVision::sfmData::SfMData>(
-            "QSharedPtr<aliceVision::sfmData::SfMData>"); // for usage in signals/slots
-        qRegisterMetaType<size_t>("size_t");              // for usage in signals/slots
+        qRegisterMetaType<aliceVision::sfmData::SfMData>("QSharedPtr<aliceVision::sfmData::SfMData>");  // for usage in signals/slots
+        qRegisterMetaType<size_t>("size_t");                                                            // for usage in signals/slots
 
         qmlRegisterType<FloatImageViewer>(uri, 1, 0, "FloatImageViewer");
         qmlRegisterType<Surface>(uri, 1, 0, "Surface");
@@ -67,4 +65,4 @@ public:
     }
 };
 
-} // namespace qtAliceVision
+}  // namespace qtAliceVision

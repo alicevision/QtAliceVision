@@ -12,21 +12,20 @@
 #include <unordered_map>
 #include <string>
 
-namespace qtAliceVision
-{
+namespace qtAliceVision {
 
 /**
  * @brief Cached reconstruction data used for drawing by the FeaturesViewer.
- * 
+ *
  * Given a describer type, reconstruction data is organized in two parts:
  * - for each view, the features data with 3D reconstruction information if there is any
  * - the tracks, containing track elements ordered by frame number.
  */
 class MReconstruction
 {
-public:
-
-    struct FeatureData {
+  public:
+    struct FeatureData
+    {
         float x, y;
         float rx, ry;
         float scale;
@@ -35,13 +34,15 @@ public:
         bool hasLandmark;
     };
 
-    struct PointwiseTrackData {
+    struct PointwiseTrackData
+    {
         aliceVision::IndexT frameId = aliceVision::UndefinedIndexT;
         aliceVision::IndexT viewId = aliceVision::UndefinedIndexT;
         aliceVision::IndexT featureId = aliceVision::UndefinedIndexT;
     };
 
-    struct TrackData {
+    struct TrackData
+    {
         std::vector<PointwiseTrackData> elements;
         float averageScale;
         int nbReconstructed;
@@ -51,18 +52,17 @@ public:
     std::vector<TrackData> trackDatas;
     float minFeatureScale;
     float maxFeatureScale;
-
 };
 
 /**
  * @brief Display extracted features, matches, tracks and landmarks in 2D.
- * 
+ *
  * The FeaturesViewer uses MFeatures, MTracks and MSfMData to load data from disk
  * and keeps an MReconstruction instance to cache the reconstruction data
  * in a way that makes sense for drawing.
- * 
+ *
  * The various display options and filters can be manipulated from QML.
- * 
+ *
  * The FeaturesViewer relies on the Painter class for paiting routines and layer organization.
  */
 class FeaturesViewer : public QQuickItem
@@ -118,14 +118,14 @@ class FeaturesViewer : public QQuickItem
     // Pointer to SfmData
     Q_PROPERTY(qtAliceVision::MSfMData* msfmData READ getMSfMData WRITE setMSfMData NOTIFY sfmDataChanged)
 
-public:
+  public:
     /// Helpers
 
     enum FeatureDisplayMode
     {
-        Points = 0,     // Simple points (GL_POINTS)
-        Squares,        // Scaled filled squares (GL_TRIANGLES)
-        OrientedSquares // Scaled and oriented squares (GL_LINES)
+        Points = 0,      // Simple points (GL_POINTS)
+        Squares,         // Scaled filled squares (GL_TRIANGLES)
+        OrientedSquares  // Scaled and oriented squares (GL_LINES)
     };
     Q_ENUM(FeatureDisplayMode)
 
@@ -197,11 +197,11 @@ public:
     MSfMData* getMSfMData() { return _msfmdata; }
     void setMSfMData(MSfMData* sfmData);
 
-private:
+  private:
     /// Custom QSGNode update
     QSGNode* updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePaintNodeData* data) override;
 
-private:
+  private:
     void initializePaintParams(PaintParams& params);
     void updatePaintFeatures(const PaintParams& params, QSGNode* node);
     void paintFeaturesAsPoints(const PaintParams& params, QSGNode* node);
@@ -242,11 +242,19 @@ private:
     MSfMData* _msfmdata = nullptr;
     MReconstruction _mreconstruction;
 
-    Painter painter =
-        Painter({"features", "trackEndpoints", "highlightPoints", "trackLines_reconstruction_none",
-                 "trackLines_reconstruction_partial_outliers", "trackLines_reconstruction_partial_inliers",
-                 "trackLines_reconstruction_full", "trackLines_gaps", "trackPoints_outliers", "trackPoints_inliers",
-                 "matches", "reprojectionErrors", "landmarks"});
+    Painter painter = Painter({"features",
+                               "trackEndpoints",
+                               "highlightPoints",
+                               "trackLines_reconstruction_none",
+                               "trackLines_reconstruction_partial_outliers",
+                               "trackLines_reconstruction_partial_inliers",
+                               "trackLines_reconstruction_full",
+                               "trackLines_gaps",
+                               "trackPoints_outliers",
+                               "trackPoints_inliers",
+                               "matches",
+                               "reprojectionErrors",
+                               "landmarks"});
 };
 
-} // namespace qtAliceVision
+}  // namespace qtAliceVision

@@ -12,23 +12,21 @@
 #include <vector>
 #include <string>
 
-namespace qtAliceVision
-{
+namespace qtAliceVision {
 
-using FeaturesPerViewPerDesc =
-    std::map<std::string, std::map<aliceVision::IndexT, std::vector<aliceVision::feature::PointFeature>>>;
+using FeaturesPerViewPerDesc = std::map<std::string, std::map<aliceVision::IndexT, std::vector<aliceVision::feature::PointFeature>>>;
 
 /**
  * @brief QObject wrapper around extracted features.
- * 
+ *
  * Given a folder containing extracted features,
  * the role of an MFeatures instance is to load the features from disk.
  * Describer types and view IDs to load must also be specified.
  * This task is done asynchronously to avoid freezing the UI.
- * 
+ *
  * MFeatures objects are accessible from QML
  * and can be manipulated through their properties.
- * 
+ *
  * Note:
  * for a given describer type and view ID,
  * features are stored in an array-like structure
@@ -51,7 +49,7 @@ class MFeatures : public QObject
 
     Q_PROPERTY(Status status READ status NOTIFY statusChanged)
 
-public:
+  public:
     /// Status Enum
 
     enum Status
@@ -93,7 +91,7 @@ public:
     Status status() const { return _status; }
     void setStatus(Status status);
 
-private:
+  private:
     /// Private members
 
     QVariantList _featureFolders;
@@ -113,13 +111,14 @@ class FeaturesIORunnable : public QObject, public QRunnable
 {
     Q_OBJECT
 
-public:
+  public:
     FeaturesIORunnable(const std::vector<std::string>& folders,
                        const std::vector<aliceVision::IndexT>& viewIds,
                        const std::vector<std::string>& describerTypes)
-        : _folders(folders), _viewIds(viewIds), _describerTypes(describerTypes)
-    {
-    }
+      : _folders(folders),
+        _viewIds(viewIds),
+        _describerTypes(describerTypes)
+    {}
 
     /// Load features based on input parameters
     Q_SLOT void run() override;
@@ -132,10 +131,10 @@ public:
      */
     Q_SIGNAL void resultReady(FeaturesPerViewPerDesc* featuresPerViewPerDesc);
 
-private:
+  private:
     std::vector<std::string> _folders;
     std::vector<aliceVision::IndexT> _viewIds;
     std::vector<std::string> _describerTypes;
 };
 
-} // namespace qtAliceVision
+}  // namespace qtAliceVision

@@ -2,7 +2,6 @@
 
 #include <aliceVision/system/MemoryInfo.hpp>
 
-
 #include <QString>
 #include <QPoint>
 
@@ -14,15 +13,14 @@
 #include <iostream>
 #include <atomic>
 
-
 namespace qtAliceVision {
 namespace imgserve {
 
 // Flag for aborting the prefetching worker thread from the main thread
 std::atomic_bool abortPrefetching = false;
 
-SequenceCache::SequenceCache(QObject* parent) :
-    QObject(parent)
+SequenceCache::SequenceCache(QObject* parent)
+  : QObject(parent)
 {
     // Retrieve memory information from system
     const auto memInfo = aliceVision::system::getMemoryInfo();
@@ -56,11 +54,12 @@ SequenceCache::~SequenceCache()
     }
 
     // Free memory occupied by image cache
-    if (_cache) delete _cache;
+    if (_cache)
+        delete _cache;
 }
 
 void SequenceCache::setSequence(const QVariantList& paths)
-{   
+{
     _lockSequence.lock();
     {
         _sequenceId++;
@@ -98,8 +97,7 @@ void SequenceCache::setSequence(const QVariantList& paths)
 
                 // Compute downscale
                 const int maxDim = std::max(width, height);
-                const int level = static_cast<int>(std::floor(
-                    std::log2(static_cast<double>(maxDim) / static_cast<double>(_targetSize))));
+                const int level = static_cast<int>(std::floor(std::log2(static_cast<double>(maxDim) / static_cast<double>(_targetSize))));
                 data.downscale = 1 << std::max(level, 0);
 
                 // Set frame number
@@ -122,10 +120,7 @@ void SequenceCache::setSequence(const QVariantList& paths)
     Q_EMIT contentChanged();
 }
 
-void SequenceCache::setInteractivePrefetching(bool interactive)
-{
-    _interactivePrefetching = interactive;
-}
+void SequenceCache::setInteractivePrefetching(bool interactive) { _interactivePrefetching = interactive; }
 
 void SequenceCache::setTargetSize(int size)
 {
@@ -138,8 +133,7 @@ void SequenceCache::setTargetSize(int size)
     {
         // Compute downscale
         const int maxDim = std::max(data.dim.width(), data.dim.height());
-        const int level = static_cast<int>(std::floor(
-            std::log2(static_cast<double>(maxDim) / static_cast<double>(_targetSize))));
+        const int level = static_cast<int>(std::floor(std::log2(static_cast<double>(maxDim) / static_cast<double>(_targetSize))));
         const int downscale = 1 << std::max(level, 0);
 
         refresh = refresh || (data.downscale != downscale);
@@ -221,7 +215,7 @@ ResponseData SequenceCache::request(const RequestData& reqData)
     // Retrieve frame data
     const std::size_t idx = static_cast<std::size_t>(frame);
     const FrameData& data = _sequence[idx];
-    
+
     // Retrieve image from cache
     const bool cachedOnly = true;
     const bool lazyCleaning = false;
@@ -272,11 +266,11 @@ void SequenceCache::onPrefetchingProgressed(int)
 
 void SequenceCache::onPrefetchingDone(int sequenceId, int reqFrame)
 {
-    //Make sure the fetching concerns the actual sequence Id
+    // Make sure the fetching concerns the actual sequence Id
     bool exitOld = false;
     _lockSequence.lock();
     if (sequenceId != _sequenceId)
-    {   
+    {
         exitOld = true;
     }
     if (reqFrame >= _sequence.size())
@@ -291,8 +285,6 @@ void SequenceCache::onPrefetchingDone(int sequenceId, int reqFrame)
         Q_EMIT requestHandled();
         return;
     }
-
-    
 
     _lockSequence.lock();
     {
@@ -387,14 +379,16 @@ PrefetchingIORunnable::PrefetchingIORunnable(aliceVision::image::ImageCache* cac
                                              const std::vector<FrameData>& toLoad,
                                              int reqFrame,
                                              double fillRatio,
-                                             int sequenceId) :
-    _cache(cache), _toLoad(toLoad), _reqFrame(reqFrame), _sequenceId(sequenceId)
+                                             int sequenceId)
+  : _cache(cache),
+    _toLoad(toLoad),
+    _reqFrame(reqFrame),
+    _sequenceId(sequenceId)
 {
     _toFill = static_cast<uint64_t>(static_cast<double>(_cache->info().capacity) * fillRatio);
 }
 
-PrefetchingIORunnable::~PrefetchingIORunnable()
-{}
+PrefetchingIORunnable::~PrefetchingIORunnable() {}
 
 void PrefetchingIORunnable::run()
 {
@@ -424,10 +418,7 @@ void PrefetchingIORunnable::run()
         }
 
         // Check if image size does not exceed limit
-        uint64_t memSize =
-            static_cast<uint64_t>(data.dim.width() / data.downscale)
-            * static_cast<uint64_t>(data.dim.height() / data.downscale)
-            * 16;
+        uint64_t memSize = static_cast<uint64_t>(data.dim.width() / data.downscale) * static_cast<uint64_t>(data.dim.height() / data.downscale) * 16;
         if (filled + memSize > _toFill)
         {
             break;
@@ -464,7 +455,7 @@ void PrefetchingIORunnable::run()
     Q_EMIT done(_sequenceId, _reqFrame);
 }
 
-} // namespace imgserve
-} // namespace qtAliceVision
+}  // namespace imgserve
+}  // namespace qtAliceVision
 
 #include "SequenceCache.moc"

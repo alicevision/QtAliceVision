@@ -17,10 +17,9 @@
 
 #include <aliceVision/system/MemoryInfo.hpp>
 
-namespace qtAliceVision
-{
+namespace qtAliceVision {
 PanoramaViewer::PanoramaViewer(QQuickItem* parent)
-    : QQuickItem(parent)
+  : QQuickItem(parent)
 {
     setFlag(QQuickItem::ItemHasContents, true);
     connect(this, &PanoramaViewer::sourceSizeChanged, this, &PanoramaViewer::update);
@@ -37,8 +36,7 @@ void PanoramaViewer::computeDownscale()
 
     int totalSizeImages = 0;
     for (const auto& view : _msfmData->rawData().getViews())
-        totalSizeImages +=
-            int(static_cast<double>((view.second->getImage().getWidth() * view.second->getImage().getHeight()) * 4) / std::pow(10, 6));
+        totalSizeImages += int(static_cast<double>((view.second->getImage().getWidth() * view.second->getImage().getHeight()) * 4) / std::pow(10, 6));
 
     // Downscale = 4 by default
     _downscale = 4;
@@ -59,7 +57,7 @@ void PanoramaViewer::computeDownscale()
 
 QSGNode* PanoramaViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePaintNodeData* data)
 {
-    (void)data; // Fix "unused parameter" warnings; should be replaced by [[maybe_unused]] when C++17 is supported
+    (void)data;  // Fix "unused parameter" warnings; should be replaced by [[maybe_unused]] when C++17 is supported
     QSGGeometryNode* root = static_cast<QSGGeometryNode*>(oldNode);
     return root;
 }
@@ -95,4 +93,4 @@ void PanoramaViewer::setMSfmData(MSfMData* sfmData)
     }
 }
 
-} // namespace qtAliceVision
+}  // namespace qtAliceVision
