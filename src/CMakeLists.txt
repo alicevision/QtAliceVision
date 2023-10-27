@@ -11,6 +11,3 @@ if(BUILD_SFM)
     add_subdirectory(qmlSfmData)
 endif()
 
-if(BUILD_ALEMBIC)
-    add_subdirectory(qmlAlembic)
-endif()
