@@ -18,13 +18,20 @@ void IOThread::run()
         return;
 
     QMutexLocker lock(&_mutex);
-    if (!aliceVision::sfmDataIO::Load(_sfmData, _source.toLocalFile().toStdString(),
-                                      aliceVision::sfmDataIO::ESfMData(aliceVision::sfmDataIO::ESfMData::VIEWS |
-                                                                       aliceVision::sfmDataIO::ESfMData::INTRINSICS |
-                                                                       aliceVision::sfmDataIO::ESfMData::EXTRINSICS |
-                                                                       aliceVision::sfmDataIO::ESfMData::STRUCTURE)))
+    try
     {
-        qDebug() << "[QtAliceVision] Failed to load sfmData: " << _source << ".";
+        if (!aliceVision::sfmDataIO::Load(_sfmData, _source.toLocalFile().toStdString(),
+                                        aliceVision::sfmDataIO::ESfMData(aliceVision::sfmDataIO::ESfMData::VIEWS |
+                                                                        aliceVision::sfmDataIO::ESfMData::INTRINSICS |
+                                                                        aliceVision::sfmDataIO::ESfMData::EXTRINSICS |
+                                                                        aliceVision::sfmDataIO::ESfMData::STRUCTURE)))
+        {
+            qWarning() << "[QmlSfmData] Failed to load SfMData: " << _source << ".";
+        }
+    }
+    catch (const std::exception &e)
+    {
+        qCritical() << "[QmlSfmData] Error while loading the SfMData: " << e.what();
     }
 }
 

@@ -37,7 +37,7 @@ void PointCloudEntity::setData(const aliceVision::sfmData::Landmarks & landmarks
     int npoints = static_cast<int>(landmarks.size());
 
     // vertices buffer
-    QByteArray positionData((const char*)points.data(), npoints * 3 * static_cast<int>(sizeof(float)));
+    QByteArray positionData(reinterpret_cast<const char*>(points.data()), npoints * 3 * static_cast<int>(sizeof(float)));
     auto vertexDataBuffer = new QBuffer;
     vertexDataBuffer->setData(positionData);
     auto positionAttribute = new QAttribute;
@@ -54,7 +54,7 @@ void PointCloudEntity::setData(const aliceVision::sfmData::Landmarks & landmarks
 
     // read color data
     auto colorDataBuffer = new QBuffer;
-    QByteArray colorData((const char*)colors.data(), npoints * 3 * static_cast<int>(sizeof(float)));
+    QByteArray colorData(reinterpret_cast<const char*>(colors.data()), npoints * 3 * static_cast<int>(sizeof(float)));
     colorDataBuffer->setData(colorData);
 
     // colors buffer

@@ -21,9 +21,9 @@ namespace sfmdataentity
 {
 
 SfmDataEntity::SfmDataEntity(Qt3DCore::QNode* parent)
-    : Qt3DCore::QEntity(parent)
-    , _pointSizeParameter(new Qt3DRender::QParameter)
-    , _ioThread(new IOThread())
+    : Qt3DCore::QEntity(parent),
+      _pointSizeParameter(new Qt3DRender::QParameter),
+      _ioThread(new IOThread())
 {
     connect(_ioThread.get(), &IOThread::finished, this, &SfmDataEntity::onIOThreadFinished);
     createMaterials();
@@ -165,34 +165,48 @@ void SfmDataEntity::loadSfmData()
 void SfmDataEntity::onIOThreadFinished()
 {
     const auto& sfmData = _ioThread->getSfmData();
-
-    Qt3DCore::QEntity * root = new Qt3DCore::QEntity(this);
-
+    if (sfmData == aliceVision::sfmData::SfMData())
     {
-        PointCloudEntity* entity = new PointCloudEntity(root);
-        entity->setData(sfmData.getLandmarks());
-        entity->addComponent(_cloudMaterial);
+        qCritical() << "[QmlSfmData] The SfMData has not been correctly initialized, the file may not be valid.";
+        setStatus(SfmDataEntity::Error);
+        return;
     }
-
-    for (const auto & pv : sfmData.getViews())
+    else if (sfmData.getLandmarks().empty() && sfmData.getPoses().empty())
     {
-        if (!sfmData.isPoseAndIntrinsicDefined(pv.second.get()))
+        qCritical() << "[QmlSfmData] The SfMData has been initialized but does not contain any 3D information.";
+        setStatus(SfmDataEntity::Error);
+        return;
+    }
+    else
+    {
+        Qt3DCore::QEntity * root = new Qt3DCore::QEntity(this);
+
         {
-            continue;
+            PointCloudEntity* entity = new PointCloudEntity(root);
+            entity->setData(sfmData.getLandmarks());
+            entity->addComponent(_cloudMaterial);
         }
 
-        CameraLocatorEntity* entity = new CameraLocatorEntity(pv.first, root);
-        entity->addComponent(_cameraMaterial);
-        entity->setTransform(sfmData.getPoses().at(pv.second->getPoseId()).getTransform().getHomogeneous());
-        entity->setObjectName(std::to_string(pv.first).c_str());
+        for (const auto & pv : sfmData.getViews())
+        {
+            if (!sfmData.isPoseAndIntrinsicDefined(pv.second.get()))
+            {
+                continue;
+            }
+
+            CameraLocatorEntity* entity = new CameraLocatorEntity(pv.first, root);
+            entity->addComponent(_cameraMaterial);
+            entity->setTransform(sfmData.getPoses().at(pv.second->getPoseId()).getTransform().getHomogeneous());
+            entity->setObjectName(std::to_string(pv.first).c_str());
+        }
+
+        _cameras = findChildren<CameraLocatorEntity*>();
+        _pointClouds = findChildren<PointCloudEntity*>();
+
+        scaleLocators();
+
+        setStatus(SfmDataEntity::Ready);
     }
-
-    _cameras = findChildren<CameraLocatorEntity*>();
-    _pointClouds = findChildren<PointCloudEntity*>();
-
-    scaleLocators();
-
-    setStatus(SfmDataEntity::Ready);
 
     _ioThread->clear();
 
