@@ -12,9 +12,11 @@
 
 namespace sfmdataentity {
 
-CameraLocatorEntity::CameraLocatorEntity(const aliceVision::IndexT& viewId, float hfov, float vfov, Qt3DCore::QNode* parent)
+CameraLocatorEntity::CameraLocatorEntity(const aliceVision::IndexT& viewId, const aliceVision::IndexT& resectionId,
+                                         float hfov, float vfov, Qt3DCore::QNode* parent)
   : Qt3DCore::QEntity(parent),
-    _viewId(viewId)
+    _viewId(viewId),
+    _resectionId(resectionId)
 {
     _transform = new Qt3DCore::QTransform;
     addComponent(_transform);

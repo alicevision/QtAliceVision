@@ -198,7 +198,7 @@ void SfmDataEntity::onIOThreadFinished()
             double hfov = intrinsic->getHorizontalFov();
             double vfov = intrinsic->getVerticalFov();
 
-            CameraLocatorEntity* entity = new CameraLocatorEntity(pv.first, hfov, vfov, root);
+            CameraLocatorEntity* entity = new CameraLocatorEntity(pv.first, pv.second->getResectionId(), hfov, vfov, root);
             entity->addComponent(_cameraMaterial);
             entity->setTransform(sfmData.getPoses().at(pv.second->getPoseId()).getTransform().getHomogeneous());
             entity->setObjectName(std::to_string(pv.first).c_str());
