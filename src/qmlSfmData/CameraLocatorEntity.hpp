@@ -21,6 +21,7 @@ class CameraLocatorEntity : public Qt3DCore::QEntity
 
     void setTransform(const Eigen::Matrix4d&);
 
+    aliceVision::IndexT viewId() const { return _viewId; }
     aliceVision::IndexT resectionId() const { return _resectionId; }
 
     Q_SIGNAL void viewIdChanged();
