@@ -70,9 +70,54 @@ void SfmDataEntity::scaleLocators() const
     {
         for (auto* transform : entity->findChildren<Qt3DCore::QTransform*>(QString(), Qt::FindDirectChildrenOnly))
         {
-            transform->setScale(_locatorScale);
+            if (entity->viewId() == _selectedViewId)
+            {
+                transform->setScale(_locatorScale * 1.5f);
+            }
+            else
+            {
+                transform->setScale(_locatorScale);
+            }
         }
     }
+}
+
+void SfmDataEntity::setSelectedViewId(const aliceVision::IndexT& viewId)
+{
+    if (_selectedViewId == viewId)
+    {
+        return;
+    }
+
+    bool previousReset = _selectedViewId == 0 ? true : false;
+    bool newUpdated = false;
+    for (auto* entity : _cameras)
+    {
+        if (entity->viewId() == _selectedViewId)  // Previously selected camera: the scale must be reset
+        {
+            for (auto* transform : entity->findChildren<Qt3DCore::QTransform*>(QString(), Qt::FindDirectChildrenOnly))
+            {
+                transform->setScale(_locatorScale);
+            }
+            previousReset = true;
+        }
+        else if (entity->viewId() == viewId)  // Newly selected camera: the scale must be enlarged
+        {
+            for (auto* transform : entity->findChildren<Qt3DCore::QTransform*>(QString(), Qt::FindDirectChildrenOnly))
+            {
+                transform->setScale(_locatorScale * 1.5f);
+            }
+            newUpdated = true;
+        }
+
+        if (previousReset && newUpdated)
+        {
+            break;
+        }
+    }
+    _selectedViewId = viewId;
+
+    Q_EMIT selectedViewIdChanged();
 }
 
 void SfmDataEntity::setResectionId(const aliceVision::IndexT& value)
