@@ -75,6 +75,29 @@ void SfmDataEntity::scaleLocators() const
     }
 }
 
+void SfmDataEntity::setResectionId(const aliceVision::IndexT& value)
+{
+    if (_resectionId == value)
+    {
+        return;
+    }
+
+    _resectionId = value;
+    for (auto* entity : _cameras)
+    {
+        if (entity->resectionId() > _resectionId)
+        {
+            entity->setEnabled(false);
+        }
+        else
+        {
+            entity->setEnabled(true);
+        }
+    }
+
+    Q_EMIT resectionIdChanged();
+}
+
 void SfmDataEntity::createMaterials()
 {
     using namespace Qt3DRender;
@@ -133,7 +156,7 @@ void SfmDataEntity::clear()
     auto entities = findChildren<QEntity*>(QString(), Qt::FindDirectChildrenOnly);
     for (auto entity : entities)
     {
-        entity->setParent((QNode*)nullptr);
+        entity->setParent(static_cast<QNode*>(nullptr));
         entity->deleteLater();
     }
     for (auto& component : components())
@@ -202,6 +225,10 @@ void SfmDataEntity::onIOThreadFinished()
             entity->addComponent(_cameraMaterial);
             entity->setTransform(sfmData.getPoses().at(pv.second->getPoseId()).getTransform().getHomogeneous());
             entity->setObjectName(std::to_string(pv.first).c_str());
+            if (entity->resectionId() > _resectionId)
+            {
+                entity->setEnabled(false);
+            }
         }
 
         _cameras = findChildren<CameraLocatorEntity*>();
