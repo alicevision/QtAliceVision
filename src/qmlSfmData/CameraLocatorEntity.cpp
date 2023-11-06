@@ -6,9 +6,11 @@
 #include <Qt3DRender/QObjectPicker>
 #include <Qt3DCore/QTransform>
 
+#include <aliceVision/numeric/numeric.hpp>
+
 namespace sfmdataentity {
 
-CameraLocatorEntity::CameraLocatorEntity(const aliceVision::IndexT& viewId, Qt3DCore::QNode* parent)
+CameraLocatorEntity::CameraLocatorEntity(const aliceVision::IndexT& viewId, float hfov, float vfov, Qt3DCore::QNode* parent)
   : Qt3DCore::QEntity(parent),
     _viewId(viewId)
 {
@@ -21,94 +23,111 @@ CameraLocatorEntity::CameraLocatorEntity(const aliceVision::IndexT& viewId, Qt3D
     auto customMeshRenderer = new QGeometryRenderer;
     auto customGeometry = new QGeometry;
 
+    const float axisLength = 0.5f;
+    const float halfImageWidth = 0.3f;
+    const float halfImageHeight = 0.2f;
+    const float yArrowHeight = 0.05f;
+    const float depth = halfImageWidth / tan(hfov / 2.0);
+    const float radius = 0.3f;
+
+    int subdiv = 1;
+    if (hfov > M_PI * 0.7 || vfov > M_PI * 0.7)
+        subdiv = 10;
+
+    // clang-format off
     // vertices buffer
-    QVector<float> points = {
-      // Coord system
-      0.f,
-      0.f,
-      0.f,
-      0.5f,
-      0.0f,
-      0.0f,  // X
-      0.f,
-      0.f,
-      0.f,
-      0.0f,
-      -0.5f,
-      0.0f,  // Y
-      0.f,
-      0.f,
-      0.f,
-      0.0f,
-      0.0f,
-      -0.5f,  // Z
-
-      // Pyramid
-      0.f,
-      0.f,
-      0.f,
-      -0.3f,
-      0.2f,
-      -0.3f,  // TL
-      0.f,
-      0.f,
-      0.f,
-      -0.3f,
-      -0.2f,
-      -0.3f,  // BL
-      0.f,
-      0.f,
-      0.f,
-      0.3f,
-      -0.2f,
-      -0.3f,  // BR
-      0.f,
-      0.f,
-      0.f,
-      0.3f,
-      0.2f,
-      -0.3f,  // TR
-
-      // Image plane
-      -0.3f,
-      -0.2f,
-      -0.3f,
-      -0.3f,
-      0.2f,
-      -0.3f,  // L
-      -0.3f,
-      0.2f,
-      -0.3f,
-      0.3f,
-      0.2f,
-      -0.3f,  // B
-      0.3f,
-      0.2f,
-      -0.3f,
-      0.3f,
-      -0.2f,
-      -0.3f,  // R
-      0.3f,
-      -0.2f,
-      -0.3f,
-      -0.3f,
-      -0.2f,
-      -0.3f,  // T
-
-      // Camera Up
-      -0.3f,
-      0.2f,
-      -0.3f,
-      0.0f,
-      0.25f,
-      -0.3f,  // L
-      0.3f,
-      0.2f,
-      -0.3f,
-      0.0f,
-      0.25f,
-      -0.3f,  // R
+    QVector<float> origin = {
+        // Coord system
+        0.f, 0.f, 0.f, axisLength, 0.0f, 0.0f,  // X
+        0.f, 0.f, 0.f, 0.0f, -axisLength, 0.0f,  // Y
+        0.f, 0.f, 0.f, 0.0f, 0.0f, -axisLength,  // Z
     };
+
+    QVector<float> bodyCam;
+
+    aliceVision::Vec3 tl, tr, bl, br;
+    tl.x() = sin(-hfov / 2.0f);
+    tl.y() = sin(vfov / 2.0f);
+    tl.z() = cos(-hfov / 2.0f);
+
+    tr.x() = sin(-hfov / 2.0f);
+    tr.y() = sin(vfov / 2.0f);
+    tr.z() = cos(vfov / 2.0f);
+
+    const float vslice = vfov / double(subdiv);
+    const float hslice = hfov / double(subdiv);
+
+    Eigen::Vector3d vZ = - Eigen::Vector3d::UnitZ() * radius;
+
+    for (int vid = 0; vid < subdiv; vid++)
+    {
+        float vangle1 = - vfov / 2.0f + (vid) * vslice;
+        float vangle2 = - vfov / 2.0f + (vid + 1) * vslice;
+
+        Eigen::AngleAxis<double> Rv1(vangle1, Eigen::Vector3d::UnitX());
+        Eigen::AngleAxis<double> Rv2(vangle2, Eigen::Vector3d::UnitX());
+
+        for (int hid = 0; hid < subdiv; hid++)
+        {
+            float hangle1 = - hfov / 2.0f + (hid) * hslice;
+            float hangle2 = - hfov / 2.0f + (hid + 1) * hslice;
+
+            Eigen::AngleAxis<double> Rh1(hangle1, Eigen::Vector3d::UnitY());
+            Eigen::AngleAxis<double> Rh2(hangle2, Eigen::Vector3d::UnitY());
+
+            aliceVision::Vec3 pt1 = Rv1.toRotationMatrix() * Rh1.toRotationMatrix() * vZ;
+            aliceVision::Vec3 pt2 = Rv2.toRotationMatrix() * Rh1.toRotationMatrix() * vZ;
+            aliceVision::Vec3 pt3 = Rv2.toRotationMatrix() * Rh2.toRotationMatrix() * vZ;
+            aliceVision::Vec3 pt4 = Rv1.toRotationMatrix() * Rh2.toRotationMatrix() * vZ;
+
+            QVector<float> quad = {
+                pt1.x(), pt1.y(), pt1.z(), pt2.x(), pt2.y(), pt2.z(),
+                pt2.x(), pt2.y(), pt2.z(), pt3.x(), pt3.y(), pt3.z(),
+                pt3.x(), pt3.y(), pt3.z(), pt4.x(), pt4.y(), pt4.z(),
+                pt4.x(), pt4.y(), pt4.z(), pt1.x(), pt1.y(), pt1.z(),
+            };
+
+            bodyCam.append(quad);
+        }
+    }
+
+    float vangle1 = - vfov / 2.0f;
+    float vangle2 = vfov / 2.0f;
+    float hangle1 = - hfov / 2.0f;
+    float hangle2 = hfov / 2.0f;
+
+    Eigen::AngleAxis<double> Rv1(vangle1, Eigen::Vector3d::UnitX());
+    Eigen::AngleAxis<double> Rv2(vangle2, Eigen::Vector3d::UnitX());
+    Eigen::AngleAxis<double> Rh1(hangle1, Eigen::Vector3d::UnitY());
+    Eigen::AngleAxis<double> Rh2(hangle2, Eigen::Vector3d::UnitY());
+
+    aliceVision::Vec3 pt1 = Rv1.toRotationMatrix() * Rh1.toRotationMatrix() * vZ;
+    aliceVision::Vec3 pt2 = Rv2.toRotationMatrix() * Rh1.toRotationMatrix() * vZ;
+    aliceVision::Vec3 pt3 = Rv2.toRotationMatrix() * Rh2.toRotationMatrix() * vZ;
+    aliceVision::Vec3 pt4 = Rv1.toRotationMatrix() * Rh2.toRotationMatrix() * vZ;
+
+    QVector<float> quad = {
+        0.0f, 0.0f, 0.0f, pt2.x(), pt2.y(), pt2.z(),
+        0.0f, 0.0f, 0.0f, pt3.x(), pt3.y(), pt3.z(),
+        0.0f, 0.0f, 0.0f, pt4.x(), pt4.y(), pt4.z(),
+        0.0f, 0.0f, 0.0f, pt1.x(), pt1.y(), pt1.z(),
+    };
+
+    bodyCam.append(quad);
+
+    aliceVision::Vec3 middle = 0.5 * (pt2 + pt3);
+
+    QVector<float> upVector = {
+        // Camera Up
+        pt2.x(), pt2.y(), pt2.z(), middle.x(), middle.y() + yArrowHeight, middle.z(),
+        middle.x(), middle.y() + yArrowHeight, middle.z(), pt3.x(), pt3.y(), pt3.z(),
+    };
+
+    QVector<float> points;
+    points.append(origin);
+    points.append(bodyCam);
+    points.append(upVector);
+    // clang-format on
 
     QByteArray positionData((const char*)points.data(), points.size() * static_cast<int>(sizeof(float)));
     auto vertexDataBuffer = new QBuffer;
@@ -125,90 +144,38 @@ CameraLocatorEntity::CameraLocatorEntity(const aliceVision::IndexT& viewId, Qt3D
     customGeometry->addAttribute(positionAttribute);
 
     // colors buffer
-    QVector<float> colors{
-      // Coord system
-      1.f,
-      0.f,
-      0.f,
-      1.f,
-      0.f,
-      0.f,  // R
-      0.f,
-      1.f,
-      0.f,
-      0.f,
-      1.f,
-      0.f,  // G
-      0.f,
-      0.f,
-      1.f,
-      0.f,
-      0.f,
-      1.f,  // B
-      // Pyramid
-      1.f,
-      1.f,
-      1.f,
-      1.f,
-      1.f,
-      1.f,
-      1.f,
-      1.f,
-      1.f,
-      1.f,
-      1.f,
-      1.f,
-      1.f,
-      1.f,
-      1.f,
-      1.f,
-      1.f,
-      1.f,
-      1.f,
-      1.f,
-      1.f,
-      1.f,
-      1.f,
-      1.f,
-      // Image Plane
-      1.f,
-      1.f,
-      1.f,
-      1.f,
-      1.f,
-      1.f,
-      1.f,
-      1.f,
-      1.f,
-      1.f,
-      1.f,
-      1.f,
-      1.f,
-      1.f,
-      1.f,
-      1.f,
-      1.f,
-      1.f,
-      1.f,
-      1.f,
-      1.f,
-      1.f,
-      1.f,
-      1.f,
-      // Camera Up direction
-      1.f,
-      1.f,
-      1.f,
-      1.f,
-      1.f,
-      1.f,
-      1.f,
-      1.f,
-      1.f,
-      1.f,
-      1.f,
-      1.f,
-    };
+    QVector<float> colors(points.size(), 1.0f);
+    float * color;
+
+    color = &(colors[0 * 3]);
+    color[0] = 1.0f;
+    color[1] = 0.0f;
+    color[2] = 0.0f;
+
+    color = &(colors[1 * 3]);
+    color[0] = 1.0f;
+    color[1] = 0.0f;
+    color[2] = 0.0f;
+
+    color = &(colors[2 * 3]);
+    color[0] = 0.0f;
+    color[1] = 1.0f;
+    color[2] = 0.0f;
+
+    color = &(colors[3 * 3]);
+    color[0] = 0.0f;
+    color[1] = 1.0f;
+    color[2] = 0.0f;
+
+    color = &(colors[4 * 3]);
+    color[0] = 0.0f;
+    color[1] = 0.0f;
+    color[2] = 1.0f;
+
+    color = &(colors[5 * 3]);
+    color[0] = 0.0f;
+    color[1] = 0.0f;
+    color[2] = 1.0f;
 
     QByteArray colorData((const char*)colors.data(), colors.size() * static_cast<int>(sizeof(float)));
     auto colorDataBuffer = new QBuffer;

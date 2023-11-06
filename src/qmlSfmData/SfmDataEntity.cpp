@@ -192,7 +192,12 @@ void SfmDataEntity::onIOThreadFinished()
                 continue;
             }
 
-            CameraLocatorEntity* entity = new CameraLocatorEntity(pv.first, root);
+            aliceVision::IndexT intrinsicId = pv.second->getIntrinsicId();
+            auto intrinsic = sfmData.getIntrinsicsharedPtr(intrinsicId);
+            double hfov = intrinsic->getHorizontalFov();
+            double vfov = intrinsic->getVerticalFov();
+
+            CameraLocatorEntity* entity = new CameraLocatorEntity(pv.first, hfov, vfov, root);
             entity->addComponent(_cameraMaterial);
             entity->setTransform(sfmData.getPoses().at(pv.second->getPoseId()).getTransform().getHomogeneous());
             entity->setObjectName(std::to_string(pv.first).c_str());
@@ -205,6 +210,7 @@ void SfmDataEntity::onIOThreadFinished()
 
         setStatus(SfmDataEntity::Ready);
     }
+
 
     _ioThread->clear();
 
