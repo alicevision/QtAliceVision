@@ -65,9 +65,10 @@ void SfmDataEntity::setLocatorScale(const float& value)
 
 void SfmDataEntity::scaleLocators() const
 {
+    
     for (auto* entity : _cameras)
     {
-        for (auto* transform : entity->findChildren<Qt3DCore::QTransform*>())
+        for (auto* transform : entity->findChildren<Qt3DCore::QTransform*>(QString(), Qt::FindDirectChildrenOnly))
         {
             transform->setScale(_locatorScale);
         }
