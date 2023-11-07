@@ -510,7 +510,7 @@ void FeaturesViewer::updatePaintMatches(const PaintParams& params, QSGNode* node
             continue;
         }
 
-        if (feature.hasLandmark)
+        if (feature.hasLandmark && _displayLandmarks)
         {
             continue;
         }
@@ -525,7 +525,7 @@ void FeaturesViewer::updatePaintLandmarks(const PaintParams& params, QSGNode* no
 {
     qDebug() << "[QtAliceVision] FeaturesViewer: Update paint " << _describerType << " landmarks.";
 
-    if (!_displayLandmarks || !params.haveValidFeatures || !params.haveValidTracks || !params.haveValidLandmarks)
+    if (!_displayLandmarks || !params.haveValidFeatures || !params.haveValidLandmarks)
     {
         // nothing to draw or something is not ready
         painter.clearLayer(node, "reprojectionErrors");
