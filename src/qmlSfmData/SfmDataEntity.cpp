@@ -72,10 +72,12 @@ void SfmDataEntity::scaleLocators() const
         {
             if (entity->viewId() == _selectedViewId)
             {
+                entity->updateColors(0.f, 0.f, 1.f);
                 transform->setScale(_locatorScale * 1.5f);
             }
             else
             {
+                entity->updateColors(1.f, 1.f, 1.f);
                 transform->setScale(_locatorScale);
             }
         }
@@ -95,6 +97,7 @@ void SfmDataEntity::setSelectedViewId(const aliceVision::IndexT& viewId)
     {
         if (entity->viewId() == _selectedViewId)  // Previously selected camera: the scale must be reset
         {
+            entity->updateColors(1.f, 1.f, 1.f);
             for (auto* transform : entity->findChildren<Qt3DCore::QTransform*>(QString(), Qt::FindDirectChildrenOnly))
             {
                 transform->setScale(_locatorScale);
@@ -103,6 +106,7 @@ void SfmDataEntity::setSelectedViewId(const aliceVision::IndexT& viewId)
         }
         else if (entity->viewId() == viewId)  // Newly selected camera: the scale must be enlarged
         {
+            entity->updateColors(0.f, 0.f, 1.f);
             for (auto* transform : entity->findChildren<Qt3DCore::QTransform*>(QString(), Qt::FindDirectChildrenOnly))
             {
                 transform->setScale(_locatorScale * 1.5f);

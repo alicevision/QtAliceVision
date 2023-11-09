@@ -1,10 +1,8 @@
 #include "CameraLocatorEntity.hpp"
 
 #include <Qt3DRender/QGeometryRenderer>
-#include <Qt3DRender/QAttribute>
 #include <Qt3DRender/QBuffer>
 #include <Qt3DRender/QObjectPicker>
-#include <Qt3DCore/QTransform>
 
 #include <aliceVision/numeric/numeric.hpp>
 
@@ -150,52 +148,21 @@ CameraLocatorEntity::CameraLocatorEntity(const aliceVision::IndexT& viewId, cons
     customGeometry->addAttribute(positionAttribute);
 
     // colors buffer
-    QVector<float> colors(points.size(), 1.0f);
-    float * color;
+    _colors = initializeColors(points.size(), 1.0f);
 
-    color = &(colors[0 * 3]);
-    color[0] = 1.0f;
-    color[1] = 0.0f;
-    color[2] = 0.0f;
-
-    color = &(colors[1 * 3]);
-    color[0] = 1.0f;
-    color[1] = 0.0f;
-    color[2] = 0.0f;
-
-    color = &(colors[2 * 3]);
-    color[0] = 0.0f;
-    color[1] = 1.0f;
-    color[2] = 0.0f;
-
-    color = &(colors[3 * 3]);
-    color[0] = 0.0f;
-    color[1] = 1.0f;
-    color[2] = 0.0f;
-
-    color = &(colors[4 * 3]);
-    color[0] = 0.0f;
-    color[1] = 0.0f;
-    color[2] = 1.0f;
-
-    color = &(colors[5 * 3]);
-    color[0] = 0.0f;
-    color[1] = 0.0f;
-    color[2] = 1.0f;
-
-    QByteArray colorData(reinterpret_cast<const char*>(colors.data()), colors.size() * static_cast<int>(sizeof(float)));
+    QByteArray colorData(reinterpret_cast<const char*>(_colors.data()), _colors.size() * static_cast<int>(sizeof(float)));
     auto colorDataBuffer = new QBuffer;
     colorDataBuffer->setData(colorData);
-    auto colorAttribute = new QAttribute;
-    colorAttribute->setAttributeType(QAttribute::VertexAttribute);
-    colorAttribute->setBuffer(colorDataBuffer);
-    colorAttribute->setVertexBaseType(QAttribute::Float);
-    colorAttribute->setVertexSize(3);
-    colorAttribute->setByteOffset(0);
-    colorAttribute->setByteStride(3 * sizeof(float));
-    colorAttribute->setCount(static_cast<uint>(colors.size() / 3));
-    colorAttribute->setName(QAttribute::defaultColorAttributeName());
-    customGeometry->addAttribute(colorAttribute);
+    _colorAttribute = new QAttribute;
+    _colorAttribute->setAttributeType(QAttribute::VertexAttribute);
+    _colorAttribute->setBuffer(colorDataBuffer);
+    _colorAttribute->setVertexBaseType(QAttribute::Float);
+    _colorAttribute->setVertexSize(3);
+    _colorAttribute->setByteOffset(0);
+    _colorAttribute->setByteStride(3 * sizeof(float));
+    _colorAttribute->setCount(static_cast<uint>(_colors.size() / 3));
+    _colorAttribute->setName(QAttribute::defaultColorAttributeName());
+    customGeometry->addAttribute(_colorAttribute);
 
     // geometry renderer settings
     customMeshRenderer->setInstanceCount(1);
@@ -239,6 +206,66 @@ void CameraLocatorEntity::setTransform(const Eigen::Matrix4d& T)
                     static_cast<float>(mat(3, 3)));
 
     _transform->setMatrix(qmat);
+}
+
+QVector<float> CameraLocatorEntity::initializeColors(int size, float defaultValue)
+{
+    QVector<float> colors(size, defaultValue);
+    float* color;
+
+    // R
+    color = &(colors[0 * 3]);
+    color[0] = 1.0f;
+    color[1] = 0.0f;
+    color[2] = 0.0f;
+
+    // R
+    color = &(colors[1 * 3]);
+    color[0] = 1.0f;
+    color[1] = 0.0f;
+    color[2] = 0.0f;
+
+    // G
+    color = &(colors[2 * 3]);
+    color[0] = 0.0f;
+    color[1] = 1.0f;
+    color[2] = 0.0f;
+
+    // G
+    color = &(colors[3 * 3]);
+    color[0] = 0.0f;
+    color[1] = 1.0f;
+    color[2] = 0.0f;
+
+    // B
+    color = &(colors[4 * 3]);
+    color[0] = 0.0f;
+    color[1] = 0.0f;
+    color[2] = 1.0f;
+
+    // B
+    color = &(colors[5 * 3]);
+    color[0] = 0.0f;
+    color[1] = 0.0f;
+    color[2] = 1.0f;
+
+    return colors;
+}
+
+void CameraLocatorEntity::updateColors(float red, float green, float blue)
+{
+    const int pyramidIndex = 6 * 3;  // Only modify the colors of the pyramid, image plane and camera up direction
+    for (int i = pyramidIndex; i < _colors.size(); i += 3)
+    {
+        _colors[i] = red;
+        _colors[i + 1] = green;
+        _colors[i + 2] = blue;
+    }
+
+    QByteArray colorData(reinterpret_cast<const char*>(_colors.data()), _colors.size() * static_cast<int>(sizeof(float)));
+    auto colorDataBuffer = new Qt3DRender::QBuffer;
+    colorDataBuffer->setData(colorData);
+    _colorAttribute->setBuffer(colorDataBuffer);
 }
 
 }  // namespace sfmdataentity
