@@ -729,13 +729,15 @@ void FeaturesViewer::updateReconstruction()
             trackData.averageScale = 0.f;
             trackData.nbReconstructed = 0;
 
-            for (const auto& [viewId, featureId] : track.featPerView)
+            for (const auto& [viewId, trackItem] : track.featPerView)
             {
                 const auto featureDatasIt = _mreconstruction.featureDatasPerView.find(static_cast<aliceVision::IndexT>(viewId));
                 if (featureDatasIt == _mreconstruction.featureDatasPerView.end())
                 {
                     continue;
                 }
+
+                size_t featureId = trackItem.featureId;
 
                 auto& featureDatas = featureDatasIt->second;
                 if (featureId >= featureDatas.size())
