@@ -8,6 +8,8 @@
 
 #include <aliceVision/numeric/numeric.hpp>
 
+#include <boost/math/constants/constants.hpp>
+
 namespace sfmdataentity {
 
 CameraLocatorEntity::CameraLocatorEntity(const aliceVision::IndexT& viewId, float hfov, float vfov, Qt3DCore::QNode* parent)
@@ -31,7 +33,7 @@ CameraLocatorEntity::CameraLocatorEntity(const aliceVision::IndexT& viewId, floa
     const float radius = 0.3f;
 
     int subdiv = 1;
-    if (hfov > M_PI * 0.7 || vfov > M_PI * 0.7)
+    if (hfov > boost::math::constants::pi<double>() * 0.7 || vfov > boost::math::constants::pi<double>() * 0.7)
         subdiv = 10;
 
     // clang-format off
@@ -75,10 +77,10 @@ CameraLocatorEntity::CameraLocatorEntity(const aliceVision::IndexT& viewId, floa
             Eigen::AngleAxis<double> Rh1(hangle1, Eigen::Vector3d::UnitY());
             Eigen::AngleAxis<double> Rh2(hangle2, Eigen::Vector3d::UnitY());
 
-            aliceVision::Vec3 pt1 = Rv1.toRotationMatrix() * Rh1.toRotationMatrix() * vZ;
-            aliceVision::Vec3 pt2 = Rv2.toRotationMatrix() * Rh1.toRotationMatrix() * vZ;
-            aliceVision::Vec3 pt3 = Rv2.toRotationMatrix() * Rh2.toRotationMatrix() * vZ;
-            aliceVision::Vec3 pt4 = Rv1.toRotationMatrix() * Rh2.toRotationMatrix() * vZ;
+            aliceVision::Vec3f pt1 = (Rv1.toRotationMatrix() * Rh1.toRotationMatrix() * vZ).cast<float>();
+            aliceVision::Vec3f pt2 = (Rv2.toRotationMatrix() * Rh1.toRotationMatrix() * vZ).cast<float>();
+            aliceVision::Vec3f pt3 = (Rv2.toRotationMatrix() * Rh2.toRotationMatrix() * vZ).cast<float>();
+            aliceVision::Vec3f pt4 = (Rv1.toRotationMatrix() * Rh2.toRotationMatrix() * vZ).cast<float>();
 
             QVector<float> quad = {
                 pt1.x(), pt1.y(), pt1.z(), pt2.x(), pt2.y(), pt2.z(),
@@ -101,26 +103,28 @@ CameraLocatorEntity::CameraLocatorEntity(const aliceVision::IndexT& viewId, floa
     Eigen::AngleAxis<double> Rh1(hangle1, Eigen::Vector3d::UnitY());
     Eigen::AngleAxis<double> Rh2(hangle2, Eigen::Vector3d::UnitY());
 
-    aliceVision::Vec3 pt1 = Rv1.toRotationMatrix() * Rh1.toRotationMatrix() * vZ;
+    aliceVision::Vec3f pt1 = (Rv1.toRotationMatrix() * Rh1.toRotationMatrix() * vZ).cast<float>();
     aliceVision::Vec3 pt2 = Rv2.toRotationMatrix() * Rh1.toRotationMatrix() * vZ;
+    auto pt2f = pt2.cast<float>();
     aliceVision::Vec3 pt3 = Rv2.toRotationMatrix() * Rh2.toRotationMatrix() * vZ;
-    aliceVision::Vec3 pt4 = Rv1.toRotationMatrix() * Rh2.toRotationMatrix() * vZ;
+    auto pt3f = pt3.cast<float>();
+    aliceVision::Vec3f pt4 = (Rv1.toRotationMatrix() * Rh2.toRotationMatrix() * vZ).cast<float>();
 
     QVector<float> quad = {
-        0.0f, 0.0f, 0.0f, pt2.x(), pt2.y(), pt2.z(),
-        0.0f, 0.0f, 0.0f, pt3.x(), pt3.y(), pt3.z(),
+        0.0f, 0.0f, 0.0f, pt2f.x(), pt2f.y(), pt2f.z(),
+        0.0f, 0.0f, 0.0f, pt3f.x(), pt3f.y(), pt3f.z(),
         0.0f, 0.0f, 0.0f, pt4.x(), pt4.y(), pt4.z(),
         0.0f, 0.0f, 0.0f, pt1.x(), pt1.y(), pt1.z(),
     };
 
     bodyCam.append(quad);
 
-    aliceVision::Vec3 middle = 0.5 * (pt2 + pt3);
+    aliceVision::Vec3f middle = (0.5 * (pt2 + pt3)).cast<float>();
 
     QVector<float> upVector = {
         // Camera Up
-        pt2.x(), pt2.y(), pt2.z(), middle.x(), middle.y() + yArrowHeight, middle.z(),
-        middle.x(), middle.y() + yArrowHeight, middle.z(), pt3.x(), pt3.y(), pt3.z(),
+        pt2f.x(), pt2f.y(), pt2f.z(), middle.x(), middle.y() + yArrowHeight, middle.z(),
+        middle.x(), middle.y() + yArrowHeight, middle.z(), pt3f.x(), pt3f.y(), pt3f.z()
     };
 
     QVector<float> points;
@@ -129,7 +133,7 @@ CameraLocatorEntity::CameraLocatorEntity(const aliceVision::IndexT& viewId, floa
     points.append(upVector);
     // clang-format on
 
-    QByteArray positionData((const char*)points.data(), points.size() * static_cast<int>(sizeof(float)));
+    QByteArray positionData(reinterpret_cast<const char*>(points.data()), points.size() * static_cast<int>(sizeof(float)));
     auto vertexDataBuffer = new QBuffer;
     vertexDataBuffer->setData(positionData);
     auto positionAttribute = new QAttribute;
@@ -177,7 +181,7 @@ CameraLocatorEntity::CameraLocatorEntity(const aliceVision::IndexT& viewId, floa
     color[1] = 0.0f;
     color[2] = 1.0f;
 
-    QByteArray colorData((const char*)colors.data(), colors.size() * static_cast<int>(sizeof(float)));
+    QByteArray colorData(reinterpret_cast<const char*>(colors.data()), colors.size() * static_cast<int>(sizeof(float)));
     auto colorDataBuffer = new QBuffer;
     colorDataBuffer->setData(colorData);
     auto colorAttribute = new QAttribute;
