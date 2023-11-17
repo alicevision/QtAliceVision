@@ -26,6 +26,7 @@ class SfmDataEntity : public Qt3DCore::QEntity
     Q_PROPERTY(float locatorScale READ locatorScale WRITE setLocatorScale NOTIFY locatorScaleChanged)
     Q_PROPERTY(QQmlListProperty<sfmdataentity::CameraLocatorEntity> cameras READ cameras NOTIFY camerasChanged)
     Q_PROPERTY(QQmlListProperty<sfmdataentity::PointCloudEntity> pointClouds READ pointClouds NOTIFY pointCloudsChanged)
+    Q_PROPERTY(quint32 selectedViewId READ selectedViewId WRITE setSelectedViewId NOTIFY selectedViewIdChanged)
     Q_PROPERTY(quint32 resectionId READ resectionId WRITE setResectionId NOTIFY resectionIdChanged)
 
     Q_PROPERTY(Status status READ status NOTIFY statusChanged)
@@ -47,10 +48,12 @@ class SfmDataEntity : public Qt3DCore::QEntity
     Q_SLOT const QUrl& source() const { return _source; }
     Q_SLOT float pointSize() const { return _pointSize; }
     Q_SLOT float locatorScale() const { return _locatorScale; }
+    Q_SLOT aliceVision::IndexT selectedViewId() const { return _selectedViewId; }
     Q_SLOT aliceVision::IndexT resectionId() const { return _resectionId; }
     Q_SLOT void setSource(const QUrl& source);
     Q_SLOT void setPointSize(const float& value);
     Q_SLOT void setLocatorScale(const float& value);
+    Q_SLOT void setSelectedViewId(const aliceVision::IndexT& viewId);
     Q_SLOT void setResectionId(const aliceVision::IndexT& value);
 
     Status status() const { return _status; }
@@ -71,6 +74,7 @@ class SfmDataEntity : public Qt3DCore::QEntity
     Q_SIGNAL void objectPicked(Qt3DCore::QTransform* transform);
     Q_SIGNAL void statusChanged(Status status);
     Q_SIGNAL void skipHiddenChanged();
+    Q_SIGNAL void selectedViewIdChanged();
     Q_SIGNAL void resectionIdChanged();
 
   protected:
@@ -94,6 +98,7 @@ class SfmDataEntity : public Qt3DCore::QEntity
     bool _skipHidden = false;
     float _pointSize = 0.5f;
     float _locatorScale = 1.0f;
+    aliceVision::IndexT _selectedViewId = 0;
     aliceVision::IndexT _resectionId = 0;
     Qt3DRender::QParameter* _pointSizeParameter;
     Qt3DRender::QMaterial* _cloudMaterial;

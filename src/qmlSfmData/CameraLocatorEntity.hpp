@@ -2,7 +2,10 @@
 
 #include <QEntity>
 #include <Qt3DCore/QTransform>
+#include <Qt3DRender/QAttribute>
+
 #include <Eigen/Dense>
+
 #include <aliceVision/types.hpp>
 
 namespace sfmdataentity {
@@ -20,7 +23,10 @@ class CameraLocatorEntity : public Qt3DCore::QEntity
     ~CameraLocatorEntity() override = default;
 
     void setTransform(const Eigen::Matrix4d&);
+    QVector<float> initializeColors(int size, float defaultValue = 1.0f);
+    void updateColors(float red, float green, float blue);
 
+    aliceVision::IndexT viewId() const { return _viewId; }
     aliceVision::IndexT resectionId() const { return _resectionId; }
 
     Q_SIGNAL void viewIdChanged();
@@ -30,6 +36,8 @@ class CameraLocatorEntity : public Qt3DCore::QEntity
     Qt3DCore::QTransform* _transform;
     aliceVision::IndexT _viewId;
     aliceVision::IndexT _resectionId;
+    Qt3DRender::QAttribute* _colorAttribute;
+    QVector<float> _colors;
 };
 
 }  // namespace sfmdataentity
