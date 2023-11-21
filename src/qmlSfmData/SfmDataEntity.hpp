@@ -28,6 +28,7 @@ class SfmDataEntity : public Qt3DCore::QEntity
     Q_PROPERTY(QQmlListProperty<sfmdataentity::PointCloudEntity> pointClouds READ pointClouds NOTIFY pointCloudsChanged)
     Q_PROPERTY(quint32 selectedViewId READ selectedViewId WRITE setSelectedViewId NOTIFY selectedViewIdChanged)
     Q_PROPERTY(quint32 resectionId READ resectionId WRITE setResectionId NOTIFY resectionIdChanged)
+    Q_PROPERTY(bool displayResections READ displayResections WRITE setDisplayResections NOTIFY displayResectionsChanged)
 
     Q_PROPERTY(Status status READ status NOTIFY statusChanged)
 
@@ -50,11 +51,13 @@ class SfmDataEntity : public Qt3DCore::QEntity
     Q_SLOT float locatorScale() const { return _locatorScale; }
     Q_SLOT aliceVision::IndexT selectedViewId() const { return _selectedViewId; }
     Q_SLOT aliceVision::IndexT resectionId() const { return _resectionId; }
+    Q_SLOT bool displayResections() const { return _displayResections; }
     Q_SLOT void setSource(const QUrl& source);
     Q_SLOT void setPointSize(const float& value);
     Q_SLOT void setLocatorScale(const float& value);
     Q_SLOT void setSelectedViewId(const aliceVision::IndexT& viewId);
     Q_SLOT void setResectionId(const aliceVision::IndexT& value);
+    Q_SLOT void setDisplayResections(const bool value);
 
     Status status() const { return _status; }
 
@@ -76,6 +79,7 @@ class SfmDataEntity : public Qt3DCore::QEntity
     Q_SIGNAL void skipHiddenChanged();
     Q_SIGNAL void selectedViewIdChanged();
     Q_SIGNAL void resectionIdChanged();
+    Q_SIGNAL void displayResectionsChanged();
 
   protected:
     /// Scale child locators
@@ -100,6 +104,7 @@ class SfmDataEntity : public Qt3DCore::QEntity
     float _locatorScale = 1.0f;
     aliceVision::IndexT _selectedViewId = 0;
     aliceVision::IndexT _resectionId = 0;
+    bool _displayResections = false;
     Qt3DRender::QParameter* _pointSizeParameter;
     Qt3DRender::QMaterial* _cloudMaterial;
     Qt3DRender::QMaterial* _cameraMaterial;
