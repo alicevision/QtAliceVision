@@ -134,7 +134,7 @@ void SfmDataEntity::setResectionId(const aliceVision::IndexT& value)
     _resectionId = value;
     for (auto* entity : _cameras)
     {
-        if (entity->resectionId() > _resectionId)
+        if (entity->resectionId() > _resectionId && _displayResections)
         {
             entity->setEnabled(false);
         }
@@ -145,6 +145,21 @@ void SfmDataEntity::setResectionId(const aliceVision::IndexT& value)
     }
 
     Q_EMIT resectionIdChanged();
+}
+
+void SfmDataEntity::setDisplayResections(const bool value)
+{
+    if (_displayResections == value)
+    {
+        return;
+    }
+
+    _displayResections = value;
+    // Re-enable all cameras both when the display of the resections is enabled and when it is disabled
+    for (auto* entity : _cameras)
+    {
+        entity->setEnabled(true);
+    }
 }
 
 void SfmDataEntity::createMaterials()
@@ -274,7 +289,7 @@ void SfmDataEntity::onIOThreadFinished()
             entity->addComponent(_cameraMaterial);
             entity->setTransform(sfmData.getPoses().at(pv.second->getPoseId()).getTransform().getHomogeneous());
             entity->setObjectName(std::to_string(pv.first).c_str());
-            if (entity->resectionId() > _resectionId)
+            if (entity->resectionId() > _resectionId && _displayResections)
             {
                 entity->setEnabled(false);
             }
