@@ -56,8 +56,8 @@ CameraLocatorEntity::CameraLocatorEntity(const aliceVision::IndexT& viewId, cons
     tr.y() = sin(vfov / 2.0f);
     tr.z() = cos(vfov / 2.0f);
 
-    const float vslice = vfov / double(subdiv);
-    const float hslice = hfov / double(subdiv);
+    const float vslice = vfov / static_cast<double>(subdiv);
+    const float hslice = hfov / static_cast<double>(subdiv);
 
     Eigen::Vector3d vZ = - Eigen::Vector3d::UnitZ() * radius;
 
