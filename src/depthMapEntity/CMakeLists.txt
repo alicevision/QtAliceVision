@@ -53,7 +53,7 @@ target_link_libraries(depthMapEntityPlugin
 
 set_target_properties(depthMapEntityPlugin
       PROPERTIES
-      DEBUG_POSTFIX "d"
+      DEBUG_POSTFIX ""
       FOLDER "depthMapEntityPlugin"
       $SOVERSION ${PROJECT_VERSION_MAJOR}
       VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}"

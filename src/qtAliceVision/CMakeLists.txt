@@ -77,7 +77,7 @@ target_link_libraries(qtAliceVisionPlugin
 
 set_target_properties(qtAliceVisionPlugin
         PROPERTIES
-        DEBUG_POSTFIX "d"
+        DEBUG_POSTFIX ""
         FOLDER "qtAliceVisionPlugin"
         SOVERSION ${PROJECT_VERSION_MAJOR}
         VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}"
