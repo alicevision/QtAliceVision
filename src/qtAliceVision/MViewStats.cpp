@@ -262,13 +262,13 @@ void MViewStats::computeViewStats()
                 residualFullHistY[i] = static_cast<size_t>(round(static_cast<double>(residualFullHistY[i]) / nbCameras));
             }
             std::vector<double> residualHistX = _residualHistogramFull.GetXbinsValue();
-            if(residualHistX.size() != residualFullHistY.size())
+            
+            for (std::size_t i = 0; i < residualHistX.size(); ++i)
             {
-                throw std::runtime_error("MViewStats::computeViewStats: residualHistX & residualFullHistY size mismatch.");
+                _residualMaxAxisX = round(std::max(_residualMaxAxisX, residualHistX[i]));
             }
             for (std::size_t i = 0; i < residualFullHistY.size(); ++i)
             {
-                _residualMaxAxisX = round(std::max(_residualMaxAxisX, residualHistX[i]));
                 _residualMaxAxisY = round(std::max(_residualMaxAxisY, double(residualFullHistY[i])));
             }
         }
@@ -278,14 +278,13 @@ void MViewStats::computeViewStats()
             sfm::computeResidualsHistogram(_msfmData->rawData(), residualViewStats, &_residualHistogramView, {_viewId});
             std::vector<size_t>& residualViewHistY = _residualHistogramView.GetHist();
             std::vector<double> residualHistX = _residualHistogramView.GetXbinsValue();
-            if(residualHistX.size() != residualViewHistY.size())
-            {
-                throw std::runtime_error("MViewStats::computeViewStats: residualHistX & residualViewHistY size mismatch.");
-            }
 
-            for (std::size_t i = 0; i < residualViewHistY.size(); ++i)
+            for (std::size_t i = 0; i < residualHistX.size(); ++i)
             {
                 _residualMaxAxisX = round(std::max(_residualMaxAxisX, residualHistX[i]));
+            }
+            for (std::size_t i = 0; i < residualViewHistY.size(); ++i)
+            {
                 _residualMaxAxisY = round(std::max(_residualMaxAxisY, double(residualViewHistY[i])));
             }
         }
@@ -302,7 +301,7 @@ void MViewStats::computeViewStats()
             sfm::computeObservationsLengthsHistogram(
               _msfmData->rawData(), observationsLengthsFullStats, _nbObservations, &_observationsLengthsHistogramFull);
 
-            double nbCameras = double(_msfmData->nbCameras());
+            const double nbCameras = double(_msfmData->nbCameras());
             std::vector<size_t>& observationsLengthsFullHistY = _observationsLengthsHistogramFull.GetHist();
 
             // normalize the histogram to get the average number of observations
@@ -311,13 +310,13 @@ void MViewStats::computeViewStats()
                 observationsLengthsFullHistY[i] = static_cast<size_t>(round(static_cast<double>(observationsLengthsFullHistY[i]) / nbCameras));
             }
             std::vector<double> observationsLengthsHistX = _observationsLengthsHistogramFull.GetXbinsValue();
-            if(observationsLengthsHistX.size() != observationsLengthsFullHistY.size())
+
+            for (std::size_t i = 0; i < observationsLengthsHistX.size(); ++i)
             {
-                throw std::runtime_error("MViewStats::computeViewStats: observationsLengthsHistX & observationsLengthsFullHistY size mismatch.");
+                _observationsLengthsMaxAxisX = round(std::max(_observationsLengthsMaxAxisX, observationsLengthsHistX[i]));
             }
             for (std::size_t i = 0; i < observationsLengthsFullHistY.size(); ++i)
             {
-                _observationsLengthsMaxAxisX = round(std::max(_observationsLengthsMaxAxisX, observationsLengthsHistX[i]));
                 _observationsLengthsMaxAxisY = round(std::max(_observationsLengthsMaxAxisY, double(observationsLengthsFullHistY[i])));
             }
         }
@@ -326,16 +325,15 @@ void MViewStats::computeViewStats()
             BoxStats<double> observationsLengthsViewStats;
             sfm::computeObservationsLengthsHistogram(
               _msfmData->rawData(), observationsLengthsViewStats, _nbObservations, &_observationsLengthsHistogramView, {_viewId});
-            std::vector<size_t> observationsLengthsViewHistY = _observationsLengthsHistogramView.GetHist();
-            std::vector<double> observationsLengthsHistX = _observationsLengthsHistogramView.GetXbinsValue();
-            if(observationsLengthsHistX.size() != observationsLengthsViewHistY.size())
-            {
-                throw std::runtime_error("MViewStats::computeViewStats: observationsLengthsHistX & observationsLengthsViewHistY size mismatch.");
-            }
+            const std::vector<size_t> observationsLengthsViewHistY = _observationsLengthsHistogramView.GetHist();
+            const std::vector<double> observationsLengthsHistX = _observationsLengthsHistogramView.GetXbinsValue();
 
-            for (std::size_t i = 0; i < observationsLengthsViewHistY.size(); ++i)
+            for (std::size_t i = 0; i < observationsLengthsHistX.size(); ++i)
             {
                 _observationsLengthsMaxAxisX = round(std::max(_observationsLengthsMaxAxisX, observationsLengthsHistX[i]));
+            }
+            for (std::size_t i = 0; i < observationsLengthsViewHistY.size(); ++i)
+            {
                 _observationsLengthsMaxAxisY = round(std::max(_observationsLengthsMaxAxisY, double(observationsLengthsViewHistY[i])));
             }
         }
@@ -347,7 +345,7 @@ void MViewStats::computeViewStats()
         BoxStats<double> observationsScaleFullStats;
         sfm::computeScaleHistogram(_msfmData->rawData(), observationsScaleFullStats, &_observationsScaleHistogramFull);
 
-        double nbCameras = double(_msfmData->nbCameras());
+        const double nbCameras = double(_msfmData->nbCameras());
 
         // normalize the histogram to get the average number of observations
         std::vector<size_t>& observationsScaleFullHistY = _observationsScaleHistogramFull.GetHist();
@@ -356,23 +354,11 @@ void MViewStats::computeViewStats()
             observationsScaleFullHistY[i] = static_cast<std::size_t>(std::round(static_cast<double>(observationsScaleFullHistY[i]) / nbCameras));
         }
         std::vector<double> observationsScaleHistX = _observationsScaleHistogramFull.GetXbinsValue();
-        if(observationsScaleHistX.size() != observationsScaleFullHistY.size())
-        {
-            std::stringstream s;
-            s << "MViewStats::computeViewStats: "
-              << "observationsScaleHistX (" << observationsScaleHistX.size() << ") & "
-              << "observationsScaleFullHistY (" << observationsScaleFullHistY.size() << ") size mismatch.";
-            throw std::runtime_error(s.str());
-        }
 
         // histogram of observations Scale of current view
         BoxStats<double> observationsScaleViewStats;
         sfm::computeScaleHistogram(_msfmData->rawData(), observationsScaleViewStats, &_observationsScaleHistogramView, {_viewId});
-        std::vector<size_t> observationsScaleViewHistY = _observationsScaleHistogramView.GetHist();
-        if(observationsScaleHistX.size() != observationsScaleViewHistY.size())
-        {
-            throw std::runtime_error("MViewStats::computeViewStats: observationsScaleHistX & observationsScaleViewHistY size mismatch.");
-        }
+        const std::vector<size_t> observationsScaleViewHistY = _observationsScaleHistogramView.GetHist();
 
         _observationsScaleMaxAxisX = 0.0;
         _observationsScaleMaxAxisY = 0.0;
@@ -380,6 +366,9 @@ void MViewStats::computeViewStats()
         for (std::size_t i = 0; i < observationsScaleHistX.size(); ++i)
         {
             _observationsScaleMaxAxisX = round(std::max(_observationsScaleMaxAxisX, observationsScaleHistX[i]));
+        }
+        for (std::size_t i = 0; i < observationsScaleFullHistY.size(); ++i)
+        {
             _observationsScaleMaxAxisY = round(std::max(_observationsScaleMaxAxisY, double(observationsScaleFullHistY[i])));
         }
         for (std::size_t i = 0; i < observationsScaleViewHistY.size(); ++i)
