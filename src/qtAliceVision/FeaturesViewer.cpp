@@ -257,14 +257,15 @@ void FeaturesViewer::updatePaintTracks(const PaintParams& params, QSGNode* node)
     qDebug() << "[QtAliceVision] FeaturesViewer: Update paint " << _describerType << " tracks.";
 
     bool valid = (_displayTracks && params.haveValidFeatures && params.haveValidTracks && params.haveValidLandmarks &&
-       _msfmdata);
+       _msfmdata && _currentViewId != aliceVision::UndefinedIndexT);
     
     aliceVision::IndexT currentFrameId = aliceVision::UndefinedIndexT;
     if(valid)
     {
-        if(const auto& view = _msfmdata->rawData().getViewPtr(_currentViewId))
+        if(_msfmdata->rawData().getViews().count(_currentViewId))
         {
-            currentFrameId = view->getFrameId();
+            const auto& view = _msfmdata->rawData().getView(_currentViewId);
+            currentFrameId = view.getFrameId();
         }
 
         if (currentFrameId == aliceVision::UndefinedIndexT)
@@ -700,18 +701,18 @@ void FeaturesViewer::updateReconstruction()
 
                 data.hasLandmark = true;
 
-                const auto& view = sfmData.getViewPtr(static_cast<aliceVision::IndexT>(viewId));
-                if(!view)
+                if(!sfmData.getViews().count(viewId))
                 {
                     continue;
                 }
-                if(!sfmData.isPoseAndIntrinsicDefined(view))
+                const auto& view = sfmData.getView(static_cast<aliceVision::IndexT>(viewId));
+                if(!sfmData.isPoseAndIntrinsicDefined(&view))
                 {
                     continue;
                 }
-                const auto& pose = sfmData.getPose(*view);
+                const auto& pose = sfmData.getPose(view);
                 const auto& camTransform = pose.getTransform();
-                const auto& intrinsic = sfmData.getIntrinsicPtr(view->getIntrinsicId());
+                const auto& intrinsic = sfmData.getIntrinsicPtr(view.getIntrinsicId());
                 const aliceVision::Vec2 reprojection = intrinsic->project(camTransform, landmark.X.homogeneous());
                 data.rx = static_cast<float>(reprojection.x());
                 data.ry = static_cast<float>(reprojection.y());
@@ -766,9 +767,10 @@ void FeaturesViewer::updateReconstruction()
                     elt.featureId = static_cast<aliceVision::IndexT>(featureId);
 
                     const auto& sfmData = _msfmdata->rawData();
-                    if(const auto& view = sfmData.getViewPtr(static_cast<aliceVision::IndexT>(viewId)))
+                    if(sfmData.getViews().count(viewId))
                     {
-                        elt.frameId = view->getFrameId();
+                        const auto& view = sfmData.getView(static_cast<aliceVision::IndexT>(viewId));
+                        elt.frameId = view.getFrameId();
                     }
 
                     trackData.elements.push_back(elt);
