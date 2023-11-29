@@ -32,7 +32,7 @@ void MViewStats::fillResidualFullSerie(QXYSeries* residuals)
     std::vector<double> residualHistX = _residualHistogramFull.GetXbinsValue();
     std::vector<size_t> residualHistY = _residualHistogramFull.GetHist();
 
-    if(residualHistX.size() != residualHistY.size())
+    if (residualHistX.size() != residualHistY.size())
     {
         throw std::runtime_error("MViewStats::fillResidualFullSerie: residualHistX & residualHistY size mismatch.");
     }
@@ -67,7 +67,7 @@ void MViewStats::fillResidualViewSerie(QXYSeries* residuals)
 
     std::vector<double> residualHistX = _residualHistogramView.GetXbinsValue();
     std::vector<size_t> residualHistY = _residualHistogramView.GetHist();
-    if(residualHistX.size() != residualHistY.size())
+    if (residualHistX.size() != residualHistY.size())
     {
         throw std::runtime_error("MViewStats::fillResidualViewSerie: residualHistX & residualHistY size mismatch.");
     }
@@ -102,7 +102,7 @@ void MViewStats::fillObservationsLengthsFullSerie(QXYSeries* observationsLengths
 
     std::vector<double> observationsLengthsHistX = _observationsLengthsHistogramFull.GetXbinsValue();
     std::vector<size_t> observationsLengthsHistY = _observationsLengthsHistogramFull.GetHist();
-    if(observationsLengthsHistX.size() != observationsLengthsHistY.size())
+    if (observationsLengthsHistX.size() != observationsLengthsHistY.size())
     {
         throw std::runtime_error("MViewStats::fillObservationsLengthsFullSerie: observationsLengthsHistX & observationsLengthsHistY size mismatch.");
     }
@@ -137,7 +137,7 @@ void MViewStats::fillObservationsLengthsViewSerie(QXYSeries* observationsLengths
 
     std::vector<double> observationsLengthsHistX = _observationsLengthsHistogramView.GetXbinsValue();
     std::vector<size_t> observationsLengthsHistY = _observationsLengthsHistogramView.GetHist();
-    if(observationsLengthsHistX.size() != observationsLengthsHistY.size())
+    if (observationsLengthsHistX.size() != observationsLengthsHistY.size())
     {
         throw std::runtime_error("MViewStats::fillObservationsLengthsViewSerie: observationsLengthsHistX & observationsLengthsHistY size mismatch.");
     }
@@ -172,7 +172,7 @@ void MViewStats::fillObservationsScaleFullSerie(QXYSeries* observationsScale)
 
     std::vector<double> observationsScaleHistX = _observationsScaleHistogramFull.GetXbinsValue();
     std::vector<size_t> observationsScaleHistY = _observationsScaleHistogramFull.GetHist();
-    if(observationsScaleHistX.size() != observationsScaleHistY.size())
+    if (observationsScaleHistX.size() != observationsScaleHistY.size())
     {
         throw std::runtime_error("MViewStats::fillObservationsScaleFullSerie: observationsScaleHistX & observationsScaleHistY size mismatch.");
     }
@@ -207,7 +207,7 @@ void MViewStats::fillObservationsScaleViewSerie(QXYSeries* observationsScale)
 
     std::vector<double> observationsScaleHistX = _observationsScaleHistogramView.GetXbinsValue();
     std::vector<size_t> observationsScaleHistY = _observationsScaleHistogramView.GetHist();
-    if(observationsScaleHistX.size() != observationsScaleHistY.size())
+    if (observationsScaleHistX.size() != observationsScaleHistY.size())
     {
         throw std::runtime_error("MViewStats::fillObservationsScaleViewSerie: observationsScaleHistX & observationsScaleHistY size mismatch.");
     }
@@ -262,7 +262,7 @@ void MViewStats::computeViewStats()
                 residualFullHistY[i] = static_cast<size_t>(round(static_cast<double>(residualFullHistY[i]) / nbCameras));
             }
             std::vector<double> residualHistX = _residualHistogramFull.GetXbinsValue();
-            
+
             for (std::size_t i = 0; i < residualHistX.size(); ++i)
             {
                 _residualMaxAxisX = round(std::max(_residualMaxAxisX, residualHistX[i]));

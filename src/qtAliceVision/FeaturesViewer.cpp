@@ -256,13 +256,13 @@ void FeaturesViewer::updatePaintTracks(const PaintParams& params, QSGNode* node)
 {
     qDebug() << "[QtAliceVision] FeaturesViewer: Update paint " << _describerType << " tracks.";
 
-    bool valid = (_displayTracks && params.haveValidFeatures && params.haveValidTracks && params.haveValidLandmarks &&
-       _msfmdata && _currentViewId != aliceVision::UndefinedIndexT);
-    
+    bool valid = (_displayTracks && params.haveValidFeatures && params.haveValidTracks && params.haveValidLandmarks && _msfmdata &&
+                  _currentViewId != aliceVision::UndefinedIndexT);
+
     aliceVision::IndexT currentFrameId = aliceVision::UndefinedIndexT;
-    if(valid)
+    if (valid)
     {
-        if(_msfmdata->rawData().getViews().count(_currentViewId))
+        if (_msfmdata->rawData().getViews().count(_currentViewId))
         {
             const auto& view = _msfmdata->rawData().getView(_currentViewId);
             currentFrameId = view.getFrameId();
@@ -275,7 +275,7 @@ void FeaturesViewer::updatePaintTracks(const PaintParams& params, QSGNode* node)
         }
     }
 
-    if(!valid)
+    if (!valid)
     {
         painter.clearLayer(node, "trackEndpoints");
         painter.clearLayer(node, "highlightPoints");
@@ -701,12 +701,12 @@ void FeaturesViewer::updateReconstruction()
 
                 data.hasLandmark = true;
 
-                if(!sfmData.getViews().count(viewId))
+                if (!sfmData.getViews().count(viewId))
                 {
                     continue;
                 }
                 const auto& view = sfmData.getView(static_cast<aliceVision::IndexT>(viewId));
-                if(!sfmData.isPoseAndIntrinsicDefined(&view))
+                if (!sfmData.isPoseAndIntrinsicDefined(&view))
                 {
                     continue;
                 }
@@ -767,7 +767,7 @@ void FeaturesViewer::updateReconstruction()
                     elt.featureId = static_cast<aliceVision::IndexT>(featureId);
 
                     const auto& sfmData = _msfmdata->rawData();
-                    if(sfmData.getViews().count(viewId))
+                    if (sfmData.getViews().count(viewId))
                     {
                         const auto& view = sfmData.getView(static_cast<aliceVision::IndexT>(viewId));
                         elt.frameId = view.getFrameId();
