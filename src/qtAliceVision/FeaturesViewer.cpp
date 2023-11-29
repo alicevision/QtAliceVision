@@ -256,7 +256,26 @@ void FeaturesViewer::updatePaintTracks(const PaintParams& params, QSGNode* node)
 {
     qDebug() << "[QtAliceVision] FeaturesViewer: Update paint " << _describerType << " tracks.";
 
-    if (!_displayTracks || !params.haveValidFeatures || !params.haveValidTracks || !params.haveValidLandmarks)
+    bool valid = (_displayTracks && params.haveValidFeatures && params.haveValidTracks && params.haveValidLandmarks && _msfmdata &&
+                  _currentViewId != aliceVision::UndefinedIndexT);
+
+    aliceVision::IndexT currentFrameId = aliceVision::UndefinedIndexT;
+    if (valid)
+    {
+        if (_msfmdata->rawData().getViews().count(_currentViewId))
+        {
+            const auto& view = _msfmdata->rawData().getView(_currentViewId);
+            currentFrameId = view.getFrameId();
+        }
+
+        if (currentFrameId == aliceVision::UndefinedIndexT)
+        {
+            qInfo() << "[QtAliceVision] FeaturesViewer: Unable to update paint " << _describerType << " tracks, can't find current frame id.";
+            valid = false;
+        }
+    }
+
+    if (!valid)
     {
         painter.clearLayer(node, "trackEndpoints");
         painter.clearLayer(node, "highlightPoints");
@@ -267,24 +286,6 @@ void FeaturesViewer::updatePaintTracks(const PaintParams& params, QSGNode* node)
         painter.clearLayer(node, "trackLines_reconstruction_full");
         painter.clearLayer(node, "trackPoints_outliers");
         painter.clearLayer(node, "trackPoints_inliers");
-        return;
-    }
-
-    aliceVision::IndexT currentFrameId = aliceVision::UndefinedIndexT;
-    try
-    {
-        currentFrameId = _msfmdata->rawData().getView(_currentViewId).getFrameId();
-    }
-    catch (std::exception& e)
-    {
-        qWarning() << "[QtAliceVision] FeaturesViewer: Failed to retrieve the current frame id."
-                   << "\n"
-                   << e.what();
-    }
-
-    if (currentFrameId == aliceVision::UndefinedIndexT)
-    {
-        qInfo() << "[QtAliceVision] FeaturesViewer: Unable to update paint " << _describerType << " tracks, can't find current frame id.";
         return;
     }
 
@@ -700,7 +701,15 @@ void FeaturesViewer::updateReconstruction()
 
                 data.hasLandmark = true;
 
-                const auto& view = sfmData.getView(viewId);
+                if (!sfmData.getViews().count(viewId))
+                {
+                    continue;
+                }
+                const auto& view = sfmData.getView(static_cast<aliceVision::IndexT>(viewId));
+                if (!sfmData.isPoseAndIntrinsicDefined(&view))
+                {
+                    continue;
+                }
                 const auto& pose = sfmData.getPose(view);
                 const auto& camTransform = pose.getTransform();
                 const auto& intrinsic = sfmData.getIntrinsicPtr(view.getIntrinsicId());
@@ -758,8 +767,11 @@ void FeaturesViewer::updateReconstruction()
                     elt.featureId = static_cast<aliceVision::IndexT>(featureId);
 
                     const auto& sfmData = _msfmdata->rawData();
-                    const auto& view = sfmData.getView(static_cast<aliceVision::IndexT>(viewId));
-                    elt.frameId = view.getFrameId();
+                    if (sfmData.getViews().count(viewId))
+                    {
+                        const auto& view = sfmData.getView(static_cast<aliceVision::IndexT>(viewId));
+                        elt.frameId = view.getFrameId();
+                    }
 
                     trackData.elements.push_back(elt);
 
