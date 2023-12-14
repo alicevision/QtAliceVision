@@ -147,8 +147,8 @@ int MSfMData::nbLandmarks(QString describerType, int viewId) const
         if (landmark.descType != descType)
             continue;
 
-        const auto observationIt = landmark.observations.find(viewId);
-        if (observationIt == landmark.observations.end())
+        const auto observationIt = landmark.getObservations().find(viewId);
+        if (observationIt == landmark.getObservations().end())
             continue;
 
         ++count;

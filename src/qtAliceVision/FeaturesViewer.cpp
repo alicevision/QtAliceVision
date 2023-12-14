@@ -683,7 +683,7 @@ void FeaturesViewer::updateReconstruction()
 
         for (const auto& [_, landmark] : landmarks)
         {
-            for (const auto& [viewId, observation] : landmark.observations)
+            for (const auto& [viewId, observation] : landmark.getObservations())
             {
                 const auto featureDatasIt = _mreconstruction.featureDatasPerView.find(viewId);
                 if (featureDatasIt == _mreconstruction.featureDatasPerView.end())
@@ -692,12 +692,12 @@ void FeaturesViewer::updateReconstruction()
                 }
 
                 auto& featureDatas = featureDatasIt->second;
-                if (observation.id_feat >= featureDatas.size())
+                if (observation.getFeatureId() >= featureDatas.size())
                 {
                     continue;
                 }
 
-                auto& data = featureDatas[observation.id_feat];
+                auto& data = featureDatas[observation.getFeatureId()];
 
                 data.hasLandmark = true;
 
