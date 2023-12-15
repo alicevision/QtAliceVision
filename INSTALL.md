@@ -5,7 +5,7 @@ This guide will help you build and install QtAliceVision plugin.
 QtAliceVision requires:
 * [Qt5](https://www.qt.io/) (== 5.15.2, make sure to use the **same version** as the target application)
 * [AliceVision](https://github.com/aliceVision/AliceVision)
-* [OpenImageIO](https://github.com/https://github.com/OpenImageIO/oiio) (>= 2.1) - with OpenEXR support for depthmaps visualization
+* [OpenImageIO](https://github.com/AcademySoftwareFoundation/OpenImageIO) (>= 2.1) - with OpenEXR support for depthmaps visualization
 * [Alembic](https://github.com/alembic/alembic) (>= 1.7)
 * [CMake](https://cmake.org/) (>= 3.11)
 * On Windows platform: Microsoft Visual Studio (>= 2019)
