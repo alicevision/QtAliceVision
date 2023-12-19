@@ -274,12 +274,12 @@ void DepthMapEntity::loadDepthMap()
     }
     if (cParam->type().basetype == oiio::TypeDesc::BASETYPE::DOUBLE)
     {
-        std::copy_n(static_cast<const double*>(cParam->data()), 9, CArr.m);
+        std::copy_n(static_cast<const double*>(cParam->data()), 3, CArr.m);
     }
     else if (cParam->type().basetype == oiio::TypeDesc::BASETYPE::FLOAT)
     {
         const float* d = static_cast<const float*>(cParam->data());
-        for (int i = 0; i < 9; ++i)
+        for (int i = 0; i < 3; ++i)
         {
             CArr.m[i] = d[i];
         }
