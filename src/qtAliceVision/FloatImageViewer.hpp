@@ -41,7 +41,7 @@ class FloatImageViewer : public QQuickItem
 
     Q_PROPERTY(QSize sourceSize READ sourceSize NOTIFY sourceSizeChanged)
 
-    Q_PROPERTY(bool loading READ loading NOTIFY loadingChanged)
+    Q_PROPERTY(EStatus status READ status NOTIFY statusChanged)
 
     Q_PROPERTY(bool clearBeforeLoad MEMBER _clearBeforeLoad NOTIFY clearBeforeLoadChanged)
 
@@ -66,6 +66,20 @@ class FloatImageViewer : public QQuickItem
   public:
     explicit FloatImageViewer(QQuickItem* parent = nullptr);
     ~FloatImageViewer() override;
+
+    enum class EStatus : quint8
+    {
+        NONE,              // nothing is happening, no error has been detected
+        LOADING,           // an image is being loaded
+        OUTDATED_LOADING,  // an image was already loading during the previous reload()
+        MISSING_FILE,      // the file to load is missing
+        ERROR              // generic error
+    };
+    Q_ENUM(EStatus)
+
+    EStatus status() const { return _status; }
+
+    void setStatus(EStatus status);
 
     bool loading() const { return _loading; }
 
@@ -103,7 +117,7 @@ class FloatImageViewer : public QQuickItem
 
     // Q_SIGNALS
     Q_SIGNAL void sourceChanged();
-    Q_SIGNAL void loadingChanged();
+    Q_SIGNAL void statusChanged();
     Q_SIGNAL void clearBeforeLoadChanged();
     Q_SIGNAL void gammaChanged();
     Q_SIGNAL void gainChanged();
@@ -147,6 +161,7 @@ class FloatImageViewer : public QQuickItem
     float _gamma = 1.f;
     float _gain = 1.f;
 
+    EStatus _status = EStatus::NONE;
     bool _loading = false;
     bool _outdated = false;
     bool _clearBeforeLoad = true;

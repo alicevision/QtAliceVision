@@ -50,6 +50,16 @@ FloatImageViewer::FloatImageViewer(QQuickItem* parent)
 
 FloatImageViewer::~FloatImageViewer() {}
 
+void FloatImageViewer::setStatus(EStatus status)
+{
+    if (_status == status)
+    {
+        return;
+    }
+    _status = status;
+    Q_EMIT statusChanged();
+}
+
 // LOADING FUNCTIONS
 void FloatImageViewer::setLoading(bool loading)
 {
@@ -58,7 +68,6 @@ void FloatImageViewer::setLoading(bool loading)
         return;
     }
     _loading = loading;
-    Q_EMIT loadingChanged();
 }
 
 void FloatImageViewer::setSequence(const QVariantList& paths)
@@ -86,7 +95,9 @@ void FloatImageViewer::reload()
 
     _outdated = false;
     if (_loading)
+    {
         _outdated = true;
+    }
 
     if (!_source.isValid())
     {
@@ -108,6 +119,7 @@ void FloatImageViewer::reload()
     if (response.img)
     {
         setLoading(false);
+        setStatus(EStatus::NONE);
 
         _surface.setVerticesChanged(true);
         _surface.setNeedToUseIntrinsic(true);
@@ -120,6 +132,28 @@ void FloatImageViewer::reload()
 
         _metadata = response.metadata;
         Q_EMIT metadataChanged();
+    }
+    else if (response.error != imgserve::LoadingStatus::SUCCESSFUL)
+    {
+        _image.reset();
+        _imageChanged = true;
+        Q_EMIT imageChanged();
+        setLoading(false);
+        switch (response.error)
+        {
+            case imgserve::LoadingStatus::MISSING_FILE:
+                setStatus(EStatus::MISSING_FILE);
+                break;
+            case imgserve::LoadingStatus::ERROR:
+            default:
+                setStatus(EStatus::ERROR);
+                break;
+        }
+    }
+    else if (_outdated)
+    {
+        qWarning() << "[QtAliceVision] The loading status has not been updated since the last reload. Something wrong might have happened.";
+        setStatus(EStatus::OUTDATED_LOADING);
     }
     else
     {

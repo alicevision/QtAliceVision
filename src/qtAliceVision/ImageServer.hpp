@@ -13,6 +13,13 @@
 namespace qtAliceVision {
 namespace imgserve {
 
+enum LoadingStatus
+{
+    SUCCESSFUL,
+    MISSING_FILE,
+    ERROR
+};
+
 /**
  * @brief Utility structure to encapsulate an image loading request.
  */
@@ -33,6 +40,8 @@ struct ResponseData
     QSize dim;
 
     QVariantMap metadata;
+
+    LoadingStatus error = SUCCESSFUL;
 };
 
 /**
