@@ -47,15 +47,11 @@ void Surface::update(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, Q
 // GRID METHODS
 void Surface::computeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize, int downscaleLevel)
 {
-    aliceVision::camera::IntrinsicBase* intrinsic = nullptr;
     bool verticesComputed = false;
     if (_sfmLoaded && (_isPanoramaRotating || _needToUseIntrinsic))
     {
         // Load Intrinsic with 2 ways whether we are in the Panorama or Distorsion Viewer
-        if (_msfmData)
-        {
-            intrinsic = getIntrinsicFromViewId(_idView);
-        }
+        const aliceVision::camera::IntrinsicBase* intrinsic = (_msfmData)?getIntrinsicFromViewId(_idView):nullptr;
 
         if (intrinsic)
         {
@@ -120,7 +116,7 @@ void Surface::computeGrid(QSGGeometry* geometryLine)
 
 void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices,
                                   QSize textureSize,
-                                  aliceVision::camera::IntrinsicBase* intrinsic,
+                                  const aliceVision::camera::IntrinsicBase* intrinsic,
                                   int downscaleLevel)
 {
     // Retrieve pose if Panorama Viewer is enable
@@ -140,7 +136,7 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices,
         pose = _msfmData->rawData().getPose(view);
     }
 
-    aliceVision::camera::Equidistant* eqcam = dynamic_cast<aliceVision::camera::Equidistant*>(intrinsic);
+    const aliceVision::camera::Equidistant* eqcam = dynamic_cast<const aliceVision::camera::Equidistant*>(intrinsic);
     aliceVision::Vec2 center = {0, 0};
     double radius = std::numeric_limits<double>::max();
 
@@ -388,16 +384,11 @@ QPointF Surface::getPrincipalPoint()
 {
     aliceVision::Vec2 ppCorrection(0.0, 0.0);
 
-    aliceVision::camera::IntrinsicBase* intrinsic = nullptr;
-
-    if (_msfmData)
-    {
-        intrinsic = getIntrinsicFromViewId(_idView);
-    }
+    const aliceVision::camera::IntrinsicBase* intrinsic = (_msfmData)? getIntrinsicFromViewId(_idView): nullptr;
 
     if (intrinsic && aliceVision::camera::isPinhole(intrinsic->getType()))
     {
-        ppCorrection = dynamic_cast<aliceVision::camera::IntrinsicScaleOffset&>(*intrinsic).getOffset();
+        ppCorrection = dynamic_cast<const aliceVision::camera::IntrinsicScaleOffset&>(*intrinsic).getOffset();
     }
 
     return {ppCorrection.x(), ppCorrection.y()};
@@ -633,22 +624,20 @@ void Surface::setMSfmData(MSfMData* sfmData)
     Q_EMIT sfmDataChanged();
 }
 
-aliceVision::camera::IntrinsicBase* Surface::getIntrinsicFromViewId(unsigned int viewId) const
+const aliceVision::camera::IntrinsicBase* Surface::getIntrinsicFromViewId(unsigned int viewId) const
 {
     if (!_msfmData)
     {
         return nullptr;
     }
-    aliceVision::camera::IntrinsicBase* intrinsic = nullptr;
+    
     const auto viewIt = _msfmData->rawData().getViews().find(viewId);
     if (viewIt == _msfmData->rawData().getViews().end())
     {
         return nullptr;
     }
     const aliceVision::sfmData::View& view = *viewIt->second;
-    intrinsic = _msfmData->rawData().getIntrinsicPtr(view.getIntrinsicId());
-
-    return intrinsic;
+    return _msfmData->rawData().getIntrinsicPtr(view.getIntrinsicId());
 }
 
 const aliceVision::camera::Equidistant* Surface::getIntrinsicEquidistant() const

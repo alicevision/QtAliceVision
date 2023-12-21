@@ -151,13 +151,13 @@ class Surface : public QObject
     const aliceVision::camera::Equidistant* getIntrinsicEquidistant() const;
 
   private:
-    aliceVision::camera::IntrinsicBase* getIntrinsicFromViewId(unsigned int viewId) const;
+    const aliceVision::camera::IntrinsicBase* getIntrinsicFromViewId(unsigned int viewId) const;
 
     void computeGrid(QSGGeometry::TexturedPoint2D* vertices, quint16* indices, QSize textureSize, int downscaleLevel = 0);
 
     void computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices,
                              QSize textureSize,
-                             aliceVision::camera::IntrinsicBase* intrinsic,
+                             const aliceVision::camera::IntrinsicBase* intrinsic,
                              int downscaleLevel = 0);
 
     void computeIndicesGrid(quint16* indices);
