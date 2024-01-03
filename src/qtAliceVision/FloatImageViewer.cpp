@@ -158,6 +158,7 @@ void FloatImageViewer::reload()
     else
     {
         setLoading(true);
+        setStatus(EStatus::LOADING);
     }
 
     Q_EMIT cachedFramesChanged();
