@@ -177,7 +177,7 @@ QVector4D FloatImageViewer::pixelValueAt(int x, int y)
         // qInfo() << "[QtAliceVision] FloatImageViewer::pixelValueAt(" << x << ", " << y << ") => no valid image";
         return QVector4D(0.0, 0.0, 0.0, 0.0);
     }
-    else if (x < 0 || x >= _image->Width() || y < 0 || y >= _image->Height())
+    else if (x < 0 || x >= _image->width() || y < 0 || y >= _image->height())
     {
         // qInfo() << "[QtAliceVision] FloatImageViewer::pixelValueAt(" << x << ", " << y << ") => out of range";
         return QVector4D(0.0, 0.0, 0.0, 0.0);
@@ -306,8 +306,8 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
                 const aliceVision::Vec3 fisheyeCircleParams(
                   intrinsicEquidistant->getCircleCenterX(), intrinsicEquidistant->getCircleCenterY(), intrinsicEquidistant->getCircleRadius());
 
-                const double width = _image->Width() * pow(2.0, _downscaleLevel);
-                const double height = _image->Height() * pow(2.0, _downscaleLevel);
+                const double width = _image->width() * pow(2.0, _downscaleLevel);
+                const double height = _image->height() * pow(2.0, _downscaleLevel);
                 const double aspectRatio = (width > height) ? width / height : height / width;
 
                 const double radiusInPercentage = (fisheyeCircleParams.z() / ((width > height) ? height : width)) * 2.0;

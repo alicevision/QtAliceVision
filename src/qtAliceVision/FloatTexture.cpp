@@ -22,13 +22,13 @@ FloatTexture::~FloatTexture()
 void FloatTexture::setImage(std::shared_ptr<FloatImage>& image)
 {
     _srcImage = image;
-    _textureSize = {_srcImage->Width(), _srcImage->Height()};
+    _textureSize = {_srcImage->width(), _srcImage->height()};
     _dirty = true;
     _dirtyBindOptions = true;
     _mipmapsGenerated = false;
 }
 
-bool FloatTexture::isValid() const { return _srcImage->Width() != 0 && _srcImage->Height() != 0; }
+bool FloatTexture::isValid() const { return _srcImage->width() != 0 && _srcImage->height() != 0; }
 
 int FloatTexture::textureId() const
 {
@@ -92,13 +92,13 @@ void FloatTexture::bind()
         }
 
         // Downscale the texture to fit inside the max texture limit if it is too big.
-        while (_maxTextureSize != -1 && (_srcImage->Width() > _maxTextureSize || _srcImage->Height() > _maxTextureSize))
+        while (_maxTextureSize != -1 && (_srcImage->width() > _maxTextureSize || _srcImage->height() > _maxTextureSize))
         {
             FloatImage tmp;
-            aliceVision::image::ImageHalfSample(*_srcImage, tmp);
+            aliceVision::image::imageHalfSample(*_srcImage, tmp);
             *_srcImage = std::move(tmp);
         }
-        _textureSize = {_srcImage->Width(), _srcImage->Height()};
+        _textureSize = {_srcImage->width(), _srcImage->height()};
 
         updateBindOptions(_dirtyBindOptions);
 

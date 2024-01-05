@@ -248,7 +248,7 @@ void DepthMapEntity::loadDepthMap()
     oiio::ImageBuf inBuf;
     image::getBufferFromImage(depthMap, inBuf);
 
-    qDebug() << "[DepthMapEntity] Image Size: " << depthMap.Width() << "x" << depthMap.Height();
+    qDebug() << "[DepthMapEntity] Image Size: " << depthMap.width() << "x" << depthMap.height();
 
     oiio::ImageSpec inSpec = image::readImageSpec(depthMapPath);
 
@@ -351,21 +351,21 @@ void DepthMapEntity::loadDepthMap()
         qWarning() << "[DepthMapEntity] Failed to find associated sim map";
     }
 
-    const bool validSimMap = (simMap.Width() == depthMap.Width()) && (simMap.Height() == depthMap.Height());
+    const bool validSimMap = (simMap.width() == depthMap.width()) && (simMap.height() == depthMap.height());
 
     // 3D points position and color (using jetColorMap)
 
     qDebug() << "[DepthMapEntity] Computing positions and colors for point cloud";
 
-    std::vector<int> indexPerPixel(static_cast<std::size_t>(depthMap.Width() * depthMap.Height()), -1);
+    std::vector<int> indexPerPixel(static_cast<std::size_t>(depthMap.width() * depthMap.height()), -1);
     std::vector<Vec3f> positions;
     std::vector<image::RGBfColor> colors;
 
     oiio::ImageBufAlgo::PixelStats stats = oiio::ImageBufAlgo::computePixelStats(inBuf);
 
-    for (int y = 0; y < depthMap.Height(); ++y)
+    for (int y = 0; y < depthMap.height(); ++y)
     {
-        for (int x = 0; x < depthMap.Width(); ++x)
+        for (int x = 0; x < depthMap.width(); ++x)
         {
             float depthValue = depthMap(y, x);
             if (!std::isfinite(depthValue) || depthValue <= 0.f)
@@ -374,7 +374,7 @@ void DepthMapEntity::loadDepthMap()
             Point3d p = CArr + (iCamArr * Point2d(static_cast<double>(x), static_cast<double>(y))).normalize() * depthValue;
             Vec3f position(static_cast<float>(p.x), static_cast<float>(-p.y), static_cast<float>(-p.z));
 
-            indexPerPixel[static_cast<std::size_t>(y * depthMap.Width() + x)] = static_cast<int>(positions.size());
+            indexPerPixel[static_cast<std::size_t>(y * depthMap.width() + x)] = static_cast<int>(positions.size());
             positions.push_back(position);
 
             if (validSimMap)
@@ -402,14 +402,14 @@ void DepthMapEntity::loadDepthMap()
     // vertices buffer
     std::vector<std::size_t> trianglesIndexes;
     trianglesIndexes.reserve(2 * 3 * positions.size());
-    for (int y = 0; y < depthMap.Height() - 1; ++y)
+    for (int y = 0; y < depthMap.height() - 1; ++y)
     {
-        for (int x = 0; x < depthMap.Width() - 1; ++x)
+        for (int x = 0; x < depthMap.width() - 1; ++x)
         {
-            int pixelIndexA = indexPerPixel[static_cast<std::size_t>(y * depthMap.Width() + x)];
-            int pixelIndexB = indexPerPixel[static_cast<std::size_t>((y + 1) * depthMap.Width() + x)];
-            int pixelIndexC = indexPerPixel[static_cast<std::size_t>((y + 1) * depthMap.Width() + x + 1)];
-            int pixelIndexD = indexPerPixel[static_cast<std::size_t>(y * depthMap.Width() + x + 1)];
+            int pixelIndexA = indexPerPixel[static_cast<std::size_t>(y * depthMap.width() + x)];
+            int pixelIndexB = indexPerPixel[static_cast<std::size_t>((y + 1) * depthMap.width() + x)];
+            int pixelIndexC = indexPerPixel[static_cast<std::size_t>((y + 1) * depthMap.width() + x + 1)];
+            int pixelIndexD = indexPerPixel[static_cast<std::size_t>(y * depthMap.width() + x + 1)];
 
             // Cast indices to std::size_t once for readability
             std::size_t sPixelIndexA = static_cast<std::size_t>(pixelIndexA);

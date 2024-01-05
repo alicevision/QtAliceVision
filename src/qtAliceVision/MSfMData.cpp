@@ -14,7 +14,7 @@ void SfmDataIORunnable::run()
 
     try
     {
-        if (!aliceVision::sfmDataIO::Load(*sfmData, _sfmDataPath.toLocalFile().toStdString(), aliceVision::sfmDataIO::ESfMData::ALL))
+        if (!aliceVision::sfmDataIO::load(*sfmData, _sfmDataPath.toLocalFile().toStdString(), aliceVision::sfmDataIO::ESfMData::ALL))
         {
             qDebug() << "[QtAliceVision] Failed to load sfmData: " << _sfmDataPath << ".";
         }
