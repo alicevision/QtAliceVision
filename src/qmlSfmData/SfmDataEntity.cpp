@@ -281,7 +281,7 @@ void SfmDataEntity::onIOThreadFinished()
             }
 
             aliceVision::IndexT intrinsicId = pv.second->getIntrinsicId();
-            auto intrinsic = sfmData.getIntrinsicsharedPtr(intrinsicId);
+            auto intrinsic = sfmData.getIntrinsicSharedPtr(intrinsicId);
             double hfov = intrinsic->getHorizontalFov();
             double vfov = intrinsic->getVerticalFov();
 
