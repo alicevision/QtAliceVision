@@ -1,9 +1,9 @@
 #include "DepthMapEntity.hpp"
 
 #include <QDebug>
+#include <Qt3DCore/QAttribute>
+#include <Qt3DCore/QBuffer>
 #include <Qt3DCore/QTransform>
-#include <Qt3DRender/QAttribute>
-#include <Qt3DRender/QBuffer>
 #include <Qt3DRender/QEffect>
 #include <Qt3DRender/QRenderPass>
 #include <Qt3DRender/QShaderProgram>
@@ -143,6 +143,7 @@ void DepthMapEntity::setPointSize(const float& value)
 // private
 void DepthMapEntity::createMaterials()
 {
+    using namespace Qt3DCore;
     using namespace Qt3DRender;
     using namespace Qt3DExtras;
 
@@ -218,7 +219,7 @@ bool validTriangleRatio(const Vec3f& a, const Vec3f& b, const Vec3f& c)
 // private
 void DepthMapEntity::loadDepthMap()
 {
-    using namespace Qt3DRender;
+    using namespace Qt3DCore;;
 
     _status = DepthMapEntity::Loading;
 
@@ -470,7 +471,7 @@ void DepthMapEntity::loadDepthMap()
 
     QAttribute* normalAttribute = new QAttribute(this);
     normalAttribute->setName(QAttribute::defaultNormalAttributeName());
-    normalAttribute->setAttributeType(Qt3DRender::QAttribute::VertexAttribute);
+    normalAttribute->setAttributeType(Qt3DCore::QAttribute::VertexAttribute);
     normalAttribute->setBuffer(normalBuffer);
     normalAttribute->setVertexBaseType(QAttribute::Float);
     normalAttribute->setVertexSize(3);
@@ -496,8 +497,8 @@ void DepthMapEntity::loadDepthMap()
     colorDataBuffer->setData(colorData);
 
     QAttribute* colorAttribute = new QAttribute;
-    qDebug() << "[DepthMapEntity] Qt3DRender::QAttribute::defaultColorAttributeName(): " << Qt3DRender::QAttribute::defaultColorAttributeName();
-    colorAttribute->setName(Qt3DRender::QAttribute::defaultColorAttributeName());
+    qDebug() << "[DepthMapEntity] Qt3DRender::QAttribute::defaultColorAttributeName(): " << Qt3DCore::QAttribute::defaultColorAttributeName();
+    colorAttribute->setName(Qt3DCore::QAttribute::defaultColorAttributeName());
     colorAttribute->setAttributeType(QAttribute::VertexAttribute);
     colorAttribute->setBuffer(colorDataBuffer);
     colorAttribute->setVertexBaseType(QAttribute::Float);
@@ -508,7 +509,7 @@ void DepthMapEntity::loadDepthMap()
     customGeometry->addAttribute(colorAttribute);
 
     // create the geometry renderer
-    _meshRenderer = new QGeometryRenderer;
+    _meshRenderer = new Qt3DRender::QGeometryRenderer;
     _meshRenderer->setGeometry(customGeometry);
 
     _status = DepthMapEntity::Ready;
