@@ -1,7 +1,7 @@
 #include "CameraLocatorEntity.hpp"
 
-#include <Qt3DRender/QGeometryRenderer>
-#include <Qt3DRender/QBuffer>
+#include <QGeometryRenderer>
+#include <Qt3DCore/QBuffer>
 #include <Qt3DRender/QObjectPicker>
 
 #include <aliceVision/numeric/numeric.hpp>
@@ -20,6 +20,7 @@ CameraLocatorEntity::CameraLocatorEntity(const aliceVision::IndexT& viewId, cons
     addComponent(_transform);
 
     using namespace Qt3DRender;
+    using namespace Qt3DCore;
 
     // create a new geometry renderer
     auto customMeshRenderer = new QGeometryRenderer;
@@ -263,7 +264,7 @@ void CameraLocatorEntity::updateColors(float red, float green, float blue)
     }
 
     QByteArray colorData(reinterpret_cast<const char*>(_colors.data()), _colors.size() * static_cast<int>(sizeof(float)));
-    auto colorDataBuffer = new Qt3DRender::QBuffer;
+    auto colorDataBuffer = new Qt3DCore::QBuffer;
     colorDataBuffer->setData(colorData);
     _colorAttribute->setBuffer(colorDataBuffer);
 }

@@ -15,10 +15,10 @@ set(PLUGIN_HEADERS
 )
 
 # Qt module dependency
-find_package(Qt5 COMPONENTS Qml REQUIRED)
-find_package(Qt5 COMPONENTS 3DCore REQUIRED)
-find_package(Qt5 COMPONENTS 3DRender REQUIRED)
-find_package(Qt5 COMPONENTS 3DExtras REQUIRED)
+find_package(Qt6 COMPONENTS Qml REQUIRED)
+find_package(Qt6 COMPONENTS 3DCore REQUIRED)
+find_package(Qt6 COMPONENTS 3DRender REQUIRED)
+find_package(Qt6 COMPONENTS 3DExtras REQUIRED)
 
 # Target properties
 add_library(sfmDataEntityQmlPlugin SHARED ${PLUGIN_SOURCES} ${PLUGIN_HEADERS})
@@ -34,15 +34,15 @@ endif()
 
 target_link_libraries(sfmDataEntityQmlPlugin
     PUBLIC
-        Qt5::Core
-        Qt5::Qml
-        Qt5::3DCore
-        Qt5::3DRender
+        Qt6::Core
+        Qt6::Qml
+        Qt6::3DCore
+        Qt6::3DRender
         aliceVision_sfmDataIO
         aliceVision_sfm
         aliceVision_system
     PRIVATE
-        Qt5::3DExtras
+        Qt6::3DExtras
 )
 
 set_target_properties(sfmDataEntityQmlPlugin
