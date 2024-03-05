@@ -2,7 +2,7 @@
 
 #include <QEntity>
 #include <Qt3DCore/QTransform>
-#include <Qt3DRender/QAttribute>
+#include <Qt3DCore/QAttribute>
 
 #include <Eigen/Dense>
 
@@ -36,7 +36,7 @@ class CameraLocatorEntity : public Qt3DCore::QEntity
     Qt3DCore::QTransform* _transform;
     aliceVision::IndexT _viewId;
     aliceVision::IndexT _resectionId;
-    Qt3DRender::QAttribute* _colorAttribute;
+    Qt3DCore::QAttribute* _colorAttribute;
     QVector<float> _colors;
 };
 

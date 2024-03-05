@@ -14,6 +14,7 @@
 #include <Qt3DRender/QPickEvent>
 #include <Qt3DRender/QDebugOverlay>
 #include <Qt3DExtras/QPerVertexColorMaterial>
+#include <Qt3DRender/QGraphicsApiFilter>
 #include <QFile>
 
 namespace sfmdataentity {
@@ -170,20 +171,52 @@ void SfmDataEntity::createMaterials()
     _cloudMaterial = new QMaterial(this);
     _cameraMaterial = new QPerVertexColorMaterial(this);
 
-    // configure cloud material
-    auto effect = new QEffect;
-    auto technique = new QTechnique;
-    auto renderPass = new QRenderPass;
-    auto shaderProgram = new QShaderProgram;
+    // Configure cloud material
+    auto effect = new QEffect();
+    auto technique = new QTechnique();
+    auto renderPass = new QRenderPass();
+    auto shaderProgram = new QShaderProgram();
 
-    shaderProgram->setVertexShaderCode(R"(#version 130
-    in vec3 vertexPosition;
-    in vec3 vertexColor;
-    out vec3 color;
-    uniform mat4 mvp;
-    uniform mat4 projectionMatrix;
-    uniform mat4 viewportMatrix;
-    uniform float pointSize;
+    technique->graphicsApiFilter()->setApi(QGraphicsApiFilter::RHI);
+    technique->graphicsApiFilter()->setMajorVersion(1);
+    technique->graphicsApiFilter()->setMinorVersion(0);
+    technique->graphicsApiFilter()->setProfile(QGraphicsApiFilter::CoreProfile);
+
+    shaderProgram->setShaderCode(QShaderProgram::Vertex, R"(#version 450
+    layout(location = 0) in vec3 vertexPosition;
+    layout(location = 1) in vec3 vertexColor;
+    layout(location = 0) out vec3 color;
+    layout(std140, binding = 0) uniform qt3d_render_view_uniforms {
+        mat4 viewMatrix;
+        mat4 projectionMatrix;
+        mat4 uncorrectedProjectionMatrix;
+        mat4 clipCorrectionMatrix;
+        mat4 viewProjectionMatrix;
+        mat4 inverseViewMatrix;
+        mat4 inverseProjectionMatrix;
+        mat4 inverseViewProjectionMatrix;
+        mat4 viewportMatrix;
+        mat4 inverseViewportMatrix;
+        vec4 textureTransformMatrix;
+        vec3 eyePosition;
+        float aspectRatio;
+        float gamma;
+        float exposure;
+        float time;
+    };
+    layout(std140, binding = 1) uniform qt3d_command_uniforms {
+        mat4 modelMatrix;
+        mat4 inverseModelMatrix;
+        mat4 modelViewMatrix;
+        mat3 modelNormalMatrix;
+        mat4 inverseModelViewMatrix;
+        mat4 mvp;
+        mat4 inverseModelViewProjectionMatrix;
+    };
+    layout(std140, binding = 2) uniform custom_ubo {
+        float pointSize;
+    };
+
     void main()
     {
         color = vertexColor;
@@ -192,22 +225,22 @@ void SfmDataEntity::createMaterials()
     }
     )");
 
-    // set fragment shader
-    shaderProgram->setFragmentShaderCode(R"(#version 130
-        in vec3 color;
-        out vec4 fragColor;
-        void main(void)
-        {
-            fragColor = vec4(color, 1.0);
-        }
+    // Set fragment shader
+    shaderProgram->setShaderCode(QShaderProgram::Fragment, R"(#version 450
+    layout(location = 0) out vec4 fragColor;
+    layout(location = 0) in vec3 color;
+    void main()
+    {
+        fragColor = vec4(color, 1.0);
+    }
     )");
 
-    // add a pointSize uniform
+    // Add a pointSize uniform
     _pointSizeParameter->setName("pointSize");
     _pointSizeParameter->setValue(_pointSize);
     _cloudMaterial->addParameter(_pointSizeParameter);
 
-    // build the material
+    // Build the material
     renderPass->setShaderProgram(shaderProgram);
     technique->addRenderPass(renderPass);
     effect->addTechnique(technique);
@@ -216,7 +249,7 @@ void SfmDataEntity::createMaterials()
 
 void SfmDataEntity::clear()
 {
-    // clear entity (remove direct children & all components)
+    // Clear entity (remove direct children & all components)
     auto entities = findChildren<QEntity*>(QString(), Qt::FindDirectChildrenOnly);
     for (auto entity : entities)
     {
@@ -232,7 +265,7 @@ void SfmDataEntity::clear()
     _pointClouds.clear();
 }
 
-// private
+// Private
 void SfmDataEntity::loadSfmData()
 {
     clear();
