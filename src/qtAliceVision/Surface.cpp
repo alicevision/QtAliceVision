@@ -194,7 +194,7 @@ void Surface::computeVerticesGrid(QSGGeometry::TexturedPoint2D* vertices,
             if (isDistortionViewerEnabled() && intrinsic && intrinsic->hasDistortion())
             {
                 const aliceVision::Vec2 undisto_pix(x, y);
-                const aliceVision::Vec2 disto_pix = intrinsic->get_d_pixel(undisto_pix);
+                const aliceVision::Vec2 disto_pix = intrinsic->getDistortedPixel(undisto_pix);
                 vertices[vertexIndex].set(static_cast<float>(disto_pix.x()), static_cast<float>(disto_pix.y()), u, v);
             }
 
