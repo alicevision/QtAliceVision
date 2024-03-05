@@ -14,6 +14,7 @@
 #include <Qt3DRender/QPickEvent>
 #include <Qt3DRender/QDebugOverlay>
 #include <Qt3DExtras/QPerVertexColorMaterial>
+#include <Qt3DRender/QGraphicsApiFilter>
 #include <QFile>
 
 namespace sfmdataentity {
@@ -171,12 +172,17 @@ void SfmDataEntity::createMaterials()
     _cameraMaterial = new QPerVertexColorMaterial(this);
 
     // configure cloud material
-    auto effect = new QEffect;
-    auto technique = new QTechnique;
-    auto renderPass = new QRenderPass;
-    auto shaderProgram = new QShaderProgram;
+    auto effect = new QEffect();
+    auto technique = new QTechnique();
+    auto renderPass = new QRenderPass();
+    auto shaderProgram = new QShaderProgram();
 
-    shaderProgram->setVertexShaderCode(R"(#version 130
+    technique->graphicsApiFilter()->setApi(QGraphicsApiFilter::RHI);
+    technique->graphicsApiFilter()->setMajorVersion(1);
+    technique->graphicsApiFilter()->setMinorVersion(0);
+    technique->graphicsApiFilter()->setProfile(QGraphicsApiFilter::CoreProfile);
+
+    /*shaderProgram->setVertexShaderCode(R"(#version 130
     in vec3 vertexPosition;
     in vec3 vertexColor;
     out vec3 color;
@@ -190,16 +196,67 @@ void SfmDataEntity::createMaterials()
         gl_Position = mvp * vec4(vertexPosition, 1.0);
         gl_PointSize = max(viewportMatrix[1][1] * projectionMatrix[1][1] * pointSize / gl_Position.w, 1.0);
     }
+    )");*/
+
+    shaderProgram->setShaderCode(QShaderProgram::Vertex, R"(#version 450
+    layout(location = 0) in vec3 vertexPosition;
+    layout(location = 1) in vec3 vertexColor;
+    layout(location = 0) out vec3 color;
+    layout(std140, binding = 0) uniform qt3d_render_view_uniforms {
+        mat4 viewMatrix;
+        mat4 projectionMatrix;
+        mat4 uncorrectedProjectionMatrix;
+        mat4 clipCorrectionMatrix;
+        mat4 viewProjectionMatrix;
+        mat4 inverseViewMatrix;
+        mat4 inverseProjectionMatrix;
+        mat4 inverseViewProjectionMatrix;
+        mat4 viewportMatrix;
+        mat4 inverseViewportMatrix;
+        vec4 textureTransformMatrix;
+        vec3 eyePosition;
+        float aspectRatio;
+        float gamma;
+        float exposure;
+        float time;
+    };
+    layout(std140, binding = 1) uniform qt3d_command_uniforms {
+        mat4 modelMatrix;
+        mat4 inverseModelMatrix;
+        mat4 modelViewMatrix;
+        mat3 modelNormalMatrix;
+        mat4 inverseModelViewMatrix;
+        mat4 mvp;
+        mat4 inverseModelViewProjectionMatrix;
+    };
+    layout(std140, binding = 2) uniform custom_ubo {
+        float pointSize;
+    };
+
+    void main()
+    {
+        color = vertexColor;
+        gl_Position = mvp * vec4(vertexPosition, 1.0);
+        gl_PointSize = max(viewportMatrix[1][1] * projectionMatrix[1][1] * pointSize / gl_Position.w, 1.0);
+    }
     )");
 
     // set fragment shader
-    shaderProgram->setFragmentShaderCode(R"(#version 130
+    /*shaderProgram->setFragmentShaderCode(R"(#version 130
         in vec3 color;
         out vec4 fragColor;
         void main(void)
         {
             fragColor = vec4(color, 1.0);
         }
+    )");*/
+    shaderProgram->setShaderCode(QShaderProgram::Fragment, R"(#version 450
+    layout(location = 0) out vec4 fragColor;
+    layout(location = 0) in vec3 color;
+    void main()
+    {
+        fragColor = vec4(color, 1.0);
+    }
     )");
 
     // add a pointSize uniform

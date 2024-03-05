@@ -1,8 +1,8 @@
 #include "PointCloudEntity.hpp"
 
-#include <Qt3DRender/QGeometryRenderer>
-#include <Qt3DRender/QAttribute>
-#include <Qt3DRender/QBuffer>
+#include <QGeometryRenderer>
+#include <Qt3DCore/QAttribute>
+#include <Qt3DCore/QBuffer>
 #include <Qt3DCore/QTransform>
 
 namespace sfmdataentity {
@@ -14,6 +14,7 @@ PointCloudEntity::PointCloudEntity(Qt3DCore::QNode* parent)
 void PointCloudEntity::setData(const aliceVision::sfmData::Landmarks& landmarks)
 {
     using namespace Qt3DRender;
+    using namespace Qt3DCore;
 
     // create a new geometry renderer
     auto customMeshRenderer = new QGeometryRenderer;
