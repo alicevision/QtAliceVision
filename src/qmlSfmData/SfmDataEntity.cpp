@@ -225,7 +225,6 @@ void SfmDataEntity::createMaterials()
     }
     )");
 
-    // Set fragment shader
     shaderProgram->setShaderCode(QShaderProgram::Fragment, R"(#version 450
     layout(location = 0) out vec4 fragColor;
     layout(location = 0) in vec3 color;

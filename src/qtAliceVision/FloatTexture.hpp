@@ -5,7 +5,6 @@
 #include <aliceVision/types.hpp>
 
 #include <QSGTexture>
-
 #include <memory>
 
 namespace qtAliceVision {
@@ -21,7 +20,9 @@ class FloatTexture : public QSGTexture
     FloatTexture();
     ~FloatTexture() override;
 
-    int textureId() const override;
+    virtual qint64 comparisonKey() const override;
+    virtual QRhiTexture* rhiTexture() const override;
+    virtual void commitTextureOperations(QRhi* rhi, QRhiResourceUpdateBatch* resourceUpdates) override;
 
     QSize textureSize() const override { return _textureSize; }
 
@@ -31,8 +32,6 @@ class FloatTexture : public QSGTexture
 
     void setImage(std::shared_ptr<FloatImage>& image);
     const FloatImage& image() { return *_srcImage; }
-
-    void bind() override;
 
     /**
      * @brief Get the maximum dimension of a texture.
@@ -49,11 +48,10 @@ class FloatTexture : public QSGTexture
   private:
     std::shared_ptr<FloatImage> _srcImage;
 
-    unsigned int _textureId = 0;
+    QRhiTexture* _rhiTexture = nullptr;
     QSize _textureSize;
 
     bool _dirty = false;
-    bool _dirtyBindOptions = false;
     bool _mipmapsGenerated = false;
 
     static int _maxTextureSize;
