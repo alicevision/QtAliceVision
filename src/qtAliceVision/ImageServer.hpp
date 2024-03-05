@@ -15,9 +15,9 @@ namespace imgserve {
 
 enum LoadingStatus
 {
-    SUCCESSFUL,
+    SUCCESSFUL = 0,
     MISSING_FILE,
-    ERROR
+    LOADING_ERROR
 };
 
 /**
@@ -41,7 +41,7 @@ struct ResponseData
 
     QVariantMap metadata;
 
-    LoadingStatus error = SUCCESSFUL;
+    LoadingStatus error = LoadingStatus::SUCCESSFUL;
 };
 
 /**

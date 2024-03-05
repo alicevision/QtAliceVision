@@ -99,7 +99,7 @@ void SingleImageLoadingIORunnable::run()
         }
         else  // "can't open image" case
         {
-            response.error = ERROR;
+            response.error = LOADING_ERROR;
         }
 
         // Log error message

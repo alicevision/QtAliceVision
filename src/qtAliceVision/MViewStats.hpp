@@ -14,8 +14,6 @@
 
 namespace qtAliceVision {
 
-QT_CHARTS_USE_NAMESPACE
-
 class MViewStats : public QObject
 {
     Q_OBJECT
