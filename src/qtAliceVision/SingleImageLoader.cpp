@@ -92,8 +92,11 @@ void SingleImageLoadingIORunnable::run()
     }
     catch (const std::runtime_error& e)
     {
+        // Retrieve and ignore the error code for the file exists test.
+        // This avoids the throw of an exception (for any error like missing permission, etc)
+        std::error_code ec;
         // std::runtime_error at this point is a "can't find/open image" error
-        if (!std::filesystem::exists(_reqData.path))  // "can't find image" case
+        if (!std::filesystem::exists(_reqData.path, ec))  // "can't find image" case
         {
             response.error = MISSING_FILE;
         }
