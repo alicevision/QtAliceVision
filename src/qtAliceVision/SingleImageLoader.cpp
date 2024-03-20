@@ -5,7 +5,7 @@
 #include <stdexcept>
 #include <iostream>
 
-#include <boost/filesystem.hpp>
+#include <filesystem>
 
 namespace qtAliceVision {
 namespace imgserve {
@@ -93,7 +93,7 @@ void SingleImageLoadingIORunnable::run()
     catch (const std::runtime_error& e)
     {
         // std::runtime_error at this point is a "can't find/open image" error
-        if (!boost::filesystem::exists(_reqData.path))  // "can't find image" case
+        if (!std::filesystem::exists(_reqData.path))  // "can't find image" case
         {
             response.error = MISSING_FILE;
         }
