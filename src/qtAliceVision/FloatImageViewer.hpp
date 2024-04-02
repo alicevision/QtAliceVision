@@ -173,6 +173,7 @@ class FloatImageViewer : public QQuickItem
     bool _gammaChanged = false;
     float _gain = 1.f;
     bool _gainChanged = false;
+    bool _mouseOverChanged = false;
 
     EStatus _status = EStatus::NONE;
     bool _loading = false;
