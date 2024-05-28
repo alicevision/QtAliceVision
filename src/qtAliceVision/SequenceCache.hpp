@@ -91,6 +91,12 @@ class SequenceCache : public QObject, public ImageServer
      */
     QVariantList getCachedFrames() const;
 
+    /**
+     * @brief Set the boolean flag indicating if the sequence is being fetched.
+     * @param[in] fetching new value for the fetching flag
+     */
+    void setFetchingSequence(bool fetching);
+
   public:
     // Request management
 
@@ -141,6 +147,9 @@ class SequenceCache : public QObject, public ImageServer
 
     /// Target size used to compute downscale
     int _targetSize;
+
+    /// Flag to indicate if the sequence is being fetched
+    bool _fetchingSequence;
 
     /// Local threadpool
     QThreadPool _threadPool;

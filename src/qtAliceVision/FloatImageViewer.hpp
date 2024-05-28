@@ -63,6 +63,8 @@ class FloatImageViewer : public QQuickItem
 
     Q_PROPERTY(bool useSequence MEMBER _useSequence NOTIFY useSequenceChanged)
 
+    Q_PROPERTY(bool fetchingSequence WRITE setFetchingSequence NOTIFY fetchingSequenceChanged)
+
   public:
     explicit FloatImageViewer(QQuickItem* parent = nullptr);
     ~FloatImageViewer() override;
@@ -135,6 +137,7 @@ class FloatImageViewer : public QQuickItem
     Q_SIGNAL void targetSizeChanged();
     Q_SIGNAL void cachedFramesChanged();
     Q_SIGNAL void useSequenceChanged();
+    Q_SIGNAL void fetchingSequenceChanged();
 
     // Q_INVOKABLE
     Q_INVOKABLE QVector4D pixelValueAt(int x, int y);
@@ -145,6 +148,8 @@ class FloatImageViewer : public QQuickItem
     void setSequence(const QVariantList& paths);
 
     void setTargetSize(int size);
+
+    void setFetchingSequence(bool fetching);
 
     QVariantList getCachedFrames() const;
 

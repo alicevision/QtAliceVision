@@ -76,6 +76,12 @@ void FloatImageViewer::setSequence(const QVariantList& paths)
     Q_EMIT sequenceChanged();
 }
 
+void FloatImageViewer::setFetchingSequence(bool fetching)
+{
+    _sequenceCache.setFetchingSequence(fetching);
+    Q_EMIT fetchingSequenceChanged();
+}
+
 void FloatImageViewer::setTargetSize(int size)
 {
     _sequenceCache.setTargetSize(size);

@@ -41,6 +41,7 @@ SequenceCache::SequenceCache(QObject* parent)
     _loading = false;
     _interactivePrefetching = true;
     _targetSize = 1000;
+    _fetchingSequence = false;
 }
 
 SequenceCache::~SequenceCache()
@@ -199,6 +200,35 @@ QVariantList SequenceCache::getCachedFrames() const
     return intervals;
 }
 
+void SequenceCache::setFetchingSequence(bool fetching)
+{
+    _fetchingSequence = fetching;
+    abortPrefetching = !fetching;
+
+    if (fetching)
+    {
+        // Update internal state
+        _loading = true;
+
+        // Gather images to load
+        std::vector<FrameData> toLoad = _sequence;
+
+        // For now fill the allow worker thread to fill the whole cache capacity
+        const double fillRatio = 1.;
+
+        // Create new runnable and launch it in worker thread (managed by Qt thread pool)
+        auto ioRunnable = new PrefetchingIORunnable(_cache, toLoad, 0, fillRatio, _sequenceId.loadAcquire());
+        connect(ioRunnable, &PrefetchingIORunnable::progressed, this, &SequenceCache::onPrefetchingProgressed);
+        connect(ioRunnable, &PrefetchingIORunnable::done, this, &SequenceCache::onPrefetchingDone);
+        _threadPool.start(ioRunnable);
+    }
+    else
+    {
+        // Notify clients that a request has been handled
+        Q_EMIT requestHandled();
+    }
+}
+
 ResponseData SequenceCache::request(const RequestData& reqData)
 {
     // Initialize empty response
@@ -234,7 +264,7 @@ ResponseData SequenceCache::request(const RequestData& reqData)
     }
 
     // Request falls outside of safe region
-    if ((frame < _regionSafe.first || frame > _regionSafe.second) && !_loading)
+    if ((frame < _regionSafe.first || frame > _regionSafe.second) && !_loading && _fetchingSequence)
     {
         // Make sur abort flag is off before launching a new prefetching thread
         abortPrefetching = false;
