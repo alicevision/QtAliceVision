@@ -97,6 +97,12 @@ class SequenceCache : public QObject, public ImageServer
      */
     void setFetchingSequence(bool fetching);
 
+    /**
+     * @brief Get the maximum available RAM on the system.
+     * @return maximum available RAM in bytes
+     */
+    int getMaxAvailableRam() const;
+
   public:
     // Request management
 

@@ -90,6 +90,8 @@ void FloatImageViewer::setTargetSize(int size)
 
 QVariantList FloatImageViewer::getCachedFrames() const { return _sequenceCache.getCachedFrames(); }
 
+int FloatImageViewer::getMaxAvailableRam() const { return _sequenceCache.getMaxAvailableRam(); }
+
 void FloatImageViewer::reload()
 {
     if (_clearBeforeLoad)

@@ -229,6 +229,13 @@ void SequenceCache::setFetchingSequence(bool fetching)
     }
 }
 
+int SequenceCache::getMaxAvailableRam() const
+{
+    const auto memInfo = aliceVision::system::getMemoryInfo();
+    // return in GB
+    return static_cast<int>(memInfo.availableRam / (1024. * 1024. * 1024.));
+}
+
 ResponseData SequenceCache::request(const RequestData& reqData)
 {
     // Initialize empty response
