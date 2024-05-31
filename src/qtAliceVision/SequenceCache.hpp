@@ -98,6 +98,12 @@ class SequenceCache : public QObject, public ImageServer
     void setFetchingSequence(bool fetching);
 
     /**
+     * @brief Set the maximum memory that can be filled by the cache.
+     * @param[in] memory maximum memory in bytes
+     */
+    void setMemoryLimit(int memory);
+
+    /**
      * @brief Get the maximum available RAM on the system.
      * @return maximum available RAM in bytes
      */

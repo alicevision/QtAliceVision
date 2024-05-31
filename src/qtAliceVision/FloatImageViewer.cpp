@@ -88,6 +88,11 @@ void FloatImageViewer::setTargetSize(int size)
     Q_EMIT targetSizeChanged();
 }
 
+void FloatImageViewer::setMemoryLimit(int memoryLimit) {
+    _sequenceCache.setMemoryLimit(memoryLimit);
+    Q_EMIT memoryLimitChanged();
+}
+
 QVariantList FloatImageViewer::getCachedFrames() const { return _sequenceCache.getCachedFrames(); }
 
 int FloatImageViewer::getMaxAvailableRam() const { return _sequenceCache.getMaxAvailableRam(); }

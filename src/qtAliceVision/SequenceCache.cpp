@@ -229,7 +229,12 @@ void SequenceCache::setFetchingSequence(bool fetching)
     }
 }
 
-int SequenceCache::getMaxAvailableRam() const
+void SequenceCache::setMemoryLimit(int memory)
+{
+    const double factorConvertGiB = 1024. * 1024. * 1024.;
+    const float fMemory = static_cast<float>(memory * factorConvertGiB);
+    _cache = new aliceVision::image::ImageCache(fMemory, fMemory, aliceVision::image::EImageColorSpace::LINEAR);
+}
 {
     const auto memInfo = aliceVision::system::getMemoryInfo();
     // return in GB

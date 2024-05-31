@@ -65,7 +65,7 @@ class FloatImageViewer : public QQuickItem
 
     Q_PROPERTY(bool fetchingSequence WRITE setFetchingSequence NOTIFY fetchingSequenceChanged)
 
-    Q_PROPERTY(int maxAvailableRam READ getMaxAvailableRam NOTIFY maxAvailableRamChanged)
+    Q_PROPERTY(int memoryLimit WRITE setMemoryLimit NOTIFY memoryLimitChanged)
 
   public:
     explicit FloatImageViewer(QQuickItem* parent = nullptr);
