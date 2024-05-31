@@ -95,7 +95,7 @@ void FloatImageViewer::setMemoryLimit(int memoryLimit) {
 
 QVariantList FloatImageViewer::getCachedFrames() const { return _sequenceCache.getCachedFrames(); }
 
-int FloatImageViewer::getMaxAvailableRam() const { return _sequenceCache.getMaxAvailableRam(); }
+QPointF FloatImageViewer::getRamInfo() const { return _sequenceCache.getRamInfo(); }
 
 void FloatImageViewer::reload()
 {

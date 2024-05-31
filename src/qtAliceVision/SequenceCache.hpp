@@ -107,7 +107,7 @@ class SequenceCache : public QObject, public ImageServer
      * @brief Get the maximum available RAM on the system.
      * @return maximum available RAM in bytes
      */
-    int getMaxAvailableRam() const;
+    QPointF getRamInfo() const;
 
   public:
     // Request management

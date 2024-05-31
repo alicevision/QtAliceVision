@@ -235,10 +235,13 @@ void SequenceCache::setMemoryLimit(int memory)
     const float fMemory = static_cast<float>(memory * factorConvertGiB);
     _cache = new aliceVision::image::ImageCache(fMemory, fMemory, aliceVision::image::EImageColorSpace::LINEAR);
 }
+
+QPointF SequenceCache::getRamInfo() const
 {
+    // get available RAM in bytes and cache occupied memory
     const auto memInfo = aliceVision::system::getMemoryInfo();
     // return in GB
-    return static_cast<int>(memInfo.availableRam / (1024. * 1024. * 1024.));
+    return QPointF(static_cast<int>(memInfo.availableRam / (1024. * 1024. * 1024.)), _cache->info().contentSize / (1024. * 1024. * 1024. * 1024.));
 }
 
 ResponseData SequenceCache::request(const RequestData& reqData)
