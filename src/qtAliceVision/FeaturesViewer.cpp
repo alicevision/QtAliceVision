@@ -586,9 +586,8 @@ void FeaturesViewer::initializePaintParams(PaintParams& params)
     params.maxFeatureScale = minFeatureScale + std::max(0.f, std::min(1.f, _featureMaxScaleFilter)) * difFeatureScale;
 }
 
-QSGNode* FeaturesViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePaintNodeData* data)
+QSGNode* FeaturesViewer::updatePaintNode(QSGNode* oldNode, [[maybe_unused]] QQuickItem::UpdatePaintNodeData* data)
 {
-    (void)data;  // Fix "unused parameter" warnings; should be replaced by [[maybe_unused]] when C++17 is supported
     PaintParams params;
     initializePaintParams(params);
 
@@ -767,7 +766,7 @@ void FeaturesViewer::updateReconstruction()
                     elt.featureId = static_cast<aliceVision::IndexT>(featureId);
 
                     const auto& sfmData = _msfmdata->rawData();
-                    if (sfmData.getViews().count(viewId))
+                    if (sfmData.getViews().count(static_cast<aliceVision::IndexT>(viewId)))
                     {
                         const auto& view = sfmData.getView(static_cast<aliceVision::IndexT>(viewId));
                         elt.frameId = view.getFrameId();

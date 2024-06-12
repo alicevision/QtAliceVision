@@ -476,7 +476,7 @@ QVector4D FloatImageViewer::pixelValueAt(int x, int y)
     return QVector4D(color(0), color(1), color(2), color(3));
 }
 
-QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePaintNodeData* data)
+QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, [[maybe_unused]] QQuickItem::UpdatePaintNodeData* data)
 {
     auto* node = static_cast<FloatImageViewerNode*>(oldNode);
     bool isNewNode = false;
@@ -520,7 +520,8 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
                 // Radius is converted in uv coordinates (0, 0.5)
                 const double radius = 0.5 * (radiusInPercentage);
 
-                node->setFisheye(aspectRatio, radius, QVector2D(fisheyeCircleParams.x() / width, fisheyeCircleParams.y() / height));
+                node->setFisheye(static_cast<float>(aspectRatio), static_cast<float>(radius),
+                    QVector2D(static_cast<float>(fisheyeCircleParams.x() / width), static_cast<float>(fisheyeCircleParams.y() / height)));
             }
             else
             {
@@ -543,7 +544,7 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
     {
         _boundingRect = newBoundingRect;
 
-        const float windowRatio = _boundingRect.width() / _boundingRect.height();
+        const float windowRatio = static_cast<float>(_boundingRect.width() / _boundingRect.height());
         const float textureRatio = _textureSize.width() / float(_textureSize.height());
         QRectF geometryRect = _boundingRect;
         if (windowRatio > textureRatio)

@@ -28,9 +28,7 @@ CameraLocatorEntity::CameraLocatorEntity(const aliceVision::IndexT& viewId, cons
 
     const float axisLength = 0.5f;
     const float halfImageWidth = 0.3f;
-    const float halfImageHeight = 0.2f;
     const float yArrowHeight = 0.05f;
-    const float depth = halfImageWidth / tan(hfov / 2.0);
     const float radius = 0.3f;
 
     int subdiv = 1;

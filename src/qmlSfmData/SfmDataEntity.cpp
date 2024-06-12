@@ -314,8 +314,8 @@ void SfmDataEntity::onIOThreadFinished()
 
             aliceVision::IndexT intrinsicId = pv.second->getIntrinsicId();
             auto intrinsic = sfmData.getIntrinsicSharedPtr(intrinsicId);
-            double hfov = intrinsic->getHorizontalFov();
-            double vfov = intrinsic->getVerticalFov();
+            float hfov = static_cast<float>(intrinsic->getHorizontalFov());
+            float vfov = static_cast<float>(intrinsic->getVerticalFov());
 
             CameraLocatorEntity* entity = new CameraLocatorEntity(pv.first, pv.second->getResectionId(), hfov, vfov, root);
             entity->addComponent(_cameraMaterial);
