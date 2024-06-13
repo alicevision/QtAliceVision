@@ -204,29 +204,7 @@ void SequenceCache::setFetchingSequence(bool fetching)
 {
     _fetchingSequence = fetching;
     abortPrefetching = !fetching;
-
-    if (fetching)
-    {
-        // Update internal state
-        _loading = true;
-
-        // Gather images to load
-        std::vector<FrameData> toLoad = _sequence;
-
-        // For now fill the allow worker thread to fill the whole cache capacity
-        const double fillRatio = 1.;
-
-        // Create new runnable and launch it in worker thread (managed by Qt thread pool)
-        auto ioRunnable = new PrefetchingIORunnable(_cache, toLoad, 0, fillRatio, _sequenceId.loadAcquire());
-        connect(ioRunnable, &PrefetchingIORunnable::progressed, this, &SequenceCache::onPrefetchingProgressed);
-        connect(ioRunnable, &PrefetchingIORunnable::done, this, &SequenceCache::onPrefetchingDone);
-        _threadPool.start(ioRunnable);
-    }
-    else
-    {
-        // Notify clients that a request has been handled
-        Q_EMIT requestHandled();
-    }
+    Q_EMIT requestHandled();
 }
 
 void SequenceCache::setMemoryLimit(int memory)
@@ -278,7 +256,24 @@ ResponseData SequenceCache::request(const RequestData& reqData)
         abortPrefetching = true;
     }
 
-    // Request falls outside of safe region
+    // If requested image is not in cache and prefetching is disabled
+    if (!response.img && !_fetchingSequence)
+    {
+        // Load image in cache
+        try
+        {
+            const bool cachedOnly = false;
+            const bool lazyCleaning = false;
+            response.img = _cache->get<aliceVision::image::RGBAfColor>(data.path, data.downscale, cachedOnly, lazyCleaning);
+        }
+        catch (const std::runtime_error& e)
+        {
+            // Log error message
+            std::cerr << e.what() << std::endl;
+        }
+    }
+
+    // Request falls outside of safe region and we only want to fetch what is forward and not before
     if ((frame < _regionSafe.first || frame > _regionSafe.second) && !_loading && _fetchingSequence)
     {
         // Make sur abort flag is off before launching a new prefetching thread
@@ -443,10 +438,13 @@ void PrefetchingIORunnable::run()
     auto tRef = std::chrono::high_resolution_clock::now();
 
     // Processing order:
-    // Sort frames by distance to request frame
-    std::sort(_toLoad.begin(), _toLoad.end(), [this](const FrameData& lhs, const FrameData& rhs) {
-        return std::abs(lhs.frame - _reqFrame) < std::abs(rhs.frame - _reqFrame);
-    });
+    // Take the frames that are after the requested frame and put the rest after
+    std::vector<FrameData> toLoad;
+    toLoad.reserve(_toLoad.size());
+    toLoad.insert(toLoad.end(), _toLoad.begin() + _reqFrame, _toLoad.end());
+    if (_reqFrame > 0)
+        toLoad.insert(toLoad.end(), _toLoad.begin(), _toLoad.begin() + _reqFrame - 1);
+    _toLoad = toLoad;
 
     // Accumulator variable to keep track of cache capacity filled with loaded images
     uint64_t filled = 0;
