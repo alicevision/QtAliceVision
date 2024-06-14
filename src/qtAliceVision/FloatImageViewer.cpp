@@ -447,7 +447,7 @@ void FloatImageViewer::reload()
     }
     else if (_outdated)
     {
-        qWarning() << "[QtAliceVision] The loading status has not been updated since the last reload. Something wrong might have happened.";
+        qWarning() << "[QtAliceVision] FloatImageViewer: The loading status has not been updated since the last reload. Something wrong might have happened.";
         setStatus(EStatus::OUTDATED_LOADING);
     }
 
