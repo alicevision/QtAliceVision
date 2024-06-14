@@ -3,6 +3,7 @@
 #include "ImageServer.hpp"
 #include "FeaturesViewer.hpp"
 #include "FloatImageViewer.hpp"
+#include "PhongImageViewer.hpp"
 #include "MFeatures.hpp"
 #include "MSfMDataStats.hpp"
 #include "MTracks.hpp"
@@ -50,6 +51,7 @@ class QtAliceVisionPlugin : public QQmlExtensionPlugin
         qRegisterMetaType<size_t>("size_t");                                                            // for usage in signals/slots
 
         qmlRegisterType<FloatImageViewer>(uri, 1, 0, "FloatImageViewer");
+        qmlRegisterType<PhongImageViewer>(uri, 1, 0, "PhongImageViewer");
         qmlRegisterType<Surface>(uri, 1, 0, "Surface");
         qmlRegisterType<PanoramaViewer>(uri, 1, 0, "PanoramaViewer");
         qRegisterMetaType<QPointF>("QPointF");
