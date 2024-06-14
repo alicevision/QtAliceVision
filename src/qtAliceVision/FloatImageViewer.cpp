@@ -58,7 +58,7 @@ class FloatImageViewerMaterial : public QSGMaterial
 
     bool dirtyUniforms;
     bool appliedHoveringGamma;
-    std::unique_ptr<FloatTexture> texture;
+    std::unique_ptr<FloatTexture> texture = std::make_unique<FloatTexture>();  // should be initialize;
 };
 
 class FloatImageViewerMaterialShader : public QSGMaterialShader
