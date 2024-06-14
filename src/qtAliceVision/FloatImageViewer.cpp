@@ -59,7 +59,7 @@ namespace
 
         bool dirtyUniforms;
         bool appliedHoveringGamma;
-        std::unique_ptr<FloatTexture> texture;
+        std::unique_ptr<FloatTexture> texture = std::make_unique<FloatTexture>(); // should be initialized
     };
 
     class FloatImageViewerMaterialShader : public QSGMaterialShader
