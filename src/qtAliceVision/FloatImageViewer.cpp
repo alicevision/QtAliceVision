@@ -146,32 +146,25 @@ void FloatImageViewer::reload()
         _metadata = response.metadata;
         Q_EMIT metadataChanged();
     }
-    else if (response.error != imgserve::LoadingStatus::SUCCESSFUL)
+    else if (response.error == imgserve::LoadingStatus::UNDEFINED)
+    {
+        setLoading(true);
+        setStatus(EStatus::LOADING);
+    }
+    else if (response.error == imgserve::LoadingStatus::MISSING_FILE)
     {
         _image.reset();
-        _imageChanged = true;
-        Q_EMIT imageChanged();
-        setLoading(false);
-        switch (response.error)
-        {
-            case imgserve::LoadingStatus::MISSING_FILE:
-                setStatus(EStatus::MISSING_FILE);
-                break;
-            case imgserve::LoadingStatus::ERROR:
-            default:
-                setStatus(EStatus::ERROR);
-                break;
-        }
+        setStatus(EStatus::MISSING_FILE);
+    }
+    else if (response.error == imgserve::LoadingStatus::ERROR)
+    {
+        _image.reset();
+        setStatus(EStatus::ERROR);
     }
     else if (_outdated)
     {
         qWarning() << "[QtAliceVision] The loading status has not been updated since the last reload. Something wrong might have happened.";
         setStatus(EStatus::OUTDATED_LOADING);
-    }
-    else
-    {
-        setLoading(true);
-        setStatus(EStatus::LOADING);
     }
 
     Q_EMIT cachedFramesChanged();
