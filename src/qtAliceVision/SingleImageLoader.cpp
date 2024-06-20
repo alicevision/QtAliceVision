@@ -89,6 +89,9 @@ void SingleImageLoadingIORunnable::run()
         {
             aliceVision::imageAlgo::resizeImage(_reqData.downscale, *(response.img));
         }
+
+        // Set loading status
+        response.error = SUCCESSFUL;
     }
     catch (const std::runtime_error& e)
     {

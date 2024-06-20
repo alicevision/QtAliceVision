@@ -15,6 +15,7 @@ namespace imgserve {
 
 enum LoadingStatus
 {
+    UNDEFINED,
     SUCCESSFUL,
     MISSING_FILE,
     ERROR
@@ -41,7 +42,7 @@ struct ResponseData
 
     QVariantMap metadata;
 
-    LoadingStatus error = SUCCESSFUL;
+    LoadingStatus error = UNDEFINED;
 };
 
 /**

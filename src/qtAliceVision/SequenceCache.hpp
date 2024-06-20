@@ -91,6 +91,24 @@ class SequenceCache : public QObject, public ImageServer
      */
     QVariantList getCachedFrames() const;
 
+    /**
+     * @brief Set the boolean flag indicating if the sequence is being fetched.
+     * @param[in] fetching new value for the fetching flag
+     */
+    void setFetchingSequence(bool fetching);
+
+    /**
+     * @brief Set the maximum memory that can be filled by the cache.
+     * @param[in] memory maximum memory in bytes
+     */
+    void setMemoryLimit(int memory);
+
+    /**
+     * @brief Get the maximum available RAM on the system.
+     * @return maximum available RAM in bytes
+     */
+    QPointF getRamInfo() const;
+
   public:
     // Request management
 
@@ -141,6 +159,9 @@ class SequenceCache : public QObject, public ImageServer
 
     /// Target size used to compute downscale
     int _targetSize;
+
+    /// Flag to indicate if the sequence is being fetched
+    bool _fetchingSequence;
 
     /// Local threadpool
     QThreadPool _threadPool;
