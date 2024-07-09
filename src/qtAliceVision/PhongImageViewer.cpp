@@ -349,8 +349,10 @@ QSGNode* PhongImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
         }
         else
         {
-            const float windowRatio = _boundingRect.width() / _boundingRect.height();
-            const float textureRatio = _textureSize.width() / float(_textureSize.height());
+            const float windowRatio = static_cast<float>(_boundingRect.width()) /
+                                      static_cast<float>(_boundingRect.height());
+            const float textureRatio = static_cast<float>(_textureSize.width()) /
+                                       static_cast<float>(_textureSize.height());
             QRectF geometryRect = _boundingRect;
 
             if (windowRatio > textureRatio)
@@ -388,6 +390,8 @@ QSGNode* PhongImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
             case EChannelMode::A:
                 channelOrder = QVector4D(3.f, 3.f, 3.f, -1.f);
                 break;
+            default:
+                break;
         }
 
         node->setSourceParameters(channelOrder, _gamma, _gain);
@@ -400,13 +404,21 @@ QSGNode* PhongImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
     if (isNewNode || _shadingParametersChanged)
     {
         // light direction from Yaw and Pitch
-        const Eigen::AngleAxis<double> yawA(static_cast<double>(aliceVision::degreeToRadian(_lightYaw)), Eigen::Vector3d::UnitY());
-        const Eigen::AngleAxis<double> pitchA(static_cast<double>(aliceVision::degreeToRadian(_lightPitch)), Eigen::Vector3d::UnitX());
-        const aliceVision::Vec3 direction = yawA.toRotationMatrix() * pitchA.toRotationMatrix() * aliceVision::Vec3(0.0, 0.0, -1.0);
-        const QVector3D lightDirection(direction.x(), direction.y(), direction.z());
+        const Eigen::AngleAxis<double> yawA(static_cast<double>(aliceVision::degreeToRadian(_lightYaw)),
+                                            Eigen::Vector3d::UnitY());
+        const Eigen::AngleAxis<double> pitchA(static_cast<double>(aliceVision::degreeToRadian(_lightPitch)),
+                                            Eigen::Vector3d::UnitX());
+        const aliceVision::Vec3 direction = yawA.toRotationMatrix() * pitchA.toRotationMatrix() *
+                                            aliceVision::Vec3(0.0, 0.0, -1.0);
+        const QVector3D lightDirection(static_cast<float>(direction.x()),
+                                       static_cast<float>(direction.y()),
+                                       static_cast<float>(direction.z()));
 
         // linear base color from QColor
-        const QVector4D baseColor(std::powf(_baseColor.redF(), 2.2), std::powf(_baseColor.greenF(), 2.2), std::powf(_baseColor.blueF(), 2.2), _baseColor.alphaF());
+        const QVector4D baseColor(std::pow(static_cast<float>(_baseColor.redF()), 2.2f),
+                                  std::pow(static_cast<float>(_baseColor.greenF()), 2.2f),
+                                  std::pow(static_cast<float>(_baseColor.blueF()), 2.2f),
+                                  _baseColor.alphaF());
 
         node->setShadingParameters(baseColor, lightDirection, _textureOpacity, _ka, _kd, _ks, _shininess);
 
