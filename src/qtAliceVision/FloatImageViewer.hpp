@@ -79,7 +79,7 @@ class FloatImageViewer : public QQuickItem
         LOADING,           // an image is being loaded
         OUTDATED_LOADING,  // an image was already loading during the previous reload()
         MISSING_FILE,      // the file to load is missing
-        ERROR              // generic error
+        LOADING_ERROR      // generic error
     };
     Q_ENUM(EStatus)
 

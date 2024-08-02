@@ -156,10 +156,10 @@ void FloatImageViewer::reload()
         _image.reset();
         setStatus(EStatus::MISSING_FILE);
     }
-    else if (response.error == imgserve::LoadingStatus::ERROR)
+    else if (response.error == imgserve::LoadingStatus::LOADING_ERROR)
     {
         _image.reset();
-        setStatus(EStatus::ERROR);
+        setStatus(EStatus::LOADING_ERROR);
     }
     else if (_outdated)
     {
