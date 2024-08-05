@@ -18,7 +18,7 @@ enum LoadingStatus
     UNDEFINED,
     SUCCESSFUL,
     MISSING_FILE,
-    ERROR
+    LOADING_ERROR
 };
 
 /**
