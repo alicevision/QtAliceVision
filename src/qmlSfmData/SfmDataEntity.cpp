@@ -287,7 +287,7 @@ void SfmDataEntity::onIOThreadFinished()
 
             CameraLocatorEntity* entity = new CameraLocatorEntity(pv.first, pv.second->getResectionId(), hfov, vfov, root);
             entity->addComponent(_cameraMaterial);
-            entity->setTransform(sfmData.getPoses().at(pv.second->getPoseId()).getTransform().getHomogeneous());
+            entity->setTransform(sfmData.getPose(*pv.second).getTransform().getHomogeneous());
             entity->setObjectName(std::to_string(pv.first).c_str());
             if (entity->resectionId() > _resectionId && _displayResections)
             {
