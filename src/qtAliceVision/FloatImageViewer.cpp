@@ -44,7 +44,7 @@ FloatImageViewer::FloatImageViewer(QQuickItem* parent)
 
     connect(&_singleImageLoader, &imgserve::SingleImageLoader::requestHandled, this, &FloatImageViewer::reload);
     connect(&_sequenceCache, &imgserve::SequenceCache::requestHandled, this, &FloatImageViewer::reload);
-    connect(&_sequenceCache, &imgserve::SequenceCache::contentChanged, this, &FloatImageViewer::reload);
+    //connect(&_sequenceCache, &imgserve::SequenceCache::contentChanged, this, &FloatImageViewer::reload);
     connect(this, &FloatImageViewer::useSequenceChanged, this, &FloatImageViewer::reload);
 }
 
@@ -78,14 +78,22 @@ void FloatImageViewer::setSequence(const QVariantList& paths)
 
 void FloatImageViewer::setFetchingSequence(bool fetching)
 {
-    _sequenceCache.setFetchingSequence(fetching);
+    _sequenceCache.setAsyncFetching(fetching);
     Q_EMIT fetchingSequenceChanged();
 }
 
 void FloatImageViewer::setTargetSize(int size)
 {
-    _sequenceCache.setTargetSize(size);
-    Q_EMIT targetSizeChanged();
+}
+
+void FloatImageViewer::setResizeRatio(double ratio)
+{
+    ratio = std::clamp(ratio, 0.0, 1.0);
+    ratio = std::ceil(ratio * 10.0) / 10.0;
+    
+    _sequenceCache.setResizeRatio(ratio);
+
+    Q_EMIT resizeRatioChanged();
 }
 
 void FloatImageViewer::setMemoryLimit(int memoryLimit) {
@@ -166,14 +174,11 @@ void FloatImageViewer::reload()
         qWarning() << "[QtAliceVision] The loading status has not been updated since the last reload. Something wrong might have happened.";
         setStatus(EStatus::OUTDATED_LOADING);
     }
-
     Q_EMIT cachedFramesChanged();
 }
 
 void FloatImageViewer::playback(bool active)
 {
-    // Turn off interactive prefetching when playback is ON
-    _sequenceCache.setInteractivePrefetching(!active);
 }
 
 QVector4D FloatImageViewer::pixelValueAt(int x, int y)

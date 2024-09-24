@@ -13,6 +13,8 @@ set(PLUGIN_SOURCES
     Painter.cpp
     SequenceCache.cpp
     SingleImageLoader.cpp
+    ImageCache.cpp
+    AsyncFetcher.cpp
     )
 
 set(PLUGIN_HEADERS
@@ -32,6 +34,9 @@ set(PLUGIN_HEADERS
     ImageServer.hpp
     SequenceCache.hpp
     SingleImageLoader.hpp
+    ImageCache.hpp
+    AsyncFetcher.hpp
+    
     )
 
 set(PLUGIN_MOCS
@@ -43,6 +48,7 @@ set(PLUGIN_MOCS
     MSfMDataStats.hpp
     SequenceCache.hpp
     SingleImageLoader.hpp
+    AsyncFetcher.hpp
     )
 
 
