@@ -263,7 +263,7 @@ namespace
 
         void setFisheye(float aspectRatio, float fisheyeCircleRadius, QVector2D fisheyeCircleCoord)
         {
-            auto* m = static_cast<FloatImageViewerMaterial*>(_gridNode->material());
+            auto* m = static_cast<FloatImageViewerMaterial*>(material());
             m->uniforms.aspectRatio = aspectRatio;
             m->uniforms.fisheyeCircleRadius = fisheyeCircleRadius;
             m->uniforms.fisheyeCircleCoord = fisheyeCircleCoord;
@@ -273,7 +273,7 @@ namespace
 
         void resetFisheye()
         {
-            auto* m = static_cast<FloatImageViewerMaterial*>(_gridNode->material());
+            auto* m = static_cast<FloatImageViewerMaterial*>(material());
             m->uniforms.fisheyeCircleRadius = 0.f;
             m->dirtyUniforms = true;
             markDirty(DirtyMaterial);
