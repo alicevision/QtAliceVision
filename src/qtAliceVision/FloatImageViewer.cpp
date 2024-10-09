@@ -24,7 +24,12 @@ namespace
     public:
         FloatImageViewerMaterial()
         {
-
+            std::shared_ptr<FloatImage> image = std::make_shared<FloatImage>(1,1,true);
+            texture = std::make_unique<FloatTexture>();
+            texture->setImage(image);
+            texture->setFiltering(QSGTexture::Nearest);
+            texture->setHorizontalWrapMode(QSGTexture::Repeat);
+            texture->setVerticalWrapMode(QSGTexture::Repeat);
         }
 
         QSGMaterialType* type() const override
@@ -96,7 +101,10 @@ namespace
             FloatImageViewerMaterial* mat = static_cast<FloatImageViewerMaterial*>(newMaterial);
             if (binding == 1)
             {
-                mat->texture->commitTextureOperations(state.rhi(), state.resourceUpdateBatch());
+                if (mat->texture)
+                {
+                    mat->texture->commitTextureOperations(state.rhi(), state.resourceUpdateBatch());
+                }
                 *texture = mat->texture.get();
             }
         }
