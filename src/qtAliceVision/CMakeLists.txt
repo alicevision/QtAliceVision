@@ -10,6 +10,7 @@ set(PLUGIN_SOURCES
     Surface.cpp
     MSfMDataStats.cpp
     PanoramaViewer.cpp
+    PhongImageViewer.cpp
     Painter.cpp
     SequenceCache.cpp
     SingleImageLoader.cpp
@@ -26,6 +27,7 @@ set(PLUGIN_HEADERS
     FloatTexture.hpp
     MSfMDataStats.hpp
     PanoramaViewer.hpp
+    PhongImageViewer.hpp
     Surface.hpp
     Painter.hpp
     ImageServer.hpp
@@ -70,6 +72,7 @@ qt6_add_shaders(qtAliceVisionPlugin "qtAliceVisionPlugin_shaders"
     OPTIMIZED
     PREFIX "/shaders"
     FILES FloatImageViewer.vert FloatImageViewer.frag
+          PhongImageViewer.vert PhongImageViewer.frag
           ImageOverlay.frag
           AttributeItemDelegate.frag
     )
