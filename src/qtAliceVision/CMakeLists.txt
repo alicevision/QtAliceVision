@@ -70,6 +70,7 @@ qt6_add_shaders(qtAliceVisionPlugin "qtAliceVisionPlugin_shaders"
     OPTIMIZED
     PREFIX "/shaders"
     FILES FloatImageViewer.vert FloatImageViewer.frag
+          FeaturesViewer.vert FeaturesViewer.frag
           ImageOverlay.frag
           AttributeItemDelegate.frag
     )

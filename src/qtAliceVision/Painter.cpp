@@ -4,7 +4,133 @@
 #include <QSGGeometry>
 #include <QtDebug>
 
+#if QT_CONFIG(opengl)
+    #include <qopenglshaderprogram.h>
+#else
+    #error "opengl must be valid"
+#endif
+
 namespace qtAliceVision {
+
+class PointMaterialShader;
+
+class PointMaterial : public QSGMaterial
+{
+public:
+    PointMaterial() : 
+        _color(1, 1, 1, 1),
+        _size(1.0f)
+    {
+    }
+
+    void setColor(const QColor& color)
+    {
+        _color = color;
+    }
+
+    QColor getColor() const
+    {
+        return _color;
+    }
+
+    void setSize(const float & size)
+    { 
+        _size = size; 
+    }
+
+    float getSize() const 
+    {
+        return _size; 
+    }
+
+    QSGMaterialType* type() const override
+    {
+        static QSGMaterialType type;
+        return &type;
+    }
+
+    int compare(const QSGMaterial* other) const override
+    {
+        Q_ASSERT(other && type() == other->type());
+        return other == this ? 0 : (other > this ? 1 : -1);
+    }
+
+    QSGMaterialShader* createShader(QSGRendererInterface::RenderMode) const override;
+
+private:
+    QColor _color;
+    float _size;
+};
+
+class PointMaterialShader : public QSGMaterialShader
+{
+public:
+    PointMaterialShader()
+    {
+        setShaderFileName(VertexStage, QLatin1String(":/shaders/FeaturesViewer.vert.qsb"));
+        setShaderFileName(FragmentStage, QLatin1String(":/shaders/FeaturesViewer.frag.qsb"));
+    }
+
+    bool updateUniformData(RenderState& state, QSGMaterial* newMaterial, QSGMaterial* oldMaterial) override
+    {
+        bool changed = false;
+        QByteArray* buf = state.uniformData();
+        
+        if (state.isMatrixDirty())
+        {
+            const QMatrix4x4 m = state.combinedMatrix();
+            memcpy(buf->data() + 0, m.constData(), 64);
+            changed = true;
+        }
+
+        auto* currentMaterial = static_cast<PointMaterial*>(newMaterial);
+        
+        if (currentMaterial != nullptr)
+        {
+            const QColor& color = currentMaterial->getColor();
+            const float& size = currentMaterial->getSize();
+            bool hasColorChanged = true;
+            bool hasSizeChanged = true;
+            
+            if (oldMaterial != nullptr)
+            {
+                auto* previousMaterial = static_cast<PointMaterial*>(oldMaterial);
+                QColor pc = previousMaterial->getColor();
+                if (color == pc)
+                {
+                    hasColorChanged = false;
+                }
+
+                if (previousMaterial->getSize() == size)
+                {
+                    hasSizeChanged = false;
+                }
+            }
+
+            if (state.isOpacityDirty() || hasColorChanged)
+            {
+                float opacity = state.opacity() * color.alphaF();
+                QVector4D v(color.redF() * opacity, color.greenF() * opacity, color.blueF() * opacity, opacity);
+
+                memcpy(buf->data() + 64, &v, 4 * 4);
+                changed = true;
+            }
+
+            if (hasSizeChanged)
+            {
+                memcpy(buf->data() + 80, &size, 4);
+                changed = true;
+            }
+        }
+
+        return changed;
+    }
+};
+
+QSGMaterialShader* PointMaterial::createShader(QSGRendererInterface::RenderMode) const  
+{ 
+    return new PointMaterialShader; 
+}
 
 Painter::Painter(const std::vector<std::string>& layers)
   : _layers(layers)
@@ -38,7 +164,7 @@ bool Painter::ensureGeometry(QSGNode* node) const
         geometry->setIndexDataPattern(QSGGeometry::StaticPattern);
         geometry->setVertexDataPattern(QSGGeometry::StaticPattern);
 
-        auto material = new QSGFlatColorMaterial;
+        auto material = new PointMaterial;
 
         root->setGeometry(geometry);
         root->setMaterial(material);
@@ -97,7 +223,7 @@ void Painter::drawPoints(QSGNode* node, const std::string& layer, const std::vec
     geometry->allocate(static_cast<int>(points.size()), 0);
 
     geometry->setDrawingMode(QSGGeometry::DrawPoints);
-    geometry->setLineWidth(pointSize);
+    //geometry->setLineWidth(pointSize);
 
     auto* vertices = geometry->vertexDataAsPoint2D();
     if (!vertices)
@@ -112,7 +238,7 @@ void Painter::drawPoints(QSGNode* node, const std::string& layer, const std::vec
         vertices[i].set(static_cast<float>(p.x()), static_cast<float>(p.y()));
     }
 
-    auto* material = static_cast<QSGFlatColorMaterial*>(root->material());
+    auto* material = static_cast<PointMaterial*>(root->material());
     if (!material)
     {
         qDebug() << "[qtAliceVision] Painter::drawPoints: invalid material for layer " << layer;
@@ -120,6 +246,7 @@ void Painter::drawPoints(QSGNode* node, const std::string& layer, const std::vec
     }
 
     material->setColor(color);
+    material->setSize(pointSize);
 }
 
 void Painter::drawLines(QSGNode* node, const std::string& layer, const std::vector<QPointF>& points, const QColor& color, float lineWidth) const
@@ -151,7 +278,7 @@ void Painter::drawLines(QSGNode* node, const std::string& layer, const std::vect
         vertices[i].set(static_cast<float>(p.x()), static_cast<float>(p.y()));
     }
 
-    auto* material = static_cast<QSGFlatColorMaterial*>(root->material());
+    auto* material = static_cast<PointMaterial*>(root->material());
     if (!material)
     {
         qDebug() << "[qtAliceVision] Painter::drawLines: invalid material for layer " << layer;
@@ -189,7 +316,7 @@ void Painter::drawTriangles(QSGNode* node, const std::string& layer, const std::
         vertices[i].set(static_cast<float>(p.x()), static_cast<float>(p.y()));
     }
 
-    auto* material = static_cast<QSGFlatColorMaterial*>(root->material());
+    auto* material = static_cast<PointMaterial*>(root->material());
     if (!material)
     {
         qDebug() << "[qtAliceVision] Painter::drawTriangles: invalid material for layer " << layer;
