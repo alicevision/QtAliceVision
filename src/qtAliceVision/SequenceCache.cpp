@@ -24,6 +24,13 @@ SequenceCache::SequenceCache(QObject* parent)
     _maxMemory = static_cast<size_t>(cacheRam);  
 
     _fetcher.setAutoDelete(false); 
+    
+    //Cache does not exist
+    //Let's create a new one !
+    {
+        image::ImageCache::uptr cache = std::make_unique<image::ImageCache>(_maxMemory, image::EImageColorSpace::LINEAR);
+        _fetcher.setCache(std::move(cache));
+    }
 }
 
 SequenceCache::~SequenceCache()
@@ -34,15 +41,10 @@ SequenceCache::~SequenceCache()
 
 void SequenceCache::setSequence(const QVariantList& paths)
 {
+    bool isAsync = _fetcher.isAsync();
+
     _fetcher.stopAsync();
     _threadPool.waitForDone();
-
-    //On changing sequence, the cache become totally invalid
-    //Let's create a new one !
-    {
-        image::ImageCache::uptr cache = std::make_unique<image::ImageCache>(_maxMemory, image::EImageColorSpace::LINEAR);
-        _fetcher.setCache(std::move(cache));
-    }
 
     //Convert to string
     std::vector<std::string> sequence;
@@ -53,6 +55,9 @@ void SequenceCache::setSequence(const QVariantList& paths)
 
     //Assign sequence to fetcher
     _fetcher.setSequence(sequence);
+
+    //Restart if needed
+    setAsyncFetching(isAsync);
 }
 
 void SequenceCache::setResizeRatio(double ratio)

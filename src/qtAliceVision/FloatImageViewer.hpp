@@ -207,6 +207,7 @@ class FloatImageViewer : public QQuickItem
     imgserve::SequenceCache _sequenceCache;
     imgserve::SingleImageLoader _singleImageLoader;
     bool _useSequence = true;
+    double _clampedResizeRatio = 1.0;
 };
 
 }  // namespace qtAliceVision

@@ -93,6 +93,8 @@ void FloatImageViewer::setResizeRatio(double ratio)
     
     _sequenceCache.setResizeRatio(ratio);
 
+    _clampedResizeRatio = ratio;
+
     Q_EMIT resizeRatioChanged();
 }
 
@@ -183,6 +185,12 @@ void FloatImageViewer::playback(bool active)
 
 QVector4D FloatImageViewer::pixelValueAt(int x, int y)
 {
+    if (_useSequence)
+    {
+        x = int(std::ceil(double(x) * _clampedResizeRatio));
+        y = int(std::ceil(double(y) * _clampedResizeRatio));
+    }
+    
     if (!_image)
     {
         // qInfo() << "[QtAliceVision] FloatImageViewer::pixelValueAt(" << x << ", " << y << ") => no valid image";

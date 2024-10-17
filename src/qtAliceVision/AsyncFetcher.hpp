@@ -67,6 +67,11 @@ public:
     */
     void stopAsync();
 
+    bool isAsync() const 
+    {
+        return _isAsynchroneous;
+    }
+
     /**
      * @brief get the cache content size in bytes
      * @return the cache content size in bytes
