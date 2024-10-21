@@ -32,13 +32,12 @@ void AsyncFetcher::setSequence(const std::vector<std::string> & paths)
     } 
 
     _sequence = paths;
+    _currentIndex = 0;
 
     for (unsigned idx = 0; idx < _sequence.size(); idx++)
     {
         _pathToSeqId[_sequence[idx]] = idx;
     }
-
-    _currentIndex = 0;
 }
 
 void AsyncFetcher::setResizeRatio(double ratio)
@@ -75,6 +74,11 @@ void AsyncFetcher::run()
             break;
         }
 
+        if (_sequence.size() == 0)
+        {
+            std::this_thread::sleep_for(100ms);
+        }
+        else
         {
             const std::string & lpath = _sequence[_currentIndex];
 
@@ -97,9 +101,9 @@ void AsyncFetcher::run()
             {
                 _currentIndex = 0;
             }
-        }
 
-        std::this_thread::sleep_for(1ms);
+            std::this_thread::sleep_for(1ms);
+        }
 
         int cacheSize = getDiskLoads();
         if (cacheSize != previousCacheSize)
