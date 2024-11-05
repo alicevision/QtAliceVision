@@ -1,7 +1,5 @@
 #include "ImageCache.hpp"
 
-#include <aliceVision/system/Logger.hpp>
-
 namespace qtAliceVision {
 
 ImageCache::ImageCache(unsigned long maxSize, const aliceVision::image::ImageReadOptions& options)

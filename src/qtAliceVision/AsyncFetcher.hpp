@@ -51,8 +51,8 @@ class AsyncFetcher : public QObject, public QRunnable
     bool getFrame(const std::string& path,
                   std::shared_ptr<aliceVision::image::Image<aliceVision::image::RGBAfColor>>& image,
                   oiio::ParamValueList& metadatas,
-                  size_t& originalWidth,
-                  size_t& originalHeight);
+                  std::size_t& originalWidth,
+                  std::size_t& originalHeight);
 
     /**
      * @brief Internal function for QT to start the asynchronous mode
@@ -71,19 +71,19 @@ class AsyncFetcher : public QObject, public QRunnable
      * @brief get the cache content size in bytes
      * @return the cache content size in bytes
      */
-    size_t getCacheSize() const;
+    std::size_t getCacheSize() const;
 
     /**
      * @brief get the number of images loaded
      * @return the count of images loaded since the creation of the cache object
      */
-    size_t getDiskLoads() const;
+    std::size_t getDiskLoads() const;
 
     /**
      * @brief update maxMemory for the cache
      * @param maxMemory the number of bytes allowed in the cache
      */
-    void updateCacheMemory(size_t maxMemory);
+    void updateCacheMemory(std::size_t maxMemory);
 
     /**
      * @brief get a list of regions containing the image frames

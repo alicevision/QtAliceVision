@@ -10,14 +10,6 @@
 
 #include <boost/functional/hash.hpp>
 
-#include <filesystem>
-#include <memory>
-#include <unordered_map>
-#include <functional>
-#include <list>
-#include <mutex>
-#include <thread>
-#include <algorithm>
 
 namespace qtAliceVision {
 /**
@@ -187,7 +179,7 @@ class CacheInfo
         }
     }
 
-    size_t getAvailableSize() const
+    std::size_t getAvailableSize() const
     {
         const std::scoped_lock<std::mutex> lock(_mutex);
 
@@ -199,7 +191,7 @@ class CacheInfo
         return _maxSize - _contentSize;
     }
 
-    bool isSmallEnough(size_t value) const
+    bool isSmallEnough(std::size_t value) const
     {
         const std::scoped_lock<std::mutex> lock(_mutex);
 
@@ -288,7 +280,7 @@ class ImageCache
      * @param requestedSize the required size for the new image
      * @param toAdd the key of the image to add after cleanup
      */
-    void cleanup(size_t requestedSize, const CacheKey& toAdd);
+    void cleanup(std::size_t requestedSize, const CacheKey& toAdd);
 
     /**
      * @return information on the current cache state and usage
@@ -397,7 +389,7 @@ std::optional<CacheValue> ImageCache::load(const CacheKey& key, unsigned frameId
     int th = static_cast<int>(std::max(1, int(std::ceil(dh))));
 
     using TInfo = aliceVision::image::ColorTypeInfo<TPix>;
-    cleanup(tw * th * size_t(TInfo::size), key);
+    cleanup(tw * th * std::size_t(TInfo::size), key);
 
     // apply downscale
     aliceVision::imageAlgo::resizeImage(tw, th, img, *resized);

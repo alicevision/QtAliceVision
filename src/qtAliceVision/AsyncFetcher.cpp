@@ -60,7 +60,7 @@ void AsyncFetcher::run()
     _isAsynchronous = true;
     _requestSynchronous = false;
 
-    int previousCacheSize = getDiskLoads();
+    std::size_t previousCacheSize = getDiskLoads();
 
     while (1)
     {
@@ -76,7 +76,7 @@ void AsyncFetcher::run()
         }
         else
         {
-            const std::string& lpath = _sequence[_currentIndex];
+            const std::string& lpath = _sequence[static_cast<std::size_t>(_currentIndex)];
 
             // Load in cache
             if (_cache)
@@ -87,12 +87,12 @@ void AsyncFetcher::run()
                     ratio = _resizeRatio;
                 }
 
-                _cache->get<image::RGBAfColor>(lpath, _currentIndex, ratio, false);
+                _cache->get<image::RGBAfColor>(lpath, static_cast<unsigned int>(_currentIndex), ratio, false);
             }
 
             _currentIndex++;
 
-            int size = _sequence.size();
+            int size = static_cast<int>(_sequence.size());
             if (_currentIndex >= size)
             {
                 _currentIndex = 0;
@@ -101,7 +101,7 @@ void AsyncFetcher::run()
             std::this_thread::sleep_for(1ms);
         }
 
-        int cacheSize = getDiskLoads();
+        std::size_t cacheSize = getDiskLoads();
         if (cacheSize != previousCacheSize)
         {
             previousCacheSize = cacheSize;
@@ -118,7 +118,7 @@ void AsyncFetcher::stopAsync()
     _requestSynchronous = true;
 }
 
-void AsyncFetcher::updateCacheMemory(size_t maxMemory)
+void AsyncFetcher::updateCacheMemory(std::size_t maxMemory)
 {
     if (_cache)
     {
@@ -126,14 +126,14 @@ void AsyncFetcher::updateCacheMemory(size_t maxMemory)
     }
 }
 
-size_t AsyncFetcher::getCacheSize() const
+std::size_t AsyncFetcher::getCacheSize() const
 {
-    return (_cache) ? _cache->info().getContentSize() : 0.0f;
+    return (_cache) ? static_cast<std::size_t>(_cache->info().getContentSize()) : 0;
 }
 
-size_t AsyncFetcher::getDiskLoads() const
+std::size_t AsyncFetcher::getDiskLoads() const
 {
-    return (_cache) ? _cache->info().getLoadFromDisk() : 0.0f;
+    return (_cache) ? static_cast<std::size_t>(_cache->info().getLoadFromDisk()) : 0;
 }
 
 QVariantList AsyncFetcher::getCachedFrames() const
@@ -209,11 +209,11 @@ bool AsyncFetcher::getFrame(const std::string& path,
     bool onlyCache = _isAsynchronous;
 
     // Upgrade the thread with the current Index
-    for (int idx = 0; idx < _sequence.size(); ++idx)
+    for (std::size_t idx = 0; idx < _sequence.size(); ++idx)
     {
         if (_sequence[idx] == path)
         {
-            _currentIndex = idx;
+            _currentIndex = static_cast<int>(idx);
             break;
         }
     }

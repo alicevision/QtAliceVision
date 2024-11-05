@@ -1,7 +1,6 @@
 #include "SequenceCache.hpp"
 
 #include <aliceVision/system/MemoryInfo.hpp>
-#include <aliceVision/image/Image.hpp>
 
 using namespace aliceVision;
 
@@ -68,7 +67,7 @@ void SequenceCache::setMemoryLimit(int memory)
 {
     // Convert parameter in gigabytes to bytes
     const double gigaBytesToBytes = 1024. * 1024. * 1024.;
-    _maxMemory = static_cast<double>(memory) * gigaBytesToBytes;
+    _maxMemory = static_cast<std::size_t>(static_cast<double>(memory) * gigaBytesToBytes);
     _fetcher.updateCacheMemory(_maxMemory);
 }
 
@@ -95,7 +94,7 @@ QPointF SequenceCache::getRamInfo() const
     // Get available RAM in bytes and cache occupied memory
     const auto memInfo = aliceVision::system::getMemoryInfo();
 
-    double availableRam = memInfo.availableRam / (1024. * 1024. * 1024.);
+    double availableRam = static_cast<double>(memInfo.availableRam) / (1024. * 1024. * 1024.);
     double contentSize = static_cast<double>(_fetcher.getCacheSize()) / (1024. * 1024. * 1024. * 1024.);
 
     // Return in GB
@@ -119,7 +118,7 @@ ResponseData SequenceCache::request(const RequestData& reqData)
 
     response.metadata.clear();
     response.img = image;
-    response.dim = QSize(originalWidth, originalHeight);
+    response.dim = QSize(static_cast<int>(originalWidth), static_cast<int>(originalHeight));
 
     // Convert metadatas
     for (const auto& item : metadatas)
