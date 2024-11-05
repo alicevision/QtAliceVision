@@ -1,9 +1,3 @@
-// This file is part of the AliceVision project.
-// Copyright (c) 2022 AliceVision contributors.
-// This Source Code Form is subject to the terms of the Mozilla Public License,
-// v. 2.0. If a copy of the MPL was not distributed with this file,
-// You can obtain one at https://mozilla.org/MPL/2.0/.
-
 #pragma once
 
 #include <aliceVision/image/Image.hpp>
@@ -25,9 +19,7 @@
 #include <thread>
 #include <algorithm>
 
-namespace aliceVision {
-namespace image {
-
+namespace qtAliceVision {
 /**
  * @brief A struct used to identify a cached image using its file description, color type info and downscale level.
  */
@@ -80,7 +72,7 @@ class CacheValue
 {
   public:
     template<typename TPix>
-    CacheValue(unsigned frameId, std::shared_ptr<Image<TPix>> img) : 
+    CacheValue(unsigned frameId, std::shared_ptr<aliceVision::image::Image<TPix>> img) : 
     _vimg(img),
     _frameId(frameId)
     {
@@ -93,9 +85,9 @@ class CacheValue
      * @return shared pointer to an image with the pixel type given as template argument
      */
     template<typename TPix>
-    std::shared_ptr<Image<TPix>> get() const
+    std::shared_ptr<aliceVision::image::Image<TPix>> get() const
     {
-        return std::get<std::shared_ptr<Image<TPix>>>(_vimg);
+        return std::get<std::shared_ptr<aliceVision::image::Image<TPix>>>(_vimg);
     }
 
     unsigned getOriginalWidth() const
@@ -148,12 +140,12 @@ class CacheValue
 
   private:
     std::variant<
-        std::shared_ptr<Image<unsigned char>>,
-        std::shared_ptr<Image<float>>,
-        std::shared_ptr<Image<RGBColor>>,
-        std::shared_ptr<Image<RGBAColor>>,
-        std::shared_ptr<Image<RGBfColor>>,
-        std::shared_ptr<Image<RGBAfColor>>
+        std::shared_ptr<aliceVision::image::Image<unsigned char>>,
+        std::shared_ptr<aliceVision::image::Image<float>>,
+        std::shared_ptr<aliceVision::image::Image<aliceVision::image::RGBColor>>,
+        std::shared_ptr<aliceVision::image::Image<aliceVision::image::RGBAColor>>,
+        std::shared_ptr<aliceVision::image::Image<aliceVision::image::RGBfColor>>,
+        std::shared_ptr<aliceVision::image::Image<aliceVision::image::RGBAfColor>>
         > _vimg;
 
     unsigned _originalWidth;
@@ -268,7 +260,7 @@ class ImageCache
      * @param[in] maxSize the cache maximal size (in bytes)
      * @param[in] options the reading options that will be used when loading images through this cache
      */
-    ImageCache(unsigned long maxSize, const ImageReadOptions& options);
+    ImageCache(unsigned long maxSize, const aliceVision::image::ImageReadOptions& options);
 
     /**
      * @brief Destroy the cache and the unused images it contains.
@@ -317,7 +309,7 @@ class ImageCache
     /**
      * @return the image reading options of the cache
      */
-    inline const ImageReadOptions& readOptions() const { return _options; }
+    inline const aliceVision::image::ImageReadOptions& readOptions() const { return _options; }
 
     /**
      * @brief update the cache max memory
@@ -341,7 +333,7 @@ class ImageCache
     std::optional<CacheValue> load(const CacheKey& key, unsigned frameId);
 
     CacheInfo _info;
-    ImageReadOptions _options;
+    aliceVision::image::ImageReadOptions _options;
 
     //Set of images stored and indexed by CacheKey
     std::unordered_map<CacheKey, CacheValue, CacheKeyHasher> _imagePtrs;
@@ -364,8 +356,8 @@ std::optional<CacheValue> ImageCache::get(const std::string& filename, unsigned 
     }
 
     //Build lookup key
-    using TInfo = ColorTypeInfo<TPix>;
-    auto lastWriteTime = utils::getLastWriteTime(filename);
+    using TInfo = aliceVision::image::ColorTypeInfo<TPix>;
+    auto lastWriteTime = aliceVision::utils::getLastWriteTime(filename);
     CacheKey keyReq(filename, TInfo::size, TInfo::typeDesc, resizeRatio, lastWriteTime);
 
     // find the requested image in the cached images
@@ -390,8 +382,8 @@ std::optional<CacheValue> ImageCache::get(const std::string& filename, unsigned 
 template<typename TPix>
 std::optional<CacheValue> ImageCache::load(const CacheKey& key, unsigned frameId)
 {
-    Image<TPix> img;
-    auto resized = std::make_shared<Image<TPix>>();
+    aliceVision::image::Image<TPix> img;
+    auto resized = std::make_shared<aliceVision::image::Image<TPix>>();
 
     int width = 0;
     int height = 0;
@@ -399,7 +391,7 @@ std::optional<CacheValue> ImageCache::load(const CacheKey& key, unsigned frameId
 
     try 
     {
-        metadatas = readImageMetadata(key.filename, width, height);
+        metadatas = aliceVision::image::readImageMetadata(key.filename, width, height);
         
         // load image from disk
         readImage(key.filename, img, _options);
@@ -416,11 +408,11 @@ std::optional<CacheValue> ImageCache::load(const CacheKey& key, unsigned frameId
     int tw = static_cast<int>(std::max(1, int(std::ceil(dw))));
     int th = static_cast<int>(std::max(1, int(std::ceil(dh))));
 
-    using TInfo = ColorTypeInfo<TPix>;
+    using TInfo = aliceVision::image::ColorTypeInfo<TPix>;
     cleanup(tw*th*size_t(TInfo::size), key);
     
     // apply downscale
-    imageAlgo::resizeImage(tw, th, img, *resized);
+    aliceVision::imageAlgo::resizeImage(tw, th, img, *resized);
 
     //Increment disk access stats
     _info.incrementDisk();
@@ -449,8 +441,8 @@ bool ImageCache::contains(const std::string& filename, double resizeRatio) const
 {
     std::scoped_lock<std::mutex> lockKeys(_mutexAccessImages);
 
-    using TInfo = ColorTypeInfo<TPix>;
-    auto lastWriteTime = utils::getLastWriteTime(filename);
+    using TInfo = aliceVision::image::ColorTypeInfo<TPix>;
+    auto lastWriteTime = aliceVision::utils::getLastWriteTime(filename);
     CacheKey keyReq(filename, TInfo::size, TInfo::typeDesc, resizeRatio, lastWriteTime);
     auto it = _imagePtrs.find(keyReq);
 
@@ -460,6 +452,4 @@ bool ImageCache::contains(const std::string& filename, double resizeRatio) const
 }
 
 
-
-}  // namespace image
-}  // namespace aliceVision
+}  // namespace qtaliceVision

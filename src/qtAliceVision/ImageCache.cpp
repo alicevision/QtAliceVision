@@ -1,17 +1,10 @@
-// This file is part of the AliceVision project.
-// Copyright (c) 2022 AliceVision contributors.
-// This Source Code Form is subject to the terms of the Mozilla Public License,
-// v. 2.0. If a copy of the MPL was not distributed with this file,
-// You can obtain one at https://mozilla.org/MPL/2.0/.
-
 #include "ImageCache.hpp"
 
 #include <aliceVision/system/Logger.hpp>
 
-namespace aliceVision {
-namespace image {
+namespace qtAliceVision {
 
-ImageCache::ImageCache(unsigned long maxSize, const ImageReadOptions& options)
+ImageCache::ImageCache(unsigned long maxSize, const aliceVision::image::ImageReadOptions& options)
   : _info(maxSize),
     _options(options),
     _referenceFrameId(0)
@@ -103,5 +96,4 @@ void ImageCache::setReferenceFrameId(int referenceFrameId)
     _referenceFrameId = referenceFrameId;
 }
 
-}  // namespace image
-}  // namespace aliceVision
+}  // namespace qtaliceVision

@@ -46,7 +46,7 @@ void AsyncFetcher::setResizeRatio(double ratio)
     _resizeRatio = ratio;
 }
 
-void AsyncFetcher::setCache(aliceVision::image::ImageCache::uptr && cache)
+void AsyncFetcher::setCache(ImageCache::uptr && cache)
 {
     //Cache can't be changed while thread is running
     if (_isAsynchroneous)
@@ -223,13 +223,13 @@ bool AsyncFetcher::getFrame(const std::string & path,
         }
     }
 
-    std::optional<image::CacheValue> ovalue = _cache->get<image::RGBAfColor>(path, _currentIndex, _resizeRatio, onlyCache);
+    std::optional<CacheValue> ovalue = _cache->get<aliceVision::image::RGBAfColor>(path, _currentIndex, _resizeRatio, onlyCache);
         
         
     if (ovalue.has_value())
     {
         auto & value = ovalue.value();
-        image = value.get<image::RGBAfColor>();
+        image = value.get<aliceVision::image::RGBAfColor>();
 
         oiio::ParamValueList copy_metadatas = value.getMetadatas();
         metadatas = copy_metadatas;

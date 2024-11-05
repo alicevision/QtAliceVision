@@ -28,7 +28,7 @@ SequenceCache::SequenceCache(QObject* parent)
     //Cache does not exist
     //Let's create a new one !
     {
-        image::ImageCache::uptr cache = std::make_unique<image::ImageCache>(_maxMemory, image::EImageColorSpace::LINEAR);
+        ImageCache::uptr cache = std::make_unique<ImageCache>(_maxMemory, image::EImageColorSpace::LINEAR);
         _fetcher.setCache(std::move(cache));
     }
 }

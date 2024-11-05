@@ -24,7 +24,7 @@ public:
      * Pass it to the Fetcher for use (Fetcher get ownership)
      * @param cache the cache object to store
     */
-    void setCache(aliceVision::image::ImageCache::uptr && cache);
+    void setCache(ImageCache::uptr && cache);
 
     /**
      * @brief set the image sequence
@@ -100,7 +100,7 @@ public:
     Q_SIGNAL void onAsyncFetchProgressed();
 
 private:
-    aliceVision::image::ImageCache::uptr _cache;
+    ImageCache::uptr _cache;
     
     std::vector<std::string> _sequence;
     std::unordered_map<std::string, unsigned> _pathToSeqId;
