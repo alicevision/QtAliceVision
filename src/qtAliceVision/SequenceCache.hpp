@@ -63,18 +63,18 @@ class SequenceCache : public QObject, public ImageServer
      */
     QPointF getRamInfo() const;
 
-public:
+  public:
     // Request management
 
     /// If the image requested falls outside a certain region of cached images,
     /// this method will launch a worker thread to prefetch new images from disk.
     ResponseData request(const RequestData& reqData) override;
 
-public:
+  public:
     Q_SLOT void onAsyncFetchProgressed();
     Q_SIGNAL void requestHandled();
 
-private:
+  private:
     size_t _maxMemory;
     AsyncFetcher _fetcher;
     QThreadPool _threadPool;

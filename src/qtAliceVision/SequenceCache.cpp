@@ -8,7 +8,6 @@ using namespace aliceVision;
 namespace qtAliceVision {
 namespace imgserve {
 
-
 SequenceCache::SequenceCache(QObject* parent)
   : QObject(parent)
 {
@@ -21,12 +20,12 @@ SequenceCache::SequenceCache(QObject* parent)
     const double cacheRatio = 0.3;
     const double cacheRam = cacheRatio * availableRam;
 
-    _maxMemory = static_cast<size_t>(cacheRam);  
+    _maxMemory = static_cast<size_t>(cacheRam);
 
-    _fetcher.setAutoDelete(false); 
-    
-    //Cache does not exist
-    //Let's create a new one !
+    _fetcher.setAutoDelete(false);
+
+    // Cache does not exist
+    // Let's create a new one!
     {
         ImageCache::uptr cache = std::make_unique<ImageCache>(_maxMemory, image::EImageColorSpace::LINEAR);
         _fetcher.setCache(std::move(cache));
@@ -46,17 +45,17 @@ void SequenceCache::setSequence(const QVariantList& paths)
     _fetcher.stopAsync();
     _threadPool.waitForDone();
 
-    //Convert to string
+    // Convert to string
     std::vector<std::string> sequence;
-    for (const auto & item : paths)
+    for (const auto& item : paths)
     {
         sequence.push_back(item.toString().toStdString());
     }
 
-    //Assign sequence to fetcher
+    // Assign sequence to fetcher
     _fetcher.setSequence(sequence);
 
-    //Restart if needed
+    // Restart if needed
     setAsyncFetching(isAsync);
 }
 
@@ -67,8 +66,7 @@ void SequenceCache::setResizeRatio(double ratio)
 
 void SequenceCache::setMemoryLimit(int memory)
 {
-    // convert parameter in gigabytes to bytes
-    
+    // Convert parameter in gigabytes to bytes
     const double gigaBytesToBytes = 1024. * 1024. * 1024.;
     _maxMemory = static_cast<double>(memory) * gigaBytesToBytes;
     _fetcher.updateCacheMemory(_maxMemory);
@@ -80,13 +78,13 @@ QVariantList SequenceCache::getCachedFrames() const
 }
 
 void SequenceCache::setAsyncFetching(bool fetching)
-{    
-    //Always stop first
+{
+    // Always stop first
     _fetcher.stopAsync();
     _threadPool.waitForDone();
-    
+
     if (fetching)
-    {        
+    {
         connect(&_fetcher, &AsyncFetcher::onAsyncFetchProgressed, this, &SequenceCache::onAsyncFetchProgressed);
         _threadPool.start(&_fetcher);
     }
@@ -94,13 +92,13 @@ void SequenceCache::setAsyncFetching(bool fetching)
 
 QPointF SequenceCache::getRamInfo() const
 {
-    // get available RAM in bytes and cache occupied memory
+    // Get available RAM in bytes and cache occupied memory
     const auto memInfo = aliceVision::system::getMemoryInfo();
 
     double availableRam = memInfo.availableRam / (1024. * 1024. * 1024.);
     double contentSize = static_cast<double>(_fetcher.getCacheSize()) / (1024. * 1024. * 1024. * 1024.);
 
-    // return in GB
+    // Return in GB
     return QPointF(availableRam, contentSize);
 }
 
@@ -118,12 +116,12 @@ ResponseData SequenceCache::request(const RequestData& reqData)
     {
         return response;
     }
-    
+
     response.metadata.clear();
     response.img = image;
     response.dim = QSize(originalWidth, originalHeight);
 
-    //Convert metadatas
+    // Convert metadatas
     for (const auto& item : metadatas)
     {
         response.metadata[QString::fromStdString(item.name().string())] = QString::fromStdString(item.get_string());
@@ -137,7 +135,6 @@ void SequenceCache::onAsyncFetchProgressed()
     // Notify listeners that cache content has changed
     Q_EMIT requestHandled();
 }
-
 
 }  // namespace imgserve
 }  // namespace qtAliceVision

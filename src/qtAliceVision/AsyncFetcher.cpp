@@ -18,18 +18,15 @@ AsyncFetcher::AsyncFetcher()
     _requestSynchronous = false;
 }
 
-AsyncFetcher::~AsyncFetcher()
-{
-    
-}
+AsyncFetcher::~AsyncFetcher() {}
 
-void AsyncFetcher::setSequence(const std::vector<std::string> & paths)
+void AsyncFetcher::setSequence(const std::vector<std::string>& paths)
 {
-    //Sequence can't be changed while thread is running
+    // Sequence can't be changed while thread is running
     if (_isAsynchronous)
     {
         return;
-    } 
+    }
 
     _sequence = paths;
     _currentIndex = 0;
@@ -46,16 +43,15 @@ void AsyncFetcher::setResizeRatio(double ratio)
     _resizeRatio = ratio;
 }
 
-void AsyncFetcher::setCache(ImageCache::uptr && cache)
+void AsyncFetcher::setCache(ImageCache::uptr&& cache)
 {
-    //Cache can't be changed while thread is running
+    // Cache can't be changed while thread is running
     if (_isAsynchronous)
     {
         return;
-    } 
+    }
     _cache = std::move(cache);
 }
-
 
 void AsyncFetcher::run()
 {
@@ -80,9 +76,9 @@ void AsyncFetcher::run()
         }
         else
         {
-            const std::string & lpath = _sequence[_currentIndex];
+            const std::string& lpath = _sequence[_currentIndex];
 
-            //Load in cache
+            // Load in cache
             if (_cache)
             {
                 double ratio;
@@ -90,7 +86,7 @@ void AsyncFetcher::run()
                     QMutexLocker locker(&_mutexResizeRatio);
                     ratio = _resizeRatio;
                 }
-                
+
                 _cache->get<image::RGBAfColor>(lpath, _currentIndex, ratio, false);
             }
 
@@ -118,7 +114,7 @@ void AsyncFetcher::run()
 }
 
 void AsyncFetcher::stopAsync()
-{    
+{
     _requestSynchronous = true;
 }
 
@@ -132,14 +128,13 @@ void AsyncFetcher::updateCacheMemory(size_t maxMemory)
 
 size_t AsyncFetcher::getCacheSize() const
 {
-    return (_cache)?_cache->info().getContentSize():0.0f;
+    return (_cache) ? _cache->info().getContentSize() : 0.0f;
 }
 
 size_t AsyncFetcher::getDiskLoads() const
 {
-    return (_cache)?_cache->info().getLoadFromDisk():0.0f;
+    return (_cache) ? _cache->info().getLoadFromDisk() : 0.0f;
 }
-
 
 QVariantList AsyncFetcher::getCachedFrames() const
 {
@@ -198,13 +193,13 @@ QVariantList AsyncFetcher::getCachedFrames() const
     return intervals;
 }
 
-bool AsyncFetcher::getFrame(const std::string & path, 
-                std::shared_ptr<image::Image<image::RGBAfColor>> & image, 
-                oiio::ParamValueList & metadatas,
-                size_t & originalWidth,
-                size_t & originalHeight)
+bool AsyncFetcher::getFrame(const std::string& path,
+                            std::shared_ptr<image::Image<image::RGBAfColor>>& image,
+                            oiio::ParamValueList& metadatas,
+                            size_t& originalWidth,
+                            size_t& originalHeight)
 {
-    //Need a cache
+    // Need a cache
     if (!_cache)
     {
         return false;
@@ -212,8 +207,8 @@ bool AsyncFetcher::getFrame(const std::string & path,
 
     // First try getting the image
     bool onlyCache = _isAsynchronous;
-          
-    //Upgrade the thread with the current Index
+
+    // Upgrade the thread with the current Index
     for (int idx = 0; idx < _sequence.size(); ++idx)
     {
         if (_sequence[idx] == path)
@@ -224,11 +219,10 @@ bool AsyncFetcher::getFrame(const std::string & path,
     }
 
     std::optional<CacheValue> ovalue = _cache->get<aliceVision::image::RGBAfColor>(path, _currentIndex, _resizeRatio, onlyCache);
-        
-        
+
     if (ovalue.has_value())
     {
-        auto & value = ovalue.value();
+        auto& value = ovalue.value();
         image = value.get<aliceVision::image::RGBAfColor>();
 
         oiio::ParamValueList copy_metadatas = value.getMetadatas();
@@ -243,11 +237,11 @@ bool AsyncFetcher::getFrame(const std::string & path,
 
         return true;
     }
-    
+
     return false;
 }
 
-}
-}
+}  // namespace imgserve
+}  // namespace qtAliceVision
 
 #include "AsyncFetcher.moc"

@@ -37,16 +37,11 @@ struct CacheKey
         typeDesc(baseType),
         resizeRatio(ratio),
         lastWriteTime(time)
-    {
-
-    }
+    {}
 
     bool operator==(const CacheKey& other) const
     {
-        return (filename == other.filename && 
-                nbChannels == other.nbChannels && 
-                typeDesc == other.typeDesc &&
-                resizeRatio == other.resizeRatio && 
+        return (filename == other.filename && nbChannels == other.nbChannels && typeDesc == other.typeDesc && resizeRatio == other.resizeRatio &&
                 lastWriteTime == other.lastWriteTime);
     }
 };
@@ -72,11 +67,10 @@ class CacheValue
 {
   public:
     template<typename TPix>
-    CacheValue(unsigned frameId, std::shared_ptr<aliceVision::image::Image<TPix>> img) : 
-    _vimg(img),
-    _frameId(frameId)
-    {
-    }
+    CacheValue(unsigned frameId, std::shared_ptr<aliceVision::image::Image<TPix>> img)
+      : _vimg(img),
+        _frameId(frameId)
+    {}
 
   public:
     /**
@@ -126,7 +120,7 @@ class CacheValue
      */
     long int useCount() const
     {
-        return std::visit([](const auto & arg) -> long int {return arg.use_count();}, _vimg);
+        return std::visit([](const auto& arg) -> long int { return arg.use_count(); }, _vimg);
     }
 
     /**
@@ -135,18 +129,17 @@ class CacheValue
      */
     unsigned long long int memorySize() const
     {
-        return std::visit([](const auto & arg) -> unsigned long long int {return arg->memorySize();}, _vimg);
+        return std::visit([](const auto& arg) -> unsigned long long int { return arg->memorySize(); }, _vimg);
     }
 
   private:
-    std::variant<
-        std::shared_ptr<aliceVision::image::Image<unsigned char>>,
-        std::shared_ptr<aliceVision::image::Image<float>>,
-        std::shared_ptr<aliceVision::image::Image<aliceVision::image::RGBColor>>,
-        std::shared_ptr<aliceVision::image::Image<aliceVision::image::RGBAColor>>,
-        std::shared_ptr<aliceVision::image::Image<aliceVision::image::RGBfColor>>,
-        std::shared_ptr<aliceVision::image::Image<aliceVision::image::RGBAfColor>>
-        > _vimg;
+    std::variant<std::shared_ptr<aliceVision::image::Image<unsigned char>>,
+                 std::shared_ptr<aliceVision::image::Image<float>>,
+                 std::shared_ptr<aliceVision::image::Image<aliceVision::image::RGBColor>>,
+                 std::shared_ptr<aliceVision::image::Image<aliceVision::image::RGBAColor>>,
+                 std::shared_ptr<aliceVision::image::Image<aliceVision::image::RGBfColor>>,
+                 std::shared_ptr<aliceVision::image::Image<aliceVision::image::RGBAfColor>>>
+      _vimg;
 
     unsigned _originalWidth;
     unsigned _originalHeight;
@@ -154,21 +147,19 @@ class CacheValue
     unsigned _frameId;
 };
 
-
 /**
  * @brief A struct to store information about the cache current state and usage.
  */
 class CacheInfo
 {
-public:
+  public:
     CacheInfo(unsigned long int maxSize)
       : _maxSize(maxSize)
-    {
-    }
+    {}
 
     void incrementCache()
     {
-        const  std::scoped_lock<std::mutex> lockPeek(_mutex);
+        const std::scoped_lock<std::mutex> lockPeek(_mutex);
         _nbLoadFromCache++;
     }
 
@@ -184,12 +175,12 @@ public:
         return _maxSize;
     }
 
-    void update(const std::unordered_map<CacheKey, CacheValue, CacheKeyHasher> & images)
+    void update(const std::unordered_map<CacheKey, CacheValue, CacheKeyHasher>& images)
     {
         std::scoped_lock<std::mutex> lock(_mutex);
 
         _contentSize = 0;
-        for (const auto & [key, value] : images)
+        for (const auto& [key, value] : images)
         {
             _contentSize += value.memorySize();
             _nbImages++;
@@ -200,7 +191,7 @@ public:
     {
         const std::scoped_lock<std::mutex> lock(_mutex);
 
-        if (_maxSize <= _contentSize) 
+        if (_maxSize <= _contentSize)
         {
             return 0;
         }
@@ -208,10 +199,10 @@ public:
         return _maxSize - _contentSize;
     }
 
-    bool isSmallEnough(size_t value) const 
+    bool isSmallEnough(size_t value) const
     {
         const std::scoped_lock<std::mutex> lock(_mutex);
-        
+
         return (_contentSize + value < _maxSize);
     }
 
@@ -221,7 +212,7 @@ public:
         return _contentSize;
     }
 
-    int getLoadFromDisk() const 
+    int getLoadFromDisk() const
     {
         const std::scoped_lock<std::mutex> lock(_mutex);
         return _nbLoadFromDisk;
@@ -247,7 +238,6 @@ public:
 
     mutable std::mutex _mutex;
 };
-
 
 class ImageCache
 {
@@ -297,9 +287,8 @@ class ImageCache
      * Ask for more room, by deleting the LRU items which are not used
      * @param requestedSize the required size for the new image
      * @param toAdd the key of the image to add after cleanup
-    */
-    void cleanup(size_t requestedSize, const CacheKey & toAdd);
-
+     */
+    void cleanup(size_t requestedSize, const CacheKey& toAdd);
 
     /**
      * @return information on the current cache state and usage
@@ -314,13 +303,13 @@ class ImageCache
     /**
      * @brief update the cache max memory
      * @param maxSize the value to store
-    */
+     */
     void updateMaxMemory(unsigned long long int maxSize);
 
     /**
      * @brief set the reference frame ID
      * @param referenceFrameId the value to store
-    */
+     */
     void setReferenceFrameId(int referenceFrameId);
 
   private:
@@ -335,12 +324,12 @@ class ImageCache
     CacheInfo _info;
     aliceVision::image::ImageReadOptions _options;
 
-    //Set of images stored and indexed by CacheKey
+    // Set of images stored and indexed by CacheKey
     std::unordered_map<CacheKey, CacheValue, CacheKeyHasher> _imagePtrs;
     mutable std::mutex _mutexAccessImages;
 
-    //Reference frame Id used to compute the next image to remove
-    //This should be equal to the currently displayed image
+    // Reference frame Id used to compute the next image to remove
+    // This should be equal to the currently displayed image
     std::atomic<int> _referenceFrameId;
 };
 
@@ -355,7 +344,7 @@ std::optional<CacheValue> ImageCache::get(const std::string& filename, unsigned 
         return std::nullopt;
     }
 
-    //Build lookup key
+    // Build lookup key
     using TInfo = aliceVision::image::ColorTypeInfo<TPix>;
     auto lastWriteTime = aliceVision::utils::getLastWriteTime(filename);
     CacheKey keyReq(filename, TInfo::size, TInfo::typeDesc, resizeRatio, lastWriteTime);
@@ -374,8 +363,8 @@ std::optional<CacheValue> ImageCache::get(const std::string& filename, unsigned 
     {
         return std::nullopt;
     }
-    
-    //Load image and add to cache if possible
+
+    // Load image and add to cache if possible
     return load<TPix>(keyReq, frameId);
 }
 
@@ -389,10 +378,10 @@ std::optional<CacheValue> ImageCache::load(const CacheKey& key, unsigned frameId
     int height = 0;
     oiio::ParamValueList metadatas;
 
-    try 
+    try
     {
         metadatas = aliceVision::image::readImageMetadata(key.filename, width, height);
-        
+
         // load image from disk
         readImage(key.filename, img, _options);
     }
@@ -401,7 +390,6 @@ std::optional<CacheValue> ImageCache::load(const CacheKey& key, unsigned frameId
         return std::nullopt;
     }
 
-
     // Compute new size, make sure the size is at least 1
     double dw = key.resizeRatio * double(img.width());
     double dh = key.resizeRatio * double(img.height());
@@ -409,18 +397,18 @@ std::optional<CacheValue> ImageCache::load(const CacheKey& key, unsigned frameId
     int th = static_cast<int>(std::max(1, int(std::ceil(dh))));
 
     using TInfo = aliceVision::image::ColorTypeInfo<TPix>;
-    cleanup(tw*th*size_t(TInfo::size), key);
-    
+    cleanup(tw * th * size_t(TInfo::size), key);
+
     // apply downscale
     aliceVision::imageAlgo::resizeImage(tw, th, img, *resized);
 
-    //Increment disk access stats
+    // Increment disk access stats
     _info.incrementDisk();
 
     // create wrapper around shared pointer
     CacheValue value(frameId, resized);
 
-    //Add additional information about the image
+    // Add additional information about the image
     value.setOriginalHeight(static_cast<unsigned int>(height));
     value.setOriginalWidth(static_cast<unsigned int>(width));
     value.getMetadatas() = metadatas;
@@ -428,12 +416,12 @@ std::optional<CacheValue> ImageCache::load(const CacheKey& key, unsigned frameId
     // Store image in map
     {
         std::scoped_lock<std::mutex> lockImages(_mutexAccessImages);
-        
+
         _imagePtrs.insert({key, value});
         _info.update(_imagePtrs);
     }
 
-    return value; 
+    return value;
 }
 
 template<typename TPix>
@@ -451,5 +439,4 @@ bool ImageCache::contains(const std::string& filename, double resizeRatio) const
     return found;
 }
 
-
-}  // namespace qtaliceVision
+}  // namespace qtAliceVision
