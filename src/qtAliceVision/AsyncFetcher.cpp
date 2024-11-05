@@ -14,8 +14,8 @@ namespace imgserve {
 AsyncFetcher::AsyncFetcher()
 {
     _resizeRatio = 0.001;
-    _isAsynchroneous = false;
-    _requestSynchroneous = false;
+    _isAsynchronous = false;
+    _requestSynchronous = false;
 }
 
 AsyncFetcher::~AsyncFetcher()
@@ -26,7 +26,7 @@ AsyncFetcher::~AsyncFetcher()
 void AsyncFetcher::setSequence(const std::vector<std::string> & paths)
 {
     //Sequence can't be changed while thread is running
-    if (_isAsynchroneous)
+    if (_isAsynchronous)
     {
         return;
     } 
@@ -49,7 +49,7 @@ void AsyncFetcher::setResizeRatio(double ratio)
 void AsyncFetcher::setCache(ImageCache::uptr && cache)
 {
     //Cache can't be changed while thread is running
-    if (_isAsynchroneous)
+    if (_isAsynchronous)
     {
         return;
     } 
@@ -61,16 +61,16 @@ void AsyncFetcher::run()
 {
     using namespace std::chrono_literals;
 
-    _isAsynchroneous = true;
-    _requestSynchroneous = false;
+    _isAsynchronous = true;
+    _requestSynchronous = false;
 
     int previousCacheSize = getDiskLoads();
 
     while (1)
     {
-        if (_requestSynchroneous)
+        if (_requestSynchronous)
         {
-            _requestSynchroneous = false;
+            _requestSynchronous = false;
             break;
         }
 
@@ -113,13 +113,13 @@ void AsyncFetcher::run()
         }
     }
 
-    _requestSynchroneous = false;
-    _isAsynchroneous = false;
+    _requestSynchronous = false;
+    _isAsynchronous = false;
 }
 
 void AsyncFetcher::stopAsync()
 {    
-    _requestSynchroneous = true;
+    _requestSynchronous = true;
 }
 
 void AsyncFetcher::updateCacheMemory(size_t maxMemory)
@@ -211,7 +211,7 @@ bool AsyncFetcher::getFrame(const std::string & path,
     }
 
     // First try getting the image
-    bool onlyCache = _isAsynchroneous;
+    bool onlyCache = _isAsynchronous;
           
     //Upgrade the thread with the current Index
     for (int idx = 0; idx < _sequence.size(); ++idx)

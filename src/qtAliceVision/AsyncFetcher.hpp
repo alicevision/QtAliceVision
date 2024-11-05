@@ -29,7 +29,7 @@ public:
     /**
      * @brief set the image sequence
      * The image sequence is a list of image paths which is ordered
-     * The Fetcher must not be in asynchroneous mode for this function to work
+     * The Fetcher must not be in asynchronous mode for this function to work
      * As such, the _sequence object is only used in read mode during async mode.
     */
     void setSequence(const std::vector<std::string> & paths);
@@ -57,19 +57,19 @@ public:
 
 
     /**
-     * @brief Internal function for QT to start the asynchroneous mode
+     * @brief Internal function for QT to start the asynchronous mode
     */
     Q_SLOT void run() override;
 
     /**
-     * @brief stop asynchroneous mode
+     * @brief stop asynchronous mode
      * The caller have to wait on the thread pool to guarantee the effective end
     */
     void stopAsync();
 
     bool isAsync() const 
     {
-        return _isAsynchroneous;
+        return _isAsynchronous;
     }
 
     /**
@@ -106,8 +106,8 @@ private:
     std::unordered_map<std::string, unsigned> _pathToSeqId;
 
     QAtomicInt _currentIndex;
-    QAtomicInt _isAsynchroneous;
-    QAtomicInt _requestSynchroneous;
+    QAtomicInt _isAsynchronous;
+    QAtomicInt _requestSynchronous;
 
     double _resizeRatio;
     QMutex _mutexResizeRatio;

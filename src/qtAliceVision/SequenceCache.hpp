@@ -46,7 +46,7 @@ class SequenceCache : public QObject, public ImageServer
     QVariantList getCachedFrames() const;
 
     /**
-     * @brief Set the boolean flag indicating if the sequence is being fetched asynchroneously.
+     * @brief Set the boolean flag indicating if the sequence is being fetched asynchronously.
      * @param[in] fetching new value for the fetching flag
      */
     void setAsyncFetching(bool fetching);
