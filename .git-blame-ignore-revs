@@ -1,3 +1,5 @@
+# [qtAliceVision] Reformat all sequence cache-related files
+d304d8655de26ed5702966b4d855b031f85268f1
 # [qtAliceVision] Apply clang-format on modified files
 d0fd33d78af7d73f4c1c5ba0de7a1d49d263f5d0
 # Reformat all plugins with latest clang-format rules

@@ -59,6 +59,8 @@ class FloatImageViewer : public QQuickItem
 
     Q_PROPERTY(int targetSize WRITE setTargetSize NOTIFY targetSizeChanged)
 
+    Q_PROPERTY(double resizeRatio WRITE setResizeRatio NOTIFY resizeRatioChanged)
+
     Q_PROPERTY(QVariantList cachedFrames READ getCachedFrames NOTIFY cachedFramesChanged)
 
     Q_PROPERTY(bool useSequence MEMBER _useSequence NOTIFY useSequenceChanged)
@@ -139,6 +141,7 @@ class FloatImageViewer : public QQuickItem
     Q_SIGNAL void fisheyeCircleParametersChanged();
     Q_SIGNAL void sequenceChanged();
     Q_SIGNAL void targetSizeChanged();
+    Q_SIGNAL void resizeRatioChanged();
     Q_SIGNAL void cachedFramesChanged();
     Q_SIGNAL void useSequenceChanged();
     Q_SIGNAL void fetchingSequenceChanged();
@@ -153,6 +156,8 @@ class FloatImageViewer : public QQuickItem
     void setSequence(const QVariantList& paths);
 
     void setTargetSize(int size);
+
+    void setResizeRatio(double ratio);
 
     void setFetchingSequence(bool fetching);
 
@@ -202,6 +207,7 @@ class FloatImageViewer : public QQuickItem
     imgserve::SequenceCache _sequenceCache;
     imgserve::SingleImageLoader _singleImageLoader;
     bool _useSequence = true;
+    double _clampedResizeRatio = 1.0;
 };
 
 }  // namespace qtAliceVision
