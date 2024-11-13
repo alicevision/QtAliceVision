@@ -18,8 +18,11 @@ class CameraLocatorEntity : public Qt3DCore::QEntity
     Q_PROPERTY(quint32 resectionId MEMBER _resectionId NOTIFY resectionIdChanged)
 
   public:
-    explicit CameraLocatorEntity(const aliceVision::IndexT& viewId, const aliceVision::IndexT& resectionId,
-                                 float hfov, float vfov, Qt3DCore::QNode* = nullptr);
+    explicit CameraLocatorEntity(const aliceVision::IndexT& viewId,
+                                 const aliceVision::IndexT& resectionId,
+                                 float hfov,
+                                 float vfov,
+                                 Qt3DCore::QNode* = nullptr);
     ~CameraLocatorEntity() override = default;
 
     void setTransform(const Eigen::Matrix4d&);
