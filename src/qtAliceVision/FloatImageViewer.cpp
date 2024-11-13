@@ -622,7 +622,11 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, [[maybe_unused]] QQ
 
     if (!isNewNode && _image)
     {
-        node->updatePaintSurface(_surface, _textureSize, _downscaleLevel, _canBeHovered, !_surface.getMouseOver() && _mouseOverChanged);
+        node->updatePaintSurface(_surface,
+                                 _surface.isPanoramaViewerEnabled() ? _textureSize : _sourceSize,
+                                 _downscaleLevel,
+                                 _canBeHovered,
+                                 !_surface.getMouseOver() && _mouseOverChanged);
     }
     _mouseOverChanged = false;
     return node;
