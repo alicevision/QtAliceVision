@@ -16,12 +16,11 @@ class PointMaterialShader;
 
 class PointMaterial : public QSGMaterial
 {
-public:
-    PointMaterial() : 
-        _color(1, 1, 1, 1),
+  public:
+    PointMaterial()
+      : _color(1, 1, 1, 1),
         _size(1.0f)
-    {
-    }
+    {}
 
     void setColor(const QColor& color)
     {
@@ -57,14 +56,14 @@ public:
 
     QSGMaterialShader* createShader(QSGRendererInterface::RenderMode) const override;
 
-private:
+  private:
     QColor _color;
     float _size;
 };
 
 class PointMaterialShader : public QSGMaterialShader
 {
-public:
+  public:
     PointMaterialShader()
     {
         setShaderFileName(VertexStage, QLatin1String(":/shaders/FeaturesViewer.vert.qsb"));
@@ -75,7 +74,7 @@ public:
     {
         bool changed = false;
         QByteArray* buf = state.uniformData();
-        
+
         if (state.isMatrixDirty())
         {
             const QMatrix4x4 m = state.combinedMatrix();
@@ -84,14 +83,14 @@ public:
         }
 
         auto* currentMaterial = static_cast<PointMaterial*>(newMaterial);
-        
+
         if (currentMaterial != nullptr)
         {
             const QColor& color = currentMaterial->getColor();
             const float& size = currentMaterial->getSize();
             bool hasColorChanged = true;
             bool hasSizeChanged = true;
-            
+
             if (oldMaterial != nullptr)
             {
                 auto* previousMaterial = static_cast<PointMaterial*>(oldMaterial);
@@ -223,7 +222,7 @@ void Painter::drawPoints(QSGNode* node, const std::string& layer, const std::vec
     geometry->allocate(static_cast<int>(points.size()), 0);
 
     geometry->setDrawingMode(QSGGeometry::DrawPoints);
-    //geometry->setLineWidth(pointSize);
+    // geometry->setLineWidth(pointSize);
 
     auto* vertices = geometry->vertexDataAsPoint2D();
     if (!vertices)

@@ -15,276 +15,272 @@
 
 namespace qtAliceVision {
 
-namespace
+namespace {
+class FloatImageViewerMaterialShader;
+
+class FloatImageViewerMaterial : public QSGMaterial
 {
-    class FloatImageViewerMaterialShader;
-
-    class FloatImageViewerMaterial : public QSGMaterial
+  public:
+    FloatImageViewerMaterial()
     {
-    public:
-        FloatImageViewerMaterial()
-        {
-            std::shared_ptr<FloatImage> image = std::make_shared<FloatImage>(1,1,true);
-            texture = std::make_unique<FloatTexture>();
-            texture->setImage(image);
-            texture->setFiltering(QSGTexture::Nearest);
-            texture->setHorizontalWrapMode(QSGTexture::Repeat);
-            texture->setVerticalWrapMode(QSGTexture::Repeat);
-        }
-
-        QSGMaterialType* type() const override
-        {
-            static QSGMaterialType type;
-            return &type;
-        }
-
-        int compare(const QSGMaterial* other) const override
-        {
-            Q_ASSERT(other && type() == other->type());
-            return other == this ? 0 : (other > this ? 1 : -1);
-        }
-
-        QSGMaterialShader* createShader(QSGRendererInterface::RenderMode) const override;
-
-        struct
-        {
-            // warning: matches layout and padding of FloatImageViewer.vert/frag shaders
-            QVector4D channelOrder = QVector4D(0, 1, 2, 3);
-            QVector2D fisheyeCircleCoord = QVector2D(0, 0);
-            float gamma = 1.f;
-            float gain = 0.f;
-            float fisheyeCircleRadius = 0.f;
-            float aspectRatio = 0.f;
-        } uniforms;
-
-        bool dirtyUniforms;
-        bool appliedHoveringGamma;
-        std::unique_ptr<FloatTexture> texture;
-    };
-
-    class FloatImageViewerMaterialShader : public QSGMaterialShader
-    {
-    public:
-        FloatImageViewerMaterialShader()
-        {
-            setShaderFileName(VertexStage, QLatin1String(":/shaders/FloatImageViewer.vert.qsb"));
-            setShaderFileName(FragmentStage, QLatin1String(":/shaders/FloatImageViewer.frag.qsb"));
-        }
-
-        bool updateUniformData(RenderState& state, QSGMaterial* newMaterial, QSGMaterial* oldMaterial) override
-        {
-            bool changed = false;
-            QByteArray* buf = state.uniformData();
-            Q_ASSERT(buf->size() >= 84);
-            if (state.isMatrixDirty())
-            {
-                const QMatrix4x4 m = state.combinedMatrix();
-                memcpy(buf->data() + 0, m.constData(), 64);
-                changed = true;
-            }
-            if (state.isOpacityDirty()) {
-                const float opacity = state.opacity();
-                memcpy(buf->data() + 64, &opacity, 4);
-                changed = true;
-            }
-            auto* customMaterial = static_cast<FloatImageViewerMaterial*>(newMaterial);
-            if (oldMaterial != newMaterial || customMaterial->dirtyUniforms) {
-                memcpy(buf->data() + 80, &customMaterial->uniforms, 40);
-                customMaterial->dirtyUniforms = false;
-                changed = true;
-            }
-            return changed;
-        }
-
-        void updateSampledImage(RenderState& state, int binding, QSGTexture** texture, QSGMaterial* newMaterial, QSGMaterial*) override
-        {
-            FloatImageViewerMaterial* mat = static_cast<FloatImageViewerMaterial*>(newMaterial);
-            if (binding == 1)
-            {
-                if (mat->texture)
-                {
-                    mat->texture->commitTextureOperations(state.rhi(), state.resourceUpdateBatch());
-                }
-                *texture = mat->texture.get();
-            }
-        }
-    };
-
-    QSGMaterialShader* FloatImageViewerMaterial::createShader(QSGRendererInterface::RenderMode) const
-    {
-        return new FloatImageViewerMaterialShader;
+        std::shared_ptr<FloatImage> image = std::make_shared<FloatImage>(1, 1, true);
+        texture = std::make_unique<FloatTexture>();
+        texture->setImage(image);
+        texture->setFiltering(QSGTexture::Nearest);
+        texture->setHorizontalWrapMode(QSGTexture::Repeat);
+        texture->setVerticalWrapMode(QSGTexture::Repeat);
     }
 
-    class FloatImageViewerNode : public QSGGeometryNode
+    QSGMaterialType* type() const override
     {
-    public:
-        FloatImageViewerNode(int vertexCount, int indexCount)
+        static QSGMaterialType type;
+        return &type;
+    }
+
+    int compare(const QSGMaterial* other) const override
+    {
+        Q_ASSERT(other && type() == other->type());
+        return other == this ? 0 : (other > this ? 1 : -1);
+    }
+
+    QSGMaterialShader* createShader(QSGRendererInterface::RenderMode) const override;
+
+    struct
+    {
+        // warning: matches layout and padding of FloatImageViewer.vert/frag shaders
+        QVector4D channelOrder = QVector4D(0, 1, 2, 3);
+        QVector2D fisheyeCircleCoord = QVector2D(0, 0);
+        float gamma = 1.f;
+        float gain = 0.f;
+        float fisheyeCircleRadius = 0.f;
+        float aspectRatio = 0.f;
+    } uniforms;
+
+    bool dirtyUniforms;
+    bool appliedHoveringGamma;
+    std::unique_ptr<FloatTexture> texture;
+};
+
+class FloatImageViewerMaterialShader : public QSGMaterialShader
+{
+  public:
+    FloatImageViewerMaterialShader()
+    {
+        setShaderFileName(VertexStage, QLatin1String(":/shaders/FloatImageViewer.vert.qsb"));
+        setShaderFileName(FragmentStage, QLatin1String(":/shaders/FloatImageViewer.frag.qsb"));
+    }
+
+    bool updateUniformData(RenderState& state, QSGMaterial* newMaterial, QSGMaterial* oldMaterial) override
+    {
+        bool changed = false;
+        QByteArray* buf = state.uniformData();
+        Q_ASSERT(buf->size() >= 84);
+        if (state.isMatrixDirty())
         {
-            auto* m = new FloatImageViewerMaterial;
-            setMaterial(m);
-            setFlag(OwnsMaterial, true);
+            const QMatrix4x4 m = state.combinedMatrix();
+            memcpy(buf->data() + 0, m.constData(), 64);
+            changed = true;
+        }
+        if (state.isOpacityDirty())
+        {
+            const float opacity = state.opacity();
+            memcpy(buf->data() + 64, &opacity, 4);
+            changed = true;
+        }
+        auto* customMaterial = static_cast<FloatImageViewerMaterial*>(newMaterial);
+        if (oldMaterial != newMaterial || customMaterial->dirtyUniforms)
+        {
+            memcpy(buf->data() + 80, &customMaterial->uniforms, 40);
+            customMaterial->dirtyUniforms = false;
+            changed = true;
+        }
+        return changed;
+    }
 
-            QSGGeometry* geometry = new QSGGeometry(QSGGeometry::defaultAttributes_TexturedPoint2D(), vertexCount, indexCount);
-            QSGGeometry::updateTexturedRectGeometry(geometry, QRect(), QRect());
-            geometry->setDrawingMode(GL_TRIANGLES);
-            geometry->setIndexDataPattern(QSGGeometry::StaticPattern);
-            geometry->setVertexDataPattern(QSGGeometry::StaticPattern);
-            setGeometry(geometry);
-            setFlag(OwnsGeometry, true);
-
+    void updateSampledImage(RenderState& state, int binding, QSGTexture** texture, QSGMaterial* newMaterial, QSGMaterial*) override
+    {
+        FloatImageViewerMaterial* mat = static_cast<FloatImageViewerMaterial*>(newMaterial);
+        if (binding == 1)
+        {
+            if (mat->texture)
             {
-                /* Geometry and Material for the Grid */
-                _gridNode = new QSGGeometryNode;
-                auto gridMaterial = new QSGFlatColorMaterial;
-                {
-                    // Vertexcount of the grid is equal to indexCount of the image
-                    QSGGeometry* geometryLine = new QSGGeometry(QSGGeometry::defaultAttributes_Point2D(), indexCount);
-                    geometryLine->setDrawingMode(GL_LINES);
-                    geometryLine->setLineWidth(2);
-
-                    _gridNode->setGeometry(geometryLine);
-                    _gridNode->setFlags(QSGNode::OwnsGeometry);
-                    _gridNode->setMaterial(gridMaterial);
-                    _gridNode->setFlags(QSGNode::OwnsMaterial);
-                }
-                appendChildNode(_gridNode);
+                mat->texture->commitTextureOperations(state.rhi(), state.resourceUpdateBatch());
             }
+            *texture = mat->texture.get();
         }
+    }
+};
 
-        void setSubdivisions(int vertexCount, int indexCount)
+QSGMaterialShader* FloatImageViewerMaterial::createShader(QSGRendererInterface::RenderMode) const { return new FloatImageViewerMaterialShader; }
+
+class FloatImageViewerNode : public QSGGeometryNode
+{
+  public:
+    FloatImageViewerNode(int vertexCount, int indexCount)
+    {
+        auto* m = new FloatImageViewerMaterial;
+        setMaterial(m);
+        setFlag(OwnsMaterial, true);
+
+        QSGGeometry* geometry = new QSGGeometry(QSGGeometry::defaultAttributes_TexturedPoint2D(), vertexCount, indexCount);
+        QSGGeometry::updateTexturedRectGeometry(geometry, QRect(), QRect());
+        geometry->setDrawingMode(GL_TRIANGLES);
+        geometry->setIndexDataPattern(QSGGeometry::StaticPattern);
+        geometry->setVertexDataPattern(QSGGeometry::StaticPattern);
+        setGeometry(geometry);
+        setFlag(OwnsGeometry, true);
+
         {
-            geometry()->allocate(vertexCount, indexCount);
-            markDirty(QSGNode::DirtyGeometry);
-
-            // Vertexcount of the grid is equal to indexCount of the image
-            _gridNode->geometry()->allocate(indexCount);
-            _gridNode->markDirty(QSGNode::DirtyGeometry);
-        }
-
-        void updatePaintSurface(Surface & surface, QSize textureSize, int downscaleLevel, bool canBeHovered, bool wasHovered)
-        {
-            // Highlight
-            if (canBeHovered)
+            /* Geometry and Material for the Grid */
+            _gridNode = new QSGGeometryNode;
+            auto gridMaterial = new QSGFlatColorMaterial;
             {
-                if (surface.getMouseOver() && !wasHovered)
-                {
-                    auto* m = static_cast<FloatImageViewerMaterial*>(material());
+                // Vertexcount of the grid is equal to indexCount of the image
+                QSGGeometry* geometryLine = new QSGGeometry(QSGGeometry::defaultAttributes_Point2D(), indexCount);
+                geometryLine->setDrawingMode(GL_LINES);
+                geometryLine->setLineWidth(2);
 
-                    if (!m->appliedHoveringGamma)
-                    {
-                        setGamma(m->uniforms.gamma + 1.f);
-                        m->appliedHoveringGamma = true;
-                    }
-                }
-
-                else if (!surface.getMouseOver() && wasHovered)
-                {
-                    auto* m = static_cast<FloatImageViewerMaterial*>(material());
-                    if (m->appliedHoveringGamma)
-                    {
-                        setGamma(m->uniforms.gamma - 1.f);
-                        m->appliedHoveringGamma = false;
-                    }
-                }
-                markDirty(QSGNode::DirtyMaterial);
+                _gridNode->setGeometry(geometryLine);
+                _gridNode->setFlags(QSGNode::OwnsGeometry);
+                _gridNode->setMaterial(gridMaterial);
+                _gridNode->setFlags(QSGNode::OwnsMaterial);
             }
+            appendChildNode(_gridNode);
+        }
+    }
 
-            // If vertices has changed, Re-Compute the grid 
-            if (surface.hasVerticesChanged())
+    void setSubdivisions(int vertexCount, int indexCount)
+    {
+        geometry()->allocate(vertexCount, indexCount);
+        markDirty(QSGNode::DirtyGeometry);
+
+        // Vertexcount of the grid is equal to indexCount of the image
+        _gridNode->geometry()->allocate(indexCount);
+        _gridNode->markDirty(QSGNode::DirtyGeometry);
+    }
+
+    void updatePaintSurface(Surface& surface, QSize textureSize, int downscaleLevel, bool canBeHovered, bool wasHovered)
+    {
+        // Highlight
+        if (canBeHovered)
+        {
+            if (surface.getMouseOver() && !wasHovered)
             {
-                // Retrieve Vertices and Index Data
-                QSGGeometry::TexturedPoint2D* vertices = geometry()->vertexDataAsTexturedPoint2D();
-                quint16* indices = geometry()->indexDataAsUShort();
+                auto* m = static_cast<FloatImageViewerMaterial*>(material());
 
-                // Update surface
-                surface.update(vertices, indices, textureSize, downscaleLevel);
-
-                geometry()->markIndexDataDirty();
-                geometry()->markVertexDataDirty();
-                markDirty(QSGNode::DirtyGeometry | QSGNode::DirtyMaterial);
-
-                // Fill the Surface vertices array
-                surface.fillVertices(vertices);
+                if (!m->appliedHoveringGamma)
+                {
+                    setGamma(m->uniforms.gamma + 1.f);
+                    m->appliedHoveringGamma = true;
+                }
             }
 
-            // Draw the grid if Distortion Viewer is enabled and Grid Mode is enabled
-            surface.getDisplayGrid() ? surface.computeGrid(_gridNode->geometry()) : surface.removeGrid(_gridNode->geometry());
-            _gridNode->markDirty(QSGNode::DirtyGeometry | QSGNode::DirtyMaterial);
+            else if (!surface.getMouseOver() && wasHovered)
+            {
+                auto* m = static_cast<FloatImageViewerMaterial*>(material());
+                if (m->appliedHoveringGamma)
+                {
+                    setGamma(m->uniforms.gamma - 1.f);
+                    m->appliedHoveringGamma = false;
+                }
+            }
+            markDirty(QSGNode::DirtyMaterial);
         }
 
-        void setRect(const QRectF& bounds)
+        // If vertices has changed, Re-Compute the grid
+        if (surface.hasVerticesChanged())
         {
-            QSGGeometry::updateTexturedRectGeometry(geometry(), bounds, QRectF(0, 0, 1, 1));
-            markDirty(QSGNode::DirtyGeometry);
+            // Retrieve Vertices and Index Data
+            QSGGeometry::TexturedPoint2D* vertices = geometry()->vertexDataAsTexturedPoint2D();
+            quint16* indices = geometry()->indexDataAsUShort();
+
+            // Update surface
+            surface.update(vertices, indices, textureSize, downscaleLevel);
+
+            geometry()->markIndexDataDirty();
+            geometry()->markVertexDataDirty();
+            markDirty(QSGNode::DirtyGeometry | QSGNode::DirtyMaterial);
+
+            // Fill the Surface vertices array
+            surface.fillVertices(vertices);
         }
 
-        void setChannelOrder(QVector4D channelOrder)
-        {
-            auto* m = static_cast<FloatImageViewerMaterial*>(material());
-            m->uniforms.channelOrder = channelOrder;
-            m->dirtyUniforms = true;
-            markDirty(DirtyMaterial);
-        }
+        // Draw the grid if Distortion Viewer is enabled and Grid Mode is enabled
+        surface.getDisplayGrid() ? surface.computeGrid(_gridNode->geometry()) : surface.removeGrid(_gridNode->geometry());
+        _gridNode->markDirty(QSGNode::DirtyGeometry | QSGNode::DirtyMaterial);
+    }
 
-        void setBlending(bool value)
-        {
-            auto* m = static_cast<FloatImageViewerMaterial*>(material());
-            m->setFlag(QSGMaterial::Blending, value);
-        }
+    void setRect(const QRectF& bounds)
+    {
+        QSGGeometry::updateTexturedRectGeometry(geometry(), bounds, QRectF(0, 0, 1, 1));
+        markDirty(QSGNode::DirtyGeometry);
+    }
 
-        void setGamma(float gamma)
-        {
-            auto* m = static_cast<FloatImageViewerMaterial*>(material());
-            m->uniforms.gamma = gamma;
-            m->dirtyUniforms = true;
-            markDirty(DirtyMaterial);
-        }
+    void setChannelOrder(QVector4D channelOrder)
+    {
+        auto* m = static_cast<FloatImageViewerMaterial*>(material());
+        m->uniforms.channelOrder = channelOrder;
+        m->dirtyUniforms = true;
+        markDirty(DirtyMaterial);
+    }
 
-        void setGain(float gain)
-        {
-            auto* m = static_cast<FloatImageViewerMaterial*>(material());
-            m->uniforms.gain = gain;
-            m->dirtyUniforms = true;
-            markDirty(DirtyMaterial);
-        }
+    void setBlending(bool value)
+    {
+        auto* m = static_cast<FloatImageViewerMaterial*>(material());
+        m->setFlag(QSGMaterial::Blending, value);
+    }
 
-        void setTexture(std::unique_ptr<FloatTexture> texture)
-        {
-            auto* m = static_cast<FloatImageViewerMaterial*>(material());
-            m->texture = std::move(texture);
-            markDirty(DirtyMaterial);
-        }
+    void setGamma(float gamma)
+    {
+        auto* m = static_cast<FloatImageViewerMaterial*>(material());
+        m->uniforms.gamma = gamma;
+        m->dirtyUniforms = true;
+        markDirty(DirtyMaterial);
+    }
 
-        void setGridColor(const QColor & gridColor)
-        {
-            auto* m = static_cast<QSGFlatColorMaterial*>(_gridNode->material());
-            m->setColor(gridColor);
-        }
+    void setGain(float gain)
+    {
+        auto* m = static_cast<FloatImageViewerMaterial*>(material());
+        m->uniforms.gain = gain;
+        m->dirtyUniforms = true;
+        markDirty(DirtyMaterial);
+    }
 
-        void setFisheye(float aspectRatio, float fisheyeCircleRadius, QVector2D fisheyeCircleCoord)
-        {
-            auto* m = static_cast<FloatImageViewerMaterial*>(material());
-            m->uniforms.aspectRatio = aspectRatio;
-            m->uniforms.fisheyeCircleRadius = fisheyeCircleRadius;
-            m->uniforms.fisheyeCircleCoord = fisheyeCircleCoord;
-            m->dirtyUniforms = true;
-            markDirty(DirtyMaterial);
-        }
+    void setTexture(std::unique_ptr<FloatTexture> texture)
+    {
+        auto* m = static_cast<FloatImageViewerMaterial*>(material());
+        m->texture = std::move(texture);
+        markDirty(DirtyMaterial);
+    }
 
-        void resetFisheye()
-        {
-            auto* m = static_cast<FloatImageViewerMaterial*>(material());
-            m->uniforms.fisheyeCircleRadius = 0.f;
-            m->dirtyUniforms = true;
-            markDirty(DirtyMaterial);
-        }
+    void setGridColor(const QColor& gridColor)
+    {
+        auto* m = static_cast<QSGFlatColorMaterial*>(_gridNode->material());
+        m->setColor(gridColor);
+    }
 
-    private:
-        QSGGeometryNode * _gridNode;
-    };
-}
+    void setFisheye(float aspectRatio, float fisheyeCircleRadius, QVector2D fisheyeCircleCoord)
+    {
+        auto* m = static_cast<FloatImageViewerMaterial*>(material());
+        m->uniforms.aspectRatio = aspectRatio;
+        m->uniforms.fisheyeCircleRadius = fisheyeCircleRadius;
+        m->uniforms.fisheyeCircleCoord = fisheyeCircleCoord;
+        m->dirtyUniforms = true;
+        markDirty(DirtyMaterial);
+    }
 
+    void resetFisheye()
+    {
+        auto* m = static_cast<FloatImageViewerMaterial*>(material());
+        m->uniforms.fisheyeCircleRadius = 0.f;
+        m->dirtyUniforms = true;
+        markDirty(DirtyMaterial);
+    }
 
+  private:
+    QSGGeometryNode* _gridNode;
+};
+}  // namespace
 
 FloatImageViewer::FloatImageViewer(QQuickItem* parent)
   : QQuickItem(parent)
@@ -365,15 +361,13 @@ void FloatImageViewer::setFetchingSequence(bool fetching)
     Q_EMIT fetchingSequenceChanged();
 }
 
-void FloatImageViewer::setTargetSize(int size)
-{
-}
+void FloatImageViewer::setTargetSize(int size) {}
 
 void FloatImageViewer::setResizeRatio(double ratio)
 {
     ratio = std::clamp(ratio, 0.0, 1.0);
     ratio = std::ceil(ratio * 10.0) / 10.0;
-    
+
     _sequenceCache.setResizeRatio(ratio);
 
     _clampedResizeRatio = ratio;
@@ -381,7 +375,8 @@ void FloatImageViewer::setResizeRatio(double ratio)
     Q_EMIT resizeRatioChanged();
 }
 
-void FloatImageViewer::setMemoryLimit(int memoryLimit) {
+void FloatImageViewer::setMemoryLimit(int memoryLimit)
+{
     _sequenceCache.setMemoryLimit(memoryLimit);
     Q_EMIT memoryLimitChanged();
 }
@@ -462,9 +457,7 @@ void FloatImageViewer::reload()
     Q_EMIT cachedFramesChanged();
 }
 
-void FloatImageViewer::playback(bool active)
-{
-}
+void FloatImageViewer::playback(bool active) {}
 
 void FloatImageViewer::geometryChange(const QRectF& newGeometry, const QRectF& oldGeometry)
 {
@@ -479,7 +472,7 @@ QVector4D FloatImageViewer::pixelValueAt(int x, int y)
         x = int(std::ceil(double(x) * _clampedResizeRatio));
         y = int(std::ceil(double(y) * _clampedResizeRatio));
     }
-    
+
     if (!_image)
     {
         qDebug() << "[QtAliceVision] FloatImageViewer::pixelValueAt(" << x << ", " << y << ") => no valid image";
@@ -491,8 +484,8 @@ QVector4D FloatImageViewer::pixelValueAt(int x, int y)
         return QVector4D(0.0, 0.0, 0.0, 0.0);
     }
     aliceVision::image::RGBAfColor color = (*_image)(y, x);
-    qDebug() << "[QtAliceVision] FloatImageViewer::pixelValueAt(" << x << ", " << y << ") => valid pixel: " <<
-        color(0) << ", " << color(1) << ", " << color(2) << ", " << color(3);
+    qDebug() << "[QtAliceVision] FloatImageViewer::pixelValueAt(" << x << ", " << y << ") => valid pixel: " << color(0) << ", " << color(1) << ", "
+             << color(2) << ", " << color(3);
     return QVector4D(color(0), color(1), color(2), color(3));
 }
 
@@ -540,8 +533,10 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, [[maybe_unused]] QQ
                 // Radius is converted in uv coordinates (0, 0.5)
                 const double radius = 0.5 * (radiusInPercentage);
 
-                node->setFisheye(static_cast<float>(aspectRatio), static_cast<float>(radius),
-                    QVector2D(static_cast<float>(fisheyeCircleParams.x() / width), static_cast<float>(fisheyeCircleParams.y() / height)));
+                node->setFisheye(
+                  static_cast<float>(aspectRatio),
+                  static_cast<float>(radius),
+                  QVector2D(static_cast<float>(fisheyeCircleParams.x() / width), static_cast<float>(fisheyeCircleParams.y() / height)));
             }
             else
             {
