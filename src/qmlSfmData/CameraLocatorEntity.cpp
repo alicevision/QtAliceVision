@@ -1,7 +1,7 @@
 #include "CameraLocatorEntity.hpp"
 
-#include <Qt3DRender/QGeometryRenderer>
-#include <Qt3DRender/QBuffer>
+#include <QGeometryRenderer>
+#include <Qt3DCore/QBuffer>
 #include <Qt3DRender/QObjectPicker>
 
 #include <aliceVision/numeric/numeric.hpp>
@@ -10,8 +10,11 @@
 
 namespace sfmdataentity {
 
-CameraLocatorEntity::CameraLocatorEntity(const aliceVision::IndexT& viewId, const aliceVision::IndexT& resectionId,
-                                         float hfov, float vfov, Qt3DCore::QNode* parent)
+CameraLocatorEntity::CameraLocatorEntity(const aliceVision::IndexT& viewId,
+                                         const aliceVision::IndexT& resectionId,
+                                         float hfov,
+                                         float vfov,
+                                         Qt3DCore::QNode* parent)
   : Qt3DCore::QEntity(parent),
     _viewId(viewId),
     _resectionId(resectionId)
@@ -20,6 +23,7 @@ CameraLocatorEntity::CameraLocatorEntity(const aliceVision::IndexT& viewId, cons
     addComponent(_transform);
 
     using namespace Qt3DRender;
+    using namespace Qt3DCore;
 
     // create a new geometry renderer
     auto customMeshRenderer = new QGeometryRenderer;
@@ -27,9 +31,7 @@ CameraLocatorEntity::CameraLocatorEntity(const aliceVision::IndexT& viewId, cons
 
     const float axisLength = 0.5f;
     const float halfImageWidth = 0.3f;
-    const float halfImageHeight = 0.2f;
     const float yArrowHeight = 0.05f;
-    const float depth = halfImageWidth / tan(hfov / 2.0);
     const float radius = 0.3f;
 
     int subdiv = 1;
@@ -263,7 +265,7 @@ void CameraLocatorEntity::updateColors(float red, float green, float blue)
     }
 
     QByteArray colorData(reinterpret_cast<const char*>(_colors.data()), _colors.size() * static_cast<int>(sizeof(float)));
-    auto colorDataBuffer = new Qt3DRender::QBuffer;
+    auto colorDataBuffer = new Qt3DCore::QBuffer;
     colorDataBuffer->setData(colorData);
     _colorAttribute->setBuffer(colorDataBuffer);
 }

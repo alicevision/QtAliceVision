@@ -2,7 +2,7 @@
 
 #include <QEntity>
 #include <Qt3DCore/QTransform>
-#include <Qt3DRender/QAttribute>
+#include <Qt3DCore/QAttribute>
 
 #include <Eigen/Dense>
 
@@ -18,8 +18,11 @@ class CameraLocatorEntity : public Qt3DCore::QEntity
     Q_PROPERTY(quint32 resectionId MEMBER _resectionId NOTIFY resectionIdChanged)
 
   public:
-    explicit CameraLocatorEntity(const aliceVision::IndexT& viewId, const aliceVision::IndexT& resectionId,
-                                 float hfov, float vfov, Qt3DCore::QNode* = nullptr);
+    explicit CameraLocatorEntity(const aliceVision::IndexT& viewId,
+                                 const aliceVision::IndexT& resectionId,
+                                 float hfov,
+                                 float vfov,
+                                 Qt3DCore::QNode* = nullptr);
     ~CameraLocatorEntity() override = default;
 
     void setTransform(const Eigen::Matrix4d&);
@@ -36,7 +39,7 @@ class CameraLocatorEntity : public Qt3DCore::QEntity
     Qt3DCore::QTransform* _transform;
     aliceVision::IndexT _viewId;
     aliceVision::IndexT _resectionId;
-    Qt3DRender::QAttribute* _colorAttribute;
+    Qt3DCore::QAttribute* _colorAttribute;
     QVector<float> _colors;
 };
 

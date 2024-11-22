@@ -1,3 +1,7 @@
+# [qmlSfmData] Reformatted with clang-format
+271141c06f0f92b3ffc73e2283b4124b09c987d8
+# [qtAliceVision] Reformatted with clang-format
+83948e62bedeee2c755d9a038e988588163826c1
 # [qtAliceVision] Reformat all sequence cache-related files
 d304d8655de26ed5702966b4d855b031f85268f1
 # [qtAliceVision] Apply clang-format on modified files

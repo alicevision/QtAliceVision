@@ -1,12 +1,9 @@
 #include "PanoramaViewer.hpp"
 #include "FloatImageViewer.hpp"
 #include "FloatTexture.hpp"
-#include "ShaderImageViewer.hpp"
 
 #include <QSGGeometry>
 #include <QSGGeometryNode>
-#include <QSGSimpleMaterial>
-#include <QSGSimpleMaterialShader>
 #include <QSGTexture>
 #include <QThreadPool>
 
@@ -55,9 +52,8 @@ void PanoramaViewer::computeDownscale()
     Q_EMIT downscaleReady();
 }
 
-QSGNode* PanoramaViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePaintNodeData* data)
+QSGNode* PanoramaViewer::updatePaintNode(QSGNode* oldNode, [[maybe_unused]] QQuickItem::UpdatePaintNodeData* data)
 {
-    (void)data;  // Fix "unused parameter" warnings; should be replaced by [[maybe_unused]] when C++17 is supported
     QSGGeometryNode* root = static_cast<QSGGeometryNode*>(oldNode);
     return root;
 }
