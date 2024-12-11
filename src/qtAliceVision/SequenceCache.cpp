@@ -39,8 +39,6 @@ SequenceCache::~SequenceCache()
 
 void SequenceCache::setSequence(const QVariantList& paths)
 {
-    bool isAsync = _fetcher.isAsync();
-
     _fetcher.stopAsync();
     _threadPool.waitForDone();
 
@@ -55,6 +53,7 @@ void SequenceCache::setSequence(const QVariantList& paths)
     _fetcher.setSequence(sequence);
 
     // Restart if needed
+    const bool isAsync = true;
     setAsyncFetching(isAsync);
 }
 
@@ -89,6 +88,11 @@ void SequenceCache::setAsyncFetching(bool fetching)
     }
 }
 
+void SequenceCache::setPrefetching(bool prefetching)
+{
+    _fetcher.setPrefetching(prefetching);
+}
+
 QPointF SequenceCache::getRamInfo() const
 {
     // Get available RAM in bytes and cache occupied memory
@@ -116,6 +120,8 @@ ResponseData SequenceCache::request(const RequestData& reqData)
         return response;
     }
 
+
+    //Build a new response with information fetched
     response.metadata.clear();
     response.img = image;
     response.dim = QSize(static_cast<int>(originalWidth), static_cast<int>(originalHeight));
