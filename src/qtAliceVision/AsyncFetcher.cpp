@@ -15,6 +15,7 @@ AsyncFetcher::AsyncFetcher()
 {
     _resizeRatio = 0.001;
     _isAsynchronous = false;
+    _isPrefetching = false;
     _requestSynchronous = false;
 }
 
@@ -43,6 +44,17 @@ void AsyncFetcher::setResizeRatio(double ratio)
     _resizeRatio = ratio;
 }
 
+void AsyncFetcher::setPrefetching(bool prefetch)
+{
+    _isPrefetching = prefetch;
+
+    if (_isPrefetching)
+    {
+        //Make sure we're not waiting for new source
+        _semLoop.release(1);
+    }
+}
+
 void AsyncFetcher::setCache(ImageCache::uptr&& cache)
 {
     // Cache can't be changed while thread is running
@@ -69,27 +81,34 @@ void AsyncFetcher::run()
             _requestSynchronous = false;
             break;
         }
+        
+        //Lock the thread until someone ask something
+        if (!_semLoop.tryAcquire(1, QDeadlineTimer(1s)))
+        {
+            continue;
+        }
 
         if (_sequence.size() == 0)
         {
-            std::this_thread::sleep_for(100ms);
+            continue;
         }
-        else
+
+        const std::string& lpath = _sequence[static_cast<std::size_t>(_currentIndex)];
+
+        // Load in cache
+        if (_cache)
         {
-            const std::string& lpath = _sequence[static_cast<std::size_t>(_currentIndex)];
-
-            // Load in cache
-            if (_cache)
+            double ratio;
             {
-                double ratio;
-                {
-                    QMutexLocker locker(&_mutexResizeRatio);
-                    ratio = _resizeRatio;
-                }
-
-                _cache->get<image::RGBAfColor>(lpath, static_cast<unsigned int>(_currentIndex), ratio, false);
+                QMutexLocker locker(&_mutexResizeRatio);
+                ratio = _resizeRatio;
             }
 
+            _cache->get<image::RGBAfColor>(lpath, static_cast<unsigned int>(_currentIndex), ratio, false);
+        }
+
+        if (_isPrefetching)
+        {
             _currentIndex++;
 
             int size = static_cast<int>(_sequence.size());
@@ -98,8 +117,10 @@ void AsyncFetcher::run()
                 _currentIndex = 0;
             }
 
-            std::this_thread::sleep_for(1ms);
+            _semLoop.release(1);
         }
+
+        std::this_thread::sleep_for(1ms);
 
         std::size_t cacheSize = getDiskLoads();
         if (cacheSize != previousCacheSize)
@@ -205,7 +226,7 @@ bool AsyncFetcher::getFrame(const std::string& path,
         return false;
     }
 
-    // First try getting the image
+    // Do we only lookup in the cache or do we allow to load on disk immediately
     bool onlyCache = _isAsynchronous;
 
     // Upgrade the thread with the current Index
@@ -218,6 +239,7 @@ bool AsyncFetcher::getFrame(const std::string& path,
         }
     }
 
+    //Try to find in the cache
     std::optional<CacheValue> ovalue = _cache->get<aliceVision::image::RGBAfColor>(path, _currentIndex, _resizeRatio, onlyCache);
 
     if (ovalue.has_value())
@@ -236,6 +258,11 @@ bool AsyncFetcher::getFrame(const std::string& path,
         }
 
         return true;
+    }
+    else 
+    {
+        //If there is no cache, then poke the fetch thread
+        _semLoop.release(1);
     }
 
     return false;

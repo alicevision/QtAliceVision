@@ -357,7 +357,7 @@ void FloatImageViewer::setSequence(const QVariantList& paths)
 
 void FloatImageViewer::setFetchingSequence(bool fetching)
 {
-    _sequenceCache.setAsyncFetching(fetching);
+    _sequenceCache.setPrefetching(fetching);
     Q_EMIT fetchingSequenceChanged();
 }
 
@@ -369,6 +369,13 @@ void FloatImageViewer::setResizeRatio(double ratio)
     ratio = std::ceil(ratio * 10.0) / 10.0;
 
     _sequenceCache.setResizeRatio(ratio);
+
+    if (ratio != _clampedResizeRatio)
+    {
+        //If the clamped ratio has changed, then
+        //We may need to reload the image with the correct resolution
+        Q_EMIT sourceChanged();
+    }
 
     _clampedResizeRatio = ratio;
 

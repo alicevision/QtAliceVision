@@ -3,6 +3,7 @@
 #include <QObject>
 #include <QRunnable>
 #include <QMutex>
+#include <QSemaphore>
 #include <QVariantList>
 
 #include "ImageCache.hpp"
@@ -38,6 +39,13 @@ class AsyncFetcher : public QObject, public QRunnable
      * @param ratio the coefficient of resize of the loaded images
      */
     void setResizeRatio(double ratio);
+
+    /**
+     * @brief Do we enable prefetching ? Means that we are prefetching next frames 
+     * in the sequence before asked.
+     * @param prefetch true if prefetching is activated 
+     */
+    void setPrefetching(bool prefetch);
 
     /**
      * @brief retrieve a frame from the cache in both sync and async mode
@@ -102,10 +110,12 @@ class AsyncFetcher : public QObject, public QRunnable
 
     QAtomicInt _currentIndex;
     QAtomicInt _isAsynchronous;
+    QAtomicInt _isPrefetching;
     QAtomicInt _requestSynchronous;
 
     double _resizeRatio;
     QMutex _mutexResizeRatio;
+    QSemaphore _semLoop;
 };
 
 }  // namespace imgserve

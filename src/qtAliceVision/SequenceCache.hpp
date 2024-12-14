@@ -52,6 +52,12 @@ class SequenceCache : public QObject, public ImageServer
     void setAsyncFetching(bool fetching);
 
     /**
+     * @brief Set the boolean flag indicating if the sequence is performing prefetching (only if async).
+     * @param[in] prefetching new value for the prefetching flag
+     */
+    void setPrefetching(bool prefetching);
+
+    /**
      * @brief Set the maximum memory that can be filled by the cache.
      * @param[in] memory maximum memory in bytes
      */
