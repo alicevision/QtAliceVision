@@ -22,6 +22,7 @@ class SfmDataEntity : public Qt3DCore::QEntity
     Q_OBJECT
     Q_PROPERTY(QUrl source READ source WRITE setSource NOTIFY sourceChanged)
     Q_PROPERTY(bool skipHidden MEMBER _skipHidden NOTIFY skipHiddenChanged)
+    Q_PROPERTY(bool fixedPointSize READ fixedPointSize WRITE setFixedPointSize NOTIFY fixedPointSizeChanged)
     Q_PROPERTY(float pointSize READ pointSize WRITE setPointSize NOTIFY pointSizeChanged)
     Q_PROPERTY(float locatorScale READ locatorScale WRITE setLocatorScale NOTIFY locatorScaleChanged)
     Q_PROPERTY(QQmlListProperty<sfmdataentity::CameraLocatorEntity> cameras READ cameras NOTIFY camerasChanged)
@@ -47,12 +48,14 @@ class SfmDataEntity : public Qt3DCore::QEntity
     ~SfmDataEntity() override = default;
 
     Q_SLOT const QUrl& source() const { return _source; }
+    Q_SLOT bool fixedPointSize() const { return _fixedPointSize; }
     Q_SLOT float pointSize() const { return _pointSize; }
     Q_SLOT float locatorScale() const { return _locatorScale; }
     Q_SLOT aliceVision::IndexT selectedViewId() const { return _selectedViewId; }
     Q_SLOT aliceVision::IndexT resectionId() const { return _resectionId; }
     Q_SLOT bool displayResections() const { return _displayResections; }
     Q_SLOT void setSource(const QUrl& source);
+    Q_SLOT void setFixedPointSize(const bool& value);
     Q_SLOT void setPointSize(const float& value);
     Q_SLOT void setLocatorScale(const float& value);
     Q_SLOT void setSelectedViewId(const aliceVision::IndexT& viewId);
@@ -71,6 +74,7 @@ class SfmDataEntity : public Qt3DCore::QEntity
 
     Q_SIGNAL void sourceChanged();
     Q_SIGNAL void camerasChanged();
+    Q_SIGNAL void fixedPointSizeChanged();
     Q_SIGNAL void pointSizeChanged();
     Q_SIGNAL void pointCloudsChanged();
     Q_SIGNAL void locatorScaleChanged();
@@ -100,11 +104,13 @@ class SfmDataEntity : public Qt3DCore::QEntity
     Status _status = SfmDataEntity::None;
     QUrl _source;
     bool _skipHidden = false;
+    bool _fixedPointSize = false;
     float _pointSize = 0.5f;
     float _locatorScale = 1.0f;
     aliceVision::IndexT _selectedViewId = 0;
     aliceVision::IndexT _resectionId = 0;
     bool _displayResections = false;
+    Qt3DRender::QParameter* _fixedPointSizeParameter;
     Qt3DRender::QParameter* _pointSizeParameter;
     Qt3DRender::QMaterial* _cloudMaterial;
     Qt3DRender::QMaterial* _cameraMaterial;

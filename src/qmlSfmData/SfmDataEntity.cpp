@@ -21,6 +21,7 @@ namespace sfmdataentity {
 
 SfmDataEntity::SfmDataEntity(Qt3DCore::QNode* parent)
   : Qt3DCore::QEntity(parent),
+    _fixedPointSizeParameter(new Qt3DRender::QParameter),
     _pointSizeParameter(new Qt3DRender::QParameter),
     _ioThread(new IOThread())
 {
@@ -35,6 +36,19 @@ void SfmDataEntity::setSource(const QUrl& value)
     _source = value;
     loadSfmData();
     Q_EMIT sourceChanged();
+}
+
+void SfmDataEntity::setFixedPointSize(const bool& value)
+{
+    if (_fixedPointSize == value)
+    {
+        return;
+    }
+
+    _fixedPointSize = value;
+    _fixedPointSizeParameter->setValue(value);
+
+    Q_EMIT fixedPointSizeChanged();
 }
 
 void SfmDataEntity::setPointSize(const float& value)
@@ -182,46 +196,51 @@ void SfmDataEntity::createMaterials()
     technique->graphicsApiFilter()->setProfile(QGraphicsApiFilter::CoreProfile);
 
     shaderProgram->setShaderCode(QShaderProgram::Vertex, R"(#version 450
-    layout(location = 0) in vec3 vertexPosition;
-    layout(location = 1) in vec3 vertexColor;
-    layout(location = 0) out vec3 color;
-    layout(std140, binding = 0) uniform qt3d_render_view_uniforms {
-        mat4 viewMatrix;
-        mat4 projectionMatrix;
-        mat4 uncorrectedProjectionMatrix;
-        mat4 clipCorrectionMatrix;
-        mat4 viewProjectionMatrix;
-        mat4 inverseViewMatrix;
-        mat4 inverseProjectionMatrix;
-        mat4 inverseViewProjectionMatrix;
-        mat4 viewportMatrix;
-        mat4 inverseViewportMatrix;
-        vec4 textureTransformMatrix;
-        vec3 eyePosition;
-        float aspectRatio;
-        float gamma;
-        float exposure;
-        float time;
-    };
-    layout(std140, binding = 1) uniform qt3d_command_uniforms {
-        mat4 modelMatrix;
-        mat4 inverseModelMatrix;
-        mat4 modelViewMatrix;
-        mat3 modelNormalMatrix;
-        mat4 inverseModelViewMatrix;
-        mat4 mvp;
-        mat4 inverseModelViewProjectionMatrix;
-    };
-    layout(std140, binding = 2) uniform custom_ubo {
-        float pointSize;
-    };
+        layout(location = 0) in vec3 vertexPosition;
+        layout(location = 1) in vec3 vertexColor;
+        layout(location = 0) out vec3 color;
+        layout(std140, binding = 0) uniform qt3d_render_view_uniforms {
+            mat4 viewMatrix;
+            mat4 projectionMatrix;
+            mat4 uncorrectedProjectionMatrix;
+            mat4 clipCorrectionMatrix;
+            mat4 viewProjectionMatrix;
+            mat4 inverseViewMatrix;
+            mat4 inverseProjectionMatrix;
+            mat4 inverseViewProjectionMatrix;
+            mat4 viewportMatrix;
+            mat4 inverseViewportMatrix;
+            vec4 textureTransformMatrix;
+            vec3 eyePosition;
+            float aspectRatio;
+            float gamma;
+            float exposure;
+            float time;
+        };
+        layout(std140, binding = 1) uniform qt3d_command_uniforms {
+            mat4 modelMatrix;
+            mat4 inverseModelMatrix;
+            mat4 modelViewMatrix;
+            mat3 modelNormalMatrix;
+            mat4 inverseModelViewMatrix;
+            mat4 mvp;
+            mat4 inverseModelViewProjectionMatrix;
+        };
+        layout(std140, binding = 2) uniform custom_ubo {
+            float pointSize;
+            bool fixedPointSize;
+        };
 
-    void main()
-    {
-        color = vertexColor;
-        gl_Position = mvp * vec4(vertexPosition, 1.0);
-        gl_PointSize = max(viewportMatrix[1][1] * projectionMatrix[1][1] * pointSize / gl_Position.w, 1.0);
-    }
+        void main()
+        {
+            color = vertexColor;
+            gl_Position = mvp * vec4(vertexPosition, 1.0);
+            if (fixedPointSize) {
+                gl_PointSize = pointSize;
+            } else {
+                gl_PointSize = max(viewportMatrix[1][1] * projectionMatrix[1][1] * pointSize * 0.01 / gl_Position.w, 1.0);
+            }
+        }
     )");
 
     shaderProgram->setShaderCode(QShaderProgram::Fragment, R"(#version 450
@@ -232,6 +251,11 @@ void SfmDataEntity::createMaterials()
         fragColor = vec4(color, 1.0);
     }
     )");
+
+    // Add a fixedPointSize uniform
+    _fixedPointSizeParameter->setName("fixedPointSize");
+    _fixedPointSizeParameter->setValue(_fixedPointSize);
+    _cloudMaterial->addParameter(_fixedPointSizeParameter);
 
     // Add a pointSize uniform
     _pointSizeParameter->setName("pointSize");
