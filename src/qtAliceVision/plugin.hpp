@@ -11,6 +11,7 @@
 #include "PanoramaViewer.hpp"
 #include "Surface.hpp"
 #include "MFeatures.hpp"
+#include "EdgeMouse.hpp"
 
 #include <aliceVision/system/Logger.hpp>
 
@@ -39,6 +40,7 @@ class QtAliceVisionPlugin : public QQmlExtensionPlugin
         aliceVision::system::Logger::get()->setLogLevel("info");
         Q_ASSERT(uri == QLatin1String("AliceVision"));
 
+        qmlRegisterType<EdgeMouse>(uri, 1, 0, "EdgeMouse");
         qmlRegisterType<FeaturesViewer>(uri, 1, 0, "FeaturesViewer");
         qmlRegisterType<MFeatures>(uri, 1, 0, "MFeatures");
         qmlRegisterType<MSfMData>(uri, 1, 0, "MSfMData");

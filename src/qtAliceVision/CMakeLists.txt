@@ -16,6 +16,7 @@ set(PLUGIN_SOURCES
     SingleImageLoader.cpp
     ImageCache.cpp
     AsyncFetcher.cpp
+    EdgeMouse.cpp
     )
 
 set(PLUGIN_HEADERS
@@ -37,10 +38,11 @@ set(PLUGIN_HEADERS
     SingleImageLoader.hpp
     ImageCache.hpp
     AsyncFetcher.hpp
-    
+    EdgeMouse.hpp
     )
 
 set(PLUGIN_MOCS
+    EdgeMouse.hpp
     FeaturesViewer.hpp
     MFeatures.hpp
     MSfMData.hpp
