@@ -218,7 +218,9 @@ bool AsyncFetcher::getFrame(const std::string& path,
                             std::shared_ptr<image::Image<image::RGBAfColor>>& image,
                             oiio::ParamValueList& metadatas,
                             size_t& originalWidth,
-                            size_t& originalHeight)
+                            size_t& originalHeight,
+                            bool & missingFile,
+                            bool & loadingError)
 {
     // Need a cache
     if (!_cache)
@@ -251,6 +253,8 @@ bool AsyncFetcher::getFrame(const std::string& path,
         metadatas = copy_metadatas;
         originalWidth = value.getOriginalWidth();
         originalHeight = value.getOriginalHeight();
+        missingFile = value.isFileMissing();
+        loadingError = value.hadErrorOnLoad();
 
         if (image)
         {

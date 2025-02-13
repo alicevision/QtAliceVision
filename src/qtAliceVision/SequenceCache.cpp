@@ -114,9 +114,25 @@ ResponseData SequenceCache::request(const RequestData& reqData)
     oiio::ParamValueList metadatas;
     size_t originalWidth = 0;
     size_t originalHeight = 0;
+    bool hadErrorOnLoad = false;
+    bool isFileMissing = false;
 
-    if (!_fetcher.getFrame(reqData.path, image, metadatas, originalWidth, originalHeight))
+    if (!_fetcher.getFrame(reqData.path, image, metadatas, 
+                        originalWidth, originalHeight, 
+                        isFileMissing, hadErrorOnLoad))
     {
+        return response;
+    }
+
+    if (isFileMissing)
+    {
+        response.error = MISSING_FILE;
+        return response;
+    }
+
+    if (hadErrorOnLoad)
+    {
+        response.error = LOADING_ERROR;
         return response;
     }
 

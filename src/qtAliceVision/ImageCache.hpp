@@ -59,9 +59,11 @@ class CacheValue
 {
   public:
     template<typename TPix>
-    CacheValue(unsigned frameId, std::shared_ptr<aliceVision::image::Image<TPix>> img)
+    CacheValue(unsigned frameId, std::shared_ptr<aliceVision::image::Image<TPix>> img, bool missingFile, bool loadError)
       : _vimg(img),
-        _frameId(frameId)
+        _frameId(frameId),
+        _missingFile(missingFile),
+        _loadError(loadError)
     {}
 
   public:
@@ -124,6 +126,24 @@ class CacheValue
         return std::visit([](const auto& arg) -> unsigned long long int { return arg->memorySize(); }, _vimg);
     }
 
+    /**
+     * @brief did the load failed ?
+     * @return true if something bad happened during the loading
+    */
+    bool hadErrorOnLoad() const
+    {
+        return _loadError;
+    }
+
+    /**
+     * @brief is the file requested missing ?
+     * @return true if the file doesn't exist
+    */
+    bool isFileMissing() const
+    {
+        return _missingFile;
+    }
+
   private:
     std::variant<std::shared_ptr<aliceVision::image::Image<unsigned char>>,
                  std::shared_ptr<aliceVision::image::Image<float>>,
@@ -137,6 +157,8 @@ class CacheValue
     unsigned _originalHeight;
     oiio::ParamValueList _metadatas;
     unsigned _frameId;
+    bool _loadError;
+    bool _missingFile;
 };
 
 /**
@@ -363,6 +385,10 @@ std::optional<CacheValue> ImageCache::get(const std::string& filename, unsigned 
 template<typename TPix>
 std::optional<CacheValue> ImageCache::load(const CacheKey& key, unsigned frameId)
 {
+    // Increment disk access stats
+    // This is incremented whatever happens next
+    _info.incrementDisk();
+
     aliceVision::image::Image<TPix> img;
     auto resized = std::make_shared<aliceVision::image::Image<TPix>>();
 
@@ -370,35 +396,52 @@ std::optional<CacheValue> ImageCache::load(const CacheKey& key, unsigned frameId
     int height = 0;
     oiio::ParamValueList metadatas;
 
-    try
+    bool loadError = false;
+    bool missingFile = false;
+
+
+    //First check if the files exists on disk
+    //LastWriteTime equals 0 if the file doesn't exist
+    if (key.lastWriteTime == 0)
     {
-        metadatas = aliceVision::image::readImageMetadata(key.filename, width, height);
-
-        // load image from disk
-        readImage(key.filename, img, _options);
+        missingFile = true;
+        loadError = true;
     }
-    catch (...)
+    else 
     {
-        return std::nullopt;
+        //If the file exist, then try to load it.
+        try
+        {
+            //Retrieve metadatas
+            metadatas = aliceVision::image::readImageMetadata(key.filename, width, height);
+
+            // load image from disk
+            readImage(key.filename, img, _options);
+        }
+        catch (...)
+        {
+            loadError = true;
+        }
     }
 
-    // Compute new size, make sure the size is at least 1
-    double dw = key.resizeRatio * double(img.width());
-    double dh = key.resizeRatio * double(img.height());
-    int tw = static_cast<int>(std::max(1, int(std::ceil(dw))));
-    int th = static_cast<int>(std::max(1, int(std::ceil(dh))));
+    if (!loadError)
+    {
+        // Compute new size, make sure the size is at least 1
+        double dw = key.resizeRatio * double(img.width());
+        double dh = key.resizeRatio * double(img.height());
+        int tw = static_cast<int>(std::max(1, int(std::ceil(dw))));
+        int th = static_cast<int>(std::max(1, int(std::ceil(dh))));
 
-    using TInfo = aliceVision::image::ColorTypeInfo<TPix>;
-    cleanup(tw * th * std::size_t(TInfo::size), key);
+        using TInfo = aliceVision::image::ColorTypeInfo<TPix>;
+        cleanup(tw * th * std::size_t(TInfo::size), key);
 
-    // apply downscale
-    aliceVision::imageAlgo::resizeImage(tw, th, img, *resized);
-
-    // Increment disk access stats
-    _info.incrementDisk();
+        // apply downscale
+        aliceVision::imageAlgo::resizeImage(tw, th, img, *resized);
+    }
 
     // create wrapper around shared pointer
-    CacheValue value(frameId, resized);
+    // Note that we store cache item even on problem to not repeat trials
+    CacheValue value(frameId, resized, missingFile, loadError);
 
     // Add additional information about the image
     value.setOriginalHeight(static_cast<unsigned int>(height));
