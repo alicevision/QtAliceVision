@@ -41,9 +41,9 @@ class AsyncFetcher : public QObject, public QRunnable
     void setResizeRatio(double ratio);
 
     /**
-     * @brief Do we enable prefetching ? Means that we are prefetching next frames 
+     * @brief Do we enable prefetching ? Means that we are prefetching next frames
      * in the sequence before asked.
-     * @param prefetch true if prefetching is activated 
+     * @param prefetch true if prefetching is activated
      */
     void setPrefetching(bool prefetch);
 
@@ -54,13 +54,17 @@ class AsyncFetcher : public QObject, public QRunnable
      * @param metadatas the image metadatas found in the file
      * @param originalWidth the image width before the resize
      * @param originalHeight the image height before the resize
+     * @param missingFile the image cache entry indicates a missing file
+     * @param loadingError the image cache entry indicates a file loading error
      * @return true if the image was succesfully found in the cache
      */
     bool getFrame(const std::string& path,
                   std::shared_ptr<aliceVision::image::Image<aliceVision::image::RGBAfColor>>& image,
                   oiio::ParamValueList& metadatas,
                   std::size_t& originalWidth,
-                  std::size_t& originalHeight);
+                  std::size_t& originalHeight,
+                  bool& missingFile,
+                  bool& loadingError);
 
     /**
      * @brief Internal function for QT to start the asynchronous mode

@@ -22,25 +22,13 @@ class PointMaterial : public QSGMaterial
         _size(1.0f)
     {}
 
-    void setColor(const QColor& color)
-    {
-        _color = color;
-    }
+    void setColor(const QColor& color) { _color = color; }
 
-    QColor getColor() const
-    {
-        return _color;
-    }
+    QColor getColor() const { return _color; }
 
-    void setSize(const float & size)
-    { 
-        _size = size; 
-    }
+    void setSize(const float& size) { _size = size; }
 
-    float getSize() const 
-    {
-        return _size; 
-    }
+    float getSize() const { return _size; }
 
     QSGMaterialType* type() const override
     {
@@ -126,10 +114,7 @@ class PointMaterialShader : public QSGMaterialShader
     }
 };
 
-QSGMaterialShader* PointMaterial::createShader(QSGRendererInterface::RenderMode) const  
-{ 
-    return new PointMaterialShader; 
-}
+QSGMaterialShader* PointMaterial::createShader(QSGRendererInterface::RenderMode) const { return new PointMaterialShader; }
 
 Painter::Painter(const std::vector<std::string>& layers)
   : _layers(layers)

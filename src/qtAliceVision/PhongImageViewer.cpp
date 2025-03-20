@@ -7,186 +7,190 @@
 
 namespace qtAliceVision {
 
-namespace
+namespace {
+class PhongImageViewerMaterialShader;
+
+class PhongImageViewerMaterial : public QSGMaterial
 {
-    class PhongImageViewerMaterialShader;
+  public:
+    PhongImageViewerMaterial() {}
 
-    class PhongImageViewerMaterial : public QSGMaterial
+    QSGMaterialType* type() const override
     {
-    public:
-        PhongImageViewerMaterial() {}
-
-        QSGMaterialType* type() const override
-        {
-            static QSGMaterialType type;
-            return &type;
-        }
-
-        int compare(const QSGMaterial* other) const override
-        {
-            Q_ASSERT(other && type() == other->type());
-            return other == this ? 0 : (other > this ? 1 : -1);
-        }
-
-        QSGMaterialShader* createShader(QSGRendererInterface::RenderMode) const override;
-
-        struct
-        {
-            // warning: matches layout and padding of PhongImageViewer.vert/frag shaders
-            QVector4D channelOrder = QVector4D(0, 1, 2, 3);
-            QVector4D baseColor = QVector4D(.2f, .2f, .2f, 1.f);
-            QVector3D lightDirection = QVector3D(0.f, 0.f, -1.f);
-            float textureOpacity = 1.f;
-            float gamma = 1.f;
-            float gain = 0.f;
-            float ka = 0.f;
-            float kd = 1.f;
-            float ks = 1.f;
-            float shininess = 20.f;
-
-        } uniforms;
-
-        std::unique_ptr<FloatTexture> sourceTexture = std::make_unique<FloatTexture>(); // should be initialized
-        std::unique_ptr<FloatTexture> normalTexture = std::make_unique<FloatTexture>(); // should be initialized
-        bool dirtyUniforms;
-    };
-
-    class PhongImageViewerMaterialShader : public QSGMaterialShader
-    {
-    public:
-        PhongImageViewerMaterialShader()
-        {
-            setShaderFileName(VertexStage, QLatin1String(":/shaders/PhongImageViewer.vert.qsb"));
-            setShaderFileName(FragmentStage, QLatin1String(":/shaders/PhongImageViewer.frag.qsb"));
-        }
-
-        bool updateUniformData(RenderState& state, QSGMaterial* newMaterial, QSGMaterial* oldMaterial) override
-        {
-            bool changed = false;
-            QByteArray* buf = state.uniformData();
-            Q_ASSERT(buf->size() >= 84);
-            if (state.isMatrixDirty())
-            {
-                const QMatrix4x4 m = state.combinedMatrix();
-                memcpy(buf->data() + 0, m.constData(), 64);
-                changed = true;
-            }
-            if (state.isOpacityDirty()) {
-                const float opacity = state.opacity();
-                memcpy(buf->data() + 64, &opacity, 4);
-                changed = true;
-            }
-            auto* customMaterial = static_cast<PhongImageViewerMaterial*>(newMaterial);
-            if (oldMaterial != newMaterial || customMaterial->dirtyUniforms) {
-                memcpy(buf->data() + 80, &customMaterial->uniforms, 72); // uniforms size is 72
-                customMaterial->dirtyUniforms = false;
-                changed = true;
-            }
-            return changed;
-        }
-
-        void updateSampledImage(RenderState& state, int binding, QSGTexture** texture, QSGMaterial* newMaterial, QSGMaterial*) override
-        {
-            PhongImageViewerMaterial* mat = static_cast<PhongImageViewerMaterial*>(newMaterial);
-
-            if (binding == 1)
-            {
-                mat->sourceTexture->commitTextureOperations(state.rhi(), state.resourceUpdateBatch());
-                *texture = mat->sourceTexture.get();
-            }
-
-            if (binding == 2)
-            {
-                mat->normalTexture->commitTextureOperations(state.rhi(), state.resourceUpdateBatch());
-                *texture = mat->normalTexture.get();
-            }
-        }
-    };
-
-    QSGMaterialShader* PhongImageViewerMaterial::createShader(QSGRendererInterface::RenderMode) const
-    {
-        return new PhongImageViewerMaterialShader;
+        static QSGMaterialType type;
+        return &type;
     }
 
-    class PhongImageViewerNode : public QSGGeometryNode
+    int compare(const QSGMaterial* other) const override
     {
-    public:
-        PhongImageViewerNode()
+        Q_ASSERT(other && type() == other->type());
+        return other == this ? 0 : (other > this ? 1 : -1);
+    }
+
+    QSGMaterialShader* createShader(QSGRendererInterface::RenderMode) const override;
+
+    struct
+    {
+        // warning: matches layout and padding of PhongImageViewer.vert/frag shaders
+        QVector4D channelOrder = QVector4D(0, 1, 2, 3);
+        QVector4D baseColor = QVector4D(.2f, .2f, .2f, 1.f);
+        QVector3D lightDirection = QVector3D(0.f, 0.f, -1.f);
+        float textureOpacity = 1.f;
+        float gamma = 1.f;
+        float gain = 0.f;
+        float ka = 0.f;
+        float kd = 1.f;
+        float ks = 1.f;
+        float shininess = 20.f;
+
+    } uniforms;
+
+    std::unique_ptr<FloatTexture> sourceTexture = std::make_unique<FloatTexture>();  // should be initialized
+    std::unique_ptr<FloatTexture> normalTexture = std::make_unique<FloatTexture>();  // should be initialized
+    bool dirtyUniforms;
+};
+
+class PhongImageViewerMaterialShader : public QSGMaterialShader
+{
+  public:
+    PhongImageViewerMaterialShader()
+    {
+        setShaderFileName(VertexStage, QLatin1String(":/shaders/PhongImageViewer.vert.qsb"));
+        setShaderFileName(FragmentStage, QLatin1String(":/shaders/PhongImageViewer.frag.qsb"));
+    }
+
+    bool updateUniformData(RenderState& state, QSGMaterial* newMaterial, QSGMaterial* oldMaterial) override
+    {
+        bool changed = false;
+        QByteArray* buf = state.uniformData();
+        Q_ASSERT(buf->size() >= 84);
+        if (state.isMatrixDirty())
         {
-            auto* m = new PhongImageViewerMaterial;
-            setMaterial(m);
-            setFlag(OwnsMaterial, true);
-            QSGGeometry* geometry = new QSGGeometry(QSGGeometry::defaultAttributes_TexturedPoint2D(), 0);
-            geometry->setIndexDataPattern(QSGGeometry::StaticPattern);
-            geometry->setVertexDataPattern(QSGGeometry::StaticPattern);
-            setGeometry(geometry);
-            setFlag(OwnsGeometry, true);
+            const QMatrix4x4 m = state.combinedMatrix();
+            memcpy(buf->data() + 0, m.constData(), 64);
+            changed = true;
+        }
+        if (state.isOpacityDirty())
+        {
+            const float opacity = state.opacity();
+            memcpy(buf->data() + 64, &opacity, 4);
+            changed = true;
+        }
+        auto* customMaterial = static_cast<PhongImageViewerMaterial*>(newMaterial);
+        if (oldMaterial != newMaterial || customMaterial->dirtyUniforms)
+        {
+            memcpy(buf->data() + 80, &customMaterial->uniforms, 72);  // uniforms size is 72
+            customMaterial->dirtyUniforms = false;
+            changed = true;
+        }
+        return changed;
+    }
+
+    void updateSampledImage(RenderState& state, int binding, QSGTexture** texture, QSGMaterial* newMaterial, QSGMaterial*) override
+    {
+        PhongImageViewerMaterial* mat = static_cast<PhongImageViewerMaterial*>(newMaterial);
+
+        if (binding == 1)
+        {
+            mat->sourceTexture->commitTextureOperations(state.rhi(), state.resourceUpdateBatch());
+            *texture = mat->sourceTexture.get();
         }
 
-        void setBlending(bool value)
+        if (binding == 2)
         {
-            auto* m = static_cast<PhongImageViewerMaterial*>(material());
-            m->setFlag(QSGMaterial::Blending, value);
+            mat->normalTexture->commitTextureOperations(state.rhi(), state.resourceUpdateBatch());
+            *texture = mat->normalTexture.get();
         }
+    }
+};
 
-        void setEmptyGeometry()
+QSGMaterialShader* PhongImageViewerMaterial::createShader(QSGRendererInterface::RenderMode) const { return new PhongImageViewerMaterialShader; }
+
+class PhongImageViewerNode : public QSGGeometryNode
+{
+  public:
+    PhongImageViewerNode()
+    {
+        auto* m = new PhongImageViewerMaterial;
+        setMaterial(m);
+        setFlag(OwnsMaterial, true);
+        QSGGeometry* geometry = new QSGGeometry(QSGGeometry::defaultAttributes_TexturedPoint2D(), 0);
+        geometry->setIndexDataPattern(QSGGeometry::StaticPattern);
+        geometry->setVertexDataPattern(QSGGeometry::StaticPattern);
+        setGeometry(geometry);
+        setFlag(OwnsGeometry, true);
+    }
+
+    void setBlending(bool value)
+    {
+        auto* m = static_cast<PhongImageViewerMaterial*>(material());
+        m->setFlag(QSGMaterial::Blending, value);
+    }
+
+    void setEmptyGeometry()
+    {
+        auto* g = geometry();
+
+        if (g->vertexCount() != 0)
         {
-            auto* g = geometry();
-
-            if (g->vertexCount() != 0)
-            {
-                g->allocate(0);
-                markDirty(QSGNode::DirtyGeometry);
-            }
-        }
-
-        void setRectGeometry(const QRectF& bounds)
-        {
-            auto* g = geometry();
-
-            if (g->vertexCount() != 4)
-            {
-                geometry()->allocate(4);
-            }
-
-            QSGGeometry::updateTexturedRectGeometry(g, bounds, QRectF(0, 0, 1, 1));
-
+            g->allocate(0);
             markDirty(QSGNode::DirtyGeometry);
         }
+    }
 
-        void setSourceParameters(const QVector4D& channelOrder, float gamma, float gain)
+    void setRectGeometry(const QRectF& bounds)
+    {
+        auto* g = geometry();
+
+        if (g->vertexCount() != 4)
         {
-            auto* m = static_cast<PhongImageViewerMaterial*>(material());
-            m->uniforms.gamma = gamma;
-            m->uniforms.gain = gain;
-            m->uniforms.channelOrder = channelOrder;
-            m->dirtyUniforms = true;
-            markDirty(DirtyMaterial);
+            geometry()->allocate(4);
         }
 
-        void setShadingParameters(const QVector4D& baseColor, const QVector3D& lightDirection, float textureOpacity, float ka, float kd, float ks, float shininess)
-        {
-            auto* m = static_cast<PhongImageViewerMaterial*>(material());
-            m->uniforms.baseColor = baseColor;
-            m->uniforms.lightDirection = lightDirection;
-            m->uniforms.textureOpacity = textureOpacity;
-            m->uniforms.ka = ka;
-            m->uniforms.kd = kd;
-            m->uniforms.ks = ks;
-            m->uniforms.shininess = shininess;
-            m->dirtyUniforms = true;
-            markDirty(DirtyMaterial);
-        }
+        QSGGeometry::updateTexturedRectGeometry(g, bounds, QRectF(0, 0, 1, 1));
 
-        void setTextures(std::unique_ptr<FloatTexture> sourceTexture, std::unique_ptr<FloatTexture> normalTexture)
-        {
-            auto* m = static_cast<PhongImageViewerMaterial*>(material());
-            m->sourceTexture = std::move(sourceTexture);
-            m->normalTexture = std::move(normalTexture);
-            markDirty(DirtyMaterial);
-        }
-    };
-}
+        markDirty(QSGNode::DirtyGeometry);
+    }
+
+    void setSourceParameters(const QVector4D& channelOrder, float gamma, float gain)
+    {
+        auto* m = static_cast<PhongImageViewerMaterial*>(material());
+        m->uniforms.gamma = gamma;
+        m->uniforms.gain = gain;
+        m->uniforms.channelOrder = channelOrder;
+        m->dirtyUniforms = true;
+        markDirty(DirtyMaterial);
+    }
+
+    void setShadingParameters(const QVector4D& baseColor,
+                              const QVector3D& lightDirection,
+                              float textureOpacity,
+                              float ka,
+                              float kd,
+                              float ks,
+                              float shininess)
+    {
+        auto* m = static_cast<PhongImageViewerMaterial*>(material());
+        m->uniforms.baseColor = baseColor;
+        m->uniforms.lightDirection = lightDirection;
+        m->uniforms.textureOpacity = textureOpacity;
+        m->uniforms.ka = ka;
+        m->uniforms.kd = kd;
+        m->uniforms.ks = ks;
+        m->uniforms.shininess = shininess;
+        m->dirtyUniforms = true;
+        markDirty(DirtyMaterial);
+    }
+
+    void setTextures(std::unique_ptr<FloatTexture> sourceTexture, std::unique_ptr<FloatTexture> normalTexture)
+    {
+        auto* m = static_cast<PhongImageViewerMaterial*>(material());
+        m->sourceTexture = std::move(sourceTexture);
+        m->normalTexture = std::move(normalTexture);
+        markDirty(DirtyMaterial);
+    }
+};
+}  // namespace
 
 PhongImageViewer::PhongImageViewer(QQuickItem* parent)
   : QQuickItem(parent)
@@ -197,8 +201,14 @@ PhongImageViewer::PhongImageViewer(QQuickItem* parent)
     // connects
     connect(this, &PhongImageViewer::sourcePathChanged, this, &PhongImageViewer::reload);
     connect(this, &PhongImageViewer::normalPathChanged, this, &PhongImageViewer::reload);
-    connect(this, &PhongImageViewer::sourceParametersChanged, this, [this] { _sourceParametersChanged = true; update(); });
-    connect(this, &PhongImageViewer::shadingParametersChanged, this, [this] { _shadingParametersChanged = true; update(); });
+    connect(this, &PhongImageViewer::sourceParametersChanged, this, [this] {
+        _sourceParametersChanged = true;
+        update();
+    });
+    connect(this, &PhongImageViewer::shadingParametersChanged, this, [this] {
+        _shadingParametersChanged = true;
+        update();
+    });
     connect(this, &PhongImageViewer::textureSizeChanged, this, &PhongImageViewer::update);
     connect(this, &PhongImageViewer::sourceSizeChanged, this, &PhongImageViewer::update);
     connect(this, &PhongImageViewer::imageChanged, this, &PhongImageViewer::update);
@@ -210,7 +220,10 @@ PhongImageViewer::~PhongImageViewer() {}
 
 void PhongImageViewer::setStatus(EStatus status)
 {
-    if (_status == status) { return; }
+    if (_status == status)
+    {
+        return;
+    }
     _status = status;
     Q_EMIT statusChanged();
 }
@@ -264,10 +277,10 @@ void PhongImageViewer::reload()
 
     // copy source image
     _sourceImage = responseSourceImage.img;
-    
+
     // copy normal image
     _normalImage = responseNormalImage.img;
-    
+
     // images have changed
     _imageChanged = true;
     Q_EMIT imageChanged();
@@ -307,7 +320,7 @@ QSGNode* PhongImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
         auto sourceTexture = std::make_unique<FloatTexture>();
         auto normalTexture = std::make_unique<FloatTexture>();
 
-        if(_sourceImage)
+        if (_sourceImage)
         {
             sourceTexture->setImage(_sourceImage);
             sourceTexture->setFiltering(QSGTexture::Nearest);
@@ -349,10 +362,8 @@ QSGNode* PhongImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
         }
         else
         {
-            const float windowRatio = static_cast<float>(_boundingRect.width()) /
-                                      static_cast<float>(_boundingRect.height());
-            const float textureRatio = static_cast<float>(_textureSize.width()) /
-                                       static_cast<float>(_textureSize.height());
+            const float windowRatio = static_cast<float>(_boundingRect.width()) / static_cast<float>(_boundingRect.height());
+            const float textureRatio = static_cast<float>(_textureSize.width()) / static_cast<float>(_textureSize.height());
             QRectF geometryRect = _boundingRect;
 
             if (windowRatio > textureRatio)
@@ -404,15 +415,10 @@ QSGNode* PhongImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
     if (isNewNode || _shadingParametersChanged)
     {
         // light direction from Yaw and Pitch
-        const Eigen::AngleAxis<double> yawA(static_cast<double>(aliceVision::degreeToRadian(_lightYaw)),
-                                            Eigen::Vector3d::UnitY());
-        const Eigen::AngleAxis<double> pitchA(static_cast<double>(aliceVision::degreeToRadian(_lightPitch)),
-                                            Eigen::Vector3d::UnitX());
-        const aliceVision::Vec3 direction = yawA.toRotationMatrix() * pitchA.toRotationMatrix() *
-                                            aliceVision::Vec3(0.0, 0.0, -1.0);
-        const QVector3D lightDirection(static_cast<float>(direction.x()),
-                                       static_cast<float>(direction.y()),
-                                       static_cast<float>(direction.z()));
+        const Eigen::AngleAxis<double> yawA(static_cast<double>(aliceVision::degreeToRadian(_lightYaw)), Eigen::Vector3d::UnitY());
+        const Eigen::AngleAxis<double> pitchA(static_cast<double>(aliceVision::degreeToRadian(_lightPitch)), Eigen::Vector3d::UnitX());
+        const aliceVision::Vec3 direction = yawA.toRotationMatrix() * pitchA.toRotationMatrix() * aliceVision::Vec3(0.0, 0.0, -1.0);
+        const QVector3D lightDirection(static_cast<float>(direction.x()), static_cast<float>(direction.y()), static_cast<float>(direction.z()));
 
         // linear base color from QColor
         const QVector4D baseColor(std::pow(static_cast<float>(_baseColor.redF()), 2.2f),
