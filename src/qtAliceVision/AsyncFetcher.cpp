@@ -50,7 +50,7 @@ void AsyncFetcher::setPrefetching(bool prefetch)
 
     if (_isPrefetching)
     {
-        //Make sure we're not waiting for new source
+        // Make sure we're not waiting for new source
         _semLoop.release(1);
     }
 }
@@ -81,8 +81,8 @@ void AsyncFetcher::run()
             _requestSynchronous = false;
             break;
         }
-        
-        //Lock the thread until someone ask something
+
+        // Lock the thread until someone ask something
         if (!_semLoop.tryAcquire(1, QDeadlineTimer(1s)))
         {
             continue;
@@ -134,10 +134,7 @@ void AsyncFetcher::run()
     _isAsynchronous = false;
 }
 
-void AsyncFetcher::stopAsync()
-{
-    _requestSynchronous = true;
-}
+void AsyncFetcher::stopAsync() { _requestSynchronous = true; }
 
 void AsyncFetcher::updateCacheMemory(std::size_t maxMemory)
 {
@@ -147,15 +144,9 @@ void AsyncFetcher::updateCacheMemory(std::size_t maxMemory)
     }
 }
 
-std::size_t AsyncFetcher::getCacheSize() const
-{
-    return (_cache) ? static_cast<std::size_t>(_cache->info().getContentSize()) : 0;
-}
+std::size_t AsyncFetcher::getCacheSize() const { return (_cache) ? static_cast<std::size_t>(_cache->info().getContentSize()) : 0; }
 
-std::size_t AsyncFetcher::getDiskLoads() const
-{
-    return (_cache) ? static_cast<std::size_t>(_cache->info().getLoadFromDisk()) : 0;
-}
+std::size_t AsyncFetcher::getDiskLoads() const { return (_cache) ? static_cast<std::size_t>(_cache->info().getLoadFromDisk()) : 0; }
 
 QVariantList AsyncFetcher::getCachedFrames() const
 {
@@ -219,8 +210,8 @@ bool AsyncFetcher::getFrame(const std::string& path,
                             oiio::ParamValueList& metadatas,
                             size_t& originalWidth,
                             size_t& originalHeight,
-                            bool & missingFile,
-                            bool & loadingError)
+                            bool& missingFile,
+                            bool& loadingError)
 {
     // Need a cache
     if (!_cache)
@@ -241,7 +232,7 @@ bool AsyncFetcher::getFrame(const std::string& path,
         }
     }
 
-    //Try to find in the cache
+    // Try to find in the cache
     std::optional<CacheValue> ovalue = _cache->get<aliceVision::image::RGBAfColor>(path, _currentIndex, _resizeRatio, onlyCache);
 
     if (ovalue.has_value())
@@ -263,9 +254,9 @@ bool AsyncFetcher::getFrame(const std::string& path,
 
         return true;
     }
-    else 
+    else
     {
-        //If there is no cache, then poke the fetch thread
+        // If there is no cache, then poke the fetch thread
         _semLoop.release(1);
     }
 

@@ -10,7 +10,6 @@
 
 #include <boost/functional/hash.hpp>
 
-
 namespace qtAliceVision {
 /**
  * @brief A struct used to identify a cached image using its file description, color type info and downscale level.
@@ -78,35 +77,17 @@ class CacheValue
         return std::get<std::shared_ptr<aliceVision::image::Image<TPix>>>(_vimg);
     }
 
-    unsigned getOriginalWidth() const
-    {
-        return _originalWidth;
-    }
+    unsigned getOriginalWidth() const { return _originalWidth; }
 
-    unsigned getOriginalHeight() const
-    {
-        return _originalHeight;
-    }
+    unsigned getOriginalHeight() const { return _originalHeight; }
 
-    void setOriginalWidth(unsigned width)
-    {
-        _originalWidth = width;
-    }
+    void setOriginalWidth(unsigned width) { _originalWidth = width; }
 
-    void setOriginalHeight(unsigned height)
-    {
-        _originalHeight = height;
-    }
+    void setOriginalHeight(unsigned height) { _originalHeight = height; }
 
-    oiio::ParamValueList & getMetadatas()
-    {
-        return _metadatas;
-    }
+    oiio::ParamValueList& getMetadatas() { return _metadatas; }
 
-    unsigned getFrameId() const 
-    {
-        return _frameId;
-    }
+    unsigned getFrameId() const { return _frameId; }
 
     /**
      * @brief Count the number of usages of the wrapped shared pointer.
@@ -129,20 +110,14 @@ class CacheValue
     /**
      * @brief did the load failed ?
      * @return true if something bad happened during the loading
-    */
-    bool hadErrorOnLoad() const
-    {
-        return _loadError;
-    }
+     */
+    bool hadErrorOnLoad() const { return _loadError; }
 
     /**
      * @brief is the file requested missing ?
      * @return true if the file doesn't exist
-    */
-    bool isFileMissing() const
-    {
-        return _missingFile;
-    }
+     */
+    bool isFileMissing() const { return _missingFile; }
 
   private:
     std::variant<std::shared_ptr<aliceVision::image::Image<unsigned char>>,
@@ -399,20 +374,19 @@ std::optional<CacheValue> ImageCache::load(const CacheKey& key, unsigned frameId
     bool loadError = false;
     bool missingFile = false;
 
-
-    //First check if the files exists on disk
-    //LastWriteTime equals 0 if the file doesn't exist
+    // First check if the files exists on disk
+    // LastWriteTime equals 0 if the file doesn't exist
     if (key.lastWriteTime == 0)
     {
         missingFile = true;
         loadError = true;
     }
-    else 
+    else
     {
-        //If the file exist, then try to load it.
+        // If the file exist, then try to load it.
         try
         {
-            //Retrieve metadatas
+            // Retrieve metadatas
             metadatas = aliceVision::image::readImageMetadata(key.filename, width, height);
 
             // load image from disk

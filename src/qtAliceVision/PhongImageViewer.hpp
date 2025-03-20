@@ -27,7 +27,7 @@ class PhongImageViewer : public QQuickItem
     Q_PROPERTY(EChannelMode channelMode MEMBER _channelMode NOTIFY sourceParametersChanged)
     Q_PROPERTY(float gamma MEMBER _gamma NOTIFY sourceParametersChanged)
     Q_PROPERTY(float gain MEMBER _gain NOTIFY sourceParametersChanged)
-    
+
     // shading parameters (material, light)
     Q_PROPERTY(QColor baseColor MEMBER _baseColor NOTIFY shadingParametersChanged)
     Q_PROPERTY(float textureOpacity MEMBER _textureOpacity NOTIFY shadingParametersChanged)
@@ -41,7 +41,7 @@ class PhongImageViewer : public QQuickItem
     // texture
     Q_PROPERTY(QSize textureSize MEMBER _textureSize NOTIFY textureSizeChanged)
     Q_PROPERTY(QSize sourceSize READ sourceSize NOTIFY sourceSizeChanged)
-    
+
     // metadata
     Q_PROPERTY(QVariantMap metadata READ metadata NOTIFY metadataChanged)
 
@@ -49,13 +49,12 @@ class PhongImageViewer : public QQuickItem
     Q_PROPERTY(EStatus status READ status NOTIFY statusChanged)
 
   public:
-
     enum class EStatus : quint8
     {
-        NONE,              // nothing is happening, no error has been detected
-        LOADING,           // an image is being loaded
-        MISSING_FILE,      // the file to load is missing
-        LOADING_ERROR,     // generic error
+        NONE,           // nothing is happening, no error has been detected
+        LOADING,        // an image is being loaded
+        MISSING_FILE,   // the file to load is missing
+        LOADING_ERROR,  // generic error
     };
     Q_ENUM(EStatus)
 
@@ -83,7 +82,7 @@ class PhongImageViewer : public QQuickItem
 
     // signals
     Q_SIGNAL void sourcePathChanged();
-    Q_SIGNAL void normalPathChanged();  
+    Q_SIGNAL void normalPathChanged();
     Q_SIGNAL void sourceParametersChanged();
     Q_SIGNAL void shadingParametersChanged();
     Q_SIGNAL void textureSizeChanged();
@@ -93,11 +92,10 @@ class PhongImageViewer : public QQuickItem
     Q_SIGNAL void statusChanged();
 
   private:
-
     // set viewer status
     void setStatus(EStatus status);
 
-    // reload image(s) 
+    // reload image(s)
     void reload();
 
     // clear images in memory
@@ -107,7 +105,6 @@ class PhongImageViewer : public QQuickItem
     QSGNode* updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePaintNodeData* data) override;
 
   private:
-
     // file paths
     QUrl _sourcePath;
     QUrl _normalPath;
@@ -152,4 +149,3 @@ class PhongImageViewer : public QQuickItem
 };
 
 }  // namespace qtAliceVision
-

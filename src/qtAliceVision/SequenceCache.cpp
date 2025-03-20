@@ -57,10 +57,7 @@ void SequenceCache::setSequence(const QVariantList& paths)
     setAsyncFetching(isAsync);
 }
 
-void SequenceCache::setResizeRatio(double ratio)
-{
-    _fetcher.setResizeRatio(ratio);
-}
+void SequenceCache::setResizeRatio(double ratio) { _fetcher.setResizeRatio(ratio); }
 
 void SequenceCache::setMemoryLimit(int memory)
 {
@@ -70,10 +67,7 @@ void SequenceCache::setMemoryLimit(int memory)
     _fetcher.updateCacheMemory(_maxMemory);
 }
 
-QVariantList SequenceCache::getCachedFrames() const
-{
-    return _fetcher.getCachedFrames();
-}
+QVariantList SequenceCache::getCachedFrames() const { return _fetcher.getCachedFrames(); }
 
 void SequenceCache::setAsyncFetching(bool fetching)
 {
@@ -88,10 +82,7 @@ void SequenceCache::setAsyncFetching(bool fetching)
     }
 }
 
-void SequenceCache::setPrefetching(bool prefetching)
-{
-    _fetcher.setPrefetching(prefetching);
-}
+void SequenceCache::setPrefetching(bool prefetching) { _fetcher.setPrefetching(prefetching); }
 
 QPointF SequenceCache::getRamInfo() const
 {
@@ -117,9 +108,7 @@ ResponseData SequenceCache::request(const RequestData& reqData)
     bool hadErrorOnLoad = false;
     bool isFileMissing = false;
 
-    if (!_fetcher.getFrame(reqData.path, image, metadatas, 
-                        originalWidth, originalHeight, 
-                        isFileMissing, hadErrorOnLoad))
+    if (!_fetcher.getFrame(reqData.path, image, metadatas, originalWidth, originalHeight, isFileMissing, hadErrorOnLoad))
     {
         return response;
     }
@@ -136,8 +125,7 @@ ResponseData SequenceCache::request(const RequestData& reqData)
         return response;
     }
 
-
-    //Build a new response with information fetched
+    // Build a new response with information fetched
     response.metadata.clear();
     response.img = image;
     response.dim = QSize(static_cast<int>(originalWidth), static_cast<int>(originalHeight));

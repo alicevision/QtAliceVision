@@ -83,14 +83,8 @@ void ImageCache::cleanup(size_t requestedSize, const CacheKey& toAdd)
     }
 }
 
-void ImageCache::updateMaxMemory(unsigned long long int maxSize)
-{
-    _info.setMaxMemory(maxSize);
-}
+void ImageCache::updateMaxMemory(unsigned long long int maxSize) { _info.setMaxMemory(maxSize); }
 
-void ImageCache::setReferenceFrameId(int referenceFrameId)
-{
-    _referenceFrameId = referenceFrameId;
-}
+void ImageCache::setReferenceFrameId(int referenceFrameId) { _referenceFrameId = referenceFrameId; }
 
 }  // namespace qtAliceVision
