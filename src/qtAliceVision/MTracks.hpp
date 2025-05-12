@@ -32,8 +32,10 @@ class MTracks : public QObject
     // Path to folder containing the matches
     Q_PROPERTY(QVariantList matchingFolders MEMBER _matchingFolders NOTIFY matchingFoldersChanged)
 
-    /// Status
+    /// Path to 
+    Q_PROPERTY(QUrl tracksFile MEMBER _tracksFile NOTIFY tracksFileChanged)
 
+    /// Status
     Q_PROPERTY(Status status READ status NOTIFY statusChanged)
 
   public:
@@ -59,11 +61,13 @@ class MTracks : public QObject
     /// Slots
 
     Q_SLOT void load();
+    Q_SLOT void loadDirect();
     Q_SLOT void onReady(aliceVision::track::TracksMap* tracks, aliceVision::track::TracksPerView* tracksPerView);
 
     /// Signals
 
     Q_SIGNAL void matchingFoldersChanged();
+    Q_SIGNAL void tracksFileChanged();
     Q_SIGNAL void tracksChanged();
     Q_SIGNAL void statusChanged(Status status);
 
@@ -83,6 +87,7 @@ class MTracks : public QObject
     /// Private members
 
     QVariantList _matchingFolders;
+    QUrl _tracksFile;
 
     aliceVision::track::TracksMap* _tracks = nullptr;
     aliceVision::track::TracksPerView* _tracksPerView = nullptr;
@@ -109,6 +114,26 @@ class TracksIORunnable : public QObject, public QRunnable
 
   private:
     std::vector<std::string> _folders;
+};
+
+/**
+ * @brief QRunnable object dedicated to loading tracks using AliceVision.
+ */
+class TracksDirectIORunnable : public QObject, public QRunnable
+{
+    Q_OBJECT
+
+  public:
+    explicit TracksDirectIORunnable(const std::string& filename)
+      : _filename(filename)
+    {}
+
+    Q_SLOT void run() override;
+
+    Q_SIGNAL void resultReady(aliceVision::track::TracksMap* tracks, aliceVision::track::TracksPerView* tracksPerView);
+
+  private:
+    std::string _filename;
 };
 
 }  // namespace qtAliceVision
