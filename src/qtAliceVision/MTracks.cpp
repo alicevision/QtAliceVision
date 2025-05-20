@@ -3,6 +3,7 @@
 #include <aliceVision/matching/io.hpp>
 #include <aliceVision/track/TracksBuilder.hpp>
 #include <aliceVision/track/tracksUtils.hpp>
+#include <aliceVision/track/trackIO.hpp>
 
 #include <QDebug>
 #include <QFileInfo>
@@ -42,7 +43,34 @@ void TracksIORunnable::run()
     Q_EMIT resultReady(tracks, tracksPerView);
 }
 
-MTracks::MTracks() { connect(this, &MTracks::matchingFoldersChanged, this, &MTracks::load); }
+void TracksDirectIORunnable::run()
+{
+    aliceVision::track::TracksMap* tracks = new aliceVision::track::TracksMap;
+    aliceVision::track::TracksPerView* tracksPerView = new aliceVision::track::TracksPerView;
+    
+    if (!aliceVision::track::loadTracks(*tracks, _filename))
+    {
+        if (tracks) 
+        {
+            delete tracks;
+        }
+
+        if (tracksPerView)
+        {
+            delete tracksPerView;
+        }
+    }
+
+    aliceVision::track::computeTracksPerView(*tracks, *tracksPerView);
+
+    Q_EMIT resultReady(tracks, tracksPerView);
+}
+
+MTracks::MTracks() 
+{ 
+    connect(this, &MTracks::matchingFoldersChanged, this, &MTracks::load); 
+    connect(this, &MTracks::tracksFileChanged, this, &MTracks::loadDirect); 
+}
 
 MTracks::~MTracks()
 {
@@ -84,6 +112,32 @@ void MTracks::load()
 
     TracksIORunnable* ioRunnable = new TracksIORunnable(folders);
     connect(ioRunnable, &TracksIORunnable::resultReady, this, &MTracks::onReady);
+    QThreadPool::globalInstance()->start(ioRunnable);
+}
+
+void MTracks::loadDirect()
+{
+    _needReload = false;
+
+    if (_status == Loading)
+    {
+        qDebug("[QtAliceVision] Tracks: Unable to load, a load event is already running.");
+        _needReload = true;
+        return;
+    }
+
+    if (_tracksFile.isEmpty())
+    {
+        setStatus(None);
+        return;
+    }
+
+    setStatus(Loading);
+
+    std::string path = _tracksFile.toString().toStdString();
+
+    TracksDirectIORunnable* ioRunnable = new TracksDirectIORunnable(path);
+    connect(ioRunnable, &TracksDirectIORunnable::resultReady, this, &MTracks::onReady);
     QThreadPool::globalInstance()->start(ioRunnable);
 }
 
