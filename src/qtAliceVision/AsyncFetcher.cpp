@@ -55,6 +55,11 @@ void AsyncFetcher::setPrefetching(bool prefetch)
     }
 }
 
+bool AsyncFetcher::getPrefetching()
+{
+    return _isPrefetching;
+}
+
 void AsyncFetcher::setCache(ImageCache::uptr&& cache)
 {
     // Cache can't be changed while thread is running
@@ -144,9 +149,19 @@ void AsyncFetcher::updateCacheMemory(std::size_t maxMemory)
     }
 }
 
-std::size_t AsyncFetcher::getCacheSize() const { return (_cache) ? static_cast<std::size_t>(_cache->info().getContentSize()) : 0; }
+std::size_t AsyncFetcher::getCacheMemory()
+{
+    return (_cache)?_cache->getMaxMemory():0;
+}
 
-std::size_t AsyncFetcher::getDiskLoads() const { return (_cache) ? static_cast<std::size_t>(_cache->info().getLoadFromDisk()) : 0; }
+std::size_t AsyncFetcher::getCacheSize() const 
+{
+    return (_cache) ? static_cast<std::size_t>(_cache->info().getContentSize()) : 0; 
+}
+
+std::size_t AsyncFetcher::getDiskLoads() const { 
+    return (_cache) ? static_cast<std::size_t>(_cache->info().getLoadFromDisk()) : 0; 
+}
 
 QVariantList AsyncFetcher::getCachedFrames() const
 {

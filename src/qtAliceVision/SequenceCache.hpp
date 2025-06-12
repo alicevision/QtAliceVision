@@ -58,10 +58,22 @@ class SequenceCache : public QObject, public ImageServer
     void setPrefetching(bool prefetching);
 
     /**
-     * @brief Set the maximum memory that can be filled by the cache.
-     * @param[in] memory maximum memory in bytes
+     * @brief Get the boolean flag indicating if the sequence is performing prefetching (only if async).
+     * @return true if prefetching
+    */
+   bool getPrefetching();
+
+    /**
+     * @brief Get the maximum memory that can be filled by the cache.
+     * @return memory maximum memory in gigabytes
      */
-    void setMemoryLimit(int memory);
+    std::size_t getMemoryLimit();
+
+    /**
+     * @brief Set the maximum memory that can be filled by the cache.
+     * @param[in] memory maximum memory in gigabytes
+     */
+    void setMemoryLimit(std::size_t memory);
 
     /**
      * @brief Get the maximum available RAM on the system.

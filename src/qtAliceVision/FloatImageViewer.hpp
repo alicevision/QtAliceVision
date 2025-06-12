@@ -52,19 +52,17 @@ class FloatImageViewer : public QQuickItem
 
     Q_PROPERTY(bool cropFisheye READ getCropFisheye WRITE setCropFisheye NOTIFY isCropFisheyeChanged)
 
-    Q_PROPERTY(QVariantList sequence WRITE setSequence NOTIFY sequenceChanged)
+    Q_PROPERTY(QVariantList sequence MEMBER _sequence WRITE setSequence NOTIFY sequenceChanged)
 
-    Q_PROPERTY(int targetSize WRITE setTargetSize NOTIFY targetSizeChanged)
-
-    Q_PROPERTY(double resizeRatio WRITE setResizeRatio NOTIFY resizeRatioChanged)
+    Q_PROPERTY(double resizeRatio READ getResizeRatio WRITE setResizeRatio NOTIFY resizeRatioChanged)
 
     Q_PROPERTY(QVariantList cachedFrames READ getCachedFrames NOTIFY cachedFramesChanged)
 
     Q_PROPERTY(bool useSequence MEMBER _useSequence NOTIFY useSequenceChanged)
 
-    Q_PROPERTY(bool fetchingSequence WRITE setFetchingSequence NOTIFY fetchingSequenceChanged)
+    Q_PROPERTY(bool fetchingSequence READ getFetchingSequence WRITE setFetchingSequence NOTIFY fetchingSequenceChanged)
 
-    Q_PROPERTY(int memoryLimit WRITE setMemoryLimit NOTIFY memoryLimitChanged)
+    Q_PROPERTY(int memoryLimit READ getMemoryLimit WRITE setMemoryLimit NOTIFY memoryLimitChanged)
 
     Q_PROPERTY(QPointF ramInfo READ getRamInfo NOTIFY cachedFramesChanged)
 
@@ -151,13 +149,17 @@ class FloatImageViewer : public QQuickItem
 
     void setSequence(const QVariantList& paths);
 
-    void setTargetSize(int size);
-
     void setResizeRatio(double ratio);
+
+    double getResizeRatio();
 
     void setFetchingSequence(bool fetching);
 
+    bool getFetchingSequence();
+
     void setMemoryLimit(int memoryLimit);
+
+    int getMemoryLimit();
 
     QVariantList getCachedFrames() const;
 
@@ -210,6 +212,7 @@ class FloatImageViewer : public QQuickItem
     imgserve::SingleImageLoader _singleImageLoader;
     bool _useSequence = true;
     double _clampedResizeRatio = 1.0;
+    QVariantList _sequence;
 };
 
 }  // namespace qtAliceVision

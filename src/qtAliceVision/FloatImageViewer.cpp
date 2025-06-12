@@ -362,7 +362,10 @@ void FloatImageViewer::setFetchingSequence(bool fetching)
     Q_EMIT fetchingSequenceChanged();
 }
 
-void FloatImageViewer::setTargetSize(int size) {}
+bool FloatImageViewer::getFetchingSequence()
+{
+    return _sequenceCache.getPrefetching();
+}
 
 void FloatImageViewer::setResizeRatio(double ratio)
 {
@@ -383,15 +386,31 @@ void FloatImageViewer::setResizeRatio(double ratio)
     Q_EMIT resizeRatioChanged();
 }
 
+double FloatImageViewer::getResizeRatio()
+{
+    return _clampedResizeRatio;
+}
+
 void FloatImageViewer::setMemoryLimit(int memoryLimit)
 {
     _sequenceCache.setMemoryLimit(memoryLimit);
     Q_EMIT memoryLimitChanged();
 }
 
-QVariantList FloatImageViewer::getCachedFrames() const { return _sequenceCache.getCachedFrames(); }
+int FloatImageViewer::getMemoryLimit()
+{
+    return _sequenceCache.getMemoryLimit();
+}
 
-QPointF FloatImageViewer::getRamInfo() const { return _sequenceCache.getRamInfo(); }
+QVariantList FloatImageViewer::getCachedFrames() const
+{ 
+    return _sequenceCache.getCachedFrames(); 
+}
+
+QPointF FloatImageViewer::getRamInfo() const 
+{ 
+    return _sequenceCache.getRamInfo(); 
+}
 
 void FloatImageViewer::reload()
 {
@@ -568,8 +587,8 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, [[maybe_unused]] QQ
     {
         _boundingRect = newBoundingRect;
 
-        const float windowRatio = static_cast<float>(_boundingRect.width() / _boundingRect.height());
-        const float textureRatio = _textureSize.width() / float(_textureSize.height());
+        const float windowRatio = static_cast<float>(_boundingRect.width()) / static_cast<float>(_boundingRect.height());
+        const float textureRatio = static_cast<float>(_textureSize.width()) / static_cast<float>(_textureSize.height());
         QRectF geometryRect = _boundingRect;
         if (windowRatio > textureRatio)
         {
@@ -617,6 +636,8 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, [[maybe_unused]] QQ
                 break;
             case EChannelMode::A:
                 channelOrder = QVector4D(3.f, 3.f, 3.f, -1.f);
+                break;
+            default:
                 break;
         }
         node->setChannelOrder(channelOrder);

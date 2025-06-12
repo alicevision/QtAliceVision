@@ -57,9 +57,20 @@ void SequenceCache::setSequence(const QVariantList& paths)
     setAsyncFetching(isAsync);
 }
 
-void SequenceCache::setResizeRatio(double ratio) { _fetcher.setResizeRatio(ratio); }
+void SequenceCache::setResizeRatio(double ratio) 
+{ 
+    _fetcher.setResizeRatio(ratio); 
+}
 
-void SequenceCache::setMemoryLimit(int memory)
+std::size_t SequenceCache::getMemoryLimit()
+{
+    // Convert parameter in gigabytes to bytes
+    const double gigaBytesToBytes = 1024. * 1024. * 1024.;
+    const size_t memory = _fetcher.getCacheMemory();
+    return static_cast<std::size_t>(static_cast<double>(memory) / gigaBytesToBytes);
+}
+
+void SequenceCache::setMemoryLimit(std::size_t memory)
 {
     // Convert parameter in gigabytes to bytes
     const double gigaBytesToBytes = 1024. * 1024. * 1024.;
@@ -82,7 +93,15 @@ void SequenceCache::setAsyncFetching(bool fetching)
     }
 }
 
-void SequenceCache::setPrefetching(bool prefetching) { _fetcher.setPrefetching(prefetching); }
+void SequenceCache::setPrefetching(bool prefetching) 
+{ 
+    _fetcher.setPrefetching(prefetching); 
+}
+
+bool SequenceCache::getPrefetching()
+{
+    return _fetcher.getPrefetching();
+}
 
 QPointF SequenceCache::getRamInfo() const
 {
