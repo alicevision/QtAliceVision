@@ -296,6 +296,12 @@ class ImageCache
     void updateMaxMemory(unsigned long long int maxSize);
 
     /**
+     * @brief get the cache max memory
+     * @return the cache max memory
+    */
+    unsigned long long int getMaxMemory();
+
+    /**
      * @brief set the reference frame ID
      * @param referenceFrameId the value to store
      */

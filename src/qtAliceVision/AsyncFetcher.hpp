@@ -48,6 +48,13 @@ class AsyncFetcher : public QObject, public QRunnable
     void setPrefetching(bool prefetch);
 
     /**
+     * @brief Do we enable prefetching ? Means that we are prefetching next frames
+     * in the sequence before asked.
+     * @return true if prefetching is activated
+     */
+    bool getPrefetching();
+
+    /**
      * @brief retrieve a frame from the cache in both sync and async mode
      * @param path the image path which should be contained in _sequence.
      * @param image the result image pointer
@@ -96,6 +103,12 @@ class AsyncFetcher : public QObject, public QRunnable
      * @param maxMemory the number of bytes allowed in the cache
      */
     void updateCacheMemory(std::size_t maxMemory);
+
+    /**
+     * @brief update maxMemory for the cache
+     * @return the number of bytes allowed in the cache
+     */
+    std::size_t getCacheMemory();
 
     /**
      * @brief get a list of regions containing the image frames
