@@ -240,6 +240,14 @@ void SfmDataEntity::createMaterials()
             } else {
                 gl_PointSize = max(viewportMatrix[1][1] * projectionMatrix[1][1] * pointSize * 0.01 / gl_Position.w, 1.0);
             }
+
+            //If pointsize is not strictly positive, the point is assigned
+            //A value outside of the OpenGL frustrum cube.
+            //Therefore, it will be automatically discarded by the fixed pipeline.
+            if (pointSize <= 0.0)
+            {
+                gl_Position = vec4(10.0, 10.0, 10.0, 1.0);
+            }
         }
     )");
 
