@@ -6,7 +6,14 @@ ImageCache::ImageCache(unsigned long maxSize, const aliceVision::image::ImageRea
   : _info(maxSize),
     _options(options),
     _referenceFrameId(0)
-{}
+{
+    //Use 4 threads max, but less if we don't have this
+    int count = std::min(4, omp_get_max_threads());
+
+    //Setup openimageio
+    oiio::attribute("threads", count);
+    oiio::attribute("exr_threads", count);
+}
 
 ImageCache::~ImageCache() {}
 
