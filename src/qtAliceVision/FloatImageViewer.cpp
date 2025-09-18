@@ -8,6 +8,8 @@
 #include <QSGTexture>
 #include <QThreadPool>
 
+#include <aliceVision/camera/Equidistant.hpp>
+
 #include <cmath>
 #include <algorithm>
 #include <vector>
