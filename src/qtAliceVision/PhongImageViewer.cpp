@@ -247,19 +247,21 @@ void PhongImageViewer::reload()
     // check for loading errors
     if ((responseSourceImage.img == nullptr) || (responseNormalImage.img == nullptr))
     {
-        if (responseSourceImage.error != imgserve::LoadingStatus::SUCCESSFUL)
-        {
-            clearImages();
-            setStatus((responseSourceImage.error == imgserve::LoadingStatus::MISSING_FILE) ? EStatus::MISSING_FILE : EStatus::LOADING_ERROR);
-        }
-        else if (responseNormalImage.error != imgserve::LoadingStatus::SUCCESSFUL)
-        {
-            clearImages();
-            setStatus((responseNormalImage.error == imgserve::LoadingStatus::MISSING_FILE) ? EStatus::MISSING_FILE : EStatus::LOADING_ERROR);
-        }
-        else
+        if(responseSourceImage.error == imgserve::LoadingStatus::UNDEFINED || 
+           responseNormalImage.error == imgserve::LoadingStatus::UNDEFINED)
         {
             setStatus(EStatus::LOADING);
+        }
+        else if (responseSourceImage.error == imgserve::LoadingStatus::MISSING_FILE ||
+                 responseNormalImage.error == imgserve::LoadingStatus::MISSING_FILE)
+        {
+            clearImages();
+            setStatus(EStatus::MISSING_FILE);
+        }
+        else // loading error
+        {
+            clearImages();
+            setStatus(EStatus::LOADING_ERROR);
         }
         return;
     }
@@ -272,7 +274,7 @@ void PhongImageViewer::reload()
         return;
     }
 
-    // loading done
+    //  reset status
     setStatus(EStatus::NONE);
 
     // copy source image
