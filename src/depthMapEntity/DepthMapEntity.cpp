@@ -65,7 +65,7 @@ void DepthMapEntity::setSource(const QUrl& value)
         _simMapSource = _source;
         _depthMapSource = QUrl::fromLocalFile(QFileInfo(fileInfo.dir(), filename.replace("simMap", "depthMap")).filePath());
     }
-    else if (filename.contains("depth_"))
+    else if (filename.contains("depth"))
     {
         _depthMapSource = _source;
         _simMapSource = "";
