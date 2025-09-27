@@ -24,7 +24,7 @@
 #include <aliceVision/numeric/numeric.hpp>
 
 #include <cmath>
-#include <iostream>
+#include <optional>
 
 using namespace aliceVision;
 
@@ -64,6 +64,11 @@ void DepthMapEntity::setSource(const QUrl& value)
     {
         _simMapSource = _source;
         _depthMapSource = QUrl::fromLocalFile(QFileInfo(fileInfo.dir(), filename.replace("simMap", "depthMap")).filePath());
+    }
+    else if (filename.contains("depth"))
+    {
+        _depthMapSource = _source;
+        _simMapSource = "";
     }
     else
     {
@@ -216,6 +221,119 @@ bool validTriangleRatio(const Vec3f& a, const Vec3f& b, const Vec3f& c)
     return (mi / ma) > 1.0 / 5.0;
 }
 
+std::optional<Point3d> getCenter(const oiio::ImageSpec & inSpec)
+{
+    Point3d CArr;
+    const oiio::ParamValue* cParam = inSpec.find_attribute("AliceVision:CArr");
+    
+    if (!cParam)
+    {
+        return std::nullopt;
+    }
+
+    if (cParam->type().aggregate != oiio::TypeDesc::AGGREGATE::VEC3)
+    {
+        return std::nullopt;
+    }
+
+    if (cParam->type().basetype == oiio::TypeDesc::BASETYPE::DOUBLE)
+    {
+        std::copy_n(static_cast<const double*>(cParam->data()), 3, CArr.m);
+        return CArr;
+    }
+    
+    if (cParam->type().basetype == oiio::TypeDesc::BASETYPE::FLOAT)
+    {
+        const float* d = static_cast<const float*>(cParam->data());
+        for (int i = 0; i < 3; ++i)
+        {
+            CArr.m[i] = d[i];
+        }
+
+        return CArr;
+    }
+    
+    return std::nullopt;
+}
+
+std::optional<Matrix3x3> getInverseProjection(const oiio::ImageSpec & inSpec)
+{
+    Matrix3x3 iCamArr;
+    const oiio::ParamValue* icParam = inSpec.find_attribute("AliceVision:iCamArr");
+
+    if (!icParam)
+    {
+        return std::nullopt;
+    }
+    
+    if (icParam->type().aggregate != oiio::TypeDesc::AGGREGATE::MATRIX33)
+    {
+        return std::nullopt;
+    }
+
+    if (icParam->type().basetype == oiio::TypeDesc::BASETYPE::DOUBLE)
+    {
+        std::copy_n(static_cast<const double*>(icParam->data()), 9, iCamArr.m);
+        return iCamArr;
+    }
+
+    if (icParam->type().basetype == oiio::TypeDesc::BASETYPE::FLOAT)
+    {
+        const float* d = static_cast<const float*>(icParam->data());
+        for (int i = 0; i < 9; ++i)
+        {
+            iCamArr.m[i] = d[i];
+        }
+        return iCamArr;
+    }
+    
+    return std::nullopt;
+}
+
+std::optional<Matrix3x3> getInverseProjectionFromFov(const oiio::ImageSpec & inSpec)
+{
+    double fovDegrees = -1.0;
+    
+    //Try to find fov metadata
+    for (const auto & param : inSpec.extra_attribs)
+    {
+        std::string name = param.name().string();
+        size_t pos = name.find_last_of(":");
+        if (pos != std::string::npos)
+        {
+            name = name.erase(0, pos + 1);
+        }
+
+        std::transform(name.begin(), name.end(), name.begin(), ::tolower);
+        if (name != "fov")
+        {
+            continue;
+        }
+
+        fovDegrees = double(param.get_float(90.0));
+    }
+    
+    if (fovDegrees < 0)
+    {
+        return std::nullopt;
+    }
+
+    double fovRadians = aliceVision::degreeToRadian(fovDegrees);
+
+    //Simple trigonometry
+    //tan(fov / 2) = (width / 2) / f
+    //f = (width / 2) / (tan(fov / 2))
+    double w = double(inSpec.width);
+    double f = (w * 0.5) / std::tan(fovRadians * 0.5);
+
+    Matrix3x3 iCamArr;
+    iCamArr.m11 = 1.0 / f;
+    iCamArr.m22 = 1.0 / f;
+    iCamArr.m33 = 1.0;
+    
+    return iCamArr;
+}
+
 // private
 void DepthMapEntity::loadDepthMap()
 {
@@ -254,81 +372,29 @@ void DepthMapEntity::loadDepthMap()
     oiio::ImageSpec inSpec = image::readImageSpec(depthMapPath);
 
     Point3d CArr;
-    oiio::ParamValue* cParam = inSpec.find_attribute("AliceVision:CArr");
-    if (!cParam)
+    std::optional<Point3d> optCarr = getCenter(inSpec);
+    if (optCarr.has_value())
     {
-        qWarning() << "[DepthMapEntity] Missing metadata CArr.";
-        _status = DepthMapEntity::Error;
-        return;
+        CArr = optCarr.value();
     }
-
-    qDebug() << "[DepthMapEntity] CArr: "
-             << " nvalues: " << cParam->nvalues() << ", type: " << cParam->type().c_str() << ", basetype: " << cParam->type().basetype
-             << ", aggregate: " << cParam->type().aggregate << ", vecsemantics: " << cParam->type().vecsemantics
-             << ", arraylen: " << cParam->type().arraylen;
-
-    if (cParam->type().aggregate != oiio::TypeDesc::AGGREGATE::VEC3)
+    
+    Matrix3x3 iCamArr = diag3x3(1, 1, 1);
+    std::optional<Matrix3x3> optiCamArr = getInverseProjection(inSpec);
+    if (optiCamArr.has_value())
     {
-        qWarning() << "[DepthMapEntity] Metadata CArr: Type error (aggregate: " << cParam->type().aggregate << ")";
-        _status = DepthMapEntity::Error;
-        return;
+        iCamArr = optiCamArr.value();
     }
-    if (cParam->type().basetype == oiio::TypeDesc::BASETYPE::DOUBLE)
-    {
-        std::copy_n(static_cast<const double*>(cParam->data()), 3, CArr.m);
-    }
-    else if (cParam->type().basetype == oiio::TypeDesc::BASETYPE::FLOAT)
-    {
-        const float* d = static_cast<const float*>(cParam->data());
-        for (int i = 0; i < 3; ++i)
+    else {
+        optiCamArr = getInverseProjectionFromFov(inSpec);
+        if (optiCamArr.has_value())
         {
-            CArr.m[i] = d[i];
+            iCamArr = optiCamArr.value();
         }
-    }
-    else
-    {
-        qWarning() << "[DepthMapEntity] Metadata CArr: Data type error (basetype: " << cParam->type().basetype << ")";
-        _status = DepthMapEntity::Error;
-        return;
-    }
-
-    Matrix3x3 iCamArr;
-    oiio::ParamValue* icParam = inSpec.find_attribute("AliceVision:iCamArr");
-
-    if (!icParam)
-    {
-        qWarning() << "[DepthMapEntity] Missing metadata iCamArr.";
-        _status = DepthMapEntity::Error;
-        return;
-    }
-
-    qDebug() << "[DepthMapEntity] iCamArr: "
-             << " nvalues: " << icParam->nvalues() << ", type: " << icParam->type().c_str() << ", basetype: " << icParam->type().basetype
-             << ", aggregate: " << icParam->type().aggregate << ", vecsemantics: " << icParam->type().vecsemantics
-             << ", arraylen: " << icParam->type().arraylen;
-    if (icParam->type().aggregate != oiio::TypeDesc::AGGREGATE::MATRIX33)
-    {
-        qWarning() << "[DepthMapEntity] Metadata iCamArr: Type error (aggregate: " << icParam->type().aggregate << ")";
-        _status = DepthMapEntity::Error;
-        return;
-    }
-    if (icParam->type().basetype == oiio::TypeDesc::BASETYPE::DOUBLE)
-    {
-        std::copy_n(static_cast<const double*>(icParam->data()), 9, iCamArr.m);
-    }
-    else if (icParam->type().basetype == oiio::TypeDesc::BASETYPE::FLOAT)
-    {
-        const float* d = static_cast<const float*>(icParam->data());
-        for (int i = 0; i < 9; ++i)
+        else 
         {
-            iCamArr.m[i] = d[i];
+            _status = DepthMapEntity::Error;
+            return;
         }
-    }
-    else
-    {
-        qWarning() << "[DepthMapEntity] Metadata iCamArr: Data type error (basetype: " << icParam->type().basetype << ")";
-        _status = DepthMapEntity::Error;
-        return;
     }
 
     // Load sim map
