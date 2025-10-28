@@ -34,7 +34,7 @@ The project is released under MPLv2, see [**COPYING.md**](COPYING.md).
 
 Get the source code:
 ```bash
-git clone --recursive git://github.com/alicevision/QtAliceVision
+git clone --recursive git@github.com:alicevision/QtAliceVision.git
 cd QtAliceVision
 ```
 See [**INSTALL.md**](INSTALL.md) to build and install the project.
