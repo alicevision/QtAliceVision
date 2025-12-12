@@ -24,13 +24,16 @@ void PointCloudEntity::setData(const aliceVision::sfmData::Landmarks& landmarks)
     std::vector<float> colors;
     for (const auto& l : landmarks)
     {
-        points.push_back(static_cast<float>(l.second.X(0)));
-        points.push_back(static_cast<float>(-l.second.X(1)));
-        points.push_back(static_cast<float>(-l.second.X(2)));
+      const aliceVision::Vec3 & pt = l.second.getX();
+      const aliceVision::image::RGBColor & color = l.second.getRgb();
+    
+      points.push_back(static_cast<float>(pt.x()));
+      points.push_back(static_cast<float>(-pt.y()));
+      points.push_back(static_cast<float>(-pt.z()));
 
-        colors.push_back(static_cast<float>(l.second.rgb(0) / 255.0f));
-        colors.push_back(static_cast<float>(l.second.rgb(1) / 255.0f));
-        colors.push_back(static_cast<float>(l.second.rgb(2) / 255.0f));
+      colors.push_back(static_cast<float>(color.r() / 255.0f));
+      colors.push_back(static_cast<float>(color.g() / 255.0f));
+      colors.push_back(static_cast<float>(color.b() / 255.0f));
     }
 
     int npoints = static_cast<int>(landmarks.size());

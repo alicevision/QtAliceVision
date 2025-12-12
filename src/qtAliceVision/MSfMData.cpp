@@ -144,7 +144,7 @@ int MSfMData::nbLandmarks(QString describerType, int viewId) const
     auto descType = aliceVision::feature::EImageDescriberType_stringToEnum(describerType.toStdString());
     for (const auto& [_, landmark] : landmarks)
     {
-        if (landmark.descType != descType)
+        if (landmark.getDescType() != descType)
             continue;
 
         const auto observationIt = landmark.getObservations().find(viewId);
