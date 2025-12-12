@@ -715,7 +715,7 @@ void FeaturesViewer::updateReconstruction()
                 const auto& pose = sfmData.getPose(view);
                 const auto& camTransform = pose.getTransform();
                 const auto& intrinsic = sfmData.getIntrinsicPtr(view.getIntrinsicId());
-                const aliceVision::Vec2 reprojection = intrinsic->transformProject(camTransform, landmark.X.homogeneous());
+                const aliceVision::Vec2 reprojection = intrinsic->transformProject(camTransform, landmark.getX().homogeneous());
                 data.rx = static_cast<float>(reprojection.x());
                 data.ry = static_cast<float>(reprojection.y());
             }
