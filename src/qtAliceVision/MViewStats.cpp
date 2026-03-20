@@ -394,4 +394,124 @@ void MViewStats::setMSfmData(qtAliceVision::MSfMData* sfmData)
     Q_EMIT sfmDataChanged();
 }
 
+QVariantList MViewStats::getResidualFullPoints()
+{
+    QVariantList points;
+
+    if (_msfmData == nullptr || _viewId == aliceVision::UndefinedIndexT)
+        return points;
+
+    std::vector<double> residualHistX = _residualHistogramFull.GetXbinsValue();
+    std::vector<size_t> residualHistY = _residualHistogramFull.GetHist();
+
+    if (residualHistX.size() != residualHistY.size())
+        throw std::runtime_error("MViewStats::getResidualFullPoints: residualHistX & residualHistY size mismatch.");
+
+    points.reserve(static_cast<int>(residualHistX.size()));
+    for (std::size_t i = 0; i < residualHistX.size(); ++i)
+        points.push_back(QPointF(residualHistX[i], double(residualHistY[i])));
+
+    return points;
+}
+
+QVariantList MViewStats::getResidualViewPoints()
+{
+    QVariantList points;
+
+    if (_msfmData == nullptr || _viewId == aliceVision::UndefinedIndexT)
+        return points;
+
+    std::vector<double> residualHistX = _residualHistogramView.GetXbinsValue();
+    std::vector<size_t> residualHistY = _residualHistogramView.GetHist();
+
+    if (residualHistX.size() != residualHistY.size())
+        throw std::runtime_error("MViewStats::getResidualViewPoints: residualHistX & residualHistY size mismatch.");
+
+    points.reserve(static_cast<int>(residualHistX.size()));
+    for (std::size_t i = 0; i < residualHistX.size(); ++i)
+        points.push_back(QPointF(residualHistX[i], double(residualHistY[i])));
+
+    return points;
+}
+
+QVariantList MViewStats::getObservationsLengthsFullPoints()
+{
+    QVariantList points;
+
+    if (_msfmData == nullptr || _viewId == aliceVision::UndefinedIndexT)
+        return points;
+
+    std::vector<double> histX = _observationsLengthsHistogramFull.GetXbinsValue();
+    std::vector<size_t> histY = _observationsLengthsHistogramFull.GetHist();
+
+    if (histX.size() != histY.size())
+        throw std::runtime_error("MViewStats::getObservationsLengthsFullPoints: histX & histY size mismatch.");
+
+    points.reserve(static_cast<int>(histX.size()));
+    for (std::size_t i = 0; i < histX.size(); ++i)
+        points.push_back(QPointF(histX[i], double(histY[i])));
+
+    return points;
+}
+
+QVariantList MViewStats::getObservationsLengthsViewPoints()
+{
+    QVariantList points;
+
+    if (_msfmData == nullptr || _viewId == aliceVision::UndefinedIndexT)
+        return points;
+
+    std::vector<double> histX = _observationsLengthsHistogramView.GetXbinsValue();
+    std::vector<size_t> histY = _observationsLengthsHistogramView.GetHist();
+
+    if (histX.size() != histY.size())
+        throw std::runtime_error("MViewStats::getObservationsLengthsViewPoints: histX & histY size mismatch.");
+
+    points.reserve(static_cast<int>(histX.size()));
+    for (std::size_t i = 0; i < histX.size(); ++i)
+        points.push_back(QPointF(histX[i], double(histY[i])));
+
+    return points;
+}
+
+QVariantList MViewStats::getObservationsScaleFullPoints()
+{
+    QVariantList points;
+
+    if (_msfmData == nullptr || _viewId == aliceVision::UndefinedIndexT)
+        return points;
+
+    std::vector<double> histX = _observationsScaleHistogramFull.GetXbinsValue();
+    std::vector<size_t> histY = _observationsScaleHistogramFull.GetHist();
+
+    if (histX.size() != histY.size())
+        throw std::runtime_error("MViewStats::getObservationsScaleFullPoints: histX & histY size mismatch.");
+
+    points.reserve(static_cast<int>(histX.size()));
+    for (std::size_t i = 0; i < histX.size(); ++i)
+        points.push_back(QPointF(histX[i], double(histY[i])));
+
+    return points;
+}
+
+QVariantList MViewStats::getObservationsScaleViewPoints()
+{
+    QVariantList points;
+
+    if (_msfmData == nullptr || _viewId == aliceVision::UndefinedIndexT)
+        return points;
+
+    std::vector<double> histX = _observationsScaleHistogramView.GetXbinsValue();
+    std::vector<size_t> histY = _observationsScaleHistogramView.GetHist();
+
+    if (histX.size() != histY.size())
+        throw std::runtime_error("MViewStats::getObservationsScaleViewPoints: histX & histY size mismatch.");
+
+    points.reserve(static_cast<int>(histX.size()));
+    for (std::size_t i = 0; i < histX.size(); ++i)
+        points.push_back(QPointF(histX[i], double(histY[i])));
+
+    return points;
+}
+
 }  // namespace qtAliceVision

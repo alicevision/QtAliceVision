@@ -1,8 +1,10 @@
 #pragma once
 
 #include <QObject>
+#include <QPointF>
 #include <QRunnable>
 #include <QUrl>
+#include <QVariant>
 #include <QtCharts/QBoxSet>
 #include <QtCharts/QLineSeries>
 
@@ -71,6 +73,21 @@ class MSfMDataStats : public QObject
     Q_INVOKABLE void fillObservationsLengthsMedianPerViewSerie(QXYSeries* serie);
     Q_INVOKABLE void fillObservationsLengthsFirstQuartilePerViewSerie(QXYSeries* serie);
     Q_INVOKABLE void fillObservationsLengthsThirdQuartilePerViewSerie(QXYSeries* serie);
+
+    Q_INVOKABLE QVariantList getLandmarksPerViewPoints();
+    Q_INVOKABLE QVariantList getTracksPerViewPoints();
+    Q_INVOKABLE QVariantList getResidualsMinPerViewPoints();
+    Q_INVOKABLE QVariantList getResidualsMaxPerViewPoints();
+    Q_INVOKABLE QVariantList getResidualsMeanPerViewPoints();
+    Q_INVOKABLE QVariantList getResidualsMedianPerViewPoints();
+    Q_INVOKABLE QVariantList getResidualsFirstQuartilePerViewPoints();
+    Q_INVOKABLE QVariantList getResidualsThirdQuartilePerViewPoints();
+    Q_INVOKABLE QVariantList getObservationsLengthsMinPerViewPoints();
+    Q_INVOKABLE QVariantList getObservationsLengthsMaxPerViewPoints();
+    Q_INVOKABLE QVariantList getObservationsLengthsMeanPerViewPoints();
+    Q_INVOKABLE QVariantList getObservationsLengthsMedianPerViewPoints();
+    Q_INVOKABLE QVariantList getObservationsLengthsFirstQuartilePerViewPoints();
+    Q_INVOKABLE QVariantList getObservationsLengthsThirdQuartilePerViewPoints();
 
     MSfMData* getMSfmData() { return _msfmData; }
     void setMSfmData(qtAliceVision::MSfMData* sfmData);

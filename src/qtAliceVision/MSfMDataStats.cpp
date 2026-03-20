@@ -309,6 +309,160 @@ void MSfMDataStats::fillObservationsLengthsThirdQuartilePerViewSerie(QXYSeries* 
     }
 }
 
+QVariantList MSfMDataStats::getLandmarksPerViewPoints()
+{
+    QVariantList points;
+    if (_msfmData == nullptr)
+        return points;
+    points.reserve(static_cast<int>(_nbLandmarksPerView.size()));
+    for (std::size_t i = 0; i < _nbLandmarksPerView.size(); ++i)
+        points.push_back(QPointF(double(i), double(_nbLandmarksPerView[i])));
+    return points;
+}
+
+QVariantList MSfMDataStats::getTracksPerViewPoints()
+{
+    QVariantList points;
+    if (_msfmData == nullptr || _mTracks == nullptr)
+        return points;
+    points.reserve(static_cast<int>(_nbTracksPerView.size()));
+    for (std::size_t i = 0; i < _nbTracksPerView.size(); ++i)
+        points.push_back(QPointF(double(i), double(_nbTracksPerView[i])));
+    return points;
+}
+
+QVariantList MSfMDataStats::getResidualsMinPerViewPoints()
+{
+    QVariantList points;
+    if (_msfmData == nullptr)
+        return points;
+    points.reserve(static_cast<int>(_nbResidualsPerViewMin.size()));
+    for (std::size_t i = 0; i < _nbResidualsPerViewMin.size(); ++i)
+        points.push_back(QPointF(double(i), double(_nbResidualsPerViewMin[i])));
+    return points;
+}
+
+QVariantList MSfMDataStats::getResidualsMaxPerViewPoints()
+{
+    QVariantList points;
+    if (_msfmData == nullptr)
+        return points;
+    points.reserve(static_cast<int>(_nbResidualsPerViewMax.size()));
+    for (std::size_t i = 0; i < _nbResidualsPerViewMax.size(); ++i)
+        points.push_back(QPointF(double(i), double(_nbResidualsPerViewMax[i])));
+    return points;
+}
+
+QVariantList MSfMDataStats::getResidualsMeanPerViewPoints()
+{
+    QVariantList points;
+    if (_msfmData == nullptr)
+        return points;
+    points.reserve(static_cast<int>(_nbResidualsPerViewMean.size()));
+    for (std::size_t i = 0; i < _nbResidualsPerViewMean.size(); ++i)
+        points.push_back(QPointF(double(i), double(_nbResidualsPerViewMean[i])));
+    return points;
+}
+
+QVariantList MSfMDataStats::getResidualsMedianPerViewPoints()
+{
+    QVariantList points;
+    if (_msfmData == nullptr)
+        return points;
+    points.reserve(static_cast<int>(_nbResidualsPerViewMedian.size()));
+    for (std::size_t i = 0; i < _nbResidualsPerViewMedian.size(); ++i)
+        points.push_back(QPointF(double(i), double(_nbResidualsPerViewMedian[i])));
+    return points;
+}
+
+QVariantList MSfMDataStats::getResidualsFirstQuartilePerViewPoints()
+{
+    QVariantList points;
+    if (_msfmData == nullptr)
+        return points;
+    points.reserve(static_cast<int>(_nbResidualsPerViewFirstQuartile.size()));
+    for (std::size_t i = 0; i < _nbResidualsPerViewFirstQuartile.size(); ++i)
+        points.push_back(QPointF(double(i), double(_nbResidualsPerViewFirstQuartile[i])));
+    return points;
+}
+
+QVariantList MSfMDataStats::getResidualsThirdQuartilePerViewPoints()
+{
+    QVariantList points;
+    if (_msfmData == nullptr)
+        return points;
+    points.reserve(static_cast<int>(_nbResidualsPerViewThirdQuartile.size()));
+    for (std::size_t i = 0; i < _nbResidualsPerViewThirdQuartile.size(); ++i)
+        points.push_back(QPointF(double(i), double(_nbResidualsPerViewThirdQuartile[i])));
+    return points;
+}
+
+QVariantList MSfMDataStats::getObservationsLengthsMinPerViewPoints()
+{
+    QVariantList points;
+    if (_msfmData == nullptr)
+        return points;
+    points.reserve(static_cast<int>(_nbObservationsLengthsPerViewMin.size()));
+    for (std::size_t i = 0; i < _nbObservationsLengthsPerViewMin.size(); ++i)
+        points.push_back(QPointF(double(i), double(_nbObservationsLengthsPerViewMin[i])));
+    return points;
+}
+
+QVariantList MSfMDataStats::getObservationsLengthsMaxPerViewPoints()
+{
+    QVariantList points;
+    if (_msfmData == nullptr)
+        return points;
+    points.reserve(static_cast<int>(_nbObservationsLengthsPerViewMax.size()));
+    for (std::size_t i = 0; i < _nbObservationsLengthsPerViewMax.size(); ++i)
+        points.push_back(QPointF(double(i), double(_nbObservationsLengthsPerViewMax[i])));
+    return points;
+}
+
+QVariantList MSfMDataStats::getObservationsLengthsMeanPerViewPoints()
+{
+    QVariantList points;
+    if (_msfmData == nullptr)
+        return points;
+    points.reserve(static_cast<int>(_nbObservationsLengthsPerViewMean.size()));
+    for (std::size_t i = 0; i < _nbObservationsLengthsPerViewMean.size(); ++i)
+        points.push_back(QPointF(double(i), double(_nbObservationsLengthsPerViewMean[i])));
+    return points;
+}
+
+QVariantList MSfMDataStats::getObservationsLengthsMedianPerViewPoints()
+{
+    QVariantList points;
+    if (_msfmData == nullptr)
+        return points;
+    points.reserve(static_cast<int>(_nbObservationsLengthsPerViewMedian.size()));
+    for (std::size_t i = 0; i < _nbObservationsLengthsPerViewMedian.size(); ++i)
+        points.push_back(QPointF(double(i), double(_nbObservationsLengthsPerViewMedian[i])));
+    return points;
+}
+
+QVariantList MSfMDataStats::getObservationsLengthsFirstQuartilePerViewPoints()
+{
+    QVariantList points;
+    if (_msfmData == nullptr)
+        return points;
+    points.reserve(static_cast<int>(_nbObservationsLengthsPerViewFirstQuartile.size()));
+    for (std::size_t i = 0; i < _nbObservationsLengthsPerViewFirstQuartile.size(); ++i)
+        points.push_back(QPointF(double(i), double(_nbObservationsLengthsPerViewFirstQuartile[i])));
+    return points;
+}
+
+QVariantList MSfMDataStats::getObservationsLengthsThirdQuartilePerViewPoints()
+{
+    QVariantList points;
+    if (_msfmData == nullptr)
+        return points;
+    points.reserve(static_cast<int>(_nbObservationsLengthsPerViewThirdQuartile.size()));
+    for (std::size_t i = 0; i < _nbObservationsLengthsPerViewThirdQuartile.size(); ++i)
+        points.push_back(QPointF(double(i), double(_nbObservationsLengthsPerViewThirdQuartile[i])));
+    return points;
+}
+
 void MSfMDataStats::computeGlobalSfMStats()
 {
     using namespace aliceVision;
