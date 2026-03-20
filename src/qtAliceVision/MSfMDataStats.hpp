@@ -5,8 +5,6 @@
 #include <QRunnable>
 #include <QUrl>
 #include <QVariant>
-#include <QtCharts/QBoxSet>
-#include <QtCharts/QLineSeries>
 
 #include <aliceVision/sfm/sfmStatistics.hpp>
 #include <aliceVision/sfmData/SfMData.hpp>
@@ -58,21 +56,6 @@ class MSfMDataStats : public QObject
 
     Q_SLOT void computeGlobalSfMStats();
     Q_SLOT void computeGlobalTracksStats();
-
-    Q_INVOKABLE void fillLandmarksPerViewSerie(QXYSeries* serie);
-    Q_INVOKABLE void fillTracksPerViewSerie(QXYSeries* serie);
-    Q_INVOKABLE void fillResidualsMinPerViewSerie(QXYSeries* serie);
-    Q_INVOKABLE void fillResidualsMaxPerViewSerie(QXYSeries* serie);
-    Q_INVOKABLE void fillResidualsMeanPerViewSerie(QXYSeries* serie);
-    Q_INVOKABLE void fillResidualsMedianPerViewSerie(QXYSeries* serie);
-    Q_INVOKABLE void fillResidualsFirstQuartilePerViewSerie(QXYSeries* serie);
-    Q_INVOKABLE void fillResidualsThirdQuartilePerViewSerie(QXYSeries* serie);
-    Q_INVOKABLE void fillObservationsLengthsMinPerViewSerie(QXYSeries* serie);
-    Q_INVOKABLE void fillObservationsLengthsMaxPerViewSerie(QXYSeries* serie);
-    Q_INVOKABLE void fillObservationsLengthsMeanPerViewSerie(QXYSeries* serie);
-    Q_INVOKABLE void fillObservationsLengthsMedianPerViewSerie(QXYSeries* serie);
-    Q_INVOKABLE void fillObservationsLengthsFirstQuartilePerViewSerie(QXYSeries* serie);
-    Q_INVOKABLE void fillObservationsLengthsThirdQuartilePerViewSerie(QXYSeries* serie);
 
     Q_INVOKABLE QVariantList getLandmarksPerViewPoints();
     Q_INVOKABLE QVariantList getTracksPerViewPoints();

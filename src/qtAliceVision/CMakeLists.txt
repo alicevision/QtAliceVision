@@ -56,7 +56,6 @@ set(PLUGIN_MOCS
 # Qt module dependency
 find_package(Qt6 COMPONENTS Quick REQUIRED)
 find_package(Qt6 COMPONENTS Qml REQUIRED)
-find_package(Qt6 COMPONENTS Charts REQUIRED)
 find_package(Qt6 REQUIRED COMPONENTS Gui)
 find_package(Qt6 COMPONENTS ShaderTools)
 
@@ -94,7 +93,6 @@ target_link_libraries(qtAliceVisionPlugin
     Qt6::Core
     Qt6::Qml
     Qt6::Quick
-    Qt6::Charts
     Qt6::GuiPrivate
 )
 

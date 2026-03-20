@@ -26,7 +26,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(Qt6Core REQUIRED)
 find_package(Qt6Quick REQUIRED)
 find_package(Qt6Qml REQUIRED)
-find_package(Qt6Charts REQUIRED)
 find_package(Qt6Gui REQUIRED)
 find_package(Qt6 COMPONENTS ShaderTools)
 
