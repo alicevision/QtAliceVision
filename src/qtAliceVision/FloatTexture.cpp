@@ -24,12 +24,19 @@ FloatTexture::~FloatTexture()
 void FloatTexture::setImage(std::shared_ptr<FloatImage>& image)
 {
     _srcImage = image;
-    _textureSize = {_srcImage->width(), _srcImage->height()};
+    if (_srcImage)
+    {
+        _textureSize = {_srcImage->width(), _srcImage->height()};
+    }
+    else
+    {
+        _textureSize = {};
+    }
     _dirty = true;
     _mipmapsGenerated = false;
 }
 
-bool FloatTexture::isValid() const { return _srcImage->width() != 0 && _srcImage->height() != 0; }
+bool FloatTexture::isValid() const { return _srcImage && _srcImage->width() != 0 && _srcImage->height() != 0; }
 
 qint64 FloatTexture::comparisonKey() const { return _rhiTexture ? _rhiTexture->nativeTexture().object : 0; }
 

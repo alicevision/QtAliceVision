@@ -71,6 +71,11 @@ void MSfMData::load()
 
 QString MSfMData::getUrlFromViewId(int viewId)
 {
+    if (!_sfmData)
+    {
+        qWarning() << "[QtAliceVision] MSfMData::getUrlFromViewId: no SfMData loaded.";
+        return {};
+    }
     return QString::fromUtf8(_sfmData->getView(aliceVision::IndexT(viewId)).getImage().getImagePath().c_str());
 }
 
@@ -119,6 +124,10 @@ size_t MSfMData::nbCameras() const
 QVariantList MSfMData::getViewsIds() const
 {
     QVariantList viewsIds;
+    if (!_sfmData || _status != Ready)
+    {
+        return viewsIds;
+    }
     for (const auto& id : _sfmData->getValidViews())
     {
         viewsIds.append(id);

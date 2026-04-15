@@ -589,16 +589,19 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, [[maybe_unused]] QQ
     {
         _boundingRect = newBoundingRect;
 
-        const float windowRatio = static_cast<float>(_boundingRect.width()) / static_cast<float>(_boundingRect.height());
-        const float textureRatio = static_cast<float>(_textureSize.width()) / static_cast<float>(_textureSize.height());
         QRectF geometryRect = _boundingRect;
-        if (windowRatio > textureRatio)
+        if (_boundingRect.height() > 0 && _textureSize.height() > 0)
         {
-            geometryRect.setWidth(geometryRect.height() * textureRatio);
-        }
-        else
-        {
-            geometryRect.setHeight(geometryRect.width() / textureRatio);
+            const float windowRatio = static_cast<float>(_boundingRect.width()) / static_cast<float>(_boundingRect.height());
+            const float textureRatio = static_cast<float>(_textureSize.width()) / static_cast<float>(_textureSize.height());
+            if (windowRatio > textureRatio)
+            {
+                geometryRect.setWidth(geometryRect.height() * textureRatio);
+            }
+            else
+            {
+                geometryRect.setHeight(geometryRect.width() / textureRatio);
+            }
         }
         geometryRect.moveCenter(_boundingRect.center());
 

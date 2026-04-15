@@ -34,7 +34,8 @@ void MViewStats::fillResidualFullSerie(QXYSeries* residuals)
 
     if (residualHistX.size() != residualHistY.size())
     {
-        throw std::runtime_error("MViewStats::fillResidualFullSerie: residualHistX & residualHistY size mismatch.");
+        qWarning() << "[QtAliceVision] MViewStats::fillResidualFullSerie: residualHistX & residualHistY size mismatch.";
+        return;
     }
     QPen pen(Qt::red, 1, Qt::DashLine, Qt::FlatCap, Qt::BevelJoin);
 
@@ -69,7 +70,8 @@ void MViewStats::fillResidualViewSerie(QXYSeries* residuals)
     std::vector<size_t> residualHistY = _residualHistogramView.GetHist();
     if (residualHistX.size() != residualHistY.size())
     {
-        throw std::runtime_error("MViewStats::fillResidualViewSerie: residualHistX & residualHistY size mismatch.");
+        qWarning() << "[QtAliceVision] MViewStats::fillResidualViewSerie: residualHistX & residualHistY size mismatch.";
+        return;
     }
     QPen pen(Qt::darkBlue, 3, Qt::SolidLine, Qt::FlatCap, Qt::BevelJoin);
 
@@ -104,7 +106,8 @@ void MViewStats::fillObservationsLengthsFullSerie(QXYSeries* observationsLengths
     std::vector<size_t> observationsLengthsHistY = _observationsLengthsHistogramFull.GetHist();
     if (observationsLengthsHistX.size() != observationsLengthsHistY.size())
     {
-        throw std::runtime_error("MViewStats::fillObservationsLengthsFullSerie: observationsLengthsHistX & observationsLengthsHistY size mismatch.");
+        qWarning() << "[QtAliceVision] MViewStats::fillObservationsLengthsFullSerie: observationsLengthsHistX & observationsLengthsHistY size mismatch.";
+        return;
     }
     QPen pen(Qt::red, 1, Qt::DashLine, Qt::FlatCap, Qt::BevelJoin);
 
@@ -139,7 +142,8 @@ void MViewStats::fillObservationsLengthsViewSerie(QXYSeries* observationsLengths
     std::vector<size_t> observationsLengthsHistY = _observationsLengthsHistogramView.GetHist();
     if (observationsLengthsHistX.size() != observationsLengthsHistY.size())
     {
-        throw std::runtime_error("MViewStats::fillObservationsLengthsViewSerie: observationsLengthsHistX & observationsLengthsHistY size mismatch.");
+        qWarning() << "[QtAliceVision] MViewStats::fillObservationsLengthsViewSerie: observationsLengthsHistX & observationsLengthsHistY size mismatch.";
+        return;
     }
     QPen pen(Qt::darkBlue, 3, Qt::SolidLine, Qt::FlatCap, Qt::BevelJoin);
 
@@ -174,7 +178,8 @@ void MViewStats::fillObservationsScaleFullSerie(QXYSeries* observationsScale)
     std::vector<size_t> observationsScaleHistY = _observationsScaleHistogramFull.GetHist();
     if (observationsScaleHistX.size() != observationsScaleHistY.size())
     {
-        throw std::runtime_error("MViewStats::fillObservationsScaleFullSerie: observationsScaleHistX & observationsScaleHistY size mismatch.");
+        qWarning() << "[QtAliceVision] MViewStats::fillObservationsScaleFullSerie: observationsScaleHistX & observationsScaleHistY size mismatch.";
+        return;
     }
     QPen pen(Qt::red, 1, Qt::DashLine, Qt::FlatCap, Qt::BevelJoin);
 
@@ -209,7 +214,8 @@ void MViewStats::fillObservationsScaleViewSerie(QXYSeries* observationsScale)
     std::vector<size_t> observationsScaleHistY = _observationsScaleHistogramView.GetHist();
     if (observationsScaleHistX.size() != observationsScaleHistY.size())
     {
-        throw std::runtime_error("MViewStats::fillObservationsScaleViewSerie: observationsScaleHistX & observationsScaleHistY size mismatch.");
+        qWarning() << "[QtAliceVision] MViewStats::fillObservationsScaleViewSerie: observationsScaleHistX & observationsScaleHistY size mismatch.";
+        return;
     }
     QPen pen(Qt::darkBlue, 3, Qt::SolidLine, Qt::FlatCap, Qt::BevelJoin);
 

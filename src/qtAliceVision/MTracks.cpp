@@ -50,15 +50,11 @@ void TracksDirectIORunnable::run()
     
     if (!aliceVision::track::loadTracks(*tracks, _filename))
     {
-        if (tracks) 
-        {
-            delete tracks;
-        }
+        delete tracks;
+        delete tracksPerView;
 
-        if (tracksPerView)
-        {
-            delete tracksPerView;
-        }
+        Q_EMIT resultReady(nullptr, nullptr);
+        return;
     }
 
     aliceVision::track::computeTracksPerView(*tracks, *tracksPerView);
