@@ -52,7 +52,7 @@ class AsyncFetcher : public QObject, public QRunnable
      * in the sequence before asked.
      * @return true if prefetching is activated
      */
-    bool getPrefetching();
+    bool getPrefetching() const;
 
     /**
      * @brief retrieve a frame from the cache in both sync and async mode
@@ -105,10 +105,10 @@ class AsyncFetcher : public QObject, public QRunnable
     void updateCacheMemory(std::size_t maxMemory);
 
     /**
-     * @brief update maxMemory for the cache
+     * @brief get the maximum memory allowed for the cache
      * @return the number of bytes allowed in the cache
      */
-    std::size_t getCacheMemory();
+    std::size_t getCacheMemory() const;
 
     /**
      * @brief get a list of regions containing the image frames
@@ -131,7 +131,7 @@ class AsyncFetcher : public QObject, public QRunnable
     QAtomicInt _requestSynchronous;
 
     double _resizeRatio;
-    QMutex _mutexResizeRatio;
+    mutable QMutex _mutexResizeRatio;
     QSemaphore _semLoop;
 };
 

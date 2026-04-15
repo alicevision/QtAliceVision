@@ -4,6 +4,8 @@
 #include <QSGGeometry>
 #include <QtDebug>
 
+#include <functional>
+
 #if QT_CONFIG(opengl)
     #include <qopenglshaderprogram.h>
 #else
@@ -39,7 +41,11 @@ class PointMaterial : public QSGMaterial
     int compare(const QSGMaterial* other) const override
     {
         Q_ASSERT(other && type() == other->type());
-        return other == this ? 0 : (other > this ? 1 : -1);
+        if (other == this)
+        {
+            return 0;
+        }
+        return std::less<const QSGMaterial*>{}(this, other) ? -1 : 1;
     }
 
     QSGMaterialShader* createShader(QSGRendererInterface::RenderMode) const override;

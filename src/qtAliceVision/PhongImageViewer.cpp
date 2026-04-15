@@ -5,6 +5,8 @@
 #include <QSGMaterialShader>
 #include <QSGTexture>
 
+#include <functional>
+
 namespace qtAliceVision {
 
 namespace {
@@ -24,7 +26,12 @@ class PhongImageViewerMaterial : public QSGMaterial
     int compare(const QSGMaterial* other) const override
     {
         Q_ASSERT(other && type() == other->type());
-        return other == this ? 0 : (other > this ? 1 : -1);
+        if (other == this)
+        {
+            return 0;
+        }
+        
+        return std::less<const QSGMaterial*>{}(this, other) ? -1 : 1;
     }
 
     QSGMaterialShader* createShader(QSGRendererInterface::RenderMode) const override;
@@ -304,7 +311,7 @@ void PhongImageViewer::clearImages()
     Q_EMIT imageChanged();
 }
 
-QSGNode* PhongImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePaintNodeData* data)
+QSGNode* PhongImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdatePaintNodeData* /*data*/)
 {
     auto* node = static_cast<PhongImageViewerNode*>(oldNode);
     bool isNewNode = false;

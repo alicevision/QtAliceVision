@@ -2,7 +2,7 @@
 
 namespace qtAliceVision {
 
-ImageCache::ImageCache(unsigned long maxSize, const aliceVision::image::ImageReadOptions& options)
+ImageCache::ImageCache(unsigned long long int maxSize, const aliceVision::image::ImageReadOptions& options)
   : _info(maxSize),
     _options(options),
     _referenceFrameId(0)
@@ -45,6 +45,7 @@ void ImageCache::cleanup(size_t requestedSize, const CacheKey& toAdd)
                 {
                     _imagePtrs.erase(key);
                     _info.update(_imagePtrs);
+                    _info.incrementRemoved();
                     erased = true;
                     break;
                 }
@@ -79,6 +80,8 @@ void ImageCache::cleanup(size_t requestedSize, const CacheKey& toAdd)
                 const CacheKey* pKey = orderedKeys.rbegin()->second;
                 _imagePtrs.erase(*pKey);
                 _info.update(_imagePtrs);
+                _info.incrementRemoved();
+                erased = true;
             }
         }
 

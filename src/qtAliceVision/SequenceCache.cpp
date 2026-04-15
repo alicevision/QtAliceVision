@@ -23,12 +23,8 @@ SequenceCache::SequenceCache(QObject* parent)
 
     _fetcher.setAutoDelete(false);
 
-    // Cache does not exist
-    // Let's create a new one!
-    {
-        ImageCache::uptr cache = std::make_unique<ImageCache>(_maxMemory, image::EImageColorSpace::LINEAR);
-        _fetcher.setCache(std::move(cache));
-    }
+    ImageCache::uptr cache = std::make_unique<ImageCache>(_maxMemory, image::EImageColorSpace::LINEAR);
+    _fetcher.setCache(std::move(cache));
 }
 
 SequenceCache::~SequenceCache()
@@ -53,8 +49,7 @@ void SequenceCache::setSequence(const QVariantList& paths)
     _fetcher.setSequence(sequence);
 
     // Restart if needed
-    const bool isAsync = true;
-    setAsyncFetching(isAsync);
+    setAsyncFetching(true);
 }
 
 void SequenceCache::setResizeRatio(double ratio) 
@@ -88,7 +83,7 @@ void SequenceCache::setAsyncFetching(bool fetching)
 
     if (fetching)
     {
-        connect(&_fetcher, &AsyncFetcher::onAsyncFetchProgressed, this, &SequenceCache::onAsyncFetchProgressed);
+        connect(&_fetcher, &AsyncFetcher::onAsyncFetchProgressed, this, &SequenceCache::onAsyncFetchProgressed, Qt::UniqueConnection);
         _threadPool.start(&_fetcher);
     }
 }
@@ -98,7 +93,7 @@ void SequenceCache::setPrefetching(bool prefetching)
     _fetcher.setPrefetching(prefetching); 
 }
 
-bool SequenceCache::getPrefetching()
+bool SequenceCache::getPrefetching() const
 {
     return _fetcher.getPrefetching();
 }
@@ -109,7 +104,7 @@ QPointF SequenceCache::getRamInfo() const
     const auto memInfo = aliceVision::system::getMemoryInfo();
 
     double availableRam = static_cast<double>(memInfo.availableRam) / (1024. * 1024. * 1024.);
-    double contentSize = static_cast<double>(_fetcher.getCacheSize()) / (1024. * 1024. * 1024. * 1024.);
+    double contentSize = static_cast<double>(_fetcher.getCacheSize()) / (1024. * 1024. * 1024.);
 
     // Return in GB
     return QPointF(availableRam, contentSize);
@@ -166,5 +161,3 @@ void SequenceCache::onAsyncFetchProgressed()
 
 }  // namespace imgserve
 }  // namespace qtAliceVision
-
-#include "SequenceCache.moc"

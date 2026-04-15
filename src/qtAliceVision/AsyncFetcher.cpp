@@ -3,10 +3,9 @@
 #include <QMutexLocker>
 #include <QPoint>
 
+#include <optional>
 #include <thread>
 #include <chrono>
-
-using namespace aliceVision;
 
 namespace qtAliceVision {
 namespace imgserve {
@@ -32,14 +31,18 @@ void AsyncFetcher::setSequence(const std::vector<std::string>& paths)
     _sequence = paths;
     _currentIndex = 0;
 
-    for (unsigned idx = 0; idx < _sequence.size(); idx++)
+    for (std::size_t idx = 0; idx < _sequence.size(); ++idx)
     {
-        _pathToSeqId[_sequence[idx]] = idx;
+        _pathToSeqId[_sequence[idx]] = static_cast<unsigned>(idx);
     }
 }
 
 void AsyncFetcher::setResizeRatio(double ratio)
 {
+    if (ratio <= 0.0)
+    {
+        return;
+    }
     QMutexLocker locker(&_mutexResizeRatio);
     _resizeRatio = ratio;
 }
@@ -55,7 +58,7 @@ void AsyncFetcher::setPrefetching(bool prefetch)
     }
 }
 
-bool AsyncFetcher::getPrefetching()
+bool AsyncFetcher::getPrefetching() const
 {
     return _isPrefetching;
 }
@@ -93,7 +96,7 @@ void AsyncFetcher::run()
             continue;
         }
 
-        if (_sequence.size() == 0)
+        if (_sequence.empty())
         {
             continue;
         }
@@ -109,7 +112,7 @@ void AsyncFetcher::run()
                 ratio = _resizeRatio;
             }
 
-            _cache->get<image::RGBAfColor>(lpath, static_cast<unsigned int>(_currentIndex), ratio, false);
+            _cache->get<aliceVision::image::RGBAfColor>(lpath, static_cast<unsigned int>(_currentIndex), ratio, false);
         }
 
         if (_isPrefetching)
@@ -135,7 +138,6 @@ void AsyncFetcher::run()
         }
     }
 
-    _requestSynchronous = false;
     _isAsynchronous = false;
 }
 
@@ -149,9 +151,9 @@ void AsyncFetcher::updateCacheMemory(std::size_t maxMemory)
     }
 }
 
-std::size_t AsyncFetcher::getCacheMemory()
+std::size_t AsyncFetcher::getCacheMemory() const
 {
-    return (_cache)?_cache->getMaxMemory():0;
+    return (_cache) ? _cache->getMaxMemory() : 0;
 }
 
 std::size_t AsyncFetcher::getCacheSize() const 
@@ -178,35 +180,39 @@ QVariantList AsyncFetcher::getCachedFrames() const
 
     size_t size = _sequence.size();
 
+    double resizeRatio;
     {
-        // Build cached frames intervals
-        for (std::size_t i = 0; i < size; ++i)
-        {
-            const int frame = static_cast<int>(i);
+        QMutexLocker locker(&_mutexResizeRatio);
+        resizeRatio = _resizeRatio;
+    }
 
-            // Check if current frame is in cache
-            if (_cache->contains<aliceVision::image::RGBAfColor>(_sequence[i], _resizeRatio))
+    // Build cached frames intervals
+    for (std::size_t i = 0; i < size; ++i)
+    {
+        const int frame = static_cast<int>(i);
+
+        // Check if current frame is in cache
+        if (_cache->contains<aliceVision::image::RGBAfColor>(_sequence[i], resizeRatio))
+        {
+            // Either grow currently open region or create a new region
+            if (regionOpen)
             {
-                // Either grow currently open region or create a new region
-                if (regionOpen)
-                {
-                    region.second = frame;
-                }
-                else
-                {
-                    region.first = frame;
-                    region.second = frame;
-                    regionOpen = true;
-                }
+                region.second = frame;
             }
             else
             {
-                // Close currently open region
-                if (regionOpen)
-                {
-                    intervals.append(QPoint(region.first, region.second));
-                    regionOpen = false;
-                }
+                region.first = frame;
+                region.second = frame;
+                regionOpen = true;
+            }
+        }
+        else
+        {
+            // Close currently open region
+            if (regionOpen)
+            {
+                intervals.append(QPoint(region.first, region.second));
+                regionOpen = false;
             }
         }
     }
@@ -221,7 +227,7 @@ QVariantList AsyncFetcher::getCachedFrames() const
 }
 
 bool AsyncFetcher::getFrame(const std::string& path,
-                            std::shared_ptr<image::Image<image::RGBAfColor>>& image,
+                            std::shared_ptr<aliceVision::image::Image<aliceVision::image::RGBAfColor>>& image,
                             oiio::ParamValueList& metadatas,
                             size_t& originalWidth,
                             size_t& originalHeight,
@@ -238,25 +244,26 @@ bool AsyncFetcher::getFrame(const std::string& path,
     bool onlyCache = _isAsynchronous;
 
     // Upgrade the thread with the current Index
-    for (std::size_t idx = 0; idx < _sequence.size(); ++idx)
+    auto it = _pathToSeqId.find(path);
+    if (it != _pathToSeqId.end())
     {
-        if (_sequence[idx] == path)
-        {
-            _currentIndex = static_cast<int>(idx);
-            break;
-        }
+        _currentIndex = static_cast<int>(it->second);
     }
 
     // Try to find in the cache
-    std::optional<CacheValue> ovalue = _cache->get<aliceVision::image::RGBAfColor>(path, _currentIndex, _resizeRatio, onlyCache);
+    double ratio;
+    {
+        QMutexLocker locker(&_mutexResizeRatio);
+        ratio = _resizeRatio;
+    }
+    std::optional<CacheValue> ovalue = _cache->get<aliceVision::image::RGBAfColor>(path, static_cast<unsigned int>(_currentIndex), ratio, onlyCache);
 
     if (ovalue.has_value())
     {
         auto& value = ovalue.value();
         image = value.get<aliceVision::image::RGBAfColor>();
 
-        oiio::ParamValueList copy_metadatas = value.getMetadatas();
-        metadatas = copy_metadatas;
+        metadatas = value.getMetadatas();
         originalWidth = value.getOriginalWidth();
         originalHeight = value.getOriginalHeight();
         missingFile = value.isFileMissing();
@@ -271,7 +278,7 @@ bool AsyncFetcher::getFrame(const std::string& path,
     }
     else
     {
-        // If there is no cache, then poke the fetch thread
+        // Image not yet in cache; poke the fetch thread to load it
         _semLoop.release(1);
     }
 
@@ -280,5 +287,3 @@ bool AsyncFetcher::getFrame(const std::string& path,
 
 }  // namespace imgserve
 }  // namespace qtAliceVision
-
-#include "AsyncFetcher.moc"

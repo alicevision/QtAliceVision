@@ -207,5 +207,3 @@ int MFeatures::nbFeatures(QString describerType, int viewId) const
 }
 
 }  // namespace qtAliceVision
-
-#include "MFeatures.moc"

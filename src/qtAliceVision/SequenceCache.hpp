@@ -61,7 +61,7 @@ class SequenceCache : public QObject, public ImageServer
      * @brief Get the boolean flag indicating if the sequence is performing prefetching (only if async).
      * @return true if prefetching
     */
-   bool getPrefetching();
+   bool getPrefetching() const;
 
     /**
      * @brief Get the maximum memory that can be filled by the cache.
@@ -76,8 +76,8 @@ class SequenceCache : public QObject, public ImageServer
     void setMemoryLimit(std::size_t memory);
 
     /**
-     * @brief Get the maximum available RAM on the system.
-     * @return maximum available RAM in bytes
+     * @brief Get RAM usage information.
+     * @return QPointF where x is the available system RAM in GB and y is the current cache content size in GB
      */
     QPointF getRamInfo() const;
 

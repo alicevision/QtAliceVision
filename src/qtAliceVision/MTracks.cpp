@@ -228,5 +228,3 @@ int MTracks::nbMatches(QString describerType, int viewId) const
 }
 
 }  // namespace qtAliceVision
-
-#include "MTracks.moc"

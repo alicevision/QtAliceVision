@@ -1,5 +1,14 @@
 #pragma once
 
+#include <atomic>
+#include <ctime>
+#include <limits>
+#include <map>
+#include <mutex>
+#include <optional>
+#include <unordered_map>
+#include <variant>
+
 #include <aliceVision/image/Image.hpp>
 #include <aliceVision/image/pixelTypes.hpp>
 #include <aliceVision/image/io.hpp>
@@ -60,6 +69,8 @@ class CacheValue
     template<typename TPix>
     CacheValue(unsigned frameId, std::shared_ptr<aliceVision::image::Image<TPix>> img, bool missingFile, bool loadError)
       : _vimg(img),
+        _originalWidth(0),
+        _originalHeight(0),
         _frameId(frameId),
         _missingFile(missingFile),
         _loadError(loadError)
@@ -132,8 +143,8 @@ class CacheValue
     unsigned _originalHeight;
     oiio::ParamValueList _metadatas;
     unsigned _frameId;
-    bool _loadError;
     bool _missingFile;
+    bool _loadError;
 };
 
 /**
@@ -142,7 +153,7 @@ class CacheValue
 class CacheInfo
 {
   public:
-    CacheInfo(unsigned long int maxSize)
+    CacheInfo(unsigned long long int maxSize)
       : _maxSize(maxSize)
     {}
 
@@ -158,6 +169,12 @@ class CacheInfo
         _nbLoadFromDisk++;
     }
 
+    void incrementRemoved()
+    {
+        const std::scoped_lock<std::mutex> lock(_mutex);
+        _nbRemoveUnused++;
+    }
+
     unsigned long long int getCapacity() const
     {
         const std::scoped_lock<std::mutex> lock(_mutex);
@@ -169,6 +186,7 @@ class CacheInfo
         std::scoped_lock<std::mutex> lock(_mutex);
 
         _contentSize = 0;
+        _nbImages = 0;
         for (const auto& [key, value] : images)
         {
             _contentSize += value.memorySize();
@@ -207,12 +225,19 @@ class CacheInfo
         return _nbLoadFromDisk;
     }
 
+    int getLoadFromCache() const
+    {
+        const std::scoped_lock<std::mutex> lock(_mutex);
+        return _nbLoadFromCache;
+    }
+
     void setMaxMemory(unsigned long long int maxSize)
     {
         std::scoped_lock<std::mutex> lock(_mutex);
         _maxSize = maxSize;
     }
 
+  private:
     /// memory usage limits
     unsigned long long int _maxSize;
 
@@ -239,7 +264,7 @@ class ImageCache
      * @param[in] maxSize the cache maximal size (in bytes)
      * @param[in] options the reading options that will be used when loading images through this cache
      */
-    ImageCache(unsigned long maxSize, const aliceVision::image::ImageReadOptions& options);
+    ImageCache(unsigned long long int maxSize, const aliceVision::image::ImageReadOptions& options);
 
     /**
      * @brief Destroy the cache and the unused images it contains.
@@ -413,7 +438,7 @@ std::optional<CacheValue> ImageCache::load(const CacheKey& key, unsigned frameId
         int th = static_cast<int>(std::max(1, int(std::ceil(dh))));
 
         using TInfo = aliceVision::image::ColorTypeInfo<TPix>;
-        cleanup(tw * th * std::size_t(TInfo::size), key);
+        cleanup(static_cast<std::size_t>(tw) * static_cast<std::size_t>(th) * TInfo::size, key);
 
         // apply downscale
         aliceVision::imageAlgo::resizeImage(tw, th, img, *resized);

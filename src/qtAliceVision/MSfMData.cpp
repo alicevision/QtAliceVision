@@ -158,5 +158,3 @@ int MSfMData::nbLandmarks(QString describerType, int viewId) const
 }
 
 }  // namespace qtAliceVision
-
-#include "MSfMData.moc"

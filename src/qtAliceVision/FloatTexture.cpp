@@ -1,39 +1,56 @@
 #include "FloatTexture.hpp"
 #include <aliceVision/image/resampling.hpp>
 
-#include <QOpenGLContext>
-#include <QOpenGLFunctions>
-
 #include <rhi/qrhi.h>
 
 #include <QtDebug>
 
 namespace qtAliceVision {
+
+static constexpr const char* kLogPrefix = "[QtAliceVision] ";
+
 int FloatTexture::_maxTextureSize = -1;
 
-FloatTexture::FloatTexture() {}
-
-FloatTexture::~FloatTexture()
+void FloatTexture::RhiTextureDeleter::operator()(QRhiTexture* t) const
 {
-    if (_rhiTexture)
+    if (t)
     {
-        _rhiTexture->destroy();
+        t->destroy();
+        delete t;
     }
 }
 
-void FloatTexture::setImage(std::shared_ptr<FloatImage>& image)
+FloatTexture::FloatTexture() {}
+
+FloatTexture::~FloatTexture() = default;
+
+void FloatTexture::setImage(const std::shared_ptr<FloatImage>& image)
 {
+    if (!image || image->width() == 0 || image->height() == 0)
+    {
+        qWarning() << kLogPrefix << "setImage() called with a null or empty image; ignoring.";
+        return;
+    }
     _srcImage = image;
-    _textureSize = {_srcImage->width(), _srcImage->height()};
+    _textureSize = {image->width(), image->height()};
     _dirty = true;
     _mipmapsGenerated = false;
 }
 
-bool FloatTexture::isValid() const { return _srcImage->width() != 0 && _srcImage->height() != 0; }
+bool FloatTexture::isValid() const
+{
+    return _srcImage && _srcImage->width() != 0 && _srcImage->height() != 0;
+}
 
-qint64 FloatTexture::comparisonKey() const { return _rhiTexture ? _rhiTexture->nativeTexture().object : 0; }
+qint64 FloatTexture::comparisonKey() const
+{
+    return _rhiTexture ? static_cast<qint64>(_rhiTexture->nativeTexture().object) : 0;
+}
 
-QRhiTexture* FloatTexture::rhiTexture() const { return _rhiTexture; }
+QRhiTexture* FloatTexture::rhiTexture() const
+{
+    return _rhiTexture.get();
+}
 
 void FloatTexture::commitTextureOperations(QRhi* rhi, QRhiResourceUpdateBatch* resourceUpdates)
 {
@@ -42,55 +59,82 @@ void FloatTexture::commitTextureOperations(QRhi* rhi, QRhiResourceUpdateBatch* r
         return;
     }
 
+
     if (!isValid())
     {
-        if (_rhiTexture)
-        {
-            _rhiTexture->destroy();
-        }
-        _rhiTexture = nullptr;
+        _rhiTexture.reset();
+        _dirty = false;
         return;
     }
 
-    QRhiTexture::Format texFormat = QRhiTexture::RGBA32F;
+    const QRhiTexture::Format texFormat = QRhiTexture::RGBA32F;
     if (!rhi->isTextureFormatSupported(texFormat))
     {
-        qWarning() << "[QtAliceVision] Unsupported float images.";
+        qWarning() << kLogPrefix << "Unsupported float texture format; cannot upload image.";
+        _dirty = false;
         return;
     }
 
-    // Init max texture size
+    // Query the GPU's maximum texture dimension on first use.
     if (_maxTextureSize == -1)
     {
         _maxTextureSize = rhi->resourceLimit(QRhi::TextureSizeMax);
     }
 
-    // Downscale the texture to fit inside the max texture limit if it is too big.
-    while (_maxTextureSize != -1 && (_srcImage->width() > _maxTextureSize || _srcImage->height() > _maxTextureSize))
+    const FloatImage* uploadImage = _srcImage.get();
+    FloatImage scaledImage;
+    if (_maxTextureSize != -1 && (_srcImage->width() > _maxTextureSize || _srcImage->height() > _maxTextureSize))
     {
-        FloatImage tmp;
-        aliceVision::image::imageHalfSample(*_srcImage, tmp);
-        *_srcImage = std::move(tmp);
+        // Only copy/downscale when the source exceeds GPU limits.
+        scaledImage = *_srcImage;
+        while (scaledImage.width() > _maxTextureSize || scaledImage.height() > _maxTextureSize)
+        {
+            FloatImage tmp;
+            aliceVision::image::imageHalfSample(scaledImage, tmp);
+            scaledImage = std::move(tmp);
+        }
+        uploadImage = &scaledImage;
     }
-    _textureSize = {_srcImage->width(), _srcImage->height()};
 
+    const QSize newTextureSize(uploadImage->width(), uploadImage->height());
     const QRhiTexture::Flags texFlags(hasMipmaps() ? QRhiTexture::MipMapped : 0);
-    _rhiTexture = rhi->newTexture(texFormat, _textureSize, 1, texFlags);
-    if (!_rhiTexture || !_rhiTexture->create())
+
+    const bool needsReallocation = !_rhiTexture || _rhiTexture->format() != texFormat || _rhiTexture->pixelSize() != newTextureSize || _rhiTexture->flags() != texFlags;
+    if (needsReallocation)
     {
-        qWarning() << "[QtAliceVision] Unable to create float texture.";
-        return;
+        _rhiTexture.reset();
+        _rhiTexture.reset(rhi->newTexture(texFormat, newTextureSize, 1, texFlags));
+        if (!_rhiTexture || !_rhiTexture->create())
+        {
+            qWarning() << kLogPrefix << "Unable to create float texture.";
+            _rhiTexture.reset();
+            _dirty = false;
+            return;
+        }
     }
 
-    const QByteArray textureData(reinterpret_cast<const char*>(_srcImage->data()), _srcImage->size() * sizeof(*_srcImage->data()));
-    resourceUpdates->uploadTexture(_rhiTexture, QRhiTextureUploadEntry(0, 0, QRhiTextureSubresourceUploadDescription(textureData)));
+    _textureSize = newTextureSize;
+
+    // Declare texture data from image properties
+    const QByteArray textureData(
+        reinterpret_cast<const char*>(uploadImage->data()),
+        static_cast<qsizetype>(uploadImage->size()) * static_cast<qsizetype>(sizeof(*uploadImage->data())));
+
+    // Upload image data to texture
+    resourceUpdates->uploadTexture(_rhiTexture.get(), QRhiTextureUploadEntry(0, 0, QRhiTextureSubresourceUploadDescription(textureData)));
 
     if (hasMipmaps())
     {
-        resourceUpdates->generateMips(_rhiTexture);
+        resourceUpdates->generateMips(_rhiTexture.get());
         _mipmapsGenerated = true;
     }
+
     _dirty = false;
+
+    // Notify the owner if the committed size differs from what setImage() reported
+    // (e.g. because the image was downscaled to fit the GPU texture size limit).
+    if (_onCommit)
+        _onCommit(_textureSize);
 }
 
 }  // namespace qtAliceVision

@@ -58,23 +58,23 @@ CameraLocatorEntity::CameraLocatorEntity(const aliceVision::IndexT& viewId,
     tr.y() = sin(vfov / 2.0f);
     tr.z() = cos(vfov / 2.0f);
 
-    const float vslice = vfov / static_cast<double>(subdiv);
-    const float hslice = hfov / static_cast<double>(subdiv);
+    const float vslice = vfov / static_cast<float>(subdiv);
+    const float hslice = hfov / static_cast<float>(subdiv);
 
     Eigen::Vector3d vZ = - Eigen::Vector3d::UnitZ() * radius;
 
     for (int vid = 0; vid < subdiv; vid++)
     {
-        float vangle1 = - vfov / 2.0f + (vid) * vslice;
-        float vangle2 = - vfov / 2.0f + (vid + 1) * vslice;
+        float vangle1 = - vfov / 2.0f + static_cast<float>(vid) * vslice;
+        float vangle2 = - vfov / 2.0f + static_cast<float>(vid + 1) * vslice;
 
         Eigen::AngleAxis<double> Rv1(vangle1, Eigen::Vector3d::UnitX());
         Eigen::AngleAxis<double> Rv2(vangle2, Eigen::Vector3d::UnitX());
 
         for (int hid = 0; hid < subdiv; hid++)
         {
-            float hangle1 = - hfov / 2.0f + (hid) * hslice;
-            float hangle2 = - hfov / 2.0f + (hid + 1) * hslice;
+            float hangle1 = - hfov / 2.0f + static_cast<float>(hid) * hslice;
+            float hangle2 = - hfov / 2.0f + static_cast<float>(hid + 1) * hslice;
 
             Eigen::AngleAxis<double> Rh1(hangle1, Eigen::Vector3d::UnitY());
             Eigen::AngleAxis<double> Rh2(hangle2, Eigen::Vector3d::UnitY());

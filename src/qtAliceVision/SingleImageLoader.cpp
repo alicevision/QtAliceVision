@@ -118,5 +118,3 @@ void SingleImageLoadingIORunnable::run()
 
 }  // namespace imgserve
 }  // namespace qtAliceVision
-
-#include "SingleImageLoader.moc"

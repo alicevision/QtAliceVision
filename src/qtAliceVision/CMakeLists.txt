@@ -6,6 +6,9 @@ set(PLUGIN_SOURCES
     MViewStats.cpp
     MTracks.cpp
     FloatImageViewer.cpp
+    FloatImageViewerMaterial.cpp
+    FloatImageViewerMaterialShader.cpp
+    FloatImageViewerNode.cpp
     FloatTexture.cpp
     Surface.cpp
     MSfMDataStats.cpp
@@ -26,6 +29,9 @@ set(PLUGIN_HEADERS
     MTracks.hpp
     MViewStats.hpp
     FloatImageViewer.hpp
+    FloatImageViewerMaterial.hpp
+    FloatImageViewerMaterialShader.hpp
+    FloatImageViewerNode.hpp
     FloatTexture.hpp
     MSfMDataStats.hpp
     PanoramaViewer.hpp
@@ -76,12 +82,15 @@ qt6_add_shaders(qtAliceVisionPlugin "qtAliceVisionPlugin_shaders"
     BATCHABLE
     PRECOMPILE
     OPTIMIZED
-    PREFIX "/shaders"
-    FILES FloatImageViewer.vert FloatImageViewer.frag
-          FeaturesViewer.vert FeaturesViewer.frag
-          PhongImageViewer.vert PhongImageViewer.frag
-          ImageOverlay.frag
-          AttributeItemDelegate.frag
+    #PREFIX "/shaders"
+    FILES shaders/FloatImageViewer.vert 
+          shaders/FloatImageViewer.frag
+          shaders/FeaturesViewer.vert 
+          shaders/FeaturesViewer.frag
+          shaders/PhongImageViewer.vert 
+          shaders/PhongImageViewer.frag
+          shaders/ImageOverlay.frag
+          shaders/AttributeItemDelegate.frag
     )
 
 target_link_libraries(qtAliceVisionPlugin
