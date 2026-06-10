@@ -80,7 +80,7 @@ void PointCloudEntity::setData(const aliceVision::sfmData::Landmarks& landmarks)
     std::vector<float> normals(static_cast<size_t>(npoints) * 3, 0.0f);
     for (int i = 0; i < npoints; ++i)
         normals[static_cast<size_t>(i) * 3 + 1] = 1.0f;
-    auto normalDataBuffer = new QBuffer(customGeometry);
+    auto normalDataBuffer = new QBuffer();
     QByteArray normalData(reinterpret_cast<const char*>(normals.data()), npoints * 3 * static_cast<int>(sizeof(float)));
     normalDataBuffer->setData(normalData);
     auto normalAttribute = new QAttribute();
