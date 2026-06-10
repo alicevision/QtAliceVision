@@ -178,7 +178,7 @@ CameraLocatorEntity::CameraLocatorEntity(const aliceVision::IndexT& viewId,
     QByteArray normalData(reinterpret_cast<const char*>(normals.data()), normals.size() * static_cast<int>(sizeof(float)));
     auto normalDataBuffer = new QBuffer(customGeometry);
     normalDataBuffer->setData(normalData);
-    auto normalAttribute = new QAttribute(customGeometry);
+    auto normalAttribute = new QAttribute();
     normalAttribute->setAttributeType(QAttribute::VertexAttribute);
     normalAttribute->setBuffer(normalDataBuffer);
     normalAttribute->setVertexBaseType(QAttribute::Float);
