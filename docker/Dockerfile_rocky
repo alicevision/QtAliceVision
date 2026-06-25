@@ -1,0 +1,105 @@
+# Rocky Linux + Qt via aqtinstall
+# Usage:
+#   docker build --build-arg QT_VERSION=6.11.1 -t rocky-qt .
+#   docker run --rm -it rocky-qt bash
+#
+# Override defaults at build time:
+#   --build-arg QT_VERSION=6.11.1
+#   --build-arg QT_ARCH=gcc_64
+#   --build-arg QT_MODULES="qtcharts qt3d qtshadertools"
+
+ARG AVDEPS_VERSION=2026.03.30
+ARG CUDA_VERSION=12.1.1
+ARG ROCKY_VERSION=9
+# FROM rockylinux:${ROCKY_VERSION}
+# FROM nvidia/cuda:${CUDA_VERSION}-devel-rockylinux${ROCKY_VERSION}
+FROM alicevision/alicevision-deps:${AVDEPS_VERSION}-rocky${ROCKY_VERSION}-cuda${CUDA_VERSION}
+
+# ── System dependencies ────────────────────────────────────────────────────────
+# CRB (CodeReady Builder) is required for several *-devel packages
+# RUN dnf -y update
+RUN dnf -y install epel-release && \
+    dnf config-manager --set-enabled crb && \
+    dnf -y groupinstall "Development Tools" && \
+    dnf -y install \
+        # Python / pip (needed by aqtinstall)
+        python3 \
+        python3-pip \
+        # Qt runtime / build dependencies
+        mesa-libGL-devel \
+        mesa-libEGL-devel \
+        libxkbcommon-devel \
+        fontconfig-devel \
+        freetype-devel \
+        libX11-devel \
+        libXext-devel \
+        libXrender-devel \
+        libxcb-devel \
+        xcb-util-renderutil-devel \
+        xcb-util-image-devel \
+        libXi-devel \
+        libXcomposite-devel \
+        libXcursor-devel \
+        libXdamage-devel \
+        libXfixes-devel \
+        libXrandr-devel \
+        libXtst-devel \
+        dbus-devel \
+        glib2-devel \
+        # CMake & Ninja for building Qt projects
+        cmake \
+        ninja-build \
+        # Misc utilities
+        wget \
+        git \
+    && dnf clean all
+
+# ── Install aqtinstall ─────────────────────────────────────────────────────────
+RUN pip3 install --upgrade pip && \
+    pip3 install aqtinstall
+
+# ── Install Qt ────────────────────────────────────────────────────────────────
+
+# List available versions
+RUN aqt list-qt linux desktop
+
+# List available modules
+# RUN aqt list-qt linux desktop --modules "${QT_VERSION}" "${QT_ARCH}"
+
+# ── Build arguments ────────────────────────────────────────────────────────────
+ARG QT_VERSION=6.11.1
+ARG QT_ARCH=linux_gcc_64
+ARG QT_ARCH_SHORT=gcc_64
+ARG QT_MODULES="qtcharts qt3d qtshadertools"
+ARG QT_DIR=/opt/Qt
+
+RUN if [ -n "${QT_MODULES}" ]; then \
+        aqt install-qt \
+            --outputdir "${QT_DIR}" \
+            linux desktop "${QT_VERSION}" "${QT_ARCH}" \
+            -m ${QT_MODULES}; \
+    else \
+        aqt install-qt \
+            --outputdir "${QT_DIR}" \
+            linux desktop "${QT_VERSION}" "${QT_ARCH}"; \
+    fi
+
+# ── Environment variables ─────────────────────────────────────────────────────
+ENV QT_ROOT="${QT_DIR}/${QT_VERSION}/${QT_ARCH_SHORT}"
+ENV PATH="${QT_ROOT}/bin:${PATH}"
+ENV LD_LIBRARY_PATH="${QT_ROOT}/lib:${LD_LIBRARY_PATH}"
+ENV CMAKE_PREFIX_PATH="${QT_ROOT}"
+ENV QT_PLUGIN_PATH="${QT_ROOT}/plugins"
+ENV QML2_IMPORT_PATH="${QT_ROOT}/qml"
+ENV QML_IMPORT_PATH="${QML2_IMPORT_PATH}"
+
+# ── Smoke test ────────────────────────────────────────────────────────────────
+RUN ls -l ${QT_ROOT}/lib
+RUN find ${QT_DIR} -name "libQt6*.so*"
+RUN echo "LD_LIBRARY_PATH: ${LD_LIBRARY_PATH}"
+RUN ldd ${QT_ROOT}/bin/qmake
+
+RUN qmake --version && cmake --version
+
+WORKDIR /workspace
+CMD ["bash"]
