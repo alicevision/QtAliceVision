@@ -29,6 +29,7 @@ RUN dnf -y install epel-release && \
         mesa-libGL-devel \
         mesa-libEGL-devel \
         libxkbcommon-devel \
+        libxkbcommon-x11 \
         fontconfig-devel \
         freetype-devel \
         libX11-devel \
@@ -37,6 +38,8 @@ RUN dnf -y install epel-release && \
         libxcb-devel \
         xcb-util-renderutil-devel \
         xcb-util-image-devel \
+        xcb-util-cursor \
+        xcb-util-keysyms \
         libXi-devel \
         libXcomposite-devel \
         libXcursor-devel \
@@ -46,6 +49,7 @@ RUN dnf -y install epel-release && \
         libXtst-devel \
         dbus-devel \
         glib2-devel \
+        wayland-devel \
         # CMake & Ninja for building Qt projects
         cmake \
         ninja-build \
