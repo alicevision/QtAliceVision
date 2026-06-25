@@ -10,10 +10,6 @@ set(PLUGIN_HEADERS
     )
 
 
-# Qt module dependencies
-find_package(Qt6 COMPONENTS Gui REQUIRED)
-
-
 # OpenImageIO dependency
 find_package(OpenImageIO REQUIRED)
 

@@ -53,14 +53,6 @@ set(PLUGIN_MOCS
     )
 
 
-# Qt module dependency
-find_package(Qt6 COMPONENTS Quick REQUIRED)
-find_package(Qt6 COMPONENTS Qml REQUIRED)
-find_package(Qt6 COMPONENTS Charts REQUIRED)
-find_package(Qt6 REQUIRED COMPONENTS Gui)
-find_package(Qt6 COMPONENTS ShaderTools)
-
-
 # Target properties
 add_library(qtAliceVisionPlugin SHARED ${PLUGIN_SOURCES} ${PLUGIN_HEADERS} ${PLUGIN_MOCS})
 
@@ -71,7 +63,6 @@ else()
     target_compile_options(qtAliceVisionPlugin PUBLIC -Wall -Wextra -Wconversion -Wsign-conversion -Wshadow -Wpedantic)
 endif()
 
-find_package(Qt6 COMPONENTS ShaderTools)
 qt6_add_shaders(qtAliceVisionPlugin "qtAliceVisionPlugin_shaders"
     BATCHABLE
     PRECOMPILE
