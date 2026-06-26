@@ -74,7 +74,8 @@ RUN aqt list-qt linux desktop
 ARG QT_VERSION=6.11.1
 ARG QT_ARCH=linux_gcc_64
 ARG QT_ARCH_SHORT=gcc_64
-ARG QT_MODULES="qtcharts qt3d qtshadertools"
+# A dependency of Qt requires qttasktree but not explicitely, so we need to force the installation.
+ARG QT_MODULES="qtcharts qt3d qtshadertools qttasktree"
 ARG QT_DIR=/opt/Qt
 
 RUN if [ -n "${QT_MODULES}" ]; then \
