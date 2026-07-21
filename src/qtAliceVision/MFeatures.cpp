@@ -28,7 +28,7 @@ void FeaturesIORunnable::run()
     }
 
     std::vector<std::vector<std::unique_ptr<aliceVision::feature::Regions>>> regionsPerViewPerDesc;
-    bool loaded = aliceVision::sfm::loadFeaturesPerDescPerView(regionsPerViewPerDesc, _viewIds, _folders, imageDescriberTypes);
+    bool loaded = aliceVision::sfm::loadFeaturesPerDescPerView(regionsPerViewPerDesc, _viewIds, _folders, imageDescriberTypes, false);
 
     if (!loaded)
     {
@@ -44,12 +44,24 @@ void FeaturesIORunnable::run()
 
         const std::vector<std::unique_ptr<aliceVision::feature::Regions>>& regionsPerView = regionsPerViewPerDesc.at(static_cast<uint>(dIdx));
 
+        if (regionsPerView.size() != _viewIds.size())
+        {
+            qWarning() << "[QtAliceVision] Features: Invalid vector size";
+            delete featuresPerViewPerDesc;
+            Q_EMIT resultReady(nullptr);
+            return;
+        }
+
         for (std::size_t vIdx = 0; vIdx < _viewIds.size(); ++vIdx)
         {
             const auto& viewId = _viewIds.at(vIdx);
 
+            if (!regionsPerView.at(vIdx))
+            {
+                continue;
+            }
+            
             qDebug() << "[QtAliceVision] Features: Load " << descTypeStr << " from viewId: " << viewId << ".";
-
             (*featuresPerViewPerDesc)[descTypeStr][viewId] = regionsPerView.at(vIdx)->Features();
         }
     }
