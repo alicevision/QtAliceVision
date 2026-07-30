@@ -6,7 +6,7 @@
 #include <QQuickItem>
 #include <QRunnable>
 #include <QUrl>
-#include <QtCharts/QLineSeries>
+#include <QVariant>
 
 #include <aliceVision/sfm/sfmStatistics.hpp>
 #include <aliceVision/utils/Histogram.hpp>
@@ -47,14 +47,14 @@ class MViewStats : public QObject
     Q_SIGNAL void viewIdChanged();
     Q_SIGNAL void viewStatsChanged();
 
-    Q_INVOKABLE void fillResidualFullSerie(QXYSeries* serie);
-    Q_INVOKABLE void fillResidualViewSerie(QXYSeries* serie);
+    Q_INVOKABLE QVariantList getResidualFullPoints();
+    Q_INVOKABLE QVariantList getResidualViewPoints();
 
-    Q_INVOKABLE void fillObservationsLengthsFullSerie(QXYSeries* serie);
-    Q_INVOKABLE void fillObservationsLengthsViewSerie(QXYSeries* serie);
+    Q_INVOKABLE QVariantList getObservationsLengthsFullPoints();
+    Q_INVOKABLE QVariantList getObservationsLengthsViewPoints();
 
-    Q_INVOKABLE void fillObservationsScaleFullSerie(QXYSeries* serie);
-    Q_INVOKABLE void fillObservationsScaleViewSerie(QXYSeries* serie);
+    Q_INVOKABLE QVariantList getObservationsScaleFullPoints();
+    Q_INVOKABLE QVariantList getObservationsScaleViewPoints();
 
     Q_SLOT void computeViewStats();
 

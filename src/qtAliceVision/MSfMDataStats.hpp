@@ -1,10 +1,10 @@
 #pragma once
 
 #include <QObject>
+#include <QPointF>
 #include <QRunnable>
 #include <QUrl>
-#include <QtCharts/QBoxSet>
-#include <QtCharts/QLineSeries>
+#include <QVariant>
 
 #include <aliceVision/sfm/sfmStatistics.hpp>
 #include <aliceVision/sfmData/SfMData.hpp>
@@ -57,20 +57,20 @@ class MSfMDataStats : public QObject
     Q_SLOT void computeGlobalSfMStats();
     Q_SLOT void computeGlobalTracksStats();
 
-    Q_INVOKABLE void fillLandmarksPerViewSerie(QXYSeries* serie);
-    Q_INVOKABLE void fillTracksPerViewSerie(QXYSeries* serie);
-    Q_INVOKABLE void fillResidualsMinPerViewSerie(QXYSeries* serie);
-    Q_INVOKABLE void fillResidualsMaxPerViewSerie(QXYSeries* serie);
-    Q_INVOKABLE void fillResidualsMeanPerViewSerie(QXYSeries* serie);
-    Q_INVOKABLE void fillResidualsMedianPerViewSerie(QXYSeries* serie);
-    Q_INVOKABLE void fillResidualsFirstQuartilePerViewSerie(QXYSeries* serie);
-    Q_INVOKABLE void fillResidualsThirdQuartilePerViewSerie(QXYSeries* serie);
-    Q_INVOKABLE void fillObservationsLengthsMinPerViewSerie(QXYSeries* serie);
-    Q_INVOKABLE void fillObservationsLengthsMaxPerViewSerie(QXYSeries* serie);
-    Q_INVOKABLE void fillObservationsLengthsMeanPerViewSerie(QXYSeries* serie);
-    Q_INVOKABLE void fillObservationsLengthsMedianPerViewSerie(QXYSeries* serie);
-    Q_INVOKABLE void fillObservationsLengthsFirstQuartilePerViewSerie(QXYSeries* serie);
-    Q_INVOKABLE void fillObservationsLengthsThirdQuartilePerViewSerie(QXYSeries* serie);
+    Q_INVOKABLE QVariantList getLandmarksPerViewPoints();
+    Q_INVOKABLE QVariantList getTracksPerViewPoints();
+    Q_INVOKABLE QVariantList getResidualsMinPerViewPoints();
+    Q_INVOKABLE QVariantList getResidualsMaxPerViewPoints();
+    Q_INVOKABLE QVariantList getResidualsMeanPerViewPoints();
+    Q_INVOKABLE QVariantList getResidualsMedianPerViewPoints();
+    Q_INVOKABLE QVariantList getResidualsFirstQuartilePerViewPoints();
+    Q_INVOKABLE QVariantList getResidualsThirdQuartilePerViewPoints();
+    Q_INVOKABLE QVariantList getObservationsLengthsMinPerViewPoints();
+    Q_INVOKABLE QVariantList getObservationsLengthsMaxPerViewPoints();
+    Q_INVOKABLE QVariantList getObservationsLengthsMeanPerViewPoints();
+    Q_INVOKABLE QVariantList getObservationsLengthsMedianPerViewPoints();
+    Q_INVOKABLE QVariantList getObservationsLengthsFirstQuartilePerViewPoints();
+    Q_INVOKABLE QVariantList getObservationsLengthsThirdQuartilePerViewPoints();
 
     MSfMData* getMSfmData() { return _msfmData; }
     void setMSfmData(qtAliceVision::MSfMData* sfmData);
