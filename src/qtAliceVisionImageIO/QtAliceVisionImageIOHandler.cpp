@@ -79,7 +79,15 @@ bool QtAliceVisionImageIOHandler::read(QImage* image)
 
     qDebug() << "[QtAliceVisionImageIO] Read image: " << path.c_str();
     aliceVision::image::Image<aliceVision::image::RGBColor> img;
-    aliceVision::image::readImage(path, img, aliceVision::image::EImageColorSpace::SRGB);
+    try
+    {
+        aliceVision::image::readImage(path, img, aliceVision::image::EImageColorSpace::SRGB);
+    }
+    catch (const std::exception& e)
+    {
+        qWarning() << "[QtAliceVisionImageIO] Failed to read image:" << e.what();
+        return false;
+    }
 
     oiio::ImageBuf inBuf;
     aliceVision::image::getBufferFromImage(img, inBuf);

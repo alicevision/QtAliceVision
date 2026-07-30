@@ -68,7 +68,9 @@ void ImageCache::cleanup(size_t requestedSize, const CacheKey& toAdd)
                 // After the frameId, the largest the difference, the highest its priority to delete
                 if (diff < 0)
                 {
-                    diff = std::numeric_limits<int>::max() + diff;
+                    // Wrap negative differences to sort them after positive ones.
+                    // Use unsigned arithmetic to avoid signed integer overflow (UB).
+                    diff = static_cast<int>(static_cast<unsigned int>(std::numeric_limits<int>::max()) + static_cast<unsigned int>(diff));
                 }
 
                 orderedKeys[diff] = &key;

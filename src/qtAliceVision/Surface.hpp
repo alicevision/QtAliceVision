@@ -202,7 +202,7 @@ class Surface : public QObject
     bool _needToUseIntrinsic = true;
 
     // Id View
-    aliceVision::IndexT _idView;
+    aliceVision::IndexT _idView = aliceVision::UndefinedIndexT;
 
     // Viewer
     EViewerType _viewerType = EViewerType::DEFAULT;

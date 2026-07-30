@@ -267,7 +267,7 @@ void PhongImageViewer::reload()
     }
 
     // check source and normal images dimensions
-    if (responseSourceImage.dim != responseSourceImage.dim)
+    if (responseSourceImage.dim != responseNormalImage.dim)
     {
         clearImages();
         setStatus(EStatus::LOADING_ERROR);

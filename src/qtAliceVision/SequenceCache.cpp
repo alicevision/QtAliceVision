@@ -109,7 +109,7 @@ QPointF SequenceCache::getRamInfo() const
     const auto memInfo = aliceVision::system::getMemoryInfo();
 
     double availableRam = static_cast<double>(memInfo.availableRam) / (1024. * 1024. * 1024.);
-    double contentSize = static_cast<double>(_fetcher.getCacheSize()) / (1024. * 1024. * 1024. * 1024.);
+    double contentSize = static_cast<double>(_fetcher.getCacheSize()) / (1024. * 1024. * 1024.);
 
     // Return in GB
     return QPointF(availableRam, contentSize);
