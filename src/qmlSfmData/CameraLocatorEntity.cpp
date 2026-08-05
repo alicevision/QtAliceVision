@@ -166,6 +166,29 @@ CameraLocatorEntity::CameraLocatorEntity(const aliceVision::IndexT& viewId,
     _colorAttribute->setName(QAttribute::defaultColorAttributeName());
     customGeometry->addAttribute(_colorAttribute);
 
+    // normals buffer
+    // The per-vertex-color material declares a vertexNormal input; on the macOS Metal RHI
+    // backend a geometry that omits it makes pipeline creation fail and crashes the renderer
+    // (e.g. on viewer resize). The camera locator is line geometry with no surface normal, so
+    // provide a constant placeholder (0, 1, 0) purely to satisfy the vertex descriptor.
+    const int nverts = points.size() / 3;
+    QVector<float> normals(nverts * 3, 0.0f);
+    for (int i = 0; i < nverts; ++i)
+        normals[i * 3 + 1] = 1.0f;
+    QByteArray normalData(reinterpret_cast<const char*>(normals.data()), normals.size() * static_cast<int>(sizeof(float)));
+    auto normalDataBuffer = new QBuffer();
+    normalDataBuffer->setData(normalData);
+    auto normalAttribute = new QAttribute();
+    normalAttribute->setAttributeType(QAttribute::VertexAttribute);
+    normalAttribute->setBuffer(normalDataBuffer);
+    normalAttribute->setVertexBaseType(QAttribute::Float);
+    normalAttribute->setVertexSize(3);
+    normalAttribute->setByteOffset(0);
+    normalAttribute->setByteStride(3 * sizeof(float));
+    normalAttribute->setCount(static_cast<uint>(nverts));
+    normalAttribute->setName(QAttribute::defaultNormalAttributeName());
+    customGeometry->addAttribute(normalAttribute);
+
     // geometry renderer settings
     customMeshRenderer->setInstanceCount(1);
     customMeshRenderer->setFirstVertex(0);
