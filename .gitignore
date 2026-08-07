@@ -30,5 +30,5 @@
 compile_commands.json
 
 # Build directories
-build*
-dist*
+build*/
+dist*/
