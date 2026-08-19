@@ -15,6 +15,7 @@
 #include <aliceVision/image/io.hpp>
 #include <aliceVision/image/pixelTypes.hpp>
 
+#include <exception>
 #include <iostream>
 #include <memory>
 
@@ -79,52 +80,66 @@ bool QtAliceVisionImageIOHandler::read(QImage* image)
 
     qDebug() << "[QtAliceVisionImageIO] Read image: " << path.c_str();
     aliceVision::image::Image<aliceVision::image::RGBColor> img;
-    aliceVision::image::readImage(path, img, aliceVision::image::EImageColorSpace::SRGB);
 
-    oiio::ImageBuf inBuf;
-    aliceVision::image::getBufferFromImage(img, inBuf);
-
-    oiio::ImageSpec inSpec = aliceVision::image::readImageSpec(path);
-    float pixelAspectRatio = inSpec.get_float_attribute("PixelAspectRatio", 1.0f);
-
-    qDebug() << "[QtAliceVisionImageIO] width:" << inSpec.width << ", height:" << inSpec.height << ", nchannels:" << inSpec.nchannels
-             << ", pixelAspectRatio:" << pixelAspectRatio;
-
-    qDebug() << "[QtAliceVisionImageIO] create output QImage";
-    QImage result(inSpec.width, inSpec.height, QImage::Format_RGB32);
-
-    qDebug() << "[QtAliceVisionImageIO] shuffle channels";
-    const int nchannels = 4;
-    const oiio::TypeDesc typeDesc = oiio::TypeDesc::UINT8;
-    oiio::ImageSpec requestedSpec(inSpec.width, inSpec.height, nchannels, typeDesc);
-    oiio::ImageBuf tmpBuf(requestedSpec);
-    int channelOrder[] = {2, 1, 0, -1};
-    float channelValues[] = {1.f, 1.f, 1.f, 1.f};
-    oiio::ImageBufAlgo::channels(tmpBuf, inBuf, 4, channelOrder, channelValues, {}, false);
-    inBuf.swap(tmpBuf);
-
-    qDebug() << "[QtAliceVisionImageIO] fill output QImage";
-    oiio::ROI exportROI = inBuf.roi();
-    exportROI.chbegin = 0;
-    exportROI.chend = nchannels;
-    inBuf.get_pixels(exportROI, typeDesc, result.bits());
-
-    if (pixelAspectRatio != 1.0f)
+    try
     {
-        QSize newSize(static_cast<int>(static_cast<float>(inSpec.width) * pixelAspectRatio), inSpec.height);
-        result = result.scaled(newSize, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+        aliceVision::image::readImage(path, img, aliceVision::image::EImageColorSpace::SRGB);
+
+        oiio::ImageBuf inBuf;
+        aliceVision::image::getBufferFromImage(img, inBuf);
+
+        oiio::ImageSpec inSpec = aliceVision::image::readImageSpec(path);
+        float pixelAspectRatio = inSpec.get_float_attribute("PixelAspectRatio", 1.0f);
+
+        qDebug() << "[QtAliceVisionImageIO] width:" << inSpec.width << ", height:" << inSpec.height << ", nchannels:" << inSpec.nchannels
+                 << ", pixelAspectRatio:" << pixelAspectRatio;
+
+        qDebug() << "[QtAliceVisionImageIO] create output QImage";
+        QImage result(inSpec.width, inSpec.height, QImage::Format_RGB32);
+
+        qDebug() << "[QtAliceVisionImageIO] shuffle channels";
+        const int nchannels = 4;
+        const oiio::TypeDesc typeDesc = oiio::TypeDesc::UINT8;
+        oiio::ImageSpec requestedSpec(inSpec.width, inSpec.height, nchannels, typeDesc);
+        oiio::ImageBuf tmpBuf(requestedSpec);
+        int channelOrder[] = {2, 1, 0, -1};
+        float channelValues[] = {1.f, 1.f, 1.f, 1.f};
+        oiio::ImageBufAlgo::channels(tmpBuf, inBuf, 4, channelOrder, channelValues, {}, false);
+        inBuf.swap(tmpBuf);
+
+        qDebug() << "[QtAliceVisionImageIO] fill output QImage";
+        oiio::ROI exportROI = inBuf.roi();
+        exportROI.chbegin = 0;
+        exportROI.chend = nchannels;
+        inBuf.get_pixels(exportROI, typeDesc, result.bits());
+
+        if (pixelAspectRatio != 1.0f)
+        {
+            QSize newSize(static_cast<int>(static_cast<float>(inSpec.width) * pixelAspectRatio), inSpec.height);
+            result = result.scaled(newSize, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+        }
+
+        if (_scaledSize.isValid())
+        {
+            qDebug() << "[QtAliceVisionImageIO] _scaledSize: " << _scaledSize.width() << "x" << _scaledSize.height();
+            *image = result.scaled(_scaledSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+        }
+        else
+        {
+            *image = result;
+        }
+        return true;
+    }
+    catch (const std::exception& e)
+    {
+        qWarning() << "[QtAliceVisionImageIO] Read image failed:" << e.what();
+    }
+    catch (...)
+    {
+        qWarning() << "[QtAliceVisionImageIO] Read image failed with unknown exception.";
     }
 
-    if (_scaledSize.isValid())
-    {
-        qDebug() << "[QtAliceVisionImageIO] _scaledSize: " << _scaledSize.width() << "x" << _scaledSize.height();
-        *image = result.scaled(_scaledSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-    }
-    else
-    {
-        *image = result;
-    }
-    return true;
+    return false;
 }
 
 bool QtAliceVisionImageIOHandler::write(const QImage&)
