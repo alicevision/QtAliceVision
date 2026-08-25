@@ -88,7 +88,7 @@ void SequenceCache::setAsyncFetching(bool fetching)
 
     if (fetching)
     {
-        connect(&_fetcher, &AsyncFetcher::onAsyncFetchProgressed, this, &SequenceCache::onAsyncFetchProgressed);
+        connect(&_fetcher, &AsyncFetcher::onAsyncFetchProgressed, this, &SequenceCache::onAsyncFetchProgressed, Qt::UniqueConnection);
         _threadPool.start(&_fetcher);
     }
 }
