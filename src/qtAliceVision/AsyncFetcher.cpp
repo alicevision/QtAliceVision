@@ -1,6 +1,5 @@
 #include "AsyncFetcher.hpp"
 
-#include <QMutexLocker>
 #include <QPoint>
 
 #include <thread>
@@ -40,7 +39,6 @@ void AsyncFetcher::setSequence(const std::vector<std::string>& paths)
 
 void AsyncFetcher::setResizeRatio(double ratio)
 {
-    QMutexLocker locker(&_mutexResizeRatio);
     _resizeRatio = ratio;
 }
 
@@ -103,13 +101,7 @@ void AsyncFetcher::run()
         // Load in cache
         if (_cache)
         {
-            double ratio;
-            {
-                QMutexLocker locker(&_mutexResizeRatio);
-                ratio = _resizeRatio;
-            }
-
-            _cache->get<image::RGBAfColor>(lpath, static_cast<unsigned int>(_currentIndex), ratio, false);
+            _cache->get<image::RGBAfColor>(lpath, static_cast<unsigned int>(_currentIndex), _resizeRatio.load(), false);
         }
 
         if (_isPrefetching)
@@ -238,13 +230,10 @@ bool AsyncFetcher::getFrame(const std::string& path,
     bool onlyCache = _isAsynchronous;
 
     // Upgrade the thread with the current Index
-    for (std::size_t idx = 0; idx < _sequence.size(); ++idx)
+    auto it = _pathToSeqId.find(path);
+    if (it != _pathToSeqId.end())
     {
-        if (_sequence[idx] == path)
-        {
-            _currentIndex = static_cast<int>(idx);
-            break;
-        }
+        _currentIndex = static_cast<int>(it->second);
     }
 
     // Try to find in the cache
@@ -271,8 +260,12 @@ bool AsyncFetcher::getFrame(const std::string& path,
     }
     else
     {
-        // If there is no cache, then poke the fetch thread
-        _semLoop.release(1);
+        // Wake the fetch thread only if not already signaled, to prevent
+        // semaphore accumulation from rapid consecutive cache misses.
+        if (_semLoop.available() == 0)
+        {
+            _semLoop.release(1);
+        }
     }
 
     return false;

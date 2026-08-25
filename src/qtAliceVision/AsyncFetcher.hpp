@@ -2,8 +2,9 @@
 
 #include <QObject>
 #include <QRunnable>
-#include <QMutex>
 #include <QSemaphore>
+
+#include <atomic>
 #include <QVariantList>
 
 #include "ImageCache.hpp"
@@ -130,8 +131,7 @@ class AsyncFetcher : public QObject, public QRunnable
     QAtomicInt _isPrefetching;
     QAtomicInt _requestSynchronous;
 
-    double _resizeRatio;
-    QMutex _mutexResizeRatio;
+    std::atomic<double> _resizeRatio;
     QSemaphore _semLoop;
 };
 
