@@ -47,7 +47,8 @@ add_definitions(-DQT_ALICEVISIONIMAGEIO_USE_FORMATS_BLACKLIST)
 
 # AliceVision dependency
 find_package(AliceVision REQUIRED)
-
+# Lemon dependency (required for AliceVision libraries)
+find_package(LEMON REQUIRED)
 
 # Builds
 add_subdirectory(src)
