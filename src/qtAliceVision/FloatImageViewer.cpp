@@ -58,9 +58,9 @@ class FloatImageViewerMaterial : public QSGMaterial
         float aspectRatio = 0.f;
     } uniforms;
 
-    bool dirtyUniforms;
-    bool appliedHoveringGamma;
-    std::unique_ptr<FloatTexture> texture = std::make_unique<FloatTexture>();  // should be initialize;
+    bool dirtyUniforms = true;
+    bool appliedHoveringGamma = false;
+    std::unique_ptr<FloatTexture> texture;
 };
 
 class FloatImageViewerMaterialShader : public QSGMaterialShader
@@ -76,7 +76,7 @@ class FloatImageViewerMaterialShader : public QSGMaterialShader
     {
         bool changed = false;
         QByteArray* buf = state.uniformData();
-        Q_ASSERT(buf->size() >= 84);
+        Q_ASSERT(buf->size() >= 120);
         if (state.isMatrixDirty())
         {
             const QMatrix4x4 m = state.combinedMatrix();
@@ -471,11 +471,13 @@ void FloatImageViewer::reload()
     else if (response.error == imgserve::LoadingStatus::MISSING_FILE)
     {
         _image.reset();
+        setLoading(false);
         setStatus(EStatus::MISSING_FILE);
     }
     else if (response.error == imgserve::LoadingStatus::LOADING_ERROR)
     {
         _image.reset();
+        setLoading(false);
         setStatus(EStatus::LOADING_ERROR);
     }
     else if (_outdated)
@@ -499,8 +501,8 @@ QVector4D FloatImageViewer::pixelValueAt(int x, int y)
 {
     if (_useSequence)
     {
-        x = int(std::ceil(double(x) * _clampedResizeRatio));
-        y = int(std::ceil(double(y) * _clampedResizeRatio));
+        x = static_cast<int>(std::round(double(x) * _clampedResizeRatio));
+        y = static_cast<int>(std::round(double(y) * _clampedResizeRatio));
     }
 
     if (!_image)
@@ -589,24 +591,27 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, [[maybe_unused]] QQ
     {
         _boundingRect = newBoundingRect;
 
-        const float windowRatio = static_cast<float>(_boundingRect.width()) / static_cast<float>(_boundingRect.height());
-        const float textureRatio = static_cast<float>(_textureSize.width()) / static_cast<float>(_textureSize.height());
-        QRectF geometryRect = _boundingRect;
-        if (windowRatio > textureRatio)
+        if (_boundingRect.height() > 0 && _textureSize.height() > 0)
         {
-            geometryRect.setWidth(geometryRect.height() * textureRatio);
-        }
-        else
-        {
-            geometryRect.setHeight(geometryRect.width() / textureRatio);
-        }
-        geometryRect.moveCenter(_boundingRect.center());
+            const float windowRatio = static_cast<float>(_boundingRect.width()) / static_cast<float>(_boundingRect.height());
+            const float textureRatio = static_cast<float>(_textureSize.width()) / static_cast<float>(_textureSize.height());
+            QRectF geometryRect = _boundingRect;
+            if (windowRatio > textureRatio)
+            {
+                geometryRect.setWidth(geometryRect.height() * textureRatio);
+            }
+            else
+            {
+                geometryRect.setHeight(geometryRect.width() / textureRatio);
+            }
+            geometryRect.moveCenter(_boundingRect.center());
 
-        static const int MARGIN = 0;
-        geometryRect = geometryRect.adjusted(MARGIN, MARGIN, -MARGIN, -MARGIN);
+            static const int MARGIN = 0;
+            geometryRect = geometryRect.adjusted(MARGIN, MARGIN, -MARGIN, -MARGIN);
 
-        QSGGeometry::updateTexturedRectGeometry(node->geometry(), geometryRect, QRectF(0, 0, 1, 1));
-        node->markDirty(QSGNode::DirtyGeometry);
+            QSGGeometry::updateTexturedRectGeometry(node->geometry(), geometryRect, QRectF(0, 0, 1, 1));
+            node->markDirty(QSGNode::DirtyGeometry);
+        }
     }
     _geometryChanged = false;
 

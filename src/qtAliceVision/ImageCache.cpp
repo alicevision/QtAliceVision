@@ -79,6 +79,7 @@ void ImageCache::cleanup(size_t requestedSize, const CacheKey& toAdd)
                 const CacheKey* pKey = orderedKeys.rbegin()->second;
                 _imagePtrs.erase(*pKey);
                 _info.update(_imagePtrs);
+                erased = true;
             }
         }
 
