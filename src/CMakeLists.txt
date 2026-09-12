@@ -11,3 +11,4 @@ if(BUILD_SFM)
     add_subdirectory(qmlSfmData)
 endif()
 
+add_subdirectory(meshViewer)
