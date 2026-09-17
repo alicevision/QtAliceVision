@@ -45,10 +45,16 @@ class DepthMapEntity : public Qt3DCore::QEntity
     };
 
   public:
-    Q_SLOT const QUrl& source() const { return _source; }
+    Q_SLOT const QUrl& source() const
+    {
+        return _source;
+    }
     Q_SLOT void setSource(const QUrl&);
 
-    Status status() const { return _status; }
+    Status status() const
+    {
+        return _status;
+    }
 
     void setStatus(Status status)
     {
@@ -58,13 +64,22 @@ class DepthMapEntity : public Qt3DCore::QEntity
         Q_EMIT statusChanged(_status);
     }
 
-    Q_SLOT DisplayMode displayMode() const { return _displayMode; }
+    Q_SLOT DisplayMode displayMode() const
+    {
+        return _displayMode;
+    }
     Q_SLOT void setDisplayMode(const DisplayMode&);
 
-    Q_SLOT bool displayColor() const { return _displayColor; }
+    Q_SLOT bool displayColor() const
+    {
+        return _displayColor;
+    }
     Q_SLOT void setDisplayColor(bool);
 
-    Q_SLOT float pointSize() const { return _pointSize; }
+    Q_SLOT float pointSize() const
+    {
+        return _pointSize;
+    }
     Q_SLOT void setPointSize(const float& value);
 
   private:
