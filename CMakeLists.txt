@@ -28,6 +28,10 @@ find_package(Qt6Quick REQUIRED)
 find_package(Qt6Qml REQUIRED)
 find_package(Qt6Charts REQUIRED)
 find_package(Qt6Gui REQUIRED)
+# Some Qt distributions (notably aqtinstall framework builds on macOS) do not auto-create the
+# private-module targets via find_package(Qt6Gui); request Qt6GuiPrivate explicitly so that
+# Qt6::GuiPrivate exists. Harmless where it is already provided (Windows/Linux official builds).
+find_package(Qt6GuiPrivate REQUIRED)
 find_package(Qt6 COMPONENTS ShaderTools)
 
 
@@ -47,6 +51,25 @@ add_definitions(-DQT_ALICEVISIONIMAGEIO_USE_FORMATS_BLACKLIST)
 
 # AliceVision dependency
 find_package(AliceVision REQUIRED)
+
+
+# macOS: the QML / imageformats plugins link AliceVision frameworks and their
+# dependencies (e.g. libceres) via @rpath but installed no rpath of their own, so at
+# load time dyld fell back to system/Homebrew copies — notably a libceres lacking the
+# glog symbols statically bundled into AliceVision's — and the plugins failed to load
+# ("Symbol not found"). Set relocatable @loader_path rpaths pointing at AliceVision's
+# lib dir as laid out in a Meshroom standalone install (the plugins under
+# qtPlugins/qml/<Module>/ and qtPlugins/imageformats/ sit beside aliceVision/lib).
+# Relative paths keep the binaries redistributable — no absolute or system-specific
+# paths are baked in. No-op where rpath is unused.
+if(APPLE)
+    set(CMAKE_MACOSX_RPATH 1)
+    set(CMAKE_INSTALL_RPATH
+        "@loader_path/../../../aliceVision/lib"   # qml/<Module>/  -> <root>/aliceVision/lib
+        "@loader_path/../../aliceVision/lib"      # imageformats/  -> <root>/aliceVision/lib
+        "@loader_path"
+        "@loader_path/..")
+endif()
 
 
 # Builds
