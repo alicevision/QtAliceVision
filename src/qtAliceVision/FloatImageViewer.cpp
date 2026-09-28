@@ -529,6 +529,10 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, [[maybe_unused]] QQ
     {
         node = new FloatImageViewerNode(_surface.vertexCount(), _surface.indexCount());
         isNewNode = true;
+        // The node is re-created when the item changes window: upload everything again
+        _imageChanged = true;
+        _geometryChanged = true;
+        _surface.setVerticesChanged(true);
     }
     else if (_surface.hasSubdivisionsChanged())
     {
@@ -652,7 +656,7 @@ QSGNode* FloatImageViewer::updatePaintNode(QSGNode* oldNode, [[maybe_unused]] QQ
     }
     _channelModeChanged = false;
 
-    if (!isNewNode && _image)
+    if (_image)
     {
         node->updatePaintSurface(_surface,
                                  _surface.isPanoramaViewerEnabled() ? _textureSize : _sourceSize,
