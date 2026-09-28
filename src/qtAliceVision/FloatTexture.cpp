@@ -83,7 +83,10 @@ void FloatTexture::commitTextureOperations(QRhi* rhi, QRhiResourceUpdateBatch* r
         return;
     }
 
-    const QByteArray textureData(reinterpret_cast<const char*>(_srcImage->data()), _srcImage->size() * sizeof(*_srcImage->data()));
+    // Reference the pixels instead of copying them: the image is kept alive by this texture,
+    // which the scene graph does not release before the upload batch is submitted
+    const QByteArray textureData =
+      QByteArray::fromRawData(reinterpret_cast<const char*>(_srcImage->data()), _srcImage->size() * sizeof(*_srcImage->data()));
     resourceUpdates->uploadTexture(_rhiTexture, QRhiTextureUploadEntry(0, 0, QRhiTextureSubresourceUploadDescription(textureData)));
 
     if (hasMipmaps())
