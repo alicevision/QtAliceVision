@@ -1,7 +1,7 @@
 #pragma once
 
 #include <aliceVision/geometry/Pose3.hpp>
-
+#include <Core/BoundingBox.hpp>
 #include <Core/MotionInfo.hpp>
 
 class OrbitMotionInfo : public MotionInfo
@@ -21,6 +21,14 @@ class OrbitMotionInfo : public MotionInfo
     Q_INVOKABLE void applyTransform();
     Q_INVOKABLE void setCenter(const QVector3D& center);
     Q_INVOKABLE void setDistance(float distance);
+    Q_INVOKABLE void fit(const BoundingBox& bounds);
+
+    Q_INVOKABLE void viewTop();
+    Q_INVOKABLE void viewBottom();
+    Q_INVOKABLE void viewFront();
+    Q_INVOKABLE void viewBack();
+    Q_INVOKABLE void viewLeft();
+    Q_INVOKABLE void viewRight();
 
     float relativeRotationX() const
     {

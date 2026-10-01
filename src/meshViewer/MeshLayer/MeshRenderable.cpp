@@ -119,11 +119,21 @@ void MeshRenderable::initialize(QRhi* rhi, QRhiRenderPassDescriptor* rpDesc)
     {
         buildPipeline();  // must come first — creates _uniformBuffer used by wire SRB
     }
+}
 
-    if (_wireframeDirty)
+void MeshRenderable::prepare(QRhiResourceUpdateBatch* batch, const SceneState& state)
+{
+    /**
+     * @note The wire pipeline is (re)built here rather than in initialize(): QQuickRhiItemRenderer::initialize()
+     *       only runs on first use or when the render target changes, so a wireframe mode switch would
+     *       otherwise not be visible until an unrelated event forced a re-initialization.
+     */
+    if (_wireframeDirty && _uniformBuffer)
     {
         if (_wireframeMode != MeshLayer::Solid)
+        {
             buildWirePipeline();
+        }
         else
         {
             _wireOverlayPipeline.reset();
@@ -132,10 +142,7 @@ void MeshRenderable::initialize(QRhi* rhi, QRhiRenderPassDescriptor* rpDesc)
         }
         _wireframeDirty = false;
     }
-}
 
-void MeshRenderable::prepare(QRhiResourceUpdateBatch* batch, const SceneState& state)
-{
     if (_buffersDirty)
     {
         rebuildBuffers(batch);

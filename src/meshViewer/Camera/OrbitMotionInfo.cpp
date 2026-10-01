@@ -108,3 +108,111 @@ Eigen::Vector3d OrbitMotionInfo::getCenter() const
 
     return _pose.rotation().transpose() * planeMotion + _center;
 }
+
+void OrbitMotionInfo::fit(const BoundingBox& bbox)
+{
+    if (!bbox.isValid())   
+    {
+        return;
+    }
+
+    const QVector3D & center = bbox.center();
+    _center(0) = center[0];
+    _center(1) = center[1];
+    _center(2) = center[2];
+
+
+    Eigen::Vector3d diff = {1.0, -1.0, -1.0};
+    Eigen::Vector3d z = -diff.normalized();
+    Eigen::Vector3d x = Eigen::Vector3d::UnitY().cross(z);
+    Eigen::Vector3d y = z.cross(x);
+
+    Eigen::Matrix3d R;
+    R.block<3, 1>(0, 0) = x;
+    R.block<3, 1>(0, 1) = y;
+    R.block<3, 1>(0, 2) = z;
+
+    _pose.setRotation(R.transpose());
+
+    _distance = bbox.maxExtent();
+
+    emit changed();
+}
+
+void OrbitMotionInfo::viewTop()
+{
+    Eigen::Matrix3d R = Eigen::Matrix3d::Zero();
+
+    R(0, 0) = 1;
+    R(1, 2) = -1;
+    R(2, 1) = 1;
+
+    _pose.setRotation(R);
+
+    emit changed();
+}
+
+void OrbitMotionInfo::viewBottom()
+{
+    Eigen::Matrix3d R = Eigen::Matrix3d::Zero();
+    
+    R(0, 0) = 1;
+    R(1, 2) = 1;
+    R(2, 1) = -1;
+
+    _pose.setRotation(R);
+
+    emit changed();
+}
+
+void OrbitMotionInfo::viewFront()
+{
+    Eigen::Matrix3d R = Eigen::Matrix3d::Zero();
+
+    R(0, 0) = 1;
+    R(1, 1) = 1;
+    R(2, 2) = 1;
+
+    _pose.setRotation(R);
+
+    emit changed();
+}
+
+void OrbitMotionInfo::viewBack()
+{
+    Eigen::Matrix3d R = Eigen::Matrix3d::Zero();
+    
+    R(0, 0) = -1;
+    R(1, 1) = 1;
+    R(2, 2) = -1;
+
+    _pose.setRotation(R);
+
+    emit changed();
+}
+
+void OrbitMotionInfo::viewLeft()
+{
+    Eigen::Matrix3d R = Eigen::Matrix3d::Zero();
+
+    R(0, 2) = 1;
+    R(1, 1) = 1;
+    R(2, 0) = -1;
+
+    _pose.setRotation(R);
+
+    emit changed();
+}
+
+void OrbitMotionInfo::viewRight()
+{
+    Eigen::Matrix3d R = Eigen::Matrix3d::Zero();
+    
+    R(0, 2) = -1;
+    R(1, 1) = 1;
+    R(2, 0) = 1;
+
+    _pose.setRotation(R);
+
+    emit changed();
+}
