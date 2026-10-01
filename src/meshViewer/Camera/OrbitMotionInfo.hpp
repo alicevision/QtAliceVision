@@ -20,6 +20,7 @@ class OrbitMotionInfo : public MotionInfo
 
     Q_INVOKABLE void applyTransform();
     Q_INVOKABLE void setCenter(const QVector3D& center);
+    Q_INVOKABLE void setDistance(float distance);
 
     float relativeRotationX() const
     {

@@ -53,6 +53,19 @@ void OrbitMotionInfo::setCenter(const QVector3D& center)
     emit changed();
 }
 
+void OrbitMotionInfo::setDistance(float distance)
+{
+    if (qFuzzyCompare(_distance, distance))
+    {
+        return;
+    }
+
+    _distance = distance;
+    
+    emit distanceChanged();
+    emit changed();
+}
+
 Eigen::Matrix4d OrbitMotionInfo::getEigenMatrix() const
 {
     Eigen::Matrix4d center_T_world = Eigen::Matrix4d::Identity();
