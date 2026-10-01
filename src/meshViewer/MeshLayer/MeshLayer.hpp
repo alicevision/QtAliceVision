@@ -25,10 +25,12 @@ class MeshLayer : public LayerItem
     };
     Q_ENUM(WireframeMode)
 
+    /** @brief How the solid mesh surface is colored. */
     enum ShadingMode
     {
-        MeshShaded = 0,
-        MeshNormal = 1
+        MeshShaded = 0,  /**< Constant color with simple diffuse lighting. */
+        MeshNormal = 1,  /**< Surface normal displayed as color. */
+        MeshMaterial = 2 /**< Unlit material: diffuse texture times base color; falls back to MeshShaded when the mesh has no texture. */
     };
     Q_ENUM(ShadingMode)
 

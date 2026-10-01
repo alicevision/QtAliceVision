@@ -20,6 +20,8 @@ class MeshObject : public QObject
     Q_PROPERTY(QString errorString READ errorString NOTIFY errorStringChanged)
     Q_PROPERTY(bool valid READ valid NOTIFY validChanged)
     Q_PROPERTY(QVariantList boundingBox READ boundingBox NOTIFY boundingBoxChanged)
+    /** @brief True when the loaded mesh has at least one diffuse texture, i.e. MeshLayer.MeshMaterial shading is meaningful. */
+    Q_PROPERTY(bool hasTextures READ hasTextures NOTIFY hasTexturesChanged)
 
   public:
     explicit MeshObject(QObject* parent = nullptr);
@@ -47,6 +49,11 @@ class MeshObject : public QObject
         return _meshData && _meshData->valid;
     }
 
+    bool hasTextures() const
+    {
+        return valid() && !_meshData->textures.isEmpty();
+    }
+
     QVariantList boundingBox() const
     {
         QVariantList box;
@@ -72,6 +79,7 @@ class MeshObject : public QObject
     void errorStringChanged();
     void validChanged();
     void boundingBoxChanged();
+    void hasTexturesChanged();
     void dataReady();
 
   private slots:

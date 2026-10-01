@@ -5,6 +5,10 @@ struct Vertex {
     float nx, ny, nz;  // normal
 };
 
+struct UVVertex {
+    float u, v;
+};
+
 struct PositionVertex {
     float x, y, z;   // position
 };

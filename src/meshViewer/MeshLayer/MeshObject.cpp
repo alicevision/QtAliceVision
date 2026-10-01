@@ -29,6 +29,7 @@ void MeshObject::setSource(const QString& path)
         _meshData = std::make_unique<MeshData>();
         emit validChanged();
         emit boundingBoxChanged();
+        emit hasTexturesChanged();
         return;
     }
 
@@ -67,6 +68,7 @@ void MeshObject::onLoadFinished()
     }
 
     emit boundingBoxChanged();
+    emit hasTexturesChanged();
 
     if (_meshData->valid)
     {
