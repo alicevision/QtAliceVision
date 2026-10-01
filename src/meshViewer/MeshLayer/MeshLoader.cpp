@@ -233,38 +233,14 @@ std::unique_ptr<MeshData> MeshLoader::load(const QString& path)
 
 void MeshLoader::computeBounds(MeshData& data)
 {
-    if (data.subMeshes.isEmpty())
-    {
-        data.minX = data.maxX = 0.0f;
-        data.minY = data.maxY = 0.0f;
-        data.minZ = data.maxZ = 0.0f;
-        return;
-    }
-
-    float minX = std::numeric_limits<float>::max();
-    float minY = std::numeric_limits<float>::max();
-    float minZ = std::numeric_limits<float>::max();
-    float maxX = -std::numeric_limits<float>::max();
-    float maxY = -std::numeric_limits<float>::max();
-    float maxZ = -std::numeric_limits<float>::max();
-
+    BoundingBox box;
     for (const SubMesh& sub : data.subMeshes)
     {
         for (const Vertex& v : sub.vertices)
         {
-            minX = std::min(minX, v.x);
-            maxX = std::max(maxX, v.x);
-            minY = std::min(minY, v.y);
-            maxY = std::max(maxY, v.y);
-            minZ = std::min(minZ, v.z);
-            maxZ = std::max(maxZ, v.z);
+            box.extend(QVector3D(v.x, v.y, v.z));
         }
     }
 
-    data.minX = minX;
-    data.maxX = maxX;
-    data.minY = minY;
-    data.maxY = maxY;
-    data.minZ = minZ;
-    data.maxZ = maxZ;
+    data.boundingBox = box;
 }

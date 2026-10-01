@@ -22,6 +22,8 @@ class SceneView : public QQuickRhiItem
 
     Q_PROPERTY(QQmlListProperty<LayerItem> layers READ layers NOTIFY layersChanged)
     Q_PROPERTY(LayerItem* pickingLayer READ pickingLayer NOTIFY pickingLayerChanged)
+    /** @brief Union of the bounding boxes of all visible layers (empty when no visible layer has content). */
+    Q_PROPERTY(BoundingBox boundingBox READ boundingBox NOTIFY boundingBoxChanged)
     Q_PROPERTY(int userCode READ userCode NOTIFY userCodeChanged)
 
     Q_PROPERTY(MotionInfo* motionInfo READ motionInfo WRITE setMotionInfo NOTIFY motionInfoChanged)
@@ -48,6 +50,12 @@ class SceneView : public QQuickRhiItem
     {
         return _userCode;
     }
+
+    /**
+     * @brief Returns the union of the bounding boxes of all visible layers.
+     * @return The combined bounds, or an empty box when no visible layer has content.
+     */
+    BoundingBox boundingBox() const;
 
     Q_INVOKABLE void appendLayer(LayerItem* layer);
     Q_INVOKABLE void removeLayer(LayerItem* layer);
@@ -87,6 +95,7 @@ class SceneView : public QQuickRhiItem
 
   signals:
     void layersChanged();
+    void boundingBoxChanged();
     void pickingLayerChanged();
     void userCodeChanged();
     void motionInfoChanged();

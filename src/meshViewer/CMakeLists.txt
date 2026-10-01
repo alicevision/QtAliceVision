@@ -10,6 +10,7 @@ qt_add_qml_module(meshViewer
     NO_PLUGIN_OPTIONAL
     SOURCES
 
+        Core/BoundingBox.hpp
         Core/CameraInfo.hpp
         Core/CameraInfo.cpp
         Core/Picking.hpp

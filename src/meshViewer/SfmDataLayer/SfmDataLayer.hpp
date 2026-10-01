@@ -70,6 +70,17 @@ class SfmDataLayer : public LayerItem
     /** @brief Cameras whose resectionId passes the sfmData's limitResectionId filter, in original order. */
     std::vector<SfmDataCameraInstance> visibleCameras() const;
 
+    /** @brief Union of the point cloud and camera center bounds. */
+    BoundingBox boundingBox() const override
+    {
+        if (!_sfmData || !_sfmData->valid())
+        {
+            return {};
+        }
+        const SfmDataContent& content = _sfmData->content();
+        return content.pointCloudBoundingBox.united(content.cameraCenterBoundingBox);
+    }
+
     bool canPick() const override
     {
         return _sfmData && _sfmData->valid();

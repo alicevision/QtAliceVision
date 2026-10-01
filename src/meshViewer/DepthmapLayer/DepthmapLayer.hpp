@@ -58,6 +58,11 @@ class DepthmapLayer : public LayerItem
         return std::make_unique<DepthmapRenderable>();
     }
 
+    BoundingBox boundingBox() const override
+    {
+        return _depthmapData->valid ? _depthmapData->boundingBox : BoundingBox();
+    }
+
     bool rendersInForeground() const override
     {
         return true;

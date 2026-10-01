@@ -62,8 +62,14 @@ class MeshObject : public QObject
             return box;
         }
 
-        box << QVariant::fromValue(QVector3D(_meshData->minX, _meshData->minY, _meshData->minZ));
-        box << QVariant::fromValue(QVector3D(_meshData->maxX, _meshData->maxY, _meshData->maxZ));
+        const BoundingBox& bounds = _meshData->boundingBox;
+        if (!bounds.isValid())
+        {
+            return box;
+        }
+
+        box << QVariant::fromValue(bounds.min());
+        box << QVariant::fromValue(bounds.max());
 
         return box;
     }

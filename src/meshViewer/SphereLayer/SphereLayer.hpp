@@ -119,6 +119,17 @@ class SphereLayer : public LayerItem
         _positionsDirty = false;
     }
 
+    /** @brief Bounds of the sphere centers; the sphere radius is not included. */
+    BoundingBox boundingBox() const override
+    {
+        BoundingBox box;
+        for (const QVector3D& position : _positions)
+        {
+            box.extend(position);
+        }
+        return box;
+    }
+
     std::unique_ptr<IRenderable> createRenderable() const override
     {
         return std::make_unique<SphereRenderable>();

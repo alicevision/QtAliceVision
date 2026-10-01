@@ -22,6 +22,19 @@ QQmlListProperty<LayerItem> SceneView::layers()
       this, nullptr, &SceneView::layersAppend, &SceneView::layersCount, &SceneView::layersAt, &SceneView::layersClear);
 }
 
+BoundingBox SceneView::boundingBox() const
+{
+    BoundingBox box;
+    for (const LayerItem* layer : _layers)
+    {
+        if (layer && layer->visible())
+        {
+            box.extend(layer->boundingBox());
+        }
+    }
+    return box;
+}
+
 void SceneView::layersAppend(QQmlListProperty<LayerItem>* list, LayerItem* item)
 {
     auto* self = static_cast<SceneView*>(list->object);
@@ -84,12 +97,18 @@ void SceneView::rebuildLayerConnections()
 
     for (LayerItem* layer : _layers)
     {
-        _layerConnections += connect(layer, &LayerItem::visibleChanged, this, [this]() { update(); });
+        _layerConnections += connect(layer, &LayerItem::visibleChanged, this, [this]() {
+            emit boundingBoxChanged();
+            update();
+        });
         _layerConnections += connect(layer, &LayerItem::dataReady, this, [this]() {
+            emit boundingBoxChanged();
             update();
             polish();
         });
     }
+
+    emit boundingBoxChanged();
 }
 
 // ── Camera / motion ──────────────────────────────────────────────────────────

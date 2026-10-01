@@ -16,31 +16,6 @@
 
 namespace {
 
-void updateBoundsForPoint(const QVector3D& point, QVector3D& minPoint, QVector3D& maxPoint, bool& valid)
-{
-    if (!valid)
-    {
-        minPoint = point;
-        maxPoint = point;
-        valid = true;
-        return;
-    }
-
-    minPoint.setX(std::min(minPoint.x(), point.x()));
-    minPoint.setY(std::min(minPoint.y(), point.y()));
-    minPoint.setZ(std::min(minPoint.z(), point.z()));
-
-    maxPoint.setX(std::max(maxPoint.x(), point.x()));
-    maxPoint.setY(std::max(maxPoint.y(), point.y()));
-    maxPoint.setZ(std::max(maxPoint.z(), point.z()));
-}
-
-void updateBoundsForCamera(const SfmDataCameraInstance& camera, QVector3D& minPoint, QVector3D& maxPoint, bool& valid)
-{
-    const QVector3D center = toQMatrix4x4(camera.camera_T_world.inverse()).map(QVector3D());
-    updateBoundsForPoint(center, minPoint, maxPoint, valid);
-}
-
 std::unique_ptr<SfmDataContent> loadSfmDataFile(const QString& path)
 {
     auto result = std::make_unique<SfmDataContent>();
@@ -65,7 +40,7 @@ std::unique_ptr<SfmDataContent> loadSfmDataFile(const QString& path)
         const auto& rgb = landmark.getRgb();
         const QVector3D point(position.x(), position.y(), position.z());
 
-        updateBoundsForPoint(point, result->pointCloudMin, result->pointCloudMax, result->pointCloudBoundsValid);
+        result->pointCloudBoundingBox.extend(point);
 
         result->points.push_back({point, QVector3D(rgb.r() / 255.0f, rgb.g() / 255.0f, rgb.b() / 255.0f)});
     }
@@ -86,7 +61,7 @@ std::unique_ptr<SfmDataContent> loadSfmDataFile(const QString& path)
         camdata.intrinsics = sfmData.getIntrinsicSharedPtr(view.getIntrinsicId());
 
         result->cameraPerViewId[camdata.viewId] = camdata;
-        updateBoundsForCamera(camdata, result->cameraCenterMin, result->cameraCenterMax, result->cameraCenterBoundsValid);
+        result->cameraCenterBoundingBox.extend(toQMatrix4x4(camdata.camera_T_world.inverse()).map(QVector3D()));
 
         if (camdata.resectionId != aliceVision::UndefinedIndexT)
         {

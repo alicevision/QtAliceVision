@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Core/BoundingBox.hpp>
 #include <Geometry/vertex.hpp>
 
 #include <aliceVision/image/Image.hpp>
@@ -8,7 +9,6 @@
 #include <QString>
 #include <QVector>
 #include <QVector4D>
-#include <algorithm>
 #include <memory>
 
 /** @brief 8-bit RGBA texture image, laid out as 4 contiguous bytes per pixel (matches QRhiTexture::RGBA8). */
@@ -57,39 +57,6 @@ struct MeshData
     QString errorString;
     bool valid = false;
 
-    // Bounding box
-    float minX = 0, maxX = 0;
-    float minY = 0, maxY = 0;
-    float minZ = 0, maxZ = 0;
-
-    float centerX() const
-    {
-        return (minX + maxX) * 0.5f;
-    }
-    float centerY() const
-    {
-        return (minY + maxY) * 0.5f;
-    }
-    float centerZ() const
-    {
-        return (minZ + maxZ) * 0.5f;
-    }
-
-    float extentX() const
-    {
-        return maxX - minX;
-    }
-    float extentY() const
-    {
-        return maxY - minY;
-    }
-    float extentZ() const
-    {
-        return maxZ - minZ;
-    }
-
-    float maxExtent() const
-    {
-        return std::max({extentX(), extentY(), extentZ()});
-    }
+    /** @brief Bounds of the vertex positions; empty when there is no geometry. */
+    BoundingBox boundingBox;
 };

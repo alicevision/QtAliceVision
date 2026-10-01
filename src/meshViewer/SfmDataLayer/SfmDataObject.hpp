@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Core/BoundingBox.hpp>
+
 #include <QMatrix4x4>
 #include <QObject>
 #include <QString>
@@ -49,13 +51,8 @@ struct SfmDataContent
     QString errorString;
     bool valid = false;
 
-    QVector3D pointCloudMin = QVector3D(0.0f, 0.0f, 0.0f);
-    QVector3D pointCloudMax = QVector3D(0.0f, 0.0f, 0.0f);
-    bool pointCloudBoundsValid = false;
-
-    QVector3D cameraCenterMin = QVector3D(0.0f, 0.0f, 0.0f);
-    QVector3D cameraCenterMax = QVector3D(0.0f, 0.0f, 0.0f);
-    bool cameraCenterBoundsValid = false;
+    BoundingBox pointCloudBoundingBox;   /**< Bounds of the landmark positions; empty when there are none. */
+    BoundingBox cameraCenterBoundingBox; /**< Bounds of the camera centers; empty when there are none. */
 };
 
 class SfmDataObject : public QObject
@@ -117,20 +114,24 @@ class SfmDataObject : public QObject
     QVariantList pointCloudBoundingBox() const
     {
         QVariantList box;
-        if (!_content || !_content->pointCloudBoundsValid)
+        if (!_content || !_content->pointCloudBoundingBox.isValid())
+        {
             return box;
-        box << QVariant::fromValue(_content->pointCloudMin);
-        box << QVariant::fromValue(_content->pointCloudMax);
+        }
+        box << QVariant::fromValue(_content->pointCloudBoundingBox.min());
+        box << QVariant::fromValue(_content->pointCloudBoundingBox.max());
         return box;
     }
 
     QVariantList cameraCenterBoundingBox() const
     {
         QVariantList box;
-        if (!_content || !_content->cameraCenterBoundsValid)
+        if (!_content || !_content->cameraCenterBoundingBox.isValid())
+        {
             return box;
-        box << QVariant::fromValue(_content->cameraCenterMin);
-        box << QVariant::fromValue(_content->cameraCenterMax);
+        }
+        box << QVariant::fromValue(_content->cameraCenterBoundingBox.min());
+        box << QVariant::fromValue(_content->cameraCenterBoundingBox.max());
         return box;
     }
 

@@ -105,6 +105,15 @@ class MeshLayer : public LayerItem
         _opacityDirty = false;
     }
 
+    BoundingBox boundingBox() const override
+    {
+        if (!_mesh || !_mesh->valid())
+        {
+            return {};
+        }
+        return _mesh->meshData().boundingBox;
+    }
+
     bool canPick() const override
     {
         return _mesh && _mesh->valid();

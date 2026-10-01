@@ -5,6 +5,7 @@
 #include <QVector3D>
 #include <qqml.h>
 #include <memory>
+#include <Core/BoundingBox.hpp>
 #include <Core/Picking.hpp>
 
 class IRenderable;
@@ -57,6 +58,15 @@ class LayerItem : public QObject
 
     /** @brief Factory method: create the IRenderable that renders this layer. */
     virtual std::unique_ptr<IRenderable> createRenderable() const = 0;
+
+    /**
+     * @brief Returns the bounding box of the layer content, in world coordinates.
+     * @return The content bounds, or an empty box when the layer has no finite content (default).
+     */
+    Q_INVOKABLE virtual BoundingBox boundingBox() const
+    {
+        return {};
+    }
 
     virtual bool rendersInBackground() const
     {
