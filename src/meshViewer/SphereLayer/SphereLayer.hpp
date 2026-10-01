@@ -11,7 +11,17 @@ class SphereLayer : public LayerItem
     Q_OBJECT
     QML_ELEMENT
 
+    /** @brief Picked point positions (QVector3D values) where spheres are drawn. */
     Q_PROPERTY(QVariantList positions READ positions WRITE setPositions NOTIFY positionsChanged)
+
+    /**
+     * @brief Sphere radius.
+     * Expressed in world units, or in pixels when @ref fixedSize is true.
+     */
+    Q_PROPERTY(float size READ size WRITE setSize NOTIFY sizeChanged)
+
+    /** @brief If true, spheres keep a constant screen size whatever their distance to the camera. */
+    Q_PROPERTY(bool fixedSize READ fixedSize WRITE setFixedSize NOTIFY fixedSizeChanged)
 
   public:
     explicit SphereLayer(QObject* parent = nullptr)
@@ -50,6 +60,51 @@ class SphereLayer : public LayerItem
         emit dataReady();
     }
 
+    float size() const
+    {
+        return _size;
+    }
+
+    void setSize(float size)
+    {
+        if (qFuzzyCompare(_size, size))
+        {
+            return;
+        }
+
+        _size = size;
+        _paramsDirty = true;
+        emit sizeChanged();
+        emit dataReady();
+    }
+
+    bool fixedSize() const
+    {
+        return _fixedSize;
+    }
+
+    void setFixedSize(bool fixedSize)
+    {
+        if (_fixedSize == fixedSize)
+        {
+            return;
+        }
+
+        _fixedSize = fixedSize;
+        _paramsDirty = true;
+        emit fixedSizeChanged();
+        emit dataReady();
+    }
+
+    bool paramsDirty() const
+    {
+        return _paramsDirty;
+    }
+    void clearParamsDirty()
+    {
+        _paramsDirty = false;
+    }
+
     const std::vector<QVector3D>& renderPositions() const
     {
         return _positions;
@@ -71,8 +126,13 @@ class SphereLayer : public LayerItem
 
   signals:
     void positionsChanged();
+    void sizeChanged();
+    void fixedSizeChanged();
 
   private:
     std::vector<QVector3D> _positions;
     bool _positionsDirty = false;
+    float _size = 20.0f;
+    bool _fixedSize = true;
+    bool _paramsDirty = true;
 };

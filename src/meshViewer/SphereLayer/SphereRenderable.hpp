@@ -38,6 +38,9 @@ class SphereRenderable : public IRenderable
     quint32 _indexCount = 0;
     quint32 _instanceCount = 0;
 
+    float _size = 0.2f;
+    bool _fixedSize = false;
+
     bool _pipelineDirty = true;
     bool _geomDirty = true;
     bool _instancesDirty = false;

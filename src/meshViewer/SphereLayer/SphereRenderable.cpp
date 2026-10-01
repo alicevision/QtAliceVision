@@ -24,6 +24,13 @@ void SphereRenderable::sync(LayerItem* layer, SceneView* view)
     }
 
     SphereLayer* sphereLayer = static_cast<SphereLayer*>(layer);
+    if (sphereLayer->paramsDirty())
+    {
+        _size = sphereLayer->size();
+        _fixedSize = sphereLayer->fixedSize();
+        sphereLayer->clearParamsDirty();
+    }
+
     if (!sphereLayer->positionsDirty())
     {
         return;
@@ -77,6 +84,10 @@ void SphereRenderable::prepare(QRhiResourceUpdateBatch* batch, const SceneState&
     if (_uniformBuffer && _instanceCount > 0)
     {
         batch->updateDynamicBuffer(_uniformBuffer.get(), 0, 64, state.viewProjection.constData());
+
+        // x = size, y = fixed size flag, z = projection vertical scale, w = viewport height in pixels.
+        const float params[4] = {_size, _fixedSize ? 1.0f : 0.0f, state.projectionScaleY, float(state.viewportHeight)};
+        batch->updateDynamicBuffer(_uniformBuffer.get(), 64, sizeof(params), params);
     }
 }
 
@@ -103,7 +114,8 @@ void SphereRenderable::buildGeometry(QRhiResourceUpdateBatch* batch)
 
     QVector<ColoredVertex> verts;
     QVector<quint32> indices;
-    buildSphereMesh(verts, indices);
+    // Unit sphere: the radius is applied in the vertex shader.
+    buildSphereMesh(verts, indices, 1.0f);
 
     _indexCount = static_cast<quint32>(indices.size());
 
@@ -145,8 +157,8 @@ void SphereRenderable::buildPipeline()
     _srb.reset();
     _uniformBuffer.reset();
 
-    // Uniform buffer: viewProjection (mat4 = 64 bytes)
-    _uniformBuffer.reset(_rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::UniformBuffer, 64));
+    // Uniform buffer: viewProjection (mat4 = 64 bytes) + sphere parameters (vec4 = 16 bytes)
+    _uniformBuffer.reset(_rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::UniformBuffer, 80));
     _uniformBuffer->create();
 
     _srb.reset(_rhi->newShaderResourceBindings());
