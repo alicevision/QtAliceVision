@@ -31,7 +31,8 @@ class ImageLayer : public LayerItem
 
     Q_PROPERTY(QString source READ source WRITE setSource NOTIFY sourceChanged)
     Q_PROPERTY(QString errorString READ errorString NOTIFY errorStringChanged)
-
+    Q_PROPERTY(bool loading READ loading NOTIFY loadingChanged)
+    
   public:
     explicit ImageLayer(QObject* parent = nullptr);
     ~ImageLayer() override;
