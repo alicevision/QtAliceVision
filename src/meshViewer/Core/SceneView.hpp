@@ -89,6 +89,27 @@ class SceneView : public QQuickRhiItem
     }
     void setCameraInfo(CameraInfo* ci);
 
+    /** @brief Returns the current view (world to camera) matrix, or identity when motionInfo is unset. */
+    QMatrix4x4 viewMatrix() const;
+    /** @brief Returns the current projection matrix for the item aspect ratio, or identity when cameraInfo is unset. */
+    QMatrix4x4 projectionMatrix() const;
+
+    /**
+     * @brief Projects a world point to item coordinates (pixels, origin top-left).
+     * @param point World-space point.
+     * @return The screen position; inverse of the mapping used by screenRay().
+     */
+    Q_INVOKABLE QVector2D worldToScreen(const QVector3D& point) const;
+
+    /** @brief Returns the current camera position in world space. */
+    Q_INVOKABLE QVector3D cameraPosition() const;
+
+    /**
+     * @brief Builds the world-space ray going through a screen position, using the current camera.
+     * @param mousePos Position in item coordinates (pixels, origin top-left).
+     */
+    Ray screenRay(const QVector2D& mousePos) const;
+
     Q_INVOKABLE void pick(const QVector2D& mousePos, int userCode);
     PendingPickRequest takePendingPickRequest();
     void applyLayerPick(LayerItem* layer, const LayerPickResult& result);
