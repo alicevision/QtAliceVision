@@ -1,0 +1,78 @@
+# syntax=docker/dockerfile:1.4
+# vim: ft=dockerfile
+
+# AliceVision + Qt via aqtinstall: the environment qtAliceVision is built in.
+# Usage: docker/build-rocky.sh (sets AV_IMAGE to the alicevision image tag)
+#
+# Override defaults at build time:
+#   --build-arg QT_VERSION=6.11.1
+#   --build-arg QT_ARCH=linux_gcc_64
+#   --build-arg QT_MODULES="qtcharts qt3d qtshadertools qttasktree"
+
+# AliceVision is installed in ${AV_INSTALL}, with its own dependencies (OIIO, Alembic...).
+ARG AV_IMAGE
+FROM ${AV_IMAGE}
+
+# ── System dependencies ────────────────────────────────────────────────────────
+# The base image already provides gcc-toolset-12, cmake, ninja, git, wget, epel and python3.11-pip.
+# CRB (CodeReady Builder) is required for several *-devel packages
+# The dnf cache lives in a BuildKit cache mount, reused across builds and never in the image.
+RUN --mount=type=cache,target=/var/cache/dnf \
+    dnf config-manager --set-enabled crb && \
+    dnf -y install --setopt=keepcache=True \
+        # Qt runtime / build dependencies
+        mesa-libGL-devel \
+        mesa-libEGL-devel \
+        libxkbcommon-devel \
+        libxkbcommon-x11 \
+        fontconfig-devel \
+        freetype-devel \
+        libX11-devel \
+        libXext-devel \
+        libXrender-devel \
+        libxcb-devel \
+        xcb-util-renderutil-devel \
+        xcb-util-image-devel \
+        xcb-util-cursor \
+        xcb-util-keysyms \
+        xcb-util-wm \
+        libXi-devel \
+        libXcomposite-devel \
+        libXcursor-devel \
+        libXdamage-devel \
+        libXfixes-devel \
+        libXrandr-devel \
+        libXtst-devel \
+        dbus-devel \
+        glib2-devel \
+        wayland-devel
+
+# ── Install aqtinstall ─────────────────────────────────────────────────────────
+ARG AQT_VERSION=3.3.0
+RUN --mount=type=cache,target=/root/.cache/pip \
+    python3.11 -m pip install "aqtinstall==${AQT_VERSION}"
+
+# ── Install Qt ────────────────────────────────────────────────────────────────
+ARG QT_VERSION=6.12.0
+ARG QT_ARCH=linux_gcc_64
+ARG QT_ARCH_SHORT=gcc_64
+# A dependency of Qt requires qttasktree but not explicitely, so we need to force the installation.
+ARG QT_MODULES="qtcharts qt3d qtshadertools qttasktree"
+ARG QT_DIR=/opt/Qt
+
+RUN aqt install-qt --outputdir "${QT_DIR}" linux desktop "${QT_VERSION}" "${QT_ARCH}" \
+        ${QT_MODULES:+-m ${QT_MODULES}}
+
+# ── Environment variables ─────────────────────────────────────────────────────
+ENV QT_ROOT="${QT_DIR}/${QT_VERSION}/${QT_ARCH_SHORT}"
+ENV PATH="${QT_ROOT}/bin:${PATH}"
+# ":"-separated, as any CMAKE_PREFIX_PATH environment variable on Linux.
+ENV CMAKE_PREFIX_PATH="${QT_ROOT}:${AV_INSTALL}"
+
+# ── Smoke test ────────────────────────────────────────────────────────────────
+# Fails the build if a Qt library or the xcb platform plugin has an unresolved dependency.
+RUN qmake --version && \
+    ! ldd ${QT_ROOT}/lib/libQt6*.so ${QT_ROOT}/plugins/platforms/libqxcb.so | grep "not found"
+
+WORKDIR /workspace
+CMD ["bash"]

@@ -28,6 +28,10 @@ find_package(Qt6Quick REQUIRED)
 find_package(Qt6Qml REQUIRED)
 find_package(Qt6Charts REQUIRED)
 find_package(Qt6Gui REQUIRED)
+# Since Qt 6.10, private modules must be requested explicitly (before, Qt6Gui defines Qt6::GuiPrivate).
+if(Qt6Gui_VERSION VERSION_GREATER_EQUAL 6.10)
+    find_package(Qt6GuiPrivate REQUIRED)
+endif()
 find_package(Qt6 COMPONENTS ShaderTools)
 
 

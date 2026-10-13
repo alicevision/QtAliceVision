@@ -1,0 +1,4 @@
+# Allowlist: only what the Dockerfiles COPY is sent to the builder.
+*
+!CMakeLists.txt
+!src
