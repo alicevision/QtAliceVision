@@ -6,18 +6,29 @@ BaseCameraInfo::BaseCameraInfo(QObject* parent)
 
 bool BaseCameraInfo::operator==(const BaseCameraInfo& other) const
 {
-    return _fov == other._fov && _farPlane == other._farPlane && _imageWidth == other._imageWidth && _imageHeight == other._imageHeight;
-}
-
-void BaseCameraInfo::setBackendProjectionMatrix(const QMatrix4x4& bpm)
-{
-    _backendProjectionMatrix = bpm;
+    return _fov == other._fov && _farPlane == other._farPlane && _imageWidth == other._imageWidth && _imageHeight == other._imageHeight &&
+           _orthographic == other._orthographic && _orthographicWidth == other._orthographicWidth;
 }
 
 QMatrix4x4 BaseCameraInfo::getProjectionMatrix(double aspectRatio) const
 {
+    if (aspectRatio <= 0.0)
+    {
+        aspectRatio = 1.0;
+    }
+
     QMatrix4x4 ret = _backendProjectionMatrix;
-    ret.perspective(_fov, aspectRatio, _nearPlane, _farPlane);
+
+    if (_orthographic)
+    {
+        const float halfWidth = 0.5f * _orthographicWidth;
+        const float halfHeight = halfWidth / static_cast<float>(aspectRatio);
+        ret.ortho(-halfWidth, halfWidth, -halfHeight, halfHeight, _nearPlane, _farPlane);
+    }
+    else
+    {
+        ret.perspective(_fov, aspectRatio, _nearPlane, _farPlane);
+    }
 
     return ret;
 }
