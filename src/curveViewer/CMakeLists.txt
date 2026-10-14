@@ -1,9 +1,11 @@
 # Target srcs
 set(PLUGIN_SOURCES
+    CurveBandModel.cpp
     CurveModel.cpp
     )
 
 set(PLUGIN_HEADERS
+    CurveBandModel.hpp
     CurveModel.hpp
     )
 
