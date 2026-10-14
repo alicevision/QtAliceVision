@@ -29,8 +29,12 @@ qt_add_qml_module(meshViewer
         
         Camera/OrbitMotionInfo.hpp
         Camera/OrbitMotionInfo.cpp
+        Camera/AVMotionInfo.hpp
+        Camera/AVMotionInfo.cpp
         Camera/BaseCameraInfo.hpp
         Camera/BaseCameraInfo.cpp
+        Camera/AVCameraInfo.hpp
+        Camera/AVCameraInfo.cpp
 
         MeshLayer/MeshObject.hpp
         MeshLayer/MeshObject.cpp
