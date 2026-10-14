@@ -8,6 +8,7 @@ set(PLUGIN_SOURCES
     )
 
 set(PLUGIN_HEADERS
+    plugin.hpp
     CurveAxisTicks.hpp
     CurveBandModel.hpp
     CurveModel.hpp
@@ -58,3 +59,9 @@ set_target_properties(curveViewerPlugin
         VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}"
         )
 
+
+# Install settings
+install(FILES "qmldir"
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/qml/CurveViewer)
+install(TARGETS curveViewerPlugin
+        DESTINATION "${CMAKE_INSTALL_PREFIX}/qml/CurveViewer")
