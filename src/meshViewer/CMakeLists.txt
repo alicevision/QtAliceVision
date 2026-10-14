@@ -52,6 +52,19 @@ qt_add_qml_module(meshViewer
         AxisLayer/AxisRenderable.hpp
         AxisLayer/AxisRenderable.cpp
 
+        SfmDataLayer/SfmDataObject.hpp
+        SfmDataLayer/SfmDataObject.cpp
+        SfmDataLayer/SfmDataLayer.hpp
+        SfmDataLayer/SfmDataLayer.cpp
+        SfmDataLayer/SfmDataPicker.hpp
+        SfmDataLayer/SfmDataPicker.cpp
+        SfmDataLayer/SfmDataRenderable.hpp
+        SfmDataLayer/SfmDataRenderable.cpp
+        SfmDataLayer/SfmPointRenderable.hpp
+        SfmDataLayer/SfmPointRenderable.cpp
+        SfmDataLayer/SfmCameraRenderable.hpp
+        SfmDataLayer/SfmCameraRenderable.cpp
+        
         GridLayer/GridLayer.hpp
         GridLayer/GridRenderable.hpp
         GridLayer/GridRenderable.cpp
@@ -64,6 +77,7 @@ set(meshViewer_QMLTYPEREGISTRATIONS_INCLUDE_DIRS
     ${CMAKE_CURRENT_SOURCE_DIR}/AxisLayer
     ${CMAKE_CURRENT_SOURCE_DIR}/GridLayer
     ${CMAKE_CURRENT_SOURCE_DIR}/MeshLayer
+    ${CMAKE_CURRENT_SOURCE_DIR}/SfmDataLayer
 )
 
 set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/meshviewer_qmltyperegistrations.cpp
@@ -106,8 +120,11 @@ qt_add_shaders(meshViewer "mesh_shaders"
         shaders/meshMaterial.frag
         shaders/meshWire.vert
         shaders/meshWire.frag
+        shaders/pointSprite.vert
+        shaders/pointSprite.frag
         shaders/simpleColor.vert
         shaders/simpleColor.frag
+        shaders/instancedCameraShape.vert
         shaders/gridLayer.vert
         shaders/gridLayer.frag
 )
