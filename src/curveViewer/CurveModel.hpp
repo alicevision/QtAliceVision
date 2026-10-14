@@ -4,6 +4,8 @@
 #include <QColor>
 #include <QList>
 #include <QString>
+#include <QStringList>
+#include <QUrl>
 #include <QVariantList>
 
 #include <vector>
@@ -145,6 +147,26 @@ class CurveModel : public QAbstractListModel
 
     Q_INVOKABLE void setVisible(int row, bool visible);
     Q_INVOKABLE void setAllVisible(bool visible);
+
+    /**
+     * @brief Whether a file has one of the given extensions, e.g. to filter the files dropped on the viewer.
+     * @param url Local file url.
+     * @param extensions Extensions with their leading dot, compared case insensitively.
+     * A file name starting with its only dot (".usda") has no extension.
+     */
+    Q_INVOKABLE bool isAcceptedFile(const QUrl& url, const QStringList& extensions) const;
+
+    /**
+     * @brief Add the camera trajectory of an SfMData file: position X/Y/Z and rotation X/Y/Z per frame.
+     *
+     * Rotations are accumulated along the frames (sum of the rotation vectors between consecutive frames, world
+     * axes, degrees): continuous, and rotating around one axis gives a single growing angle, even past 180 degrees.
+     * Views without a pose are skipped. Each camera of a rig gets its own curves.
+     * @param url Local SfMData file url.
+     * The curves are grouped by the absolute file path, a file already loaded is skipped.
+     * @return The number of curves added (0 if the file is already loaded), -1 if the file could not be loaded.
+     */
+    Q_INVOKABLE int loadFromSfmData(const QUrl& url);
 
     const Curve& curve(int row) const { return _curves[static_cast<std::size_t>(row)]; }
     bool isValidRow(int row) const { return row >= 0 && row < static_cast<int>(_curves.size()); }

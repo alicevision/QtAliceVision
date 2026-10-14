@@ -42,6 +42,8 @@ qt6_add_shaders(curveViewerPlugin "curveViewerPlugin_shaders"
 
 target_link_libraries(curveViewerPlugin
   PUBLIC
+    aliceVision_sfmData
+    aliceVision_sfmDataIO
     Qt6::Core
     Qt6::Gui
     Qt6::Qml

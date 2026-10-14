@@ -1,8 +1,15 @@
 #include "CurveModel.hpp"
 
+#include <aliceVision/sfmData/SfMData.hpp>
+#include <aliceVision/sfmDataIO/sfmDataIO.hpp>
+
+#include <QFileInfo>
+
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <map>
+#include <numbers>
 
 namespace curveViewer {
 
@@ -343,6 +350,94 @@ void CurveModel::setAllVisible(bool visible)
         c.visible = visible;
     }
     Q_EMIT dataChanged(index(0), index(rowCount() - 1), {VisibleRole});
+}
+
+bool CurveModel::isAcceptedFile(const QUrl& url, const QStringList& extensions) const
+{
+    const QString name = QFileInfo(url.toLocalFile()).fileName();
+    const qsizetype dot = name.lastIndexOf(QLatin1Char('.'));
+    return dot > 0 && extensions.contains(name.mid(dot), Qt::CaseInsensitive);
+}
+
+int CurveModel::loadFromSfmData(const QUrl& url)
+{
+    using namespace aliceVision;
+
+    // The curves of a file are grouped by its absolute path: skip a file already loaded
+    const QString path = QFileInfo(url.toLocalFile()).absoluteFilePath();
+    if (std::any_of(_curves.begin(), _curves.end(), [&path](const Curve& c) { return c.group == path; }))
+    {
+        return 0;
+    }
+
+    sfmData::SfMData sfmData;
+    if (!sfmDataIO::load(sfmData, path.toStdString(), sfmDataIO::ESfMData(sfmDataIO::ESfMData::VIEWS | sfmDataIO::ESfMData::EXTRINSICS)))
+    {
+        qWarning() << "[CurveModel] Failed to load SfMData:" << path;
+        return -1;
+    }
+
+    struct Sample
+    {
+        double frame;
+        Vec3 center;
+        Mat3 rotation;  // camera to world
+    };
+    std::map<QString, std::vector<Sample>> cameras;
+
+    for (const auto& [viewId, view] : sfmData.getViews())
+    {
+        if (!sfmData.isPoseDefined(*view))
+        {
+            continue;
+        }
+
+        const geometry::Pose3 pose = sfmData.getPose(*view).getTransform();
+        const QString camera = view->isPartOfRig() && !view->isPoseIndependant()
+                                 ? QStringLiteral(" rig %1 camera %2").arg(view->getRigId()).arg(view->getSubPoseId())
+                                 : QString();
+        cameras[camera].push_back({static_cast<double>(view->getFrameId()), pose.center(), pose.rotation().transpose()});
+    }
+
+    static const char* names[6] = {"position X", "position Y", "position Z", "rotation X", "rotation Y", "rotation Z"};
+    constexpr double toDegrees = 180.0 / std::numbers::pi;
+    int added = 0;
+    for (auto& [camera, samples] : cameras)
+    {
+        std::sort(samples.begin(), samples.end(), [](const Sample& a, const Sample& b) { return a.frame < b.frame; });
+
+        QList<double> xs;
+        QList<double> ys[6];
+        // Accumulated rotation (world axes, degrees): sum of the small rotation vectors between consecutive frames,
+        // continuous whatever the motion, and unwrapped past 180 degrees
+        Vec3 rotation = Vec3::Zero();
+        const Mat3* previous = nullptr;
+        for (const Sample& sample : samples)
+        {
+            if (previous)
+            {
+                const Eigen::AngleAxisd step(Mat3(sample.rotation * previous->transpose()));
+                rotation += step.axis() * step.angle() * toDegrees;
+            }
+            previous = &sample.rotation;
+
+            xs.push_back(sample.frame);
+            for (int k = 0; k < 3; ++k)
+            {
+                ys[k].push_back(sample.center[k]);
+                ys[3 + k].push_back(rotation[k]);
+            }
+        }
+
+        for (int k = 0; k < 6; ++k)
+        {
+            if (addCurve(QStringLiteral("%1 %2").arg(camera, QLatin1String(names[k])).trimmed(), xs, ys[k], QColor(), path) >= 0)
+            {
+                ++added;
+            }
+        }
+    }
+    return added;
 }
 
 QColor CurveModel::nextColor()
