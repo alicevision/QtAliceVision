@@ -15,3 +15,7 @@ endif()
 if(BUILD_CURVEVIEWER)
     add_subdirectory(curveViewer)
 endif()
+
+if(BUILD_MESHVIEWER)
+    add_subdirectory(meshViewer)
+endif()

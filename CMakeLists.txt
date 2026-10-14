@@ -6,6 +6,7 @@ option(BUILD_IMAGEIO "Build qtAliceVisionImageIO plugin" ON)
 option(BUILD_DEPTHMAPENTITY "Build depthMapEntity plugin" ON)
 option(BUILD_SFM "Build qtAliceVision and qmlSfmData plugin" ON)
 option(BUILD_CURVEVIEWER "Build curveViewer plugin" ON)
+option(BUILD_MESHVIEWER "Build meshViewer plugin" ON)
 
 # C++20
 set(CMAKE_CXX_STANDARD 20)
