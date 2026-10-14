@@ -32,11 +32,17 @@ qt_add_qml_module(meshViewer
         Camera/BaseCameraInfo.hpp
         Camera/BaseCameraInfo.cpp
 
+        AxisLayer/AxisLayer.hpp
+        AxisLayer/AxisGeometry.hpp
+        AxisLayer/AxisRenderable.hpp
+        AxisLayer/AxisRenderable.cpp
+
 )
 
 set(meshViewer_QMLTYPEREGISTRATIONS_INCLUDE_DIRS
     ${CMAKE_CURRENT_SOURCE_DIR}/Core
     ${CMAKE_CURRENT_SOURCE_DIR}/Camera
+    ${CMAKE_CURRENT_SOURCE_DIR}/AxisLayer
 )
 
 set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/meshviewer_qmltyperegistrations.cpp
