@@ -60,6 +60,10 @@ qt_add_qml_module(meshViewer
         AxisLayer/AxisRenderable.hpp
         AxisLayer/AxisRenderable.cpp
 
+        PointLayer/PointLayer.hpp
+        PointLayer/PointRenderable.hpp
+        PointLayer/PointRenderable.cpp
+
         SfmDataLayer/SfmDataObject.hpp
         SfmDataLayer/SfmDataObject.cpp
         SfmDataLayer/SfmDataLayer.hpp
@@ -91,6 +95,7 @@ set(meshViewer_QMLTYPEREGISTRATIONS_INCLUDE_DIRS
     ${CMAKE_CURRENT_SOURCE_DIR}/GridLayer
     ${CMAKE_CURRENT_SOURCE_DIR}/ImageLayer
     ${CMAKE_CURRENT_SOURCE_DIR}/MeshLayer
+    ${CMAKE_CURRENT_SOURCE_DIR}/PointLayer
     ${CMAKE_CURRENT_SOURCE_DIR}/SfmDataLayer
     ${CMAKE_CURRENT_SOURCE_DIR}/DepthmapLayer
 )
@@ -139,6 +144,7 @@ qt_add_shaders(meshViewer "mesh_shaders"
         shaders/pointSprite.frag
         shaders/simpleColor.vert
         shaders/simpleColor.frag
+        shaders/instancedColor.vert
         shaders/instancedCameraShape.vert
         shaders/imageQuad.vert
         shaders/imageQuad.frag
