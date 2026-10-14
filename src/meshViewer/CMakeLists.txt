@@ -36,6 +36,14 @@ qt_add_qml_module(meshViewer
         Camera/AVCameraInfo.hpp
         Camera/AVCameraInfo.cpp
 
+        DepthmapLayer/DepthmapLayer.hpp
+        DepthmapLayer/DepthmapLayer.cpp
+        DepthmapLayer/DepthmapRenderable.hpp
+        DepthmapLayer/DepthmapRenderable.cpp
+        DepthmapLayer/DepthmapData.hpp
+        DepthmapLayer/DepthmapLoader.hpp
+        DepthmapLayer/DepthmapLoader.cpp
+        
         MeshLayer/MeshObject.hpp
         MeshLayer/MeshObject.cpp
         MeshLayer/MeshLayer.hpp
@@ -84,6 +92,7 @@ set(meshViewer_QMLTYPEREGISTRATIONS_INCLUDE_DIRS
     ${CMAKE_CURRENT_SOURCE_DIR}/ImageLayer
     ${CMAKE_CURRENT_SOURCE_DIR}/MeshLayer
     ${CMAKE_CURRENT_SOURCE_DIR}/SfmDataLayer
+    ${CMAKE_CURRENT_SOURCE_DIR}/DepthmapLayer
 )
 
 set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/meshviewer_qmltyperegistrations.cpp
