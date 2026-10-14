@@ -65,6 +65,11 @@ qt_add_qml_module(meshViewer
         SfmDataLayer/SfmCameraRenderable.hpp
         SfmDataLayer/SfmCameraRenderable.cpp
         
+        ImageLayer/ImageLayer.hpp
+        ImageLayer/ImageLayer.cpp
+        ImageLayer/ImageRenderable.hpp
+        ImageLayer/ImageRenderable.cpp
+
         GridLayer/GridLayer.hpp
         GridLayer/GridRenderable.hpp
         GridLayer/GridRenderable.cpp
@@ -76,6 +81,7 @@ set(meshViewer_QMLTYPEREGISTRATIONS_INCLUDE_DIRS
     ${CMAKE_CURRENT_SOURCE_DIR}/Camera
     ${CMAKE_CURRENT_SOURCE_DIR}/AxisLayer
     ${CMAKE_CURRENT_SOURCE_DIR}/GridLayer
+    ${CMAKE_CURRENT_SOURCE_DIR}/ImageLayer
     ${CMAKE_CURRENT_SOURCE_DIR}/MeshLayer
     ${CMAKE_CURRENT_SOURCE_DIR}/SfmDataLayer
 )
@@ -125,6 +131,8 @@ qt_add_shaders(meshViewer "mesh_shaders"
         shaders/simpleColor.vert
         shaders/simpleColor.frag
         shaders/instancedCameraShape.vert
+        shaders/imageQuad.vert
+        shaders/imageQuad.frag
         shaders/gridLayer.vert
         shaders/gridLayer.frag
 )
