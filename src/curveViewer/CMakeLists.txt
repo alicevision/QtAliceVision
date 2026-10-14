@@ -1,10 +1,12 @@
 # Target srcs
 set(PLUGIN_SOURCES
+    CurveAxisTicks.cpp
     CurveBandModel.cpp
     CurveModel.cpp
     )
 
 set(PLUGIN_HEADERS
+    CurveAxisTicks.hpp
     CurveBandModel.hpp
     CurveModel.hpp
     )
