@@ -86,6 +86,11 @@ qt_add_qml_module(meshViewer
         GridLayer/GridRenderable.hpp
         GridLayer/GridRenderable.cpp
 
+        BoxControlLayer/BoxControlLayer.hpp
+        BoxControlLayer/BoxControlLayer.cpp
+        BoxControlLayer/BoxControlGeometry.hpp
+        BoxControlLayer/BoxControlRenderable.hpp
+        BoxControlLayer/BoxControlRenderable.cpp
 )
 
 set(meshViewer_QMLTYPEREGISTRATIONS_INCLUDE_DIRS
@@ -98,6 +103,7 @@ set(meshViewer_QMLTYPEREGISTRATIONS_INCLUDE_DIRS
     ${CMAKE_CURRENT_SOURCE_DIR}/PointLayer
     ${CMAKE_CURRENT_SOURCE_DIR}/SfmDataLayer
     ${CMAKE_CURRENT_SOURCE_DIR}/DepthmapLayer
+    ${CMAKE_CURRENT_SOURCE_DIR}/BoxControlLayer
 )
 
 set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/meshviewer_qmltyperegistrations.cpp
@@ -150,6 +156,8 @@ qt_add_shaders(meshViewer "mesh_shaders"
         shaders/imageQuad.frag
         shaders/gridLayer.vert
         shaders/gridLayer.frag
+        shaders/colorAlpha.vert
+        shaders/colorAlpha.frag
 )
 
 # Install the plugin shared library
