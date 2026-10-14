@@ -37,12 +37,17 @@ qt_add_qml_module(meshViewer
         AxisLayer/AxisRenderable.hpp
         AxisLayer/AxisRenderable.cpp
 
+        GridLayer/GridLayer.hpp
+        GridLayer/GridRenderable.hpp
+        GridLayer/GridRenderable.cpp
+
 )
 
 set(meshViewer_QMLTYPEREGISTRATIONS_INCLUDE_DIRS
     ${CMAKE_CURRENT_SOURCE_DIR}/Core
     ${CMAKE_CURRENT_SOURCE_DIR}/Camera
     ${CMAKE_CURRENT_SOURCE_DIR}/AxisLayer
+    ${CMAKE_CURRENT_SOURCE_DIR}/GridLayer
 )
 
 set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/meshviewer_qmltyperegistrations.cpp
@@ -79,6 +84,8 @@ qt_add_shaders(meshViewer "mesh_shaders"
     FILES
         shaders/simpleColor.vert
         shaders/simpleColor.frag
+        shaders/gridLayer.vert
+        shaders/gridLayer.frag
 )
 
 # Install the plugin shared library
