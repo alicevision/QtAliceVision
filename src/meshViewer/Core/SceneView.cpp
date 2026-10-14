@@ -183,6 +183,46 @@ void SceneView::setCameraInfo(CameraInfo* ci)
     update();
 }
 
+QMatrix4x4 SceneView::viewMatrix() const
+{
+    return _motionInfo ? _motionInfo->getMatrix() : QMatrix4x4{};
+}
+
+QMatrix4x4 SceneView::projectionMatrix() const
+{
+    if (!_cameraInfo)
+    {
+        return {};
+    }
+
+    const double aspectRatio = height() > 0 ? width() / height() : 1.0;
+    return _cameraInfo->getProjectionMatrix(aspectRatio);
+}
+
+QVector2D SceneView::worldToScreen(const QVector3D& point) const
+{
+    const QVector4D clip = projectionMatrix() * viewMatrix() * QVector4D(point, 1.0f);
+    if (qFuzzyIsNull(clip.w()))
+    {
+        return {};
+    }
+
+    // NDC → screen, inverse of the mapping in unprojectRay()
+    const float ndcX = clip.x() / clip.w();
+    const float ndcY = clip.y() / clip.w();
+    return QVector2D((ndcX + 1.0f) * 0.5f * float(width()), (1.0f - ndcY) * 0.5f * float(height()));
+}
+
+QVector3D SceneView::cameraPosition() const
+{
+    return viewMatrix().inverted().column(3).toVector3D();
+}
+
+Ray SceneView::screenRay(const QVector2D& mousePos) const
+{
+    return unprojectRay(projectionMatrix(), viewMatrix(), mousePos, float(width()), float(height()));
+}
+
 void SceneView::pick(const QVector2D& mousePos, int userCode)
 {
     _pendingPickRequest.pending = true;
