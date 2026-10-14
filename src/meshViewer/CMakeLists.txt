@@ -32,6 +32,17 @@ qt_add_qml_module(meshViewer
         Camera/BaseCameraInfo.hpp
         Camera/BaseCameraInfo.cpp
 
+        MeshLayer/MeshObject.hpp
+        MeshLayer/MeshObject.cpp
+        MeshLayer/MeshLayer.hpp
+        MeshLayer/MeshLayer.cpp
+        MeshLayer/MeshRenderable.hpp
+        MeshLayer/MeshRenderable.cpp
+        MeshLayer/MeshLoader.hpp
+        MeshLayer/MeshLoader.cpp
+        MeshLayer/MeshPicker.hpp
+        MeshLayer/MeshPicker.cpp
+        
         AxisLayer/AxisLayer.hpp
         AxisLayer/AxisGeometry.hpp
         AxisLayer/AxisRenderable.hpp
@@ -48,6 +59,7 @@ set(meshViewer_QMLTYPEREGISTRATIONS_INCLUDE_DIRS
     ${CMAKE_CURRENT_SOURCE_DIR}/Camera
     ${CMAKE_CURRENT_SOURCE_DIR}/AxisLayer
     ${CMAKE_CURRENT_SOURCE_DIR}/GridLayer
+    ${CMAKE_CURRENT_SOURCE_DIR}/MeshLayer
 )
 
 set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/meshviewer_qmltyperegistrations.cpp
@@ -82,6 +94,14 @@ qt_add_shaders(meshViewer "mesh_shaders"
     PREFIX "/shaders"
     BASE "${CMAKE_CURRENT_SOURCE_DIR}/shaders"
     FILES
+        shaders/meshShaded.vert
+        shaders/meshShaded.frag
+        shaders/meshNormal.vert
+        shaders/meshNormal.frag
+        shaders/meshMaterial.vert
+        shaders/meshMaterial.frag
+        shaders/meshWire.vert
+        shaders/meshWire.frag
         shaders/simpleColor.vert
         shaders/simpleColor.frag
         shaders/gridLayer.vert
