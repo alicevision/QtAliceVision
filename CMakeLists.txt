@@ -7,11 +7,13 @@ project(QtAliceVisionPlugin LANGUAGES CXX VERSION 0.1.0)
 option(BUILD_IMAGEIO "Build qtAliceVisionImageIO plugin" ON)
 option(BUILD_DEPTHMAPENTITY "Build depthMapEntity plugin" ON)
 option(BUILD_SFM "Build qtAliceVision and qmlSfmData plugin" ON)
+option(BUILD_TESTS "Build the QML tests (run against the installed plugins)" OFF)
 option(BUILD_CURVEVIEWER "Build curveViewer plugin" ON)
 
 message(STATUS "BUILD_IMAGEIO: ${BUILD_IMAGEIO}")
 message(STATUS "BUILD_DEPTHMAPENTITY: ${BUILD_DEPTHMAPENTITY}")
 message(STATUS "BUILD_SFM: ${BUILD_SFM}")
+message(STATUS "BUILD_TESTS: ${BUILD_TESTS}")
 message(STATUS "BUILD_CURVEVIEWER: ${BUILD_CURVEVIEWER}")
 
 
@@ -57,3 +59,8 @@ find_package(AliceVision REQUIRED)
 
 # Builds
 add_subdirectory(src)
+
+if(BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(tests)
+endif()

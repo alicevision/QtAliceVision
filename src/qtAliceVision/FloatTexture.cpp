@@ -66,11 +66,12 @@ void FloatTexture::commitTextureOperations(QRhi* rhi, QRhiResourceUpdateBatch* r
     }
 
     // Downscale the texture to fit inside the max texture limit if it is too big.
+    // Downscale into a copy owned by this texture: the source image is shared with the viewer and the image cache.
     while (_maxTextureSize != -1 && (_srcImage->width() > _maxTextureSize || _srcImage->height() > _maxTextureSize))
     {
-        FloatImage tmp;
-        aliceVision::image::imageHalfSample(*_srcImage, tmp);
-        *_srcImage = std::move(tmp);
+        auto downscaled = std::make_shared<FloatImage>();
+        aliceVision::image::imageHalfSample(*_srcImage, *downscaled);
+        _srcImage = std::move(downscaled);
     }
     _textureSize = {_srcImage->width(), _srcImage->height()};
 
@@ -82,7 +83,10 @@ void FloatTexture::commitTextureOperations(QRhi* rhi, QRhiResourceUpdateBatch* r
         return;
     }
 
-    const QByteArray textureData(reinterpret_cast<const char*>(_srcImage->data()), _srcImage->size() * sizeof(*_srcImage->data()));
+    // Reference the pixels instead of copying them: the image is kept alive by this texture,
+    // which the scene graph does not release before the upload batch is submitted
+    const QByteArray textureData =
+      QByteArray::fromRawData(reinterpret_cast<const char*>(_srcImage->data()), _srcImage->size() * sizeof(*_srcImage->data()));
     resourceUpdates->uploadTexture(_rhiTexture, QRhiTextureUploadEntry(0, 0, QRhiTextureSubresourceUploadDescription(textureData)));
 
     if (hasMipmaps())
