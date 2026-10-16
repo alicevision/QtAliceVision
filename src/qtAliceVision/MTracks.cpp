@@ -50,15 +50,11 @@ void TracksDirectIORunnable::run()
     
     if (!aliceVision::track::loadTracks(*tracks, _filename))
     {
-        if (tracks) 
-        {
-            delete tracks;
-        }
-
-        if (tracksPerView)
-        {
-            delete tracksPerView;
-        }
+        qDebug() << "[QtAliceVision] Failed to load tracks file: " << QString::fromStdString(_filename);
+        delete tracks;
+        delete tracksPerView;
+        Q_EMIT resultReady(nullptr, nullptr);
+        return;
     }
 
     aliceVision::track::computeTracksPerView(*tracks, *tracksPerView);
