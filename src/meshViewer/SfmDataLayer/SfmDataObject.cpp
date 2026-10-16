@@ -36,6 +36,9 @@ std::unique_ptr<SfmDataContent> loadSfmDataFile(const QString& path)
         return result;
     }
 
+    result->viewCount = static_cast<int>(sfmData.getViews().size());
+    result->intrinsicCount = static_cast<int>(sfmData.getIntrinsics().size());
+
     result->points.reserve(sfmData.getLandmarks().size());
     for (const auto& [trackId, landmark] : sfmData.getLandmarks())
     {
@@ -112,6 +115,8 @@ void SfmDataObject::setSource(const QString& path)
         emit validChanged();
         emit pointCountChanged();
         emit cameraCountChanged();
+        emit viewCountChanged();
+        emit intrinsicCountChanged();
         emit maxResectionIdChanged();
         emit pointCloudBoundingBoxChanged();
         emit cameraCenterBoundingBoxChanged();
@@ -253,6 +258,8 @@ void SfmDataObject::onLoadFinished()
     emit errorStringChanged();
     emit pointCountChanged();
     emit cameraCountChanged();
+    emit viewCountChanged();
+    emit intrinsicCountChanged();
     emit maxResectionIdChanged();
     emit limitResectionIdChanged();
     emit pointCloudBoundingBoxChanged();

@@ -61,6 +61,8 @@ struct SfmDataContent
     std::vector<SfmDataCameraInstance> cameras;                                     /**< Reconstructed cameras, in file order. */
     std::unordered_map<aliceVision::IndexT, SfmDataCameraInstance> cameraPerViewId; /**< Reconstructed cameras, by view id. */
 
+    int viewCount = 0;      /**< Total number of views, reconstructed or not. */
+    int intrinsicCount = 0; /**< Total number of intrinsics. */
     quint32 maxResectionId = 0; /**< Largest resection id among the cameras. */
     QString errorString;        /**< Error message when loading failed. */
     bool valid = false;         /**< True when loading succeeded. */
@@ -92,6 +94,11 @@ class SfmDataObject : public QObject
     Q_PROPERTY(int pointCount READ pointCount NOTIFY pointCountChanged)
     /** @brief Number of reconstructed cameras. */
     Q_PROPERTY(int cameraCount READ cameraCount NOTIFY cameraCountChanged)
+    /** @brief Total number of views, reconstructed or not. */
+    Q_PROPERTY(int viewCount READ viewCount NOTIFY viewCountChanged)
+    /** @brief Total number of intrinsics. */
+    Q_PROPERTY(int intrinsicCount READ intrinsicCount NOTIFY intrinsicCountChanged)
+    /** @brief Largest resection id among the cameras. */
     Q_PROPERTY(quint32 maxResectionId READ maxResectionId NOTIFY maxResectionIdChanged)
     /** @brief Cameras with a larger resection id are hidden by SfmDataLayer. */
     Q_PROPERTY(quint32 limitResectionId READ limitResectionId WRITE setLimitResectionId NOTIFY limitResectionIdChanged)
@@ -145,6 +152,17 @@ class SfmDataObject : public QObject
     {
         return _content ? static_cast<int>(_content->cameraPerViewId.size()) : 0;
     }
+    /** @brief Returns the total number of views. */
+    int viewCount() const
+    {
+        return _content ? _content->viewCount : 0;
+    }
+    /** @brief Returns the total number of intrinsics. */
+    int intrinsicCount() const
+    {
+        return _content ? _content->intrinsicCount : 0;
+    }
+    /** @brief Returns the largest resection id among the cameras. */
     quint32 maxResectionId() const
     {
         return _content ? _content->maxResectionId : 0;
@@ -232,6 +250,11 @@ class SfmDataObject : public QObject
     void pointCountChanged();
     /** @brief Emitted when the camera count changes. */
     void cameraCountChanged();
+    /** @brief Emitted when the view count changes. */
+    void viewCountChanged();
+    /** @brief Emitted when the intrinsic count changes. */
+    void intrinsicCountChanged();
+    /** @brief Emitted when the largest resection id changes. */
     void maxResectionIdChanged();
     /** @brief Emitted when the resection id limit changes. */
     void limitResectionIdChanged();
