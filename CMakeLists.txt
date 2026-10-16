@@ -8,11 +8,13 @@ option(BUILD_IMAGEIO "Build qtAliceVisionImageIO plugin" ON)
 option(BUILD_DEPTHMAPENTITY "Build depthMapEntity plugin" ON)
 option(BUILD_SFM "Build qtAliceVision and qmlSfmData plugin" ON)
 option(BUILD_TESTS "Build the QML tests (run against the installed plugins)" OFF)
+option(BUILD_CURVEVIEWER "Build curveViewer plugin" ON)
 
 message(STATUS "BUILD_IMAGEIO: ${BUILD_IMAGEIO}")
 message(STATUS "BUILD_DEPTHMAPENTITY: ${BUILD_DEPTHMAPENTITY}")
 message(STATUS "BUILD_SFM: ${BUILD_SFM}")
 message(STATUS "BUILD_TESTS: ${BUILD_TESTS}")
+message(STATUS "BUILD_CURVEVIEWER: ${BUILD_CURVEVIEWER}")
 
 
 # CMake Find modules
@@ -30,6 +32,10 @@ find_package(Qt6Quick REQUIRED)
 find_package(Qt6Qml REQUIRED)
 find_package(Qt6Charts REQUIRED)
 find_package(Qt6Gui REQUIRED)
+# Since Qt 6.10, private modules must be requested explicitly (before, Qt6Gui defines Qt6::GuiPrivate).
+if(Qt6Gui_VERSION VERSION_GREATER_EQUAL 6.10)
+    find_package(Qt6GuiPrivate REQUIRED)
+endif()
 find_package(Qt6 COMPONENTS ShaderTools)
 
 

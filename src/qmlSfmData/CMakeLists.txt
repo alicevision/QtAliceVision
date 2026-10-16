@@ -15,7 +15,6 @@ set(PLUGIN_HEADERS
 )
 
 # Qt module dependency
-find_package(Qt6 COMPONENTS Qml REQUIRED)
 find_package(Qt6 COMPONENTS 3DCore REQUIRED)
 find_package(Qt6 COMPONENTS 3DRender REQUIRED)
 find_package(Qt6 COMPONENTS 3DExtras REQUIRED)
