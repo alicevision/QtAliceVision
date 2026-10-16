@@ -47,6 +47,8 @@ struct SfmDataContent
     std::vector<SfmDataCameraInstance> cameras;
     std::unordered_map<aliceVision::IndexT, SfmDataCameraInstance> cameraPerViewId;
 
+    int viewCount = 0;      /**< Total number of views, reconstructed or not. */
+    int intrinsicCount = 0; /**< Total number of intrinsics. */
     quint32 maxResectionId = 0;
     QString errorString;
     bool valid = false;
@@ -66,6 +68,8 @@ class SfmDataObject : public QObject
     Q_PROPERTY(bool valid READ valid NOTIFY validChanged)
     Q_PROPERTY(int pointCount READ pointCount NOTIFY pointCountChanged)
     Q_PROPERTY(int cameraCount READ cameraCount NOTIFY cameraCountChanged)
+    Q_PROPERTY(int viewCount READ viewCount NOTIFY viewCountChanged)
+    Q_PROPERTY(int intrinsicCount READ intrinsicCount NOTIFY intrinsicCountChanged)
     Q_PROPERTY(quint32 maxResectionId READ maxResectionId NOTIFY maxResectionIdChanged)
     Q_PROPERTY(quint32 limitResectionId READ limitResectionId WRITE setLimitResectionId NOTIFY limitResectionIdChanged)
     Q_PROPERTY(QVariantList pointCloudBoundingBox READ pointCloudBoundingBox NOTIFY pointCloudBoundingBoxChanged)
@@ -100,6 +104,14 @@ class SfmDataObject : public QObject
     int cameraCount() const
     {
         return _content ? static_cast<int>(_content->cameraPerViewId.size()) : 0;
+    }
+    int viewCount() const
+    {
+        return _content ? _content->viewCount : 0;
+    }
+    int intrinsicCount() const
+    {
+        return _content ? _content->intrinsicCount : 0;
     }
     quint32 maxResectionId() const
     {
@@ -155,6 +167,8 @@ class SfmDataObject : public QObject
     void validChanged();
     void pointCountChanged();
     void cameraCountChanged();
+    void viewCountChanged();
+    void intrinsicCountChanged();
     void maxResectionIdChanged();
     void limitResectionIdChanged();
     void pointCloudBoundingBoxChanged();
