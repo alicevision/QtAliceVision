@@ -1,0 +1,207 @@
+name: Build Linux
+
+on:
+  workflow_call:
+
+env:
+  QT_VERSION: 6.11.1
+  QT_ARCH: linux_gcc_64
+  QT_MODULES: qtcharts qt3d qtshadertools
+
+jobs:
+  # Resolve the AliceVision nightly binaries to build against, the exact AliceVision
+  # commit they were built from and the deps docker image used to build them.
+  # The nightly bundle does not ship headers, so we install them from the sources
+  # of the same commit, and we need the exact same deps to link against.
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      av_url: ${{ steps.nightly.outputs.av_url }}
+      av_sha: ${{ steps.nightly.outputs.av_sha }}
+      deps_image: ${{ steps.nightly.outputs.deps_image }}
+    steps:
+      - name: Resolve AliceVision nightly
+        id: nightly
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          AV_URL=$(gh release view nightly --repo alicevision/AliceVision --json assets \
+                   --jq '.assets[] | select(.name | endswith("linux.tar.gz")) | .url')
+          # Asset name: AliceVision-nightly-<date>-<short sha>-linux.tar.gz
+          AV_SHORT_SHA=$(basename "${AV_URL}" | sed -E 's/^AliceVision-nightly-[0-9]+-([0-9a-f]+)-linux\.tar\.gz$/\1/')
+          AV_SHA=$(gh api "repos/alicevision/AliceVision/commits/${AV_SHORT_SHA}" --jq '.sha')
+          DEPS_IMAGE=$(gh api "repos/alicevision/AliceVision/contents/.github/workflows/build-linux.yml?ref=${AV_SHA}" \
+                       -H "Accept: application/vnd.github.raw" \
+                       | sed -nE 's/^\s*image:\s*"?([^"]*alicevision-deps[^"]*)"?\s*$/\1/p' | head -n1)
+          echo "AliceVision nightly: ${AV_URL}"
+          echo "AliceVision commit:  ${AV_SHA}"
+          echo "Deps docker image:   ${DEPS_IMAGE}"
+          test -n "${AV_URL}" && test -n "${AV_SHA}" && test -n "${DEPS_IMAGE}"
+          echo "av_url=${AV_URL}" >> $GITHUB_OUTPUT
+          echo "av_sha=${AV_SHA}" >> $GITHUB_OUTPUT
+          echo "deps_image=${DEPS_IMAGE}" >> $GITHUB_OUTPUT
+
+  build-linux:
+    needs: prepare
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ needs.prepare.outputs.deps_image }}
+    env:
+      BUILD_TYPE: Release
+      DEPS_INSTALL_DIR: /opt/AliceVision_install
+      QT_DIR: /opt/Qt
+      ALICEVISION_BUNDLE: ${{ github.workspace }}/../AV_bundle
+      ALICEVISION_SRC: ${{ github.workspace }}/../AV_src
+      QTALICEVISION_ROOT: ${{ github.workspace }}/../QTAV_install
+      LOG_DIR: ${{ github.workspace }}/../logs
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Install system dependencies
+        run: |
+          dnf install -y 'dnf-command(config-manager)' epel-release
+          dnf config-manager --set-enabled crb
+          dnf install -y \
+            git tar gzip zstd \
+            mesa-libGL-devel mesa-libEGL-devel \
+            libxkbcommon-devel libxkbcommon-x11 \
+            fontconfig-devel freetype-devel \
+            libX11-devel libXext-devel libXrender-devel libxcb-devel \
+            xcb-util-renderutil-devel xcb-util-image-devel xcb-util-cursor xcb-util-keysyms \
+            libXi-devel libXcomposite-devel libXcursor-devel libXdamage-devel \
+            libXfixes-devel libXrandr-devel libXtst-devel \
+            dbus-devel glib2-devel wayland-devel
+          dnf clean all
+
+      - uses: actions/checkout@v4
+
+      # Qt
+
+      - name: Cache Qt
+        id: cache-qt
+        uses: actions/cache@v4
+        with:
+          path: /opt/Qt
+          key: qt-${{ env.QT_VERSION }}-${{ env.QT_ARCH }}-${{ env.QT_MODULES }}
+
+      - name: Install Qt
+        if: steps.cache-qt.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p "${LOG_DIR}"
+          {
+            python -m pip install aqtinstall
+            python -m aqt install-qt --outputdir "${QT_DIR}" \
+              linux desktop "${QT_VERSION}" "${QT_ARCH}" -m ${QT_MODULES}
+          } 2>&1 | tee "${LOG_DIR}/install-qt.log"
+
+      - name: Setup Qt environment
+        run: |
+          QT_ROOT=$(dirname $(dirname $(find "${QT_DIR}/${QT_VERSION}" -maxdepth 3 -path "*/bin/qmake" | head -n1)))
+          echo "Qt root: ${QT_ROOT}"
+          echo "QT_ROOT=${QT_ROOT}" >> $GITHUB_ENV
+          echo "${QT_ROOT}/bin" >> $GITHUB_PATH
+
+      # AliceVision
+
+      - name: Fetch AliceVision nightly binaries
+        run: |
+          mkdir -p "${ALICEVISION_BUNDLE}"
+          echo "Downloading: ${{ needs.prepare.outputs.av_url }}"
+          curl -fsSL "${{ needs.prepare.outputs.av_url }}" | tar -xz -C "${ALICEVISION_BUNDLE}" --strip-components=1
+
+      # The nightly bundle does not contain the headers: install them from the
+      # sources of the commit the nightly was built from.
+      - name: Install AliceVision headers
+        run: |
+          mkdir -p "${LOG_DIR}"
+          {
+            mkdir -p "${ALICEVISION_SRC}"
+            curl -fsSL "https://github.com/alicevision/AliceVision/archive/${{ needs.prepare.outputs.av_sha }}.tar.gz" \
+              | tar -xz -C "${ALICEVISION_SRC}" --strip-components=1
+            # Configure only (same options as the AliceVision CI) to generate config.hpp
+            cmake -S "${ALICEVISION_SRC}" -B "${ALICEVISION_SRC}/build" \
+              -G Ninja \
+              -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
+              -DBUILD_SHARED_LIBS=ON \
+              -DCMAKE_PREFIX_PATH:PATH="${DEPS_INSTALL_DIR}" \
+              -DCMAKE_INSTALL_PREFIX:PATH="${ALICEVISION_BUNDLE}" \
+              -DTARGET_ARCHITECTURE=core \
+              -DALICEVISION_USE_OPENCV=ON \
+              -DALICEVISION_USE_CUDA=ON \
+              -DALICEVISION_USE_CCTAG=ON \
+              -DALICEVISION_USE_POPSIFT=ON \
+              -DALICEVISION_USE_ALEMBIC=ON \
+              -DALICEVISION_USE_USD=ON \
+              -DOpenCV_DIR:PATH="${DEPS_INSTALL_DIR}/share/OpenCV" \
+              -DCeres_DIR:PATH="${DEPS_INSTALL_DIR}/share/Ceres" \
+              -DAlembic_DIR:PATH="${DEPS_INSTALL_DIR}/lib/cmake/Alembic"
+            cmake --install "${ALICEVISION_SRC}/build" --component headers
+            CONFIG_HPP=$(find "${ALICEVISION_SRC}/build" -path "*/aliceVision/config.hpp" | head -n1)
+            cp -v "${CONFIG_HPP}" "${ALICEVISION_BUNDLE}/include/aliceVision/"
+          } 2>&1 | tee "${LOG_DIR}/install-alicevision-headers.log"
+
+      # qtAliceVision
+
+      - name: Configure CMake
+        run: |
+          mkdir -p "${LOG_DIR}"
+          {
+            cmake -B ./build -S . \
+              -G Ninja \
+              -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
+              -DBUILD_SHARED_LIBS:BOOL=ON \
+              -DCMAKE_PREFIX_PATH:PATH="${QT_ROOT};${DEPS_INSTALL_DIR}" \
+              -DCMAKE_INSTALL_PREFIX:PATH="${QTALICEVISION_ROOT}" \
+              -DAliceVision_DIR:PATH="${ALICEVISION_BUNDLE}/share/aliceVision/cmake"
+          } 2>&1 | tee "${LOG_DIR}/configure-cmake.log"
+
+      - name: Build
+        run: |
+          mkdir -p "${LOG_DIR}"
+          {
+            cmake --build ./build -j$(nproc)
+          } 2>&1 | tee "${LOG_DIR}/build.log"
+
+      - name: Install
+        run: |
+          mkdir -p "${LOG_DIR}"
+          {
+            cmake --install ./build
+          } 2>&1 | tee "${LOG_DIR}/install.log"
+
+      # Expose the end of the failing log as annotations (visible without sign-in)
+      - name: Report failure logs
+        if: failure()
+        run: |
+          LOG=$(ls -t "${LOG_DIR}"/*.log 2>/dev/null | head -n1) || true
+          [ -n "${LOG}" ] || exit 0
+          ERRS=$(grep -nE "error|Error|ERROR|No such file|not found|Could not|undefined reference" "${LOG}" | head -n 60)
+          TAIL=$(tail -n 60 "${LOG}")
+          esc() { tr -d '\r' | sed -e 's/%/%25/g' | awk 'BEGIN{ORS="%0A"}{print}'; }
+          echo "::error title=$(basename ${LOG}) errors::$(echo "${ERRS}" | esc)"
+          echo "::error title=$(basename ${LOG}) tail::$(echo "${TAIL}" | esc)"
+
+      # Archive & Upload for nightly release
+
+      # Only runs when called from nightly.yml; skipped on regular CI.
+      - name: Create archive
+        if: github.workflow == 'Nightly'
+        id: archive
+        run: |
+          git config --global --add safe.directory ${GITHUB_WORKSPACE}
+          COMMIT_SHORT=$(git rev-parse --short=8 HEAD)
+          DATE=$(date -u +%Y%m%d)
+          ARCHIVE="qtAliceVision-nightly-${DATE}-${COMMIT_SHORT}-linux.tar.gz"
+          tar -czf "${ARCHIVE}" -C "$(dirname ${QTALICEVISION_ROOT})" "$(basename ${QTALICEVISION_ROOT})"
+          echo "filename=${ARCHIVE}" >> $GITHUB_OUTPUT
+
+      - name: Upload archive artifact
+        if: github.workflow == 'Nightly'
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-package
+          path: ${{ steps.archive.outputs.filename }}
+          retention-days: 3
