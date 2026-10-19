@@ -9,15 +9,12 @@ env:
   QT_MODULES: qtcharts qt3d qtshadertools
 
 jobs:
-  # Resolve the AliceVision nightly binaries to build against, the exact AliceVision
-  # commit they were built from and the deps docker image used to build them.
-  # The nightly bundle does not ship headers, so we install them from the sources
-  # of the same commit, and we need the exact same deps to link against.
+  # Resolve the AliceVision nightly binaries to build against and the deps docker
+  # image used to build them, as we need the exact same deps to link against.
   prepare:
     runs-on: ubuntu-latest
     outputs:
       av_url: ${{ steps.nightly.outputs.av_url }}
-      av_sha: ${{ steps.nightly.outputs.av_sha }}
       deps_image: ${{ steps.nightly.outputs.deps_image }}
     steps:
       - name: Resolve AliceVision nightly
@@ -39,7 +36,6 @@ jobs:
           echo "Deps docker image:   ${DEPS_IMAGE}"
           test -n "${AV_URL}" && test -n "${AV_SHA}" && test -n "${DEPS_IMAGE}"
           echo "av_url=${AV_URL}" >> $GITHUB_OUTPUT
-          echo "av_sha=${AV_SHA}" >> $GITHUB_OUTPUT
           echo "deps_image=${DEPS_IMAGE}" >> $GITHUB_OUTPUT
 
   build-linux:
@@ -52,7 +48,6 @@ jobs:
       DEPS_INSTALL_DIR: /opt/AliceVision_install
       QT_DIR: /opt/Qt
       ALICEVISION_BUNDLE: ${{ github.workspace }}/../AV_bundle
-      ALICEVISION_SRC: ${{ github.workspace }}/../AV_src
       QTALICEVISION_ROOT: ${{ github.workspace }}/../QTAV_install
       LOG_DIR: ${{ github.workspace }}/../logs
     defaults:
@@ -111,37 +106,7 @@ jobs:
           mkdir -p "${ALICEVISION_BUNDLE}"
           echo "Downloading: ${{ needs.prepare.outputs.av_url }}"
           curl -fsSL "${{ needs.prepare.outputs.av_url }}" | tar -xz -C "${ALICEVISION_BUNDLE}" --strip-components=1
-
-      # The nightly bundle does not contain the headers: install them from the
-      # sources of the commit the nightly was built from.
-      - name: Install AliceVision headers
-        run: |
-          mkdir -p "${LOG_DIR}"
-          {
-            mkdir -p "${ALICEVISION_SRC}"
-            curl -fsSL "https://github.com/alicevision/AliceVision/archive/${{ needs.prepare.outputs.av_sha }}.tar.gz" \
-              | tar -xz -C "${ALICEVISION_SRC}" --strip-components=1
-            # Configure only (same options as the AliceVision CI) to generate config.hpp
-            cmake -S "${ALICEVISION_SRC}" -B "${ALICEVISION_SRC}/build" \
-              -G Ninja \
-              -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
-              -DBUILD_SHARED_LIBS=ON \
-              -DCMAKE_PREFIX_PATH:PATH="${DEPS_INSTALL_DIR}" \
-              -DCMAKE_INSTALL_PREFIX:PATH="${ALICEVISION_BUNDLE}" \
-              -DTARGET_ARCHITECTURE=core \
-              -DALICEVISION_USE_OPENCV=ON \
-              -DALICEVISION_USE_CUDA=ON \
-              -DALICEVISION_USE_CCTAG=ON \
-              -DALICEVISION_USE_POPSIFT=ON \
-              -DALICEVISION_USE_ALEMBIC=ON \
-              -DALICEVISION_USE_USD=ON \
-              -DOpenCV_DIR:PATH="${DEPS_INSTALL_DIR}/share/OpenCV" \
-              -DCeres_DIR:PATH="${DEPS_INSTALL_DIR}/share/Ceres" \
-              -DAlembic_DIR:PATH="${DEPS_INSTALL_DIR}/lib/cmake/Alembic"
-            cmake --install "${ALICEVISION_SRC}/build" --component headers
-            CONFIG_HPP=$(find "${ALICEVISION_SRC}/build" -path "*/aliceVision/config.hpp" | head -n1)
-            cp -v "${CONFIG_HPP}" "${ALICEVISION_BUNDLE}/include/aliceVision/"
-          } 2>&1 | tee "${LOG_DIR}/install-alicevision-headers.log"
+          test -f "${ALICEVISION_BUNDLE}/include/aliceVision/config.hpp" || { echo "AliceVision headers missing from the nightly bundle"; exit 1; }
 
       # qtAliceVision
 
