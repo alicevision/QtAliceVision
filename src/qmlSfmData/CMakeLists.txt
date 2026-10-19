@@ -57,3 +57,5 @@ install(FILES "qmldir"
         DESTINATION ${CMAKE_INSTALL_PREFIX}/qml/SfmDataEntity)
 install(TARGETS sfmDataEntityQmlPlugin
         DESTINATION "${CMAKE_INSTALL_PREFIX}/qml/SfmDataEntity")
+install(FILES ${PLUGIN_HEADERS}
+        DESTINATION "${CMAKE_INSTALL_PREFIX}/include/qmlSfmData")

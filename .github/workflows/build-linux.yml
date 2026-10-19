@@ -135,6 +135,12 @@ jobs:
           mkdir -p "${LOG_DIR}"
           {
             cmake --install ./build
+            # Propagate the AliceVision headers, required by the qtAliceVision headers
+            cp -r "${ALICEVISION_BUNDLE}/include/." "${QTALICEVISION_ROOT}/include/"
+            for d in qtAliceVision depthMapEntity qmlSfmData qtAliceVisionImageIO aliceVision; do
+              test -d "${QTALICEVISION_ROOT}/include/${d}" || { echo "Missing include/${d}"; exit 1; }
+            done
+            ls "${QTALICEVISION_ROOT}/include"
           } 2>&1 | tee "${LOG_DIR}/install.log"
 
       # Expose the end of the failing log as annotations (visible without sign-in)

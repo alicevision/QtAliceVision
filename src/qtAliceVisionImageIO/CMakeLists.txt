@@ -42,3 +42,4 @@ target_link_libraries(qtAliceVisionImageIOPlugin
 
 # Install settings
 install(TARGETS qtAliceVisionImageIOPlugin DESTINATION imageformats)
+install(FILES ${PLUGIN_HEADERS} DESTINATION include/qtAliceVisionImageIO)

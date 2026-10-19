@@ -103,3 +103,5 @@ install(FILES "qmldir"
         DESTINATION ${CMAKE_INSTALL_PREFIX}/qml/AliceVision)
 install(TARGETS qtAliceVisionPlugin
         DESTINATION "${CMAKE_INSTALL_PREFIX}/qml/AliceVision")
+install(FILES ${PLUGIN_HEADERS}
+        DESTINATION "${CMAKE_INSTALL_PREFIX}/include/qtAliceVision")
