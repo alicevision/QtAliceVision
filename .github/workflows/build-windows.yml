@@ -91,9 +91,16 @@ jobs:
         run: |
           mkdir -p "${LOG_DIR}"
           {
-            python -m pip install aqtinstall
-            python -m aqt install-qt --outputdir "${QT_DIR}" \
-              windows desktop "${QT_VERSION}" "${QT_ARCH}" -m ${QT_MODULES}
+            # aqtinstall 3.3.0 does not support the Windows repository layout of Qt 6.11:
+            # use the unreleased fix (https://github.com/miurahr/aqtinstall/issues/959)
+            python -m pip install "aqtinstall @ git+https://github.com/miurahr/aqtinstall@076e1659807d0b362a3ed684d54c2e9c775eb9c7"
+            # Retry as some download mirrors are flaky
+            for attempt in 1 2 3; do
+              python -m aqt install-qt --outputdir "${QT_DIR}" \
+                windows desktop "${QT_VERSION}" "${QT_ARCH}" -m ${QT_MODULES} && break
+              [ ${attempt} -lt 3 ] || exit 1
+              echo "Qt installation failed, retrying..."
+            done
           } 2>&1 | tee "${LOG_DIR}/install-qt.log"
 
       - name: Setup Qt environment
