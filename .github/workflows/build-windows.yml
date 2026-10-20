@@ -6,7 +6,7 @@ on:
 env:
   QT_VERSION: 6.11.1
   QT_ARCH: win64_msvc2022_64
-  QT_MODULES: qtcharts qt3d qtshadertools
+  QT_MODULES: qtcharts qt3d qtshadertools qttasktree
 
 jobs:
   # Resolve the AliceVision nightly binaries to build against and the build
@@ -55,7 +55,7 @@ jobs:
       # The AliceVision CMake config refers to its vcpkg dependencies with the
       # absolute paths of the AliceVision CI: install them at the same location.
       DEPS_DIR: D:/a/AliceVision/AliceVision/dependencies
-      VCPKG_ROOT: D:/a/AliceVision/AliceVision/dependencies/x64-windows-release
+      AV_VCPKG_DIR: D:/a/AliceVision/AliceVision/dependencies/x64-windows-release
       QT_DIR: ${{ github.workspace }}/../Qt
       ALICEVISION_BUNDLE: ${{ github.workspace }}/../AV_bundle
       QTALICEVISION_ROOT: ${{ github.workspace }}/../QTAV_install
@@ -117,7 +117,7 @@ jobs:
         id: cache-vcpkg
         uses: actions/cache@v4
         with:
-          path: ${{ env.VCPKG_ROOT }}
+          path: ${{ env.AV_VCPKG_DIR }}
           key: vcpkg-${{ runner.os }}-${{ needs.prepare.outputs.vcpkg_version }}
 
       - name: Install vcpkg prebuilt binaries
@@ -129,7 +129,7 @@ jobs:
               "https://github.com/alicevision/vcpkg/releases/download/${{ needs.prepare.outputs.vcpkg_version }}/x64-windows-release.zip"
             7z x -bd -y "${DEPS_DIR}/installed.zip" -o"${DEPS_DIR}" > /dev/null
             rm "${DEPS_DIR}/installed.zip"
-            test -f "${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" || { echo "Unexpected vcpkg archive layout:"; ls "${DEPS_DIR}"; exit 1; }
+            test -f "${AV_VCPKG_DIR}/scripts/buildsystems/vcpkg.cmake" || { echo "Unexpected vcpkg archive layout:"; ls "${DEPS_DIR}"; exit 1; }
           } 2>&1 | tee "${LOG_DIR}/install-vcpkg.log"
 
       # Only the CUDA runtime is needed to link against AliceVision
@@ -163,7 +163,7 @@ jobs:
               -G Ninja \
               -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
               -DBUILD_SHARED_LIBS:BOOL=ON \
-              -DCMAKE_TOOLCHAIN_FILE="${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" \
+              -DCMAKE_TOOLCHAIN_FILE="${AV_VCPKG_DIR}/scripts/buildsystems/vcpkg.cmake" \
               -DVCPKG_TARGET_TRIPLET=x64-windows-release \
               -DVCPKG_MANIFEST_MODE=OFF \
               -DCMAKE_PREFIX_PATH:PATH="${QT_ROOT}" \
