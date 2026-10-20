@@ -145,6 +145,7 @@ jobs:
       - name: Report failure logs
         if: failure()
         run: |
+          set +e
           LOG=$(ls -t "${LOG_DIR}"/*.log 2>/dev/null | head -n1) || true
           [ -n "${LOG}" ] || exit 0
           ERRS=$(grep -nE "error|Error|ERROR|No such file|not found|Could not|undefined reference" "${LOG}" | head -n 60)

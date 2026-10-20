@@ -123,11 +123,14 @@ jobs:
       - name: Install vcpkg prebuilt binaries
         if: steps.cache-vcpkg.outputs.cache-hit != 'true'
         run: |
-          mkdir -p "${DEPS_DIR}"
-          curl -fsSL -o "${DEPS_DIR}/installed.zip" \
-            "https://github.com/alicevision/vcpkg/releases/download/${{ needs.prepare.outputs.vcpkg_version }}/x64-windows-release.zip"
-          tar -xf "${DEPS_DIR}/installed.zip" -C "${DEPS_DIR}"
-          rm "${DEPS_DIR}/installed.zip"
+          mkdir -p "${LOG_DIR}" "${DEPS_DIR}"
+          {
+            curl -fsSL -o "${DEPS_DIR}/installed.zip" \
+              "https://github.com/alicevision/vcpkg/releases/download/${{ needs.prepare.outputs.vcpkg_version }}/x64-windows-release.zip"
+            7z x -bd -y "${DEPS_DIR}/installed.zip" -o"${DEPS_DIR}" > /dev/null
+            rm "${DEPS_DIR}/installed.zip"
+            test -f "${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" || { echo "Unexpected vcpkg archive layout:"; ls "${DEPS_DIR}"; exit 1; }
+          } 2>&1 | tee "${LOG_DIR}/install-vcpkg.log"
 
       # Only the CUDA runtime is needed to link against AliceVision
       - name: Install CUDA Toolkit
@@ -141,12 +144,14 @@ jobs:
 
       - name: Fetch AliceVision nightly binaries
         run: |
-          mkdir -p "${ALICEVISION_BUNDLE}"
-          echo "Downloading: ${{ needs.prepare.outputs.av_url }}"
-          curl -fsSL -o av.zip "${{ needs.prepare.outputs.av_url }}"
-          tar -xf av.zip -C "${ALICEVISION_BUNDLE}"
-          rm av.zip
-          test -f "${ALICEVISION_BUNDLE}/include/aliceVision/config.hpp" || { echo "AliceVision headers missing from the nightly bundle"; exit 1; }
+          mkdir -p "${LOG_DIR}" "${ALICEVISION_BUNDLE}"
+          {
+            echo "Downloading: ${{ needs.prepare.outputs.av_url }}"
+            curl -fsSL -o av.zip "${{ needs.prepare.outputs.av_url }}"
+            7z x -bd -y av.zip -o"${ALICEVISION_BUNDLE}" > /dev/null
+            rm av.zip
+            test -f "${ALICEVISION_BUNDLE}/include/aliceVision/config.hpp" || { echo "AliceVision headers missing from the nightly bundle"; exit 1; }
+          } 2>&1 | tee "${LOG_DIR}/fetch-alicevision.log"
 
       # qtAliceVision
 
@@ -189,6 +194,7 @@ jobs:
       - name: Report failure logs
         if: failure()
         run: |
+          set +e
           LOG=$(ls -t "${LOG_DIR}"/*.log 2>/dev/null | head -n1) || true
           [ -n "${LOG}" ] || exit 0
           ERRS=$(grep -nE "error|Error|ERROR|No such file|not found|Could not|unresolved external" "${LOG}" | head -n 60)
