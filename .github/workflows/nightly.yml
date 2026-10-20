@@ -17,12 +17,12 @@ jobs:
   build-linux:
     uses: ./.github/workflows/build-linux.yml
 
-#   build-windows:
-#     uses: ./.github/workflows/build-windows.yml
+  build-windows:
+    uses: ./.github/workflows/build-windows.yml
 
   # 2. Publish to the "nightly" GitHub Release
   publish-nightly:
-    needs: [build-linux]  #, build-windows]
+    needs: [build-linux, build-windows]
     runs-on: ubuntu-latest
     permissions:
       contents: write   # required to create/edit releases and push tags
@@ -38,11 +38,11 @@ jobs:
           name: linux-package
           path: dist
 
-#       - name: Download Windows package
-#         uses: actions/download-artifact@v4
-#         with:
-#           name: windows-package
-#           path: dist
+      - name: Download Windows package
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-package
+          path: dist
 
       # Metadata
       - name: Compute release metadata
@@ -117,6 +117,7 @@ jobs:
           | File | Platform |
           |------|----------|
           | \`qtAliceVision-nightly-${BUILD_LABEL}-linux.tar.gz\` | Linux (Rocky 9) |
+          | \`qtAliceVision-nightly-${BUILD_LABEL}-windows.zip\` | Windows |
           EOF
 
       # Update release from file

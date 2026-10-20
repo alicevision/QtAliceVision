@@ -1,0 +1,212 @@
+name: Build Windows
+
+on:
+  workflow_call:
+
+env:
+  QT_VERSION: 6.11.1
+  QT_ARCH: win64_msvc2022_64
+  QT_MODULES: qtcharts qt3d qtshadertools
+
+jobs:
+  # Resolve the AliceVision nightly binaries to build against and the build
+  # environment used to build them (runner, vcpkg dependencies, CUDA version),
+  # as we need the exact same deps to link against.
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      av_url: ${{ steps.nightly.outputs.av_url }}
+      runner: ${{ steps.nightly.outputs.runner }}
+      vcpkg_version: ${{ steps.nightly.outputs.vcpkg_version }}
+      cuda_version: ${{ steps.nightly.outputs.cuda_version }}
+    steps:
+      - name: Resolve AliceVision nightly
+        id: nightly
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          AV_URL=$(gh release view nightly --repo alicevision/AliceVision --json assets \
+                   --jq '.assets[] | select(.name | endswith("windows.zip")) | .url')
+          # Asset name: AliceVision-nightly-<date>-<short sha>-windows.zip
+          AV_SHORT_SHA=$(basename "${AV_URL}" | sed -E 's/^AliceVision-nightly-[0-9]+-([0-9a-f]+)-windows\.zip$/\1/')
+          AV_SHA=$(gh api "repos/alicevision/AliceVision/commits/${AV_SHORT_SHA}" --jq '.sha')
+          gh api "repos/alicevision/AliceVision/contents/.github/workflows/build-windows.yml?ref=${AV_SHA}" \
+            -H "Accept: application/vnd.github.raw" > av-build-windows.yml
+          RUNNER=$(sed -nE 's/^\s*runs-on:\s*(\S+)\s*$/\1/p' av-build-windows.yml | head -n1)
+          VCPKG_VERSION=$(sed -nE "s/^\s*VCPKG_VERSION:\s*'?([^' ]+)'?\s*$/\1/p" av-build-windows.yml | head -n1)
+          CUDA_VERSION=$(sed -nE "s/^\s*CUDA_VERSION:\s*'?([^' ]+)'?\s*$/\1/p" av-build-windows.yml | head -n1)
+          echo "AliceVision nightly: ${AV_URL}"
+          echo "AliceVision commit:  ${AV_SHA}"
+          echo "Runner:              ${RUNNER}"
+          echo "vcpkg version:       ${VCPKG_VERSION}"
+          echo "CUDA version:        ${CUDA_VERSION}"
+          test -n "${AV_URL}" && test -n "${RUNNER}" && test -n "${VCPKG_VERSION}" && test -n "${CUDA_VERSION}"
+          echo "av_url=${AV_URL}" >> $GITHUB_OUTPUT
+          echo "runner=${RUNNER}" >> $GITHUB_OUTPUT
+          echo "vcpkg_version=${VCPKG_VERSION}" >> $GITHUB_OUTPUT
+          echo "cuda_version=${CUDA_VERSION}" >> $GITHUB_OUTPUT
+
+  build-windows:
+    needs: prepare
+    runs-on: ${{ needs.prepare.outputs.runner }}
+    env:
+      BUILD_TYPE: Release
+      # The AliceVision CMake config refers to its vcpkg dependencies with the
+      # absolute paths of the AliceVision CI: install them at the same location.
+      DEPS_DIR: D:/a/AliceVision/AliceVision/dependencies
+      VCPKG_ROOT: D:/a/AliceVision/AliceVision/dependencies/x64-windows-release
+      QT_DIR: ${{ github.workspace }}/../Qt
+      ALICEVISION_BUNDLE: ${{ github.workspace }}/../AV_bundle
+      QTALICEVISION_ROOT: ${{ github.workspace }}/../QTAV_install
+      LOG_DIR: ${{ github.workspace }}/../logs
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Visual Studio shell
+        uses: egor-tensin/vs-shell@v2
+        with:
+          arch: x64
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # Qt
+
+      - name: Cache Qt
+        id: cache-qt
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.QT_DIR }}
+          key: qt-${{ runner.os }}-${{ env.QT_VERSION }}-${{ env.QT_ARCH }}-${{ env.QT_MODULES }}
+
+      - name: Install Qt
+        if: steps.cache-qt.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p "${LOG_DIR}"
+          {
+            python -m pip install aqtinstall
+            python -m aqt install-qt --outputdir "${QT_DIR}" \
+              windows desktop "${QT_VERSION}" "${QT_ARCH}" -m ${QT_MODULES}
+          } 2>&1 | tee "${LOG_DIR}/install-qt.log"
+
+      - name: Setup Qt environment
+        run: |
+          QT_ROOT=$(dirname $(dirname $(find "${QT_DIR}/${QT_VERSION}" -maxdepth 3 -path "*/bin/qmake.exe" | head -n1)))
+          QT_ROOT=$(cygpath -m "${QT_ROOT}")
+          echo "Qt root: ${QT_ROOT}"
+          echo "QT_ROOT=${QT_ROOT}" >> $GITHUB_ENV
+          echo "${QT_ROOT}/bin" >> $GITHUB_PATH
+
+      # AliceVision dependencies
+
+      - name: Cache vcpkg prebuilt binaries
+        id: cache-vcpkg
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.VCPKG_ROOT }}
+          key: vcpkg-${{ runner.os }}-${{ needs.prepare.outputs.vcpkg_version }}
+
+      - name: Install vcpkg prebuilt binaries
+        if: steps.cache-vcpkg.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p "${DEPS_DIR}"
+          curl -fsSL -o "${DEPS_DIR}/installed.zip" \
+            "https://github.com/alicevision/vcpkg/releases/download/${{ needs.prepare.outputs.vcpkg_version }}/x64-windows-release.zip"
+          tar -xf "${DEPS_DIR}/installed.zip" -C "${DEPS_DIR}"
+          rm "${DEPS_DIR}/installed.zip"
+
+      # Only the CUDA runtime is needed to link against AliceVision
+      - name: Install CUDA Toolkit
+        uses: Jimver/cuda-toolkit@v0.2.36
+        with:
+          cuda: ${{ needs.prepare.outputs.cuda_version }}
+          method: network
+          sub-packages: '["nvcc", "cudart"]'
+
+      # AliceVision
+
+      - name: Fetch AliceVision nightly binaries
+        run: |
+          mkdir -p "${ALICEVISION_BUNDLE}"
+          echo "Downloading: ${{ needs.prepare.outputs.av_url }}"
+          curl -fsSL -o av.zip "${{ needs.prepare.outputs.av_url }}"
+          tar -xf av.zip -C "${ALICEVISION_BUNDLE}"
+          rm av.zip
+          test -f "${ALICEVISION_BUNDLE}/include/aliceVision/config.hpp" || { echo "AliceVision headers missing from the nightly bundle"; exit 1; }
+
+      # qtAliceVision
+
+      - name: Configure CMake
+        run: |
+          mkdir -p "${LOG_DIR}"
+          {
+            cmake -B ./build -S . \
+              -G Ninja \
+              -DCMAKE_BUILD_TYPE=${BUILD_TYPE} \
+              -DBUILD_SHARED_LIBS:BOOL=ON \
+              -DCMAKE_TOOLCHAIN_FILE="${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" \
+              -DVCPKG_TARGET_TRIPLET=x64-windows-release \
+              -DVCPKG_MANIFEST_MODE=OFF \
+              -DCMAKE_PREFIX_PATH:PATH="${QT_ROOT}" \
+              -DCMAKE_INSTALL_PREFIX:PATH="$(cygpath -m "${QTALICEVISION_ROOT}")" \
+              -DAliceVision_DIR:PATH="$(cygpath -m "${ALICEVISION_BUNDLE}")/share/aliceVision/cmake" \
+              -DCUDAToolkit_ROOT="$(cygpath -m "${CUDA_PATH}")"
+          } 2>&1 | tee "${LOG_DIR}/configure-cmake.log"
+
+      - name: Build
+        run: |
+          mkdir -p "${LOG_DIR}"
+          {
+            cmake --build ./build
+          } 2>&1 | tee "${LOG_DIR}/build.log"
+
+      - name: Install
+        run: |
+          mkdir -p "${LOG_DIR}"
+          {
+            cmake --install ./build
+            for d in qtAliceVision depthMapEntity qmlSfmData qtAliceVisionImageIO; do
+              test -d "${QTALICEVISION_ROOT}/include/${d}" || { echo "Missing include/${d}"; exit 1; }
+            done
+            ls "${QTALICEVISION_ROOT}" "${QTALICEVISION_ROOT}/include"
+          } 2>&1 | tee "${LOG_DIR}/install.log"
+
+      # Expose the end of the failing log as annotations (visible without sign-in)
+      - name: Report failure logs
+        if: failure()
+        run: |
+          LOG=$(ls -t "${LOG_DIR}"/*.log 2>/dev/null | head -n1) || true
+          [ -n "${LOG}" ] || exit 0
+          ERRS=$(grep -nE "error|Error|ERROR|No such file|not found|Could not|unresolved external" "${LOG}" | head -n 60)
+          TAIL=$(tail -n 60 "${LOG}")
+          esc() { tr -d '\r' | sed -e 's/%/%25/g' | awk 'BEGIN{ORS="%0A"}{print}'; }
+          echo "::error title=$(basename ${LOG}) errors::$(echo "${ERRS}" | esc)"
+          echo "::error title=$(basename ${LOG}) tail::$(echo "${TAIL}" | esc)"
+
+      # Archive & Upload for nightly release
+
+      # Only runs when called from nightly.yml; skipped on regular CI.
+      - name: Create archive
+        if: github.workflow == 'Nightly'
+        id: archive
+        run: |
+          COMMIT_SHORT=$(git rev-parse --short=8 HEAD)
+          DATE=$(date -u +%Y%m%d)
+          ARCHIVE="qtAliceVision-nightly-${DATE}-${COMMIT_SHORT}-windows.zip"
+          7z a -tzip "${ARCHIVE}" "$(cygpath -w "${QTALICEVISION_ROOT}")"
+          echo "filename=${ARCHIVE}" >> $GITHUB_OUTPUT
+
+      - name: Upload archive artifact
+        if: github.workflow == 'Nightly'
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-package
+          path: ${{ steps.archive.outputs.filename }}
+          retention-days: 3
