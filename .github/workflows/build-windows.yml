@@ -132,13 +132,14 @@ jobs:
             test -f "${AV_VCPKG_DIR}/scripts/buildsystems/vcpkg.cmake" || { echo "Unexpected vcpkg archive layout:"; ls "${DEPS_DIR}"; exit 1; }
           } 2>&1 | tee "${LOG_DIR}/install-vcpkg.log"
 
-      # Only the CUDA runtime is needed to link against AliceVision
+      # Only the CUDA libraries referenced by the CMake configs of AliceVision
+      # and its dependencies (OpenCV) are needed, nothing is compiled with CUDA
       - name: Install CUDA Toolkit
         uses: Jimver/cuda-toolkit@v0.2.36
         with:
           cuda: ${{ needs.prepare.outputs.cuda_version }}
           method: network
-          sub-packages: '["nvcc", "cudart"]'
+          sub-packages: '["nvcc", "cudart", "npp", "npp_dev", "cufft", "cufft_dev", "cublas", "cublas_dev"]'
 
       # AliceVision
 
