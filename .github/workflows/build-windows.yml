@@ -74,7 +74,7 @@ jobs:
         shell: bash
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Set up Visual Studio shell
         uses: egor-tensin/vs-shell@v2
@@ -82,7 +82,7 @@ jobs:
           arch: x64
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.12'
 
@@ -90,7 +90,7 @@ jobs:
 
       - name: Cache Qt
         id: cache-qt
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ${{ env.QT_DIR }}
           key: qt-${{ runner.os }}-${{ env.QT_VERSION }}-${{ env.QT_ARCH }}-${{ env.QT_MODULES }}
@@ -124,7 +124,7 @@ jobs:
 
       - name: Cache vcpkg prebuilt binaries
         id: cache-vcpkg
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ${{ env.AV_VCPKG_DIR }}
           key: vcpkg-${{ runner.os }}-${{ needs.prepare.outputs.vcpkg_version }}
@@ -228,7 +228,7 @@ jobs:
 
       - name: Upload archive artifact
         if: github.workflow == 'Nightly'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: windows-package
           path: ${{ steps.archive.outputs.filename }}
