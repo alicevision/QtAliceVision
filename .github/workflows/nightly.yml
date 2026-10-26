@@ -102,6 +102,8 @@ jobs:
           SHORT_SHA="${{ steps.meta.outputs.short_sha }}"
           BUILD_LABEL="${{ steps.meta.outputs.build_label }}"
           FULL_SHA="${{ steps.meta.outputs.full_sha }}"
+          AV_LINUX="$(basename "${{ needs.build-linux.outputs.av_url }}")"
+          AV_WINDOWS="$(basename "${{ needs.build-windows.outputs.av_url }}")"
           cat > nightly_release_notes.md << EOF
           > [!WARNING]
           > **Automated nightly build** from the \`develop\` branch. May be unstable.
@@ -114,10 +116,12 @@ jobs:
 
           ### Assets
 
-          | File | Platform |
-          |------|----------|
-          | \`qtAliceVision-nightly-${BUILD_LABEL}-linux.tar.gz\` | Linux (Rocky 9) |
-          | \`qtAliceVision-nightly-${BUILD_LABEL}-windows.zip\` | Windows |
+          The plugins only load in the Qt version they are built with, and need the AliceVision libraries they are built against.
+
+          | File | Platform | Qt | AliceVision |
+          |------|----------|----|-------------|
+          | \`qtAliceVision-nightly-${BUILD_LABEL}-linux.tar.gz\` | Linux (Rocky 9) | ${{ needs.build-linux.outputs.qt_version }} | \`${AV_LINUX}\` |
+          | \`qtAliceVision-nightly-${BUILD_LABEL}-windows.zip\` | Windows | ${{ needs.build-windows.outputs.qt_version }} | \`${AV_WINDOWS}\` |
           EOF
 
       # Update release from file

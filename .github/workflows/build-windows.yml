@@ -2,6 +2,14 @@ name: Build Windows
 
 on:
   workflow_call:
+    # Published in the nightly release notes, for the applications bundling the plugins
+    outputs:
+      qt_version:
+        description: Qt version the plugins are built with
+        value: ${{ jobs.prepare.outputs.qt_version }}
+      av_url:
+        description: AliceVision nightly archive the plugins are built against
+        value: ${{ jobs.prepare.outputs.av_url }}
 
 env:
   QT_VERSION: 6.11.1
@@ -16,6 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       av_url: ${{ steps.nightly.outputs.av_url }}
+      qt_version: ${{ env.QT_VERSION }}
       runner: ${{ steps.nightly.outputs.runner }}
       vcpkg_version: ${{ steps.nightly.outputs.vcpkg_version }}
       cuda_version: ${{ steps.nightly.outputs.cuda_version }}
