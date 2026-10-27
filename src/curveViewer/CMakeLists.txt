@@ -67,3 +67,5 @@ install(FILES "qmldir"
         DESTINATION ${CMAKE_INSTALL_PREFIX}/qml/CurveViewer)
 install(TARGETS curveViewerPlugin
         DESTINATION "${CMAKE_INSTALL_PREFIX}/qml/CurveViewer")
+install(FILES ${PLUGIN_HEADERS}
+        DESTINATION "${CMAKE_INSTALL_PREFIX}/include/curveViewer")
