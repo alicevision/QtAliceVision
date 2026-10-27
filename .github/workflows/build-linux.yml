@@ -70,6 +70,7 @@ jobs:
           dnf config-manager --set-enabled crb
           dnf install -y \
             git tar gzip zstd \
+            spirv-tools \
             mesa-libGL-devel mesa-libEGL-devel \
             libxkbcommon-devel libxkbcommon-x11 \
             fontconfig-devel freetype-devel \
