@@ -62,3 +62,5 @@ install(FILES "qmldir"
         DESTINATION ${CMAKE_INSTALL_PREFIX}/qml/DepthMapEntity)
 install(TARGETS depthMapEntityPlugin
         DESTINATION "${CMAKE_INSTALL_PREFIX}/qml/DepthMapEntity")
+install(FILES ${PLUGIN_HEADERS}
+        DESTINATION "${CMAKE_INSTALL_PREFIX}/include/depthMapEntity")
