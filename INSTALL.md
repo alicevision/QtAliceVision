@@ -38,9 +38,32 @@ nmake install
 export QT_DIR=/path/to/Qt/6.8.3/gcc_64
 export OPENIMAGEIO_DIR=/path/to/oiio/install
 export ALEMBIC_DIR=/path/to/alembic/config
-cmake .. -DAliceVision_DIR=$AV_DIR -DOPENIMAGEIO_LIBRARY_DIR_HINTS:PATH=$OPENIMAGEIO_DIR/lib/ -DOPENIMAGEIO_INCLUDE_DIR:PATH=$OPENIMAGEIO_DIR/include/ -DAlembic_DIR=$ALEMBIC_DIR -DCMAKE_PREFIX_PATH=$QT_DIR -DCMAKE_INSTALL_PREFIX=<INSTALL_PATH> -DCMAKE_BUILD_TYPE=Release
-make install
+cmake -S. -Bbuild \
+  -DAliceVision_DIR=$AV_DIR \
+  -DOPENIMAGEIO_LIBRARY_DIR_HINTS:PATH=$OPENIMAGEIO_DIR/lib/ \
+  -DOPENIMAGEIO_INCLUDE_DIR:PATH=$OPENIMAGEIO_DIR/include/ \
+  -DAlembic_DIR=$ALEMBIC_DIR \
+  -DCMAKE_PREFIX_PATH=$QT_DIR \
+  -DCMAKE_INSTALL_PREFIX=<INSTALL_PATH> \
+  -DCMAKE_BUILD_TYPE=Release
+cmake --build build
+cmake --install build
 ```
+
+## Tests
+The QML tests are disabled by default. Enable them with `-DBUILD_TESTS=ON` (requires the Qt `qmltestrunner` tool).
+They run against the installed plugins, so install before running them:
+
+```bash
+cmake -S. -Bbuild -DBUILD_TESTS=ON <other options>
+cmake --build build
+cmake --install build
+cd build
+ctest --output-on-failure
+```
+
+> [!NOTE]
+> The tests render images: they need a display with OpenGL support. On a headless machine, use a virtual X server (e.g. `xvfb-run ctest --output-on-failure` from the build directory).
 
 ## Usage
 Once built, setup those environment variables before launching your application:
