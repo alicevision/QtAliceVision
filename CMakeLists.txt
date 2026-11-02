@@ -29,8 +29,12 @@ find_package(Qt6 6.8 REQUIRED COMPONENTS
 
 qt_standard_project_setup()
 
-# for performance reasons let Qt handle jpeg, png and ico formats
-add_definitions(-DQT_ALICEVISIONIMAGEIO_USE_FORMATS_BLACKLIST)
+add_compile_definitions(
+    # for performance reasons let Qt handle jpeg, png and ico formats
+    QT_ALICEVISIONIMAGEIO_USE_FORMATS_BLACKLIST
+    # comment to get qDebug outputs
+    QT_NO_DEBUG_OUTPUT
+)
 
 # AliceVision dependency
 find_package(AliceVision REQUIRED)

@@ -1,6 +1,5 @@
 find_package(assimp REQUIRED)
 find_package(embree REQUIRED)
-find_package(meshoptimizer REQUIRED)
 find_package(OpenImageIO REQUIRED)
 
 qt_add_qml_module(meshViewer
@@ -120,7 +119,6 @@ target_link_libraries(meshViewer PRIVATE
     Qt6::Concurrent
     assimp::assimp
     embree
-    meshoptimizer::meshoptimizer
     ${OPENIMAGEIO_LIBRARIES}
     aliceVision_image
     aliceVision_sfmData
