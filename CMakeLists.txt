@@ -23,9 +23,16 @@ find_package(Qt6 6.8 REQUIRED COMPONENTS
     Quick
     OpenGL
     ShaderTools
+    Concurrent
     Charts
     Qml
 )
+
+# Since Qt 6.9, private module targets (Qt6::GuiPrivate, needed for RHI) are
+# shipped as separate packages that must be requested explicitly.
+if(Qt6_VERSION VERSION_GREATER_EQUAL 6.9)
+    find_package(Qt6 REQUIRED COMPONENTS GuiPrivate)
+endif()
 
 qt_standard_project_setup()
 
