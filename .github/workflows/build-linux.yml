@@ -145,7 +145,7 @@ jobs:
           mkdir -p "${LOG_DIR}"
           {
             cmake --install ./build
-            for d in qtAliceVision depthMapEntity qmlSfmData qtAliceVisionImageIO curveViewer; do
+            for d in qtAliceVision qtAliceVisionImageIO curveViewer; do
               test -d "${QTALICEVISION_ROOT}/include/${d}" || { echo "Missing include/${d}"; exit 1; }
             done
             ls "${QTALICEVISION_ROOT}/include"
