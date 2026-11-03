@@ -58,6 +58,7 @@ jobs:
       QT_DIR: /opt/Qt
       ALICEVISION_BUNDLE: ${{ github.workspace }}/../AV_bundle
       QTALICEVISION_ROOT: ${{ github.workspace }}/../QTAV_install
+      PYTHON_VENV: ${{ github.workspace }}/../pyenv
       LOG_DIR: ${{ github.workspace }}/../logs
     defaults:
       run:
@@ -82,6 +83,25 @@ jobs:
           dnf clean all
 
       - uses: actions/checkout@v6
+
+      # AliceVision
+
+      - name: Fetch AliceVision nightly binaries
+        run: |
+          mkdir -p "${ALICEVISION_BUNDLE}"
+          echo "Downloading: ${{ needs.prepare.outputs.av_url }}"
+          curl -fsSL "${{ needs.prepare.outputs.av_url }}" | tar -xz -C "${ALICEVISION_BUNDLE}" --strip-components=1
+          test -f "${ALICEVISION_BUNDLE}/include/aliceVision/config.hpp" || { echo "AliceVision headers missing from the nightly bundle"; exit 1; }
+
+      # Venv on top of the python interpreter shipped in the AliceVision nightly
+      # bundle, as in the AliceVision CI: packages go to the venv only.
+      - name: Setup Python
+        run: |
+          export PYTHON_ROOT="${ALICEVISION_BUNDLE}/python"
+          test -x "${PYTHON_ROOT}/bin/python3" || { echo "Python missing from the nightly bundle"; ls "${ALICEVISION_BUNDLE}"; exit 1; }
+          "${PYTHON_ROOT}/bin/python3" -I -m venv "${PYTHON_VENV}"
+          "${PYTHON_VENV}/bin/python" -c "import os, sys; assert os.path.samefile(sys.base_prefix, os.environ['PYTHON_ROOT']), sys.base_prefix; print(sys.version, sys.base_prefix)"
+          echo "${PYTHON_VENV}/bin" >> $GITHUB_PATH
 
       # Qt
 
@@ -108,15 +128,6 @@ jobs:
           echo "Qt root: ${QT_ROOT}"
           echo "QT_ROOT=${QT_ROOT}" >> $GITHUB_ENV
           echo "${QT_ROOT}/bin" >> $GITHUB_PATH
-
-      # AliceVision
-
-      - name: Fetch AliceVision nightly binaries
-        run: |
-          mkdir -p "${ALICEVISION_BUNDLE}"
-          echo "Downloading: ${{ needs.prepare.outputs.av_url }}"
-          curl -fsSL "${{ needs.prepare.outputs.av_url }}" | tar -xz -C "${ALICEVISION_BUNDLE}" --strip-components=1
-          test -f "${ALICEVISION_BUNDLE}/include/aliceVision/config.hpp" || { echo "AliceVision headers missing from the nightly bundle"; exit 1; }
 
       # qtAliceVision
 

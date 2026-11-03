@@ -68,6 +68,7 @@ jobs:
       QT_DIR: ${{ github.workspace }}/../Qt
       ALICEVISION_BUNDLE: ${{ github.workspace }}/../AV_bundle
       QTALICEVISION_ROOT: ${{ github.workspace }}/../QTAV_install
+      PYTHON_VENV: ${{ github.workspace }}/../pyenv
       LOG_DIR: ${{ github.workspace }}/../logs
     defaults:
       run:
@@ -81,10 +82,28 @@ jobs:
         with:
           arch: x64
 
+      # AliceVision
+
+      - name: Fetch AliceVision nightly binaries
+        run: |
+          mkdir -p "${LOG_DIR}" "${ALICEVISION_BUNDLE}"
+          {
+            echo "Downloading: ${{ needs.prepare.outputs.av_url }}"
+            curl -fsSL -o av.zip "${{ needs.prepare.outputs.av_url }}"
+            7z x -bd -y av.zip -o"${ALICEVISION_BUNDLE}" > /dev/null
+            rm av.zip
+            test -f "${ALICEVISION_BUNDLE}/include/aliceVision/config.hpp" || { echo "AliceVision headers missing from the nightly bundle"; exit 1; }
+          } 2>&1 | tee "${LOG_DIR}/fetch-alicevision.log"
+
+      # Venv on top of the python interpreter shipped in the AliceVision nightly
+      # bundle, as in the AliceVision CI: packages go to the venv only.
       - name: Setup Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: '3.12'
+        run: |
+          export PYTHON_ROOT=$(cygpath -w "${ALICEVISION_BUNDLE}/python")
+          test -f "${ALICEVISION_BUNDLE}/python/python.exe" || { echo "Python missing from the nightly bundle"; ls "${ALICEVISION_BUNDLE}"; exit 1; }
+          "${ALICEVISION_BUNDLE}/python/python.exe" -I -m venv "$(cygpath -w "${PYTHON_VENV}")"
+          "${PYTHON_VENV}/Scripts/python.exe" -c "import os, sys; assert os.path.samefile(sys.base_prefix, os.environ['PYTHON_ROOT']), sys.base_prefix; print(sys.version, sys.base_prefix)"
+          echo "$(cygpath -w "${PYTHON_VENV}/Scripts")" >> $GITHUB_PATH
 
       # Qt
 
@@ -149,19 +168,6 @@ jobs:
           cuda: ${{ needs.prepare.outputs.cuda_version }}
           method: network
           sub-packages: '["nvcc", "cudart", "npp", "npp_dev", "cufft", "cufft_dev", "cublas", "cublas_dev"]'
-
-      # AliceVision
-
-      - name: Fetch AliceVision nightly binaries
-        run: |
-          mkdir -p "${LOG_DIR}" "${ALICEVISION_BUNDLE}"
-          {
-            echo "Downloading: ${{ needs.prepare.outputs.av_url }}"
-            curl -fsSL -o av.zip "${{ needs.prepare.outputs.av_url }}"
-            7z x -bd -y av.zip -o"${ALICEVISION_BUNDLE}" > /dev/null
-            rm av.zip
-            test -f "${ALICEVISION_BUNDLE}/include/aliceVision/config.hpp" || { echo "AliceVision headers missing from the nightly bundle"; exit 1; }
-          } 2>&1 | tee "${LOG_DIR}/fetch-alicevision.log"
 
       # qtAliceVision
 
