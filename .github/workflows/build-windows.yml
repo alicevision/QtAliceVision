@@ -111,7 +111,9 @@ jobs:
         id: cache-qt
         uses: actions/cache@v6
         with:
-          path: ${{ env.QT_DIR }}
+          # QT_DIR without '..', which actions/cache rejects (the cache was never saved);
+          # the runner context is not available in the job env
+          path: ${{ runner.workspace }}/Qt
           key: qt-${{ runner.os }}-${{ env.QT_VERSION }}-${{ env.QT_ARCH }}-${{ env.QT_MODULES }}
 
       - name: Install Qt
