@@ -7,7 +7,10 @@
 #include <algorithm>
 #include <memory>
 
-/** @brief Loads a mesh file (any format supported by Assimp) into a MeshData. */
+/**
+ * @brief Loads a mesh file (any format supported by Assimp) into a MeshData.
+ * @note Textures may be external files or embedded in the mesh file (e.g. glTF binary .glb, including WebP).
+ */
 class MeshLoader
 {
   public:

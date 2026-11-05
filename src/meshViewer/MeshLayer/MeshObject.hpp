@@ -7,6 +7,7 @@
 #include <QString>
 #include <QVariant>
 #include <QVector3D>
+#include <algorithm>
 #include <memory>
 #include <qqml.h>
 
@@ -26,7 +27,10 @@ class MeshObject : public QObject
     Q_PROPERTY(bool valid READ valid NOTIFY validChanged)
     /** @brief Mesh bounds as [min, max] QVector3D values, or an empty list. */
     Q_PROPERTY(QVariantList boundingBox READ boundingBox NOTIFY boundingBoxChanged)
-    /** @brief True when the loaded mesh has at least one diffuse texture, i.e. MeshLayer.MeshMaterial shading is meaningful. */
+    /**
+     * @brief True when the loaded mesh has at least one base color texture.
+     * @note MeshLayer.MeshMaterial shading is meaningful only then. Metallic-roughness textures alone do not count.
+     */
     Q_PROPERTY(bool hasTextures READ hasTextures NOTIFY hasTexturesChanged)
 
   public:
@@ -68,10 +72,16 @@ class MeshObject : public QObject
         return _meshData && _meshData->valid;
     }
 
-    /** @brief Returns true when the loaded mesh has at least one texture. */
+    /** @brief Returns true when the loaded mesh has at least one material with a base color texture. */
     bool hasTextures() const
     {
-        return valid() && !_meshData->textures.isEmpty();
+        if (!valid())
+        {
+            return false;
+        }
+        return std::any_of(_meshData->materials.cbegin(), _meshData->materials.cend(), [](const MeshMaterial& material) {
+            return material.textureIndex >= 0;
+        });
     }
 
     /** @brief Returns the mesh bounds as [min, max], or an empty list when there is no geometry. */
