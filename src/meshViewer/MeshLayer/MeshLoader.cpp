@@ -128,6 +128,7 @@ std::unique_ptr<MeshData> MeshLoader::load(const QString& path)
                                              aiProcess_Triangulate |              // triangles only
                                                aiProcess_GenSmoothNormals |       // generate normals if missing
                                                aiProcess_JoinIdenticalVertices |  // deduplicate vertices
+                                               aiProcess_SortByPType |            // split points / lines from triangles
                                                aiProcess_FlipUVs |                // Qt / Vulkan UV convention
                                                aiProcess_PreTransformVertices |   // bake node transforms
                                                aiProcess_ValidateDataStructure);
@@ -154,6 +155,12 @@ std::unique_ptr<MeshData> MeshLoader::load(const QString& path)
     {
         const aiMesh* mesh = scene->mMeshes[m];
         if (!mesh || mesh->mNumVertices == 0 || mesh->mNumFaces == 0)
+        {
+            continue;
+        }
+
+        // Points and lines (e.g. left by a degenerate triangle) are not rendered.
+        if ((mesh->mPrimitiveTypes & aiPrimitiveType_TRIANGLE) == 0)
         {
             continue;
         }
@@ -208,7 +215,11 @@ std::unique_ptr<MeshData> MeshLoader::load(const QString& path)
         for (unsigned int f = 0; f < mesh->mNumFaces; ++f)
         {
             const aiFace& face = mesh->mFaces[f];
-            // aiProcess_Triangulate guarantees 3 indices per face
+            // aiProcess_SortByPType keeps triangles apart, but a mesh may still mix primitive types.
+            if (face.mNumIndices != 3)
+            {
+                continue;
+            }
             sub.indices.append(face.mIndices[0]);
             sub.indices.append(face.mIndices[1]);
             sub.indices.append(face.mIndices[2]);
