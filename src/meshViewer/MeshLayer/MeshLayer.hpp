@@ -36,7 +36,13 @@ class MeshLayer : public LayerItem
     {
         MeshShaded = 0,  /**< Constant color with simple diffuse lighting. */
         MeshNormal = 1,  /**< Surface normal displayed as color. */
-        MeshMaterial = 2 /**< Unlit material: diffuse texture times base color; falls back to MeshShaded when the mesh has no texture. */
+        MeshMaterial = 2, /**< Unlit material: diffuse texture times base color; falls back to MeshShaded when the mesh has no texture. */
+        /**
+         * @brief Lit PBR material under a headlight: base color, metallic-roughness texture and factors.
+         * @note Without textures (or without UVs) the factors alone are used, so untextured materials are shaded
+         *       too: unlike MeshMaterial, there is no fallback to MeshShaded.
+         */
+        MeshPBR = 3
     };
     Q_ENUM(ShadingMode)
 
