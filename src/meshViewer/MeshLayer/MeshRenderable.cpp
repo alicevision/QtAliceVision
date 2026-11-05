@@ -4,6 +4,8 @@
 
 #include <Core/ShaderLoader.hpp>
 
+#include <algorithm>
+
 void MeshRenderable::sync(LayerItem* layer, SceneView* /*view*/)
 {
     MeshLayer* meshLayer = static_cast<MeshLayer*>(layer);
@@ -44,14 +46,19 @@ void MeshRenderable::sync(LayerItem* layer, SceneView* /*view*/)
         _vertices.clear();
         _indices.clear();
         _drawRanges.clear();
-        _meshHasUVs = false;
+        _hasBaseColorTexture = false;
 
         quint32 vertexOffset = 0;
         for (const SubMesh& sub : data.subMeshes)
         {
             _drawRanges.append(
               {static_cast<quint32>(_indices.size()), static_cast<quint32>(sub.indices.size()), vertexOffset, sub.materialIndex, sub.uvs});
-            _meshHasUVs = _meshHasUVs || !sub.uvs.isEmpty();
+
+            // MeshMaterial only samples the base color texture: a sub-mesh with only a metallic-roughness texture
+            // must not enable it, so that the mode keeps falling back to MeshShaded exactly as before.
+            const bool hasBaseColor =
+              !sub.uvs.isEmpty() && sub.materialIndex >= 0 && sub.materialIndex < data.materials.size() && data.materials[sub.materialIndex].textureIndex >= 0;
+            _hasBaseColorTexture = _hasBaseColorTexture || hasBaseColor;
 
             _vertices += sub.vertices;
             for (quint32 idx : sub.indices)
@@ -67,6 +74,8 @@ void MeshRenderable::sync(LayerItem* layer, SceneView* /*view*/)
         meshLayer->clearMeshDirty();
         _buffersDirty = true;
         _materialsDirty = true;
+        _pbrDirty = true;
+        _sharedMaterialDirty = true;
     }
 
     // Build (or free) the flat wire vertex buffer whenever the mesh or mode changes.
@@ -102,8 +111,9 @@ void MeshRenderable::initialize(QRhi* rhi, QRhiRenderPassDescriptor* rpDesc)
         _wireOnlyPipeline.reset();
         _wireSrb.reset();
         _wireVertexBuffer.reset();
-        releaseMaterialResources();
+        releaseAllMaterialResources();
         _materialsDirty = true;
+        _pbrDirty = true;
     }
 
     if (_pipelineDirty)
@@ -144,17 +154,21 @@ void MeshRenderable::prepare(QRhiResourceUpdateBatch* batch, const SceneState& s
         rebuildWireBuffer(batch);
     }
 
-    if (_materialsDirty)
+    if (_sharedMaterialDirty)
     {
-        if (_shadingMode == MeshLayer::MeshMaterial)
-        {
-            rebuildMaterialResources(batch);
-        }
-        else if (_materialPipeline)
-        {
-            // Mesh changed while another mode is active: free the stale GPU resources.
-            releaseMaterialResources();
-        }
+        // Mesh changed: free the stale GPU resources of both material modes, whichever mode is active.
+        releaseAllMaterialResources();
+        _sharedMaterialDirty = false;
+    }
+
+    if (_materialsDirty && _shadingMode == MeshLayer::MeshMaterial)
+    {
+        rebuildMaterialResources(batch);
+    }
+
+    if (_pbrDirty && _shadingMode == MeshLayer::MeshPBR)
+    {
+        rebuildPbrResources(batch);
     }
 
     if (_uniformBuffer)
@@ -166,6 +180,13 @@ void MeshRenderable::prepare(QRhiResourceUpdateBatch* batch, const SceneState& s
         uboData[32] = _meshOpacity;
         batch->updateDynamicBuffer(_uniformBuffer.get(), 0, 144, uboData);
     }
+
+    // MeshPBR only: the camera position, in a buffer of its own so the shared uniform buffer is unchanged.
+    if (_pbrFrameBuffer)
+    {
+        const float frameData[4] = {state.cameraWorldPosition.x(), state.cameraWorldPosition.y(), state.cameraWorldPosition.z(), 1.0f};
+        batch->updateDynamicBuffer(_pbrFrameBuffer.get(), 0, sizeof(frameData), frameData);
+    }
 }
 
 void MeshRenderable::render(QRhiCommandBuffer* cb, const SceneState& state)
@@ -175,23 +196,27 @@ void MeshRenderable::render(QRhiCommandBuffer* cb, const SceneState& state)
 
     if (_depthPipeline && _normalPipeline && _shadedPipeline && _vertexBuffer && _indexBuffer)
     {
-        // MeshMaterial falls back to MeshShaded when the mesh has no texture.
+        // MeshMaterial falls back to MeshShaded when the mesh has no base color texture; MeshPBR draws any non-empty mesh.
         const bool drawMaterial = drawSolid && _shadingMode == MeshLayer::MeshMaterial && _materialPipeline && !_materialsDirty;
+        const bool drawPbr = drawSolid && _shadingMode == MeshLayer::MeshPBR && _pbrPipeline && !_pbrDirty;
 
-        if (drawMaterial)
+        if (drawMaterial || drawPbr)
         {
-            cb->setGraphicsPipeline(_materialPipeline.get());
+            QRhiGraphicsPipeline* pipeline = drawPbr ? _pbrPipeline.get() : _materialPipeline.get();
+            const std::vector<std::unique_ptr<QRhiShaderResourceBindings>>& srbs = drawPbr ? _pbrSrbs : _materialSrbs;
+
+            cb->setGraphicsPipeline(pipeline);
             cb->setViewport({0, 0, float(state.viewportWidth), float(state.viewportHeight)});
 
+            // MeshPBR reads the normal from the main vertex buffer too (attribute 2 of binding 0).
             const QRhiCommandBuffer::VertexInput inputs[] = {{_vertexBuffer.get(), 0}, {_uvBuffer.get(), 0}};
             cb->setVertexInput(0, 2, inputs, _indexBuffer.get(), 0, QRhiCommandBuffer::IndexUInt32);
 
-            for (const DrawRange& range : _drawRanges)
+            // One binding set per sub-mesh, built in the same order as _drawRanges.
+            for (qsizetype i = 0; i < _drawRanges.size(); ++i)
             {
-                const bool hasMaterial = range.materialIndex >= 0 && range.materialIndex < _materials.size();
-                const size_t srbIndex = hasMaterial ? static_cast<size_t>(range.materialIndex) : _materialSrbs.size() - 1;
-                cb->setShaderResources(_materialSrbs[srbIndex].get());
-                cb->drawIndexed(range.indexCount, 1, range.firstIndex);
+                cb->setShaderResources(srbs[static_cast<size_t>(i)].get());
+                cb->drawIndexed(_drawRanges[i].indexCount, 1, _drawRanges[i].firstIndex);
             }
         }
         else
@@ -428,55 +453,94 @@ void MeshRenderable::releaseMaterialResources()
     _materialPipeline.reset();
     _materialSrbs.clear();
     _materialBuffers.clear();
+}
+
+void MeshRenderable::releasePbrResources()
+{
+    _pbrPipeline.reset();
+    _pbrSrbs.clear();
+    _pbrMaterialBuffers.clear();
+    _pbrFrameBuffer.reset();
+}
+
+void MeshRenderable::releaseAllMaterialResources()
+{
+    // Mode-specific bindings reference the shared textures and sampler: release them first.
+    releaseMaterialResources();
+    releasePbrResources();
     _textures.clear();
     _whiteTexture.reset();
     _materialSampler.reset();
     _uvBuffer.reset();
 }
 
-void MeshRenderable::rebuildMaterialResources(QRhiResourceUpdateBatch* batch)
+void MeshRenderable::ensureSharedMaterialResources(QRhiResourceUpdateBatch* batch)
 {
-    releaseMaterialResources();
-    _materialsDirty = false;
-
-    if (!_meshHasUVs || _vertices.isEmpty() || !_uniformBuffer)
+    if (!_uvBuffer)
     {
-        return;
-    }
-
-    // UVs: one buffer index-aligned with the vertex buffer, filled per sub-mesh.
-    // Ranges of untextured sub-meshes are left unset: they sample the 1x1 white texture, so any UV is fine.
-    _uvBuffer.reset(_rhi->newBuffer(QRhiBuffer::Immutable, QRhiBuffer::VertexBuffer, static_cast<quint32>(_vertices.size()) * sizeof(UVVertex)));
-    _uvBuffer->create();
-    for (const DrawRange& range : _drawRanges)
-    {
-        if (!range.uvs.isEmpty())
+        // UVs: one buffer index-aligned with the vertex buffer. Sub-meshes without UVs get (0, 0): they bind the
+        // 1x1 white texture only, so any UV is fine, but the whole buffer stays defined.
+        QVector<UVVertex> uvs(_vertices.size(), UVVertex{0.0f, 0.0f});
+        for (const DrawRange& range : _drawRanges)
         {
-            batch->uploadStaticBuffer(_uvBuffer.get(),
-                                      range.firstVertex * sizeof(UVVertex),
-                                      static_cast<quint32>(range.uvs.size()) * sizeof(UVVertex),
-                                      range.uvs.constData());
+            std::copy(range.uvs.cbegin(), range.uvs.cend(), uvs.begin() + range.firstVertex);
         }
+
+        _uvBuffer.reset(_rhi->newBuffer(QRhiBuffer::Immutable, QRhiBuffer::VertexBuffer, static_cast<quint32>(uvs.size()) * sizeof(UVVertex)));
+        _uvBuffer->create();
+        batch->uploadStaticBuffer(_uvBuffer.get(), uvs.constData());
     }
 
-    // Repeat addressing keeps UDIM-offset UVs (u in [1, 2), ...) sampling their own tile texture.
-    _materialSampler.reset(_rhi->newSampler(QRhiSampler::Linear, QRhiSampler::Linear, QRhiSampler::Linear, QRhiSampler::Repeat, QRhiSampler::Repeat));
-    _materialSampler->create();
-
-    _whiteTexture.reset(_rhi->newTexture(QRhiTexture::RGBA8, QSize(1, 1)));
-    _whiteTexture->create();
-    const quint32 whitePixel = 0xFFFFFFFF;
-    batch->uploadTexture(
-      _whiteTexture.get(),
-      QRhiTextureUploadDescription(QRhiTextureUploadEntry(0, 0, QRhiTextureSubresourceUploadDescription(&whitePixel, sizeof(whitePixel)))));
-
-    // Textures: RGBAColor is 4 contiguous bytes per pixel in row-major order, matching RGBA8.
-    // The upload description copies the pixels, so the CPU images do not need to outlive the batch.
-    for (const std::shared_ptr<const MeshTextureImage>& image : _textureImages)
+    if (!_materialSampler)
     {
+        // Repeat addressing keeps UDIM-offset UVs (u in [1, 2), ...) sampling their own tile texture.
+        _materialSampler.reset(
+          _rhi->newSampler(QRhiSampler::Linear, QRhiSampler::Linear, QRhiSampler::Linear, QRhiSampler::Repeat, QRhiSampler::Repeat));
+        _materialSampler->create();
+    }
+
+    if (!_whiteTexture)
+    {
+        _whiteTexture.reset(_rhi->newTexture(QRhiTexture::RGBA8, QSize(1, 1)));
+        _whiteTexture->create();
+        const quint32 whitePixel = 0xFFFFFFFF;
+        batch->uploadTexture(
+          _whiteTexture.get(),
+          QRhiTextureUploadDescription(QRhiTextureUploadEntry(0, 0, QRhiTextureSubresourceUploadDescription(&whitePixel, sizeof(whitePixel)))));
+    }
+
+    if (_textures.size() != static_cast<size_t>(_textureImages.size()))
+    {
+        _textures.clear();
+        _textures.resize(static_cast<size_t>(_textureImages.size()));
+    }
+}
+
+QRhiTexture* MeshRenderable::ensureTexture(QRhiResourceUpdateBatch* batch, int textureIndex, bool srgb)
+{
+    if (textureIndex < 0 || static_cast<size_t>(textureIndex) >= _textures.size())
+    {
+        return _whiteTexture.get();
+    }
+
+    const std::shared_ptr<const MeshTextureImage>& image = _textureImages[textureIndex];
+    if (!image || image->width() <= 0 || image->height() <= 0)
+    {
+        return _whiteTexture.get();
+    }
+
+    std::unique_ptr<QRhiTexture>& texture = _textures[static_cast<size_t>(textureIndex)];
+    if (!texture)
+    {
+        // RGBAColor is 4 contiguous bytes per pixel in row-major order, matching RGBA8.
+        // The upload description copies the pixels, so the CPU image does not need to outlive the batch.
         const QSize size(image->width(), image->height());
-        std::unique_ptr<QRhiTexture> texture(
-          _rhi->newTexture(QRhiTexture::RGBA8, size, 1, QRhiTexture::MipMapped | QRhiTexture::UsedWithGenerateMips));
+        QRhiTexture::Flags flags = QRhiTexture::MipMapped | QRhiTexture::UsedWithGenerateMips;
+        if (srgb)
+        {
+            flags |= QRhiTexture::sRGB;
+        }
+        texture.reset(_rhi->newTexture(QRhiTexture::RGBA8, size, 1, flags));
         texture->create();
 
         const quint32 byteCount = static_cast<quint32>(size.width()) * static_cast<quint32>(size.height()) * 4;
@@ -484,33 +548,89 @@ void MeshRenderable::rebuildMaterialResources(QRhiResourceUpdateBatch* batch)
           texture.get(),
           QRhiTextureUploadDescription(QRhiTextureUploadEntry(0, 0, QRhiTextureSubresourceUploadDescription(image->data(), byteCount))));
         batch->generateMips(texture.get());
-
-        _textures.push_back(std::move(texture));
     }
 
-    // One base color buffer and binding set per material, plus a trailing default (white, untextured) one.
+    return texture.get();
+}
+
+qsizetype MeshRenderable::materialBufferIndex(const DrawRange& range) const
+{
+    const bool hasMaterial = range.materialIndex >= 0 && range.materialIndex < _materials.size();
+    return hasMaterial ? range.materialIndex : _materials.size();
+}
+
+QList<QRhiShaderResourceBinding> MeshRenderable::commonMaterialBindings(QRhiBuffer* materialBuffer, QRhiTexture* baseColorTexture) const
+{
+    return {
+      QRhiShaderResourceBinding::uniformBuffer(0, QRhiShaderResourceBinding::VertexStage | QRhiShaderResourceBinding::FragmentStage, _uniformBuffer.get()),
+      QRhiShaderResourceBinding::uniformBuffer(1, QRhiShaderResourceBinding::FragmentStage, materialBuffer),
+      QRhiShaderResourceBinding::sampledTexture(2, QRhiShaderResourceBinding::FragmentStage, baseColorTexture, _materialSampler.get()),
+    };
+}
+
+namespace {
+
+/**
+ * @brief Alpha blending used by the material pipelines, so that the layer opacity applies.
+ * @return The blend state.
+ */
+QRhiGraphicsPipeline::TargetBlend materialBlend()
+{
+    QRhiGraphicsPipeline::TargetBlend blend;
+    blend.enable = true;
+    blend.srcColor = QRhiGraphicsPipeline::SrcAlpha;
+    blend.dstColor = QRhiGraphicsPipeline::OneMinusSrcAlpha;
+    blend.srcAlpha = QRhiGraphicsPipeline::One;
+    blend.dstAlpha = QRhiGraphicsPipeline::OneMinusSrcAlpha;
+    return blend;
+}
+
+}  // namespace
+
+void MeshRenderable::rebuildMaterialResources(QRhiResourceUpdateBatch* batch)
+{
+    releaseMaterialResources();
+    _materialsDirty = false;
+
+    if (!_hasBaseColorTexture || _vertices.isEmpty() || !_uniformBuffer)
+    {
+        return;
+    }
+
+    ensureSharedMaterialResources(batch);
+
+    // One base color + opaque flag buffer per material, plus a trailing default (white) one.
     for (qsizetype i = 0; i <= _materials.size(); ++i)
     {
-        const bool isDefault = (i == _materials.size());
-        const QVector4D color = isDefault ? QVector4D(1.0f, 1.0f, 1.0f, 1.0f) : _materials[i].baseColor;
-        const int textureIndex = isDefault ? -1 : _materials[i].textureIndex;
-        QRhiTexture* texture = (textureIndex >= 0) ? _textures[static_cast<size_t>(textureIndex)].get() : _whiteTexture.get();
+        const MeshMaterial material = (i == _materials.size()) ? MeshMaterial() : _materials[i];
 
-        std::unique_ptr<QRhiBuffer> buffer(_rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::UniformBuffer, 16));
+        std::unique_ptr<QRhiBuffer> buffer(_rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::UniformBuffer, 32));
         buffer->create();
-        const float colorData[4] = {color.x(), color.y(), color.z(), color.w()};
-        batch->updateDynamicBuffer(buffer.get(), 0, sizeof(colorData), colorData);
-
-        std::unique_ptr<QRhiShaderResourceBindings> srb(_rhi->newShaderResourceBindings());
-        srb->setBindings({
-          QRhiShaderResourceBinding::uniformBuffer(
-            0, QRhiShaderResourceBinding::VertexStage | QRhiShaderResourceBinding::FragmentStage, _uniformBuffer.get()),
-          QRhiShaderResourceBinding::uniformBuffer(1, QRhiShaderResourceBinding::FragmentStage, buffer.get()),
-          QRhiShaderResourceBinding::sampledTexture(2, QRhiShaderResourceBinding::FragmentStage, texture, _materialSampler.get()),
-        });
-        srb->create();
-
+        const float materialData[8] = {material.baseColor.x(),
+                                       material.baseColor.y(),
+                                       material.baseColor.z(),
+                                       material.baseColor.w(),
+                                       material.opaque ? 1.0f : 0.0f,
+                                       0.0f,
+                                       0.0f,
+                                       0.0f};
+        batch->updateDynamicBuffer(buffer.get(), 0, sizeof(materialData), materialData);
         _materialBuffers.push_back(std::move(buffer));
+    }
+
+    // One binding set per sub-mesh: a sub-mesh without UVs binds the white texture rather than sampling its
+    // material texture at meaningless coordinates, and keeps its base color.
+    for (const DrawRange& range : _drawRanges)
+    {
+        const qsizetype bufferIndex = materialBufferIndex(range);
+        const int textureIndex = (range.uvs.isEmpty() || bufferIndex == _materials.size()) ? -1 : _materials[bufferIndex].textureIndex;
+        // Same sRGB texture as MeshPBR: the shader re-encodes to sRGB, so one GPU copy serves both modes.
+        QRhiTexture* texture = ensureTexture(batch, textureIndex, true);
+
+        const QList<QRhiShaderResourceBinding> bindings = commonMaterialBindings(_materialBuffers[static_cast<size_t>(bufferIndex)].get(), texture);
+        std::unique_ptr<QRhiShaderResourceBindings> srb(_rhi->newShaderResourceBindings());
+        srb->setBindings(bindings.cbegin(), bindings.cend());
+        srb->create();
         _materialSrbs.push_back(std::move(srb));
     }
 
@@ -519,13 +639,6 @@ void MeshRenderable::rebuildMaterialResources(QRhiResourceUpdateBatch* batch)
     inputLayout.setBindings({QRhiVertexInputBinding(sizeof(Vertex)), QRhiVertexInputBinding(sizeof(UVVertex))});
     inputLayout.setAttributes(
       {QRhiVertexInputAttribute(0, 0, QRhiVertexInputAttribute::Float3, 0), QRhiVertexInputAttribute(1, 1, QRhiVertexInputAttribute::Float2, 0)});
-
-    QRhiGraphicsPipeline::TargetBlend blend;
-    blend.enable = true;
-    blend.srcColor = QRhiGraphicsPipeline::SrcAlpha;
-    blend.dstColor = QRhiGraphicsPipeline::OneMinusSrcAlpha;
-    blend.srcAlpha = QRhiGraphicsPipeline::One;
-    blend.dstAlpha = QRhiGraphicsPipeline::OneMinusSrcAlpha;
 
     // All material SRBs share the same layout, so any of them can define the pipeline's.
     _materialPipeline.reset(_rhi->newGraphicsPipeline());
@@ -539,6 +652,89 @@ void MeshRenderable::rebuildMaterialResources(QRhiResourceUpdateBatch* batch)
     _materialPipeline->setDepthTest(true);
     _materialPipeline->setDepthWrite(true);
     _materialPipeline->setCullMode(QRhiGraphicsPipeline::Back);
-    _materialPipeline->setTargetBlends({blend});
+    _materialPipeline->setTargetBlends({materialBlend()});
     _materialPipeline->create();
+}
+
+void MeshRenderable::rebuildPbrResources(QRhiResourceUpdateBatch* batch)
+{
+    releasePbrResources();
+    _pbrDirty = false;
+
+    if (_vertices.isEmpty() || _drawRanges.isEmpty() || !_uniformBuffer)
+    {
+        return;
+    }
+
+    ensureSharedMaterialResources(batch);
+
+    // Camera position, updated every frame in prepare().
+    _pbrFrameBuffer.reset(_rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::UniformBuffer, 16));
+    _pbrFrameBuffer->create();
+
+    // One base color + factors buffer per material, plus a trailing default one
+    // (white, dielectric and fully rough: plain diffuse).
+    for (qsizetype i = 0; i <= _materials.size(); ++i)
+    {
+        const MeshMaterial material = (i == _materials.size()) ? MeshMaterial() : _materials[i];
+
+        std::unique_ptr<QRhiBuffer> buffer(_rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::UniformBuffer, 32));
+        buffer->create();
+        const float materialData[8] = {material.baseColor.x(),
+                                       material.baseColor.y(),
+                                       material.baseColor.z(),
+                                       material.baseColor.w(),
+                                       material.metallicFactor,
+                                       material.roughnessFactor,
+                                       material.opaque ? 1.0f : 0.0f,
+                                       0.0f};
+        batch->updateDynamicBuffer(buffer.get(), 0, sizeof(materialData), materialData);
+        _pbrMaterialBuffers.push_back(std::move(buffer));
+    }
+
+    // One binding set per sub-mesh. Untextured slots, and every slot of a sub-mesh without UVs, bind the white
+    // texture: the material factors alone then apply.
+    for (const DrawRange& range : _drawRanges)
+    {
+        const qsizetype bufferIndex = materialBufferIndex(range);
+        const bool sampleTextures = !range.uvs.isEmpty() && bufferIndex < _materials.size();
+        const int baseColorIndex = sampleTextures ? _materials[bufferIndex].textureIndex : -1;
+        const int metallicRoughnessIndex = sampleTextures ? _materials[bufferIndex].metallicRoughnessTextureIndex : -1;
+        // sRGB texture (shared with MeshMaterial): the shader receives linear base colors, filtered in linear space.
+        QRhiTexture* baseColorTexture = ensureTexture(batch, baseColorIndex, true);
+        QRhiTexture* metallicRoughnessTexture = ensureTexture(batch, metallicRoughnessIndex, false);
+
+        QList<QRhiShaderResourceBinding> bindings =
+          commonMaterialBindings(_pbrMaterialBuffers[static_cast<size_t>(bufferIndex)].get(), baseColorTexture);
+        bindings.append(
+          QRhiShaderResourceBinding::sampledTexture(3, QRhiShaderResourceBinding::FragmentStage, metallicRoughnessTexture, _materialSampler.get()));
+        bindings.append(QRhiShaderResourceBinding::uniformBuffer(4, QRhiShaderResourceBinding::FragmentStage, _pbrFrameBuffer.get()));
+
+        std::unique_ptr<QRhiShaderResourceBindings> srb(_rhi->newShaderResourceBindings());
+        srb->setBindings(bindings.cbegin(), bindings.cend());
+        srb->create();
+        _pbrSrbs.push_back(std::move(srb));
+    }
+
+    // Vertex layout: position (vec3) and normal (vec3) from the main vertex buffer + UV (vec2) from the UV buffer.
+    QRhiVertexInputLayout inputLayout;
+    inputLayout.setBindings({QRhiVertexInputBinding(sizeof(Vertex)), QRhiVertexInputBinding(sizeof(UVVertex))});
+    inputLayout.setAttributes({QRhiVertexInputAttribute(0, 0, QRhiVertexInputAttribute::Float3, 0),
+                               QRhiVertexInputAttribute(1, 1, QRhiVertexInputAttribute::Float2, 0),
+                               QRhiVertexInputAttribute(0, 2, QRhiVertexInputAttribute::Float3, sizeof(float) * 3)});
+
+    // All PBR SRBs share the same layout, so any of them can define the pipeline's.
+    _pbrPipeline.reset(_rhi->newGraphicsPipeline());
+    _pbrPipeline->setShaderStages({
+      {QRhiShaderStage::Vertex, loadShader(":/shaders/meshPBR.vert.qsb")},
+      {QRhiShaderStage::Fragment, loadShader(":/shaders/meshPBR.frag.qsb")},
+    });
+    _pbrPipeline->setVertexInputLayout(inputLayout);
+    _pbrPipeline->setShaderResourceBindings(_pbrSrbs.back().get());
+    _pbrPipeline->setRenderPassDescriptor(_rpDesc);
+    _pbrPipeline->setDepthTest(true);
+    _pbrPipeline->setDepthWrite(true);
+    _pbrPipeline->setCullMode(QRhiGraphicsPipeline::Back);
+    _pbrPipeline->setTargetBlends({materialBlend()});
+    _pbrPipeline->create();
 }

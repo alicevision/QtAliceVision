@@ -1,5 +1,6 @@
 #include <MeshLayer/MeshLoader.hpp>
 
+#include <assimp/GltfMaterial.h>
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
@@ -10,7 +11,9 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QHash>
+#include <QPair>
 #include <algorithm>
+#include <cmath>
 #include <cstddef>
 #include <exception>
 #include <limits>
@@ -18,6 +21,20 @@
 #include <string>
 
 namespace {
+
+/**
+ * @brief Convert one sRGB-encoded color channel to linear, with the exact piecewise transfer function.
+ * @param c Channel value in [0, 1].
+ * @return The linear value.
+ */
+float srgbToLinear(float c)
+{
+    if (c <= 0.04045f)
+    {
+        return c / 12.92f;
+    }
+    return std::pow((c + 0.055f) / 1.055f, 2.4f);
+}
 
 /**
  * @brief Build an RGBA image from raw 8-bit BGRA pixels.
@@ -91,16 +108,19 @@ std::shared_ptr<MeshTextureImage> rejectEmptyImage(std::shared_ptr<MeshTextureIm
  * @param reference Texture path as stored in the material: an embedded texture reference (e.g. "*0" in a .glb),
  *                  or a file path, absolute or relative to the mesh directory.
  * @param meshDir Directory of the mesh file, used to resolve relative texture paths.
+ * @param colorSpace Color space the pixels are converted to: SRGB for color textures,
+ *                   NO_CONVERSION for data textures such as metallic-roughness.
  * @return The RGBA image, or nullptr when the texture cannot be loaded.
- * @note Decoded with AliceVision (readImage for files, readImageFromMemory for embedded textures), converted to
- *       sRGB and 8 bits. readImageFromMemory requires an AliceVision build including it (branch
- *       dev/readImageFromMemory, not yet in develop).
+ * @note Decoded with AliceVision (readImage for files, readImageFromMemory for embedded textures), in 8 bits.
  * @note An empty (0x0) image is rejected like a decoding failure.
  */
-std::shared_ptr<MeshTextureImage> loadTexture(const aiScene& scene, const QString& reference, const QDir& meshDir)
+std::shared_ptr<MeshTextureImage> loadTexture(const aiScene& scene,
+                                              const QString& reference,
+                                              const QDir& meshDir,
+                                              aliceVision::image::EImageColorSpace colorSpace)
 {
     aliceVision::image::ImageReadOptions opts;
-    opts.workingColorSpace = aliceVision::image::EImageColorSpace::SRGB;
+    opts.workingColorSpace = colorSpace;
 
     const QByteArray referenceUtf8 = reference.toUtf8();
     if (const aiTexture* embedded = scene.GetEmbeddedTexture(referenceUtf8.constData()))
@@ -140,16 +160,54 @@ std::shared_ptr<MeshTextureImage> loadTexture(const aiScene& scene, const QStrin
  * @param data Receives the materials and textures.
  *
  * The base color is read from AI_MATKEY_BASE_COLOR (PBR formats) with AI_MATKEY_COLOR_DIFFUSE as fallback,
- * and its alpha from AI_MATKEY_OPACITY. The texture is the first base color or diffuse map.
+ * and its alpha from AI_MATKEY_OPACITY. MeshMaterial::baseColor is always linear: AI_MATKEY_BASE_COLOR is kept as is
+ * (the glTF baseColorFactor is linear), whereas AI_MATKEY_COLOR_DIFFUSE (e.g. OBJ Kd, whose color space no spec defines)
+ * is taken as sRGB and converted, which keeps the authored look of untextured legacy materials. Alpha is never converted.
+ * The OBJ importer (Assimp 6.0.5) only fills AI_MATKEY_COLOR_DIFFUSE, so OBJ colors always take the sRGB path.
+ * The texture is the first base color or diffuse map.
  * When a diffuse map is used, the color is forced to white: OBJ exporters often write an arbitrary Kd
  * alongside map_Kd, whereas a PBR base color factor is meant to be multiplied with its texture.
  * Textures shared between materials are loaded only once. A texture that fails to load leaves
  * the material untextured instead of failing the whole mesh.
+ *
+ * PBR parameters (used by the MeshPBR shading mode only): the metallic and roughness factors are read from
+ * AI_MATKEY_METALLIC_FACTOR and AI_MATKEY_ROUGHNESS_FACTOR, keeping the MeshMaterial defaults when absent, and the
+ * glTF metallic-roughness texture from aiTextureType_GLTF_METALLIC_ROUGHNESS, decoded without color conversion.
+ *
+ * A glTF alphaMode of "OPAQUE" (the glTF default, always written by the Assimp glTF importer) marks the material
+ * opaque: the glTF specification requires its base color alpha to be ignored. MASK and BLEND keep blending.
  */
 void loadMaterials(const aiScene& scene, const QString& meshPath, MeshData& data)
 {
+    using aliceVision::image::EImageColorSpace;
+
     const QDir meshDir = QFileInfo(meshPath).absoluteDir();
-    QHash<QString, int> textureIndexByReference;
+
+    /**
+     * @brief Cache of loaded textures, keyed by reference and color space: the same file decoded as color
+     *        and as data gives different pixels. -1 records a texture that failed to load.
+     */
+    QHash<QPair<QString, int>, int> textureIndexByReference;
+
+    /**
+     * @brief Return the index in data.textures of a texture, loading it on first use.
+     * @return The texture index, or -1 when the texture cannot be loaded.
+     */
+    auto findOrLoadTexture = [&](const QString& reference, EImageColorSpace colorSpace) -> int {
+        const QPair<QString, int> key(reference, static_cast<int>(colorSpace));
+        auto it = textureIndexByReference.constFind(key);
+        if (it == textureIndexByReference.constEnd())
+        {
+            int index = -1;
+            if (auto image = loadTexture(scene, reference, meshDir, colorSpace))
+            {
+                index = static_cast<int>(data.textures.size());
+                data.textures.append(std::move(image));
+            }
+            it = textureIndexByReference.insert(key, index);
+        }
+        return it.value();
+    };
 
     data.materials.reserve(scene.mNumMaterials);
 
@@ -159,9 +217,16 @@ void loadMaterials(const aiScene& scene, const QString& meshPath, MeshData& data
         MeshMaterial material;
 
         aiColor4D color;
-        if (aiMat->Get(AI_MATKEY_BASE_COLOR, color) == AI_SUCCESS || aiMat->Get(AI_MATKEY_COLOR_DIFFUSE, color) == AI_SUCCESS)
+        if (aiMat->Get(AI_MATKEY_BASE_COLOR, color) == AI_SUCCESS)
         {
             material.baseColor = QVector4D(color.r, color.g, color.b, color.a);
+        }
+        else if (aiMat->Get(AI_MATKEY_COLOR_DIFFUSE, color) == AI_SUCCESS)
+        {
+            material.baseColor = QVector4D(srgbToLinear(std::clamp(color.r, 0.0f, 1.0f)),
+                                           srgbToLinear(std::clamp(color.g, 0.0f, 1.0f)),
+                                           srgbToLinear(std::clamp(color.b, 0.0f, 1.0f)),
+                                           color.a);
         }
 
         float opacity = 1.0f;
@@ -180,23 +245,39 @@ void loadMaterials(const aiScene& scene, const QString& meshPath, MeshData& data
         const QString reference = QString::fromUtf8(texturePath.C_Str());
         if (!reference.isEmpty())
         {
-            auto it = textureIndexByReference.constFind(reference);
-            if (it == textureIndexByReference.constEnd())
-            {
-                int index = -1;
-                if (auto image = loadTexture(scene, reference, meshDir))
-                {
-                    index = static_cast<int>(data.textures.size());
-                    data.textures.append(std::move(image));
-                }
-                it = textureIndexByReference.insert(reference, index);
-            }
-
-            material.textureIndex = it.value();
+            material.textureIndex = findOrLoadTexture(reference, EImageColorSpace::SRGB);
 
             if (material.textureIndex >= 0 && isDiffuseMap)
             {
                 material.baseColor = QVector4D(1.0f, 1.0f, 1.0f, material.baseColor.w());
+            }
+        }
+
+        float metallic = 0.0f;
+        if (aiMat->Get(AI_MATKEY_METALLIC_FACTOR, metallic) == AI_SUCCESS)
+        {
+            material.metallicFactor = std::clamp(metallic, 0.0f, 1.0f);
+        }
+
+        float roughness = 1.0f;
+        if (aiMat->Get(AI_MATKEY_ROUGHNESS_FACTOR, roughness) == AI_SUCCESS)
+        {
+            material.roughnessFactor = std::clamp(roughness, 0.0f, 1.0f);
+        }
+
+        aiString alphaMode;
+        if (aiMat->Get(AI_MATKEY_GLTF_ALPHAMODE, alphaMode) == AI_SUCCESS)
+        {
+            material.opaque = (std::string(alphaMode.C_Str()) == "OPAQUE");
+        }
+
+        aiString metallicRoughnessPath;
+        if (aiMat->GetTexture(aiTextureType_GLTF_METALLIC_ROUGHNESS, 0, &metallicRoughnessPath) == AI_SUCCESS)
+        {
+            const QString metallicRoughnessReference = QString::fromUtf8(metallicRoughnessPath.C_Str());
+            if (!metallicRoughnessReference.isEmpty())
+            {
+                material.metallicRoughnessTextureIndex = findOrLoadTexture(metallicRoughnessReference, EImageColorSpace::NO_CONVERSION);
             }
         }
 
@@ -264,7 +345,9 @@ std::unique_ptr<MeshData> MeshLoader::load(const QString& path)
         }
 
         // UVs are only kept when they will actually be sampled, to save memory on untextured meshes.
-        if (mesh->HasTextureCoords(0) && sub.materialIndex >= 0 && result.materials[sub.materialIndex].textureIndex >= 0)
+        const bool isTextured = sub.materialIndex >= 0 && (result.materials[sub.materialIndex].textureIndex >= 0 ||
+                                                           result.materials[sub.materialIndex].metallicRoughnessTextureIndex >= 0);
+        if (mesh->HasTextureCoords(0) && isTextured)
         {
             sub.uvs.reserve(mesh->mNumVertices);
             for (unsigned int v = 0; v < mesh->mNumVertices; ++v)

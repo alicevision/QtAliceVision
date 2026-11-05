@@ -142,6 +142,8 @@ qt_add_shaders(meshViewer "mesh_shaders"
         shaders/meshNormal.frag
         shaders/meshMaterial.vert
         shaders/meshMaterial.frag
+        shaders/meshPBR.vert
+        shaders/meshPBR.frag
         shaders/meshWire.vert
         shaders/meshWire.frag
         shaders/pointSprite.vert

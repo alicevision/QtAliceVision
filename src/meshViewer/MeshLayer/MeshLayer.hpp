@@ -34,9 +34,11 @@ class MeshLayer : public LayerItem
     /** @brief How the solid mesh surface is colored. */
     enum ShadingMode
     {
-        MeshShaded = 0,  /**< Constant color with simple diffuse lighting. */
-        MeshNormal = 1,  /**< Surface normal displayed as color. */
-        MeshMaterial = 2 /**< Unlit material: diffuse texture times base color; falls back to MeshShaded when the mesh has no texture. */
+        MeshShaded = 0,   /**< Constant color with simple diffuse lighting. */
+        MeshNormal = 1,   /**< Surface normal displayed as color. */
+        MeshMaterial = 2, /**< Unlit material: diffuse texture times base color; falls back to MeshShaded without texture. */
+        MeshPBR = 3       /**< Lit PBR material under a headlight: base color, metallic-roughness texture and factors;
+                               without texture (or UVs) the factors alone are used, with no fallback to MeshShaded. */
     };
     Q_ENUM(ShadingMode)
 
