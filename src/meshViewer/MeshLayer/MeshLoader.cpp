@@ -11,31 +11,119 @@
 #include <QFileInfo>
 #include <QHash>
 #include <algorithm>
+#include <cstddef>
 #include <exception>
 #include <limits>
 #include <memory>
+#include <string>
 
 namespace {
 
 /**
- * @brief Load a texture file referenced by a material.
- * @param reference Texture path as stored in the material, absolute or relative to the mesh directory.
+ * @brief Build an RGBA image from raw 8-bit BGRA pixels.
+ * @param bgra Pixels, 4 bytes per pixel in B, G, R, A order, row-major from the first row.
+ * @param width Image width in pixels.
+ * @param height Image height in pixels.
+ * @return The RGBA image.
+ */
+std::shared_ptr<MeshTextureImage> imageFromBGRA8(const unsigned char* bgra, int width, int height)
+{
+    auto image = std::make_shared<MeshTextureImage>(width, height);
+    for (int y = 0; y < height; ++y)
+    {
+        for (int x = 0; x < width; ++x)
+        {
+            const unsigned char* texel = bgra + (static_cast<std::size_t>(y) * width + x) * 4;
+            (*image)(y, x) = aliceVision::image::RGBAColor(texel[2], texel[1], texel[0], texel[3]);
+        }
+    }
+    return image;
+}
+
+/**
+ * @brief Decode a texture embedded in the mesh file (e.g. glTF binary .glb).
+ * @param texture The embedded texture.
+ * @param opts Read options passed to AliceVision for compressed textures.
+ * @return The RGBA image.
+ * @throws std::exception when the texture cannot be decoded.
+ *
+ * A compressed texture (mHeight == 0) holds an encoded image file of mWidth bytes, decoded by
+ * aliceVision::image::readImageFromMemory. Its format comes from achFormatHint, where Assimp keeps at most
+ * 3 characters: "web" stands for WebP (glTF EXT_texture_webp). An uncompressed texture holds raw BGRA8 texels.
+ */
+std::shared_ptr<MeshTextureImage> decodeEmbeddedTexture(const aiTexture& texture, const aliceVision::image::ImageReadOptions& opts)
+{
+    if (texture.mHeight > 0)
+    {
+        return imageFromBGRA8(reinterpret_cast<const unsigned char*>(texture.pcData), static_cast<int>(texture.mWidth), static_cast<int>(texture.mHeight));
+    }
+
+    std::string formatHint(texture.achFormatHint);
+    if (formatHint == "web")
+    {
+        formatHint = "webp";
+    }
+
+    auto image = std::make_shared<MeshTextureImage>();
+    aliceVision::image::readImageFromMemory(texture.pcData, texture.mWidth, formatHint, *image, opts);
+    return image;
+}
+
+/**
+ * @brief Check that a decoded texture can be uploaded.
+ * @param image Decoded image, possibly null.
+ * @param reference Texture reference, for the warning.
+ * @return The image, or nullptr when it is null or empty (a 0x0 GPU texture cannot be created).
+ */
+std::shared_ptr<MeshTextureImage> rejectEmptyImage(std::shared_ptr<MeshTextureImage> image, const QString& reference)
+{
+    if (image && (image->width() <= 0 || image->height() <= 0))
+    {
+        qWarning() << "MeshLoader: empty texture" << reference;
+        return nullptr;
+    }
+    return image;
+}
+
+/**
+ * @brief Load a texture referenced by a material.
+ * @param scene The imported scene, used to resolve textures embedded in the mesh file.
+ * @param reference Texture path as stored in the material: an embedded texture reference (e.g. "*0" in a .glb),
+ *                  or a file path, absolute or relative to the mesh directory.
  * @param meshDir Directory of the mesh file, used to resolve relative texture paths.
  * @return The RGBA image, or nullptr when the texture cannot be loaded.
- * @note Read with aliceVision::image::readImage, converted to sRGB and 8 bits.
- *       Textures embedded in the mesh file (e.g. .glb) are not supported and fail here.
+ * @note Decoded with AliceVision (readImage for files, readImageFromMemory for embedded textures), converted to
+ *       sRGB and 8 bits. readImageFromMemory requires an AliceVision build including it (branch
+ *       dev/readImageFromMemory, not yet in develop).
+ * @note An empty (0x0) image is rejected like a decoding failure.
  */
-std::shared_ptr<MeshTextureImage> loadTexture(const QString& reference, const QDir& meshDir)
+std::shared_ptr<MeshTextureImage> loadTexture(const aiScene& scene, const QString& reference, const QDir& meshDir)
 {
+    aliceVision::image::ImageReadOptions opts;
+    opts.workingColorSpace = aliceVision::image::EImageColorSpace::SRGB;
+
+    const QByteArray referenceUtf8 = reference.toUtf8();
+    if (const aiTexture* embedded = scene.GetEmbeddedTexture(referenceUtf8.constData()))
+    {
+        try
+        {
+            return rejectEmptyImage(decodeEmbeddedTexture(*embedded, opts), reference);
+        }
+        catch (const std::exception& e)
+        {
+            qWarning() << "MeshLoader: failed to decode embedded texture" << reference << "-" << e.what();
+        }
+
+        return nullptr;
+    }
+
     const QString filePath = QDir::cleanPath(meshDir.absoluteFilePath(reference));
 
     try
     {
         auto image = std::make_shared<MeshTextureImage>();
-        aliceVision::image::ImageReadOptions opts;
-        opts.workingColorSpace = aliceVision::image::EImageColorSpace::SRGB;
         aliceVision::image::readImage(filePath.toStdString(), *image, opts);
-        return image;
+        return rejectEmptyImage(std::move(image), filePath);
     }
     catch (const std::exception& e)
     {
@@ -96,7 +184,7 @@ void loadMaterials(const aiScene& scene, const QString& meshPath, MeshData& data
             if (it == textureIndexByReference.constEnd())
             {
                 int index = -1;
-                if (auto image = loadTexture(reference, meshDir))
+                if (auto image = loadTexture(scene, reference, meshDir))
                 {
                     index = static_cast<int>(data.textures.size());
                     data.textures.append(std::move(image));
