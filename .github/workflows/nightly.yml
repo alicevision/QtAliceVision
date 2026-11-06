@@ -2,22 +2,46 @@ name: Nightly
 
 on:
   schedule:
-    # Every day at 04:00 UTC
-    - cron: "0 4 * * *"
+    # Hourly check (the "check" job takes a few seconds and skips the build when not needed)
+    - cron: "30 * * * *"
   workflow_dispatch:
 
-# Cancel any in-progress nightly run if a new one is triggered
+# Queue (do not cancel) a nightly triggered while another one is running: cancelling a build
+# could leave the release half published. GitHub keeps a single pending run per group and
+# replaces it with the newest one: this is harmless, as every scheduled run decides whether
+# to build from the published state, not from what triggered it.
 concurrency:
   group: nightly
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
 
+  # 0. Decide whether to build (see .github/scripts/nightly-check.sh)
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      should_build: ${{ steps.check.outputs.should_build }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: .github/scripts
+
+      - name: Compare with the last nightly
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: bash .github/scripts/nightly-check.sh
+
   # 1. Build & archive (archives created inside each build workflow)
   build-linux:
+    needs: check
+    if: needs.check.outputs.should_build == 'true'
     uses: ./.github/workflows/build-linux.yml
 
   build-windows:
+    needs: check
+    if: needs.check.outputs.should_build == 'true'
     uses: ./.github/workflows/build-windows.yml
 
   # 2. Publish to the "nightly" GitHub Release
