@@ -20,9 +20,17 @@ fi
 
 # Last nightly, in a single call: first line, upload time of its assets (the publishedAt of the
 # release never changes); then its release notes, listing its commit and the AliceVision archives
-# it is built against.
-LAST_NIGHTLY=$(gh release view nightly --repo "$GITHUB_REPOSITORY" --json assets,body \
-               --jq '([.assets[].createdAt] | min // ""), .body' 2>/dev/null || true)
+# it is built against. Only a missing release means "no previous nightly": any other error (API
+# outage, rate limit) fails the check rather than triggering a rebuild.
+GH_ERR=$(mktemp)
+if ! LAST_NIGHTLY=$(gh release view nightly --repo "$GITHUB_REPOSITORY" --json assets,body \
+                    --jq '([.assets[].createdAt] | min // ""), .body' 2>"$GH_ERR"); then
+  if ! grep -q "release not found" "$GH_ERR"; then
+    echo "::error title=Nightly check::Cannot read the last nightly: $(cat "$GH_ERR")"
+    exit 1
+  fi
+  LAST_NIGHTLY=""
+fi
 LAST_BUILD=$(head -n1 <<< "$LAST_NIGHTLY")
 NOTES=$(tail -n +2 <<< "$LAST_NIGHTLY")
 LAST_SHA=$(grep -oE '/commit/[0-9a-f]{40}' <<< "$NOTES" | head -n1 | cut -d/ -f3 || true)
