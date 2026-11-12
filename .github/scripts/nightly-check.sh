@@ -8,6 +8,10 @@
 #    AliceVision nightly at 02:00) and develop changed since the last nightly. A nightly built
 #    earlier the same day, for instance for a new AliceVision nightly, counts as the daily build:
 #    merges made after it wait for the next day.
+# A scheduled run does not retry a build that already failed: it skips when a nightly run on the
+# same develop commit, started after the current AliceVision nightly, failed after its check job
+# (build or publication). It builds again once develop or the AliceVision nightly changes, or on a
+# manual run.
 #
 # Environment: GH_TOKEN, EVENT_NAME, GITHUB_REPOSITORY, GITHUB_SHA, GITHUB_OUTPUT.
 set -euo pipefail
@@ -43,8 +47,10 @@ fi
 
 # Only the archives the plugins are built against. Both must be present: the AliceVision nightly
 # deletes its assets before uploading the new ones, so a check during its publication sees 0 or 1.
-AV_ASSETS=$(gh release view nightly --repo alicevision/AliceVision --json assets \
-            --jq '.assets[].name | select(endswith("-linux.tar.gz") or endswith("-windows.zip"))')
+AV_JSON=$(gh release view nightly --repo alicevision/AliceVision --json assets \
+          --jq '[.assets[] | select(.name | endswith("-linux.tar.gz") or endswith("-windows.zip"))]')
+AV_ASSETS=$(jq -r '.[].name' <<< "$AV_JSON")
+AV_PUBLISHED=$(jq -r '[.[].createdAt] | max // ""' <<< "$AV_JSON")
 if [ "$(grep -c . <<< "$AV_ASSETS" || true)" -ne 2 ]; then
   echo "AliceVision nightly incomplete (being published?): '${AV_ASSETS//$'\n'/ }'. Skipping, retrying next hour."
   echo "should_build=false" >> "$GITHUB_OUTPUT"
@@ -70,6 +76,25 @@ if [ -n "$LAST_BUILD" ] && [[ "$LAST_BUILD" < "$TODAY" && "$CUTOFF" < "$NOW" && 
 fi
 
 echo "Last nightly: ${LAST_BUILD:-none} (${LAST_SHA:-unknown commit}), develop: ${GITHUB_SHA}"
+
+# Failed nightly runs that already tried this build: same develop commit, current AliceVision nightly.
+# Runs whose check job failed did not build (API error, notes error): they do not count.
+if [ -n "$REASON" ]; then
+  FAILED_RUNS=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow nightly.yml --status failure --limit 20 \
+                  --json databaseId,headSha,createdAt \
+                | jq -r --arg sha "$GITHUB_SHA" --arg since "$AV_PUBLISHED" \
+                    '.[] | select(.headSha == $sha and .createdAt > $since) | .databaseId')
+  for RUN_ID in $FAILED_RUNS; do
+    CHECK=$(gh run view "$RUN_ID" --repo "$GITHUB_REPOSITORY" --json jobs \
+              --jq '.jobs[] | select(.name == "check") | .conclusion')
+    if [ "$CHECK" != "failure" ]; then
+      echo "::warning title=Nightly check::Not retrying (${REASON}): nightly run ${RUN_ID} already failed on this commit and AliceVision nightly. Run the workflow manually to retry."
+      REASON=""
+      break
+    fi
+  done
+fi
+
 if [ -n "$REASON" ]; then
   echo "Building: ${REASON}."
   echo "should_build=true" >> "$GITHUB_OUTPUT"
