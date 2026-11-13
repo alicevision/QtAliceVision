@@ -10,11 +10,11 @@ layout(std140, binding = 0) uniform UniformBuffer {
     vec4 params;
 } ubo;
 
-layout(location = 0) out vec3 outColor;
+layout(location = 0) out vec3 color;
 
 void main()
 {
-    outColor = inColor;
+    color = inColor;
 
     float radius = ubo.params.x;
     if (ubo.params.y > 0.5)

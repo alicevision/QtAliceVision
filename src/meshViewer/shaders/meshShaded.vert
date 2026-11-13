@@ -9,10 +9,10 @@ layout(std140, binding = 0) uniform UniformBuffer {
     float opacity;
 } ubo;
 
-layout(location = 0) out vec3 outNormal;
+layout(location = 0) out vec3 normal;
 
 void main()
 {
-    outNormal = normalize((ubo.normalMatrix * vec4(inNormal, 0.0)).xyz);
+    normal = normalize((ubo.normalMatrix * vec4(inNormal, 0.0)).xyz);
     gl_Position = ubo.mvp * vec4(inPosition, 1.0);
 }

@@ -1,6 +1,6 @@
 #version 460
 
-layout(location = 0) in vec2 inUV;
+layout(location = 0) in vec2 uv;
 layout(location = 0) out vec4 outColor;
 
 layout(std140, binding = 0) uniform UniformBuffer {
@@ -31,7 +31,7 @@ vec3 linearToSrgb(vec3 c)
  */
 void main()
 {
-    vec4 color = texture(baseColorMap, inUV) * material.baseColor;
+    vec4 color = texture(baseColorMap, uv) * material.baseColor;
     float alpha = material.params.x > 0.5 ? 1.0 : color.a;
     outColor = vec4(linearToSrgb(clamp(color.rgb, 0.0, 1.0)), alpha * clamp(ubo.opacity, 0.0, 1.0));
 }
