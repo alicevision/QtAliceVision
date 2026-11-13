@@ -12,8 +12,8 @@ layout(std140, binding = 0) uniform UniformBuffer {
     vec4 spriteInfo;
 } ubo;
 
-layout(location = 0) out vec3 outColor;
-layout(location = 1) out vec2 outQuadCoord;
+layout(location = 0) out vec3 color;
+layout(location = 1) out vec2 quadCoord;
 
 void main()
 {
@@ -33,6 +33,6 @@ void main()
     clipPosition.xy += ndcOffset * centerClip.w;
 
     gl_Position = clipPosition;
-    outColor = inInstanceColor;
-    outQuadCoord = inQuadOffset;
+    color = inInstanceColor;
+    quadCoord = inQuadOffset;
 }

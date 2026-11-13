@@ -7,10 +7,10 @@ layout(std140, binding = 0) uniform UniformBuffer {
     mat4 mvp;
 } ubo;
 
-layout(location = 0) out vec3 outColor;
+layout(location = 0) out vec3 color;
 
 void main()
 {
-    outColor = inColor;
+    color = inColor;
     gl_Position = ubo.mvp * vec4(inPosition, 1.0);
 }

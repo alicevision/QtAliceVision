@@ -9,10 +9,10 @@ layout(std140, binding = 0) uniform UniformBuffer {
     float opacity;
 } ubo;
 
-layout(location = 0) out vec2 outUV;
+layout(location = 0) out vec2 uv;
 
 void main()
 {
-    outUV = inUV;
+    uv = inUV;
     gl_Position = ubo.mvp * vec4(inPosition, 1.0);
 }

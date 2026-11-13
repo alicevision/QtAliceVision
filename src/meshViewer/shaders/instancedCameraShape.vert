@@ -10,12 +10,12 @@ layout(std140, binding = 0) uniform UniformBuffer {
     mat4 viewProjection;
 } ubo;
 
-layout(location = 0) out vec3 outColor;
+layout(location = 0) out vec3 color;
 
 void main()
 {
     float scale = inScale;
 
-    outColor = inColor;
+    color = inColor;
     gl_Position = ubo.viewProjection * inTransform * vec4(inPosition * scale, 1.0);
 }

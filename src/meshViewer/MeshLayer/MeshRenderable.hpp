@@ -28,6 +28,16 @@ class MeshRenderable : public IRenderable
     void render(QRhiCommandBuffer* cb, const SceneState& state) override;
 
   private:
+    /** @brief Contiguous index range of one sub-mesh inside the merged index buffer. */
+    struct DrawRange
+    {
+        quint32 firstIndex;    /**< First index in the merged index buffer. */
+        quint32 indexCount;    /**< Number of indices of the sub-mesh. */
+        quint32 firstVertex;   /**< First vertex of the sub-mesh in the merged vertex buffer. */
+        int materialIndex;     /**< Index into _materials, or -1 for the default material. */
+        QVector<UVVertex> uvs; /**< Sub-mesh UVs, implicitly shared with MeshData (no copy); empty when the sub-mesh is untextured or has no UVs. */
+    };
+
     /** @brief Create the solid pipelines (normal, shaded and depth-only), uniform buffer and SRB. */
     void buildPipeline();
     /**
@@ -49,24 +59,67 @@ class MeshRenderable : public IRenderable
     void rebuildWireBuffer(QRhiResourceUpdateBatch* batch);
 
     /**
-     * @brief Create the GPU resources of the MeshMaterial mode: UV buffer, textures, per-material bindings and pipeline.
-     * @param batch Receives the UV and texture uploads.
-     * @note Called lazily, only while MeshMaterial shading is active, so other modes never allocate GPU UVs or textures.
+     * @brief Create the GPU resources of the MeshMaterial mode: per-material uniform buffers, per-sub-mesh bindings
+     *        and pipeline.
+     * @param batch Receives the uniform uploads, and the UV and texture uploads when the shared resources are missing.
+     * @note Called lazily, only while MeshMaterial shading is active: GPU UVs and textures are only allocated by the
+     *       material modes (MeshMaterial and MeshPBR), which share them. Only the base color textures are uploaded.
      */
     void rebuildMaterialResources(QRhiResourceUpdateBatch* batch);
 
-    /** @brief Release every GPU resource owned by the MeshMaterial mode. */
+    /** @brief Release the pipeline, bindings and uniform buffers of the MeshMaterial mode. */
     void releaseMaterialResources();
 
-    /** @brief Contiguous index range of one sub-mesh inside the merged index buffer. */
-    struct DrawRange
-    {
-        quint32 firstIndex;    /**< First index in the merged index buffer. */
-        quint32 indexCount;    /**< Number of indices of the sub-mesh. */
-        quint32 firstVertex;   /**< First vertex of the sub-mesh in the merged vertex buffer. */
-        int materialIndex;     /**< Index into _materials, or -1 for the default material. */
-        QVector<UVVertex> uvs; /**< Sub-mesh UVs, implicitly shared with MeshData (no copy); empty when untextured. */
-    };
+    /**
+     * @brief Create the GPU resources of the MeshPBR mode: frame uniform buffer, per-material uniform buffers,
+     *        per-sub-mesh bindings and pipeline.
+     * @param batch Receives the uniform uploads, and the UV and texture uploads when the shared resources are missing.
+     * @note Called lazily, only while MeshPBR shading is active. Built for any non-empty mesh, textured or not:
+     *       untextured slots bind the white texture, so the material factors alone apply.
+     */
+    void rebuildPbrResources(QRhiResourceUpdateBatch* batch);
+
+    /** @brief Release the pipeline, bindings and uniform buffers of the MeshPBR mode. */
+    void releasePbrResources();
+
+    /**
+     * @brief Create the resources shared by the MeshMaterial and MeshPBR modes when missing: UV buffer, sampler and
+     *        white texture.
+     * @param batch Receives the UV and white texture uploads.
+     * @note The UV buffer covers every vertex: sub-meshes without UVs get (0, 0), so the buffer is always fully defined.
+     */
+    void ensureSharedMaterialResources(QRhiResourceUpdateBatch* batch);
+
+    /**
+     * @brief Return the GPU texture of a mesh texture, uploading it on first use.
+     * @param batch Receives the upload.
+     * @param textureIndex Index into _textureImages, or -1.
+     * @param srgb True for a base color texture: created as sRGB, so that sampling (filtering and mipmaps included)
+     *             returns linear values. False for data textures (metallic-roughness), sampled raw.
+     * @return The texture, or the white texture when textureIndex is -1, out of range or the image is empty.
+     * @note srgb only matters on the first call for a given index. An index is always used the same way: the loader
+     *       caches textures per color space, so a file used both as color and as data gets two distinct indices.
+     */
+    QRhiTexture* ensureTexture(QRhiResourceUpdateBatch* batch, int textureIndex, bool srgb);
+
+    /**
+     * @brief Return the index of the material uniform buffer used by a sub-mesh.
+     * @param range The sub-mesh.
+     * @return The material index, or _materials.size() (the trailing default buffer) when the sub-mesh has no valid material.
+     */
+    qsizetype materialBufferIndex(const DrawRange& range) const;
+
+    /** @brief Release the mode-specific resources of both material modes, then the shared ones. */
+    void releaseAllMaterialResources();
+
+    /**
+     * @brief Build the bindings shared by the material pipelines' layout.
+     * @param materialBuffer Per-material uniform buffer (binding 1).
+     * @param baseColorTexture Base color texture (binding 2).
+     * @return The bindings 0 to 2, common to MeshMaterial and MeshPBR.
+     */
+    QList<QRhiShaderResourceBinding> commonMaterialBindings(QRhiBuffer* materialBuffer, QRhiTexture* baseColorTexture) const;
+
 
     /** @brief Rendering hardware interface, set by initialize(). */
     QRhi* _rhi = nullptr;
@@ -123,8 +176,8 @@ class MeshRenderable : public IRenderable
     /** @brief Wireframe pipeline drawn without the surface. */
     std::unique_ptr<QRhiGraphicsPipeline> _wireOnlyPipeline;
 
-    /** @name MeshMaterial mode
-     *  CPU data is copied from MeshData on mesh change; GPU resources are created on first use of the mode.
+    /** @name MeshMaterial and MeshPBR modes
+     *  CPU data is copied from MeshData on mesh change; GPU resources are created on first use of each mode.
      *  @{ */
     /** @brief Index range and material of each sub-mesh. */
     QVector<DrawRange> _drawRanges;
@@ -132,19 +185,32 @@ class MeshRenderable : public IRenderable
     QVector<MeshMaterial> _materials;
     /** @brief Texture images waiting for upload. */
     QVector<std::shared_ptr<const MeshTextureImage>> _textureImages;
-    bool _meshHasUVs = false;     /**< True when at least one sub-mesh is textured, i.e. MeshMaterial can be drawn. */
-    bool _materialsDirty = false; /**< GPU material resources must be (re)built before the next MeshMaterial draw. */
+    bool _hasBaseColorTexture = false; /**< True when a sub-mesh with UVs has a base color texture, i.e. MeshMaterial can be drawn. */
+    bool _materialsDirty = false;      /**< MeshMaterial GPU resources must be (re)built before the next MeshMaterial draw. */
+    bool _pbrDirty = false;            /**< MeshPBR GPU resources must be (re)built before the next MeshPBR draw. */
+    bool _sharedMaterialDirty = false; /**< The mesh changed: every material GPU resource is stale and must be released. */
 
-    /** @brief GPU texture coordinate buffer. */
+    /** @brief GPU texture coordinate buffer, shared by both material modes. */
     std::unique_ptr<QRhiBuffer> _uvBuffer;
     /** @brief Sampler shared by all material textures. */
     std::unique_ptr<QRhiSampler> _materialSampler;
-    std::unique_ptr<QRhiTexture> _whiteTexture; /**< Bound for untextured materials. */
-    /** @brief GPU textures, parallel to _textureImages. */
+    std::unique_ptr<QRhiTexture> _whiteTexture; /**< Bound for untextured slots. */
+    /**
+     * @brief GPU textures, parallel to _textureImages; null until a mode needs them.
+     * @note Shared by MeshMaterial and MeshPBR: base color textures are sRGB, metallic-roughness textures are raw.
+     */
     std::vector<std::unique_ptr<QRhiTexture>> _textures;
-    std::vector<std::unique_ptr<QRhiBuffer>> _materialBuffers;              /**< One base color UBO per material, plus a trailing default one. */
-    std::vector<std::unique_ptr<QRhiShaderResourceBindings>> _materialSrbs; /**< Parallel to _materialBuffers. */
+
+    std::vector<std::unique_ptr<QRhiBuffer>> _materialBuffers;              /**< MeshMaterial: one base color + opaque flag UBO per material, plus a trailing default one. */
+    std::vector<std::unique_ptr<QRhiShaderResourceBindings>> _materialSrbs; /**< MeshMaterial: one binding set per sub-mesh, parallel to _drawRanges. */
     /** @brief Pipeline for MeshMaterial shading. */
     std::unique_ptr<QRhiGraphicsPipeline> _materialPipeline;
+
+    std::vector<std::unique_ptr<QRhiBuffer>> _pbrMaterialBuffers;      /**< MeshPBR: one base color + factors UBO per material, plus a default one. */
+    std::vector<std::unique_ptr<QRhiShaderResourceBindings>> _pbrSrbs; /**< MeshPBR: one binding set per sub-mesh, parallel to _drawRanges. */
+    /** @brief MeshPBR per-frame uniform buffer: camera position in world space. */
+    std::unique_ptr<QRhiBuffer> _pbrFrameBuffer;
+    /** @brief Pipeline for MeshPBR shading. */
+    std::unique_ptr<QRhiGraphicsPipeline> _pbrPipeline;
     /** @} */
 };
