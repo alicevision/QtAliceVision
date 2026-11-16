@@ -85,6 +85,16 @@ void MeshLayer::onMeshDataReady()
     emit dataReady();
 }
 
+void MeshLayer::markAllDirty()
+{
+    // The wireframe update reads the mesh data: only mark it when there is a mesh
+    const bool hasMesh = _mesh && _mesh->valid();
+    _meshDirty = hasMesh;
+    _wireframeDirty = hasMesh;
+    _shadingDirty = true;
+    _opacityDirty = true;
+}
+
 std::unique_ptr<IRenderable> MeshLayer::createRenderable() const
 {
     return std::make_unique<MeshRenderable>();

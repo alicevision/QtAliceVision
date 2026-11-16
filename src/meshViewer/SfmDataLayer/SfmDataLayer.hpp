@@ -147,6 +147,7 @@ class SfmDataLayer : public LayerItem
   public:
     /** @brief Create an SfmDataRenderable. */
     std::unique_ptr<IRenderable> createRenderable() const override;
+    void markAllDirty() override;
 
   private:
     /** @brief Flag the data dirty and rebuild the picker after the SfM data changed. */
