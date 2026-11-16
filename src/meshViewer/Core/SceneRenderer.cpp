@@ -78,6 +78,8 @@ void SceneRenderer::updateRenderables(const QList<LayerItem*>& newLayers)
         }
         else
         {
+            // The layer content may have been consumed by a renderable of a previous renderer
+            layer->markAllDirty();
             auto r = layer->createRenderable();
             if (r && _rhi && _rpDesc)
             {

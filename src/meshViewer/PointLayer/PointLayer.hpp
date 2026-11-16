@@ -155,6 +155,12 @@ class PointLayer : public LayerItem
     }
 
     /** @brief Create a PointRenderable. */
+    void markAllDirty() override
+    {
+        _positionsDirty = true;
+        _paramsDirty = true;
+    }
+
     std::unique_ptr<IRenderable> createRenderable() const override
     {
         return std::make_unique<PointRenderable>();

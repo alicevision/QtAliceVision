@@ -78,6 +78,14 @@ class LayerItem : public QObject
     virtual std::unique_ptr<IRenderable> createRenderable() const = 0;
 
     /**
+     * @brief Mark all the layer content as not consumed yet, so that a newly created renderable receives it.
+     *
+     * Renderables are recreated with their renderer, e.g. when the SceneView moves to another window, while the
+     * dirty flags of the layer were already cleared by the previous renderable. Default: nothing to mark.
+     */
+    virtual void markAllDirty() {}
+
+    /**
      * @brief Returns the bounding box of the layer content, in world coordinates.
      * @return The content bounds, or an empty box when the layer has no finite content (default).
      */

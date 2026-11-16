@@ -82,6 +82,11 @@ void SfmDataLayer::setSelectedCamera(quint32 selectedCamera)
     emit selectedCameraChanged();
 }
 
+void SfmDataLayer::markAllDirty()
+{
+    _dataDirty = _sfmData && _sfmData->valid();
+}
+
 void SfmDataLayer::onSfmDataReady()
 {
     _dataDirty = true;

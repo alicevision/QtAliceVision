@@ -193,6 +193,7 @@ class MeshLayer : public LayerItem
   public:
     /** @brief Create a MeshRenderable. */
     std::unique_ptr<IRenderable> createRenderable() const override;
+    void markAllDirty() override;
 
   private:
     /** @brief Flag everything dirty and rebuild the picking BVH after the mesh data changed. */

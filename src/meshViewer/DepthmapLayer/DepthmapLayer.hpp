@@ -70,6 +70,11 @@ class DepthmapLayer : public LayerItem
     }
 
     /** @brief Create a DepthmapRenderable. */
+    void markAllDirty() override
+    {
+        _dataDirty = _depthmapData != nullptr;
+    }
+
     std::unique_ptr<IRenderable> createRenderable() const override
     {
         return std::make_unique<DepthmapRenderable>();
