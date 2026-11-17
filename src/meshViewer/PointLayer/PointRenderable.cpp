@@ -20,18 +20,32 @@ void PointRenderable::sync(LayerItem* layer, SceneView* view)
         pointLayer->clearParamsDirty();
     }
 
-    if (!pointLayer->positionsDirty())
+    if (!pointLayer->instancesDirty())
     {
         return;
     }
 
-    setPositions(pointLayer->renderPositions());
-    pointLayer->clearPositionsDirty();
+    setInstances(pointLayer->renderPositions(), pointLayer->selectedIndex(), pointLayer->color(), pointLayer->selectedColor());
+    pointLayer->clearInstancesDirty();
 }
 
-void PointRenderable::setPositions(const std::vector<QVector3D>& positions)
+void PointRenderable::setInstances(const std::vector<QVector3D>& positions, int selectedIndex, const QColor& color, const QColor& selectedColor)
 {
-    _positions = positions;
+    _instances.clear();
+    _instances.reserve(positions.size());
+
+    for (size_t i = 0; i < positions.size(); ++i)
+    {
+        const QColor& instanceColor = (static_cast<int>(i) == selectedIndex) ? selectedColor : color;
+        const QVector3D& position = positions[i];
+        _instances.push_back({position.x(),
+                              position.y(),
+                              position.z(),
+                              static_cast<float>(instanceColor.redF()),
+                              static_cast<float>(instanceColor.greenF()),
+                              static_cast<float>(instanceColor.blueF())});
+    }
+
     _instancesDirty = true;
 }
 
@@ -129,17 +143,17 @@ void PointRenderable::rebuildInstanceBuffer(QRhiResourceUpdateBatch* batch)
     _instanceCount = 0;
     _instancesDirty = false;
 
-    if (_positions.empty())
+    if (_instances.empty())
     {
         return;
     }
 
-    _instanceCount = static_cast<quint32>(_positions.size());
-    const quint32 bufSize = _instanceCount * static_cast<quint32>(sizeof(QVector3D));
+    _instanceCount = static_cast<quint32>(_instances.size());
+    const quint32 bufSize = _instanceCount * static_cast<quint32>(sizeof(ColoredVertex));
 
     _instanceBuffer.reset(_rhi->newBuffer(QRhiBuffer::Immutable, QRhiBuffer::VertexBuffer, bufSize));
     _instanceBuffer->create();
-    batch->uploadStaticBuffer(_instanceBuffer.get(), _positions.data());
+    batch->uploadStaticBuffer(_instanceBuffer.get(), _instances.data());
 }
 
 void PointRenderable::buildPipeline()
@@ -159,13 +173,13 @@ void PointRenderable::buildPipeline()
     QShader vert = loadShader(":/shaders/instancedColor.vert.qsb");
     QShader frag = loadShader(":/shaders/simpleColor.frag.qsb");
 
-    // Binding 0: per-vertex data (position + color)
-    // Binding 1: per-instance data (world offset, vec3)
+    // Binding 0: per-vertex data (position; the mesh color is not used)
+    // Binding 1: per-instance data (world offset + color)
     QRhiVertexInputLayout inputLayout;
     inputLayout.setBindings(
-      {QRhiVertexInputBinding(sizeof(ColoredVertex)), QRhiVertexInputBinding(sizeof(float) * 3, QRhiVertexInputBinding::PerInstance)});
+      {QRhiVertexInputBinding(sizeof(ColoredVertex)), QRhiVertexInputBinding(sizeof(ColoredVertex), QRhiVertexInputBinding::PerInstance)});
     inputLayout.setAttributes({QRhiVertexInputAttribute(0, 0, QRhiVertexInputAttribute::Float3, 0),
-                               QRhiVertexInputAttribute(0, 1, QRhiVertexInputAttribute::Float3, sizeof(float) * 3),
+                               QRhiVertexInputAttribute(1, 1, QRhiVertexInputAttribute::Float3, sizeof(float) * 3),
                                QRhiVertexInputAttribute(1, 2, QRhiVertexInputAttribute::Float3, 0)});
 
     _pipeline.reset(_rhi->newGraphicsPipeline());
