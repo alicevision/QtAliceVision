@@ -1,7 +1,7 @@
 #version 460
 
 layout(location = 0) in vec3 inPosition;       // per-vertex: local sphere position
-layout(location = 1) in vec3 inColor;           // per-vertex: sphere color
+layout(location = 1) in vec3 inColor;          // per-instance: sphere color
 layout(location = 2) in vec3 inInstanceOffset; // per-instance: world-space center
 
 layout(std140, binding = 0) uniform UniformBuffer {

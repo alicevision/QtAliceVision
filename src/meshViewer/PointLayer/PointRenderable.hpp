@@ -2,6 +2,7 @@
 
 #include <Core/IRenderable.hpp>
 
+#include <QColor>
 #include <QMatrix4x4>
 #include <QVector3D>
 #include <memory>
@@ -13,7 +14,7 @@
 class PointRenderable : public IRenderable
 {
   public:
-    /** @brief Copy the positions and size parameters from the PointLayer when they changed. */
+    /** @brief Copy the positions, selection, colors and size parameters from the PointLayer when they changed. */
     void sync(LayerItem* layer, SceneView* view) override;
     /** @brief Store the QRhi and build the pipeline when needed; resets all resources if the QRhi changed. */
     void initialize(QRhi* rhi, QRhiRenderPassDescriptor* rpDesc) override;
@@ -24,10 +25,13 @@ class PointRenderable : public IRenderable
 
   private:
     /**
-     * @brief Store new instance positions and flag the instance buffer dirty.
+     * @brief Build the per-instance data (center + color) and flag the instance buffer dirty.
      * @param[in] positions Sphere centers, in world coordinates.
+     * @param[in] selectedIndex Index of the sphere drawn with @p selectedColor, -1 for none.
+     * @param[in] color Color of the unselected spheres.
+     * @param[in] selectedColor Color of the selected sphere.
      */
-    void setPositions(const std::vector<QVector3D>& positions);
+    void setInstances(const std::vector<QVector3D>& positions, int selectedIndex, const QColor& color, const QColor& selectedColor);
     /** @brief Create the instanced pipeline, uniform buffer and SRB. */
     void buildPipeline();
     /**
@@ -36,7 +40,7 @@ class PointRenderable : public IRenderable
      */
     void buildGeometry(QRhiResourceUpdateBatch* batch);
     /**
-     * @brief Recreate and upload the per-instance position buffer.
+     * @brief Recreate and upload the per-instance buffer (center + color).
      * @param[in,out] batch Resource update batch receiving the uploads.
      */
     void rebuildInstanceBuffer(QRhiResourceUpdateBatch* batch);
@@ -46,14 +50,14 @@ class PointRenderable : public IRenderable
     /** @brief Render pass descriptor the pipelines are built for. */
     QRhiRenderPassDescriptor* _rpDesc = nullptr;
 
-    /** @brief Sphere centers, in world coordinates. */
-    std::vector<QVector3D> _positions;
+    /** @brief Per-instance data: sphere center (world coordinates) and color. */
+    std::vector<ColoredVertex> _instances;
 
     /** @brief GPU vertex buffer. */
     std::unique_ptr<QRhiBuffer> _vertexBuffer;
     /** @brief GPU index buffer. */
     std::unique_ptr<QRhiBuffer> _indexBuffer;
-    /** @brief GPU per-instance position buffer. */
+    /** @brief GPU per-instance buffer (center + color). */
     std::unique_ptr<QRhiBuffer> _instanceBuffer;
     /** @brief Per-frame uniform buffer. */
     std::unique_ptr<QRhiBuffer> _uniformBuffer;

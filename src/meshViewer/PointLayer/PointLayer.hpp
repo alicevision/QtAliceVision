@@ -3,6 +3,7 @@
 #include <Core/LayerItem.hpp>
 #include <PointLayer/PointRenderable.hpp>
 
+#include <QColor>
 #include <QVariantList>
 
 /** @brief Layer that renders GPU-instanced spheres at each point. */
@@ -22,6 +23,15 @@ class PointLayer : public LayerItem
 
     /** @brief If true, spheres keep a constant screen size whatever their distance to the camera. */
     Q_PROPERTY(bool fixedSize READ fixedSize WRITE setFixedSize NOTIFY fixedSizeChanged)
+
+    /** @brief Index in @ref positions of the selected point, or -1 when no point is selected. */
+    Q_PROPERTY(int selectedIndex READ selectedIndex WRITE setSelectedIndex NOTIFY selectedIndexChanged)
+
+    /** @brief Color of the unselected spheres. */
+    Q_PROPERTY(QColor color READ color WRITE setColor NOTIFY colorChanged)
+
+    /** @brief Color of the sphere at @ref selectedIndex. */
+    Q_PROPERTY(QColor selectedColor READ selectedColor WRITE setSelectedColor NOTIFY selectedColorChanged)
 
   public:
     /**
@@ -64,7 +74,7 @@ class PointLayer : public LayerItem
         }
 
         _positions = std::move(convertedPositions);
-        _positionsDirty = true;
+        _instancesDirty = true;
         emit positionsChanged();
         emit dataReady();
     }
@@ -115,6 +125,75 @@ class PointLayer : public LayerItem
         emit dataReady();
     }
 
+    /** @brief Get the index of the selected point, or -1 when none is selected. */
+    int selectedIndex() const
+    {
+        return _selectedIndex;
+    }
+
+    /**
+     * @brief Select a point.
+     * @param[in] selectedIndex Index in positions; -1 (or any out-of-range value) selects nothing.
+     */
+    void setSelectedIndex(int selectedIndex)
+    {
+        if (_selectedIndex == selectedIndex)
+        {
+            return;
+        }
+
+        _selectedIndex = selectedIndex;
+        _instancesDirty = true;
+        emit selectedIndexChanged();
+        emit dataReady();
+    }
+
+    /** @brief Get the color of the unselected spheres. */
+    QColor color() const
+    {
+        return _color;
+    }
+
+    /**
+     * @brief Set the color of the unselected spheres.
+     * @param[in] color New color; alpha is ignored.
+     */
+    void setColor(const QColor& color)
+    {
+        if (_color == color)
+        {
+            return;
+        }
+
+        _color = color;
+        _instancesDirty = true;
+        emit colorChanged();
+        emit dataReady();
+    }
+
+    /** @brief Get the color of the selected sphere. */
+    QColor selectedColor() const
+    {
+        return _selectedColor;
+    }
+
+    /**
+     * @brief Set the color of the selected sphere.
+     * @param[in] selectedColor New color; alpha is ignored.
+     */
+    void setSelectedColor(const QColor& selectedColor)
+    {
+        if (_selectedColor == selectedColor)
+        {
+            return;
+        }
+
+        _selectedColor = selectedColor;
+        _instancesDirty = true;
+        emit selectedColorChanged();
+        emit dataReady();
+    }
+
     /** @brief Returns true when size or fixedSize changed since the renderable last consumed them. */
     bool paramsDirty() const
     {
@@ -132,15 +211,15 @@ class PointLayer : public LayerItem
         return _positions;
     }
 
-    /** @brief Returns true when the positions changed since the renderable last consumed them. */
-    bool positionsDirty() const
+    /** @brief Returns true when the positions, selection or colors changed since the renderable last consumed them. */
+    bool instancesDirty() const
     {
-        return _positionsDirty;
+        return _instancesDirty;
     }
-    /** @brief Mark the positions as consumed by the renderable. */
-    void clearPositionsDirty()
+    /** @brief Mark the positions, selection and colors as consumed by the renderable. */
+    void clearInstancesDirty()
     {
-        _positionsDirty = false;
+        _instancesDirty = false;
     }
 
     /** @brief Bounds of the sphere centers; the sphere radius is not included. */
@@ -154,13 +233,14 @@ class PointLayer : public LayerItem
         return box;
     }
 
-    /** @brief Create a PointRenderable. */
+    /** @brief Mark all layer data dirty so a recreated renderable receives it again. */
     void markAllDirty() override
     {
-        _positionsDirty = true;
+        _instancesDirty = true;
         _paramsDirty = true;
     }
 
+    /** @brief Create a PointRenderable. */
     std::unique_ptr<IRenderable> createRenderable() const override
     {
         return std::make_unique<PointRenderable>();
@@ -173,12 +253,24 @@ class PointLayer : public LayerItem
     void sizeChanged();
     /** @brief Emitted when the sizing mode changes. */
     void fixedSizeChanged();
+    /** @brief Emitted when the selected point changes. */
+    void selectedIndexChanged();
+    /** @brief Emitted when the unselected sphere color changes. */
+    void colorChanged();
+    /** @brief Emitted when the selected sphere color changes. */
+    void selectedColorChanged();
 
   private:
     /** @brief Sphere centers, in world coordinates. */
     std::vector<QVector3D> _positions;
-    /** @brief Positions dirty flag. */
-    bool _positionsDirty = false;
+    /** @brief Index of the selected point, -1 for none. */
+    int _selectedIndex = -1;
+    /** @brief Color of the unselected spheres. */
+    QColor _color = QColor::fromRgbF(1.0f, 1.0f, 0.0f);
+    /** @brief Color of the selected sphere. */
+    QColor _selectedColor = QColor::fromRgbF(1.0f, 0.3f, 0.0f);
+    /** @brief Positions, selection and colors dirty flag. */
+    bool _instancesDirty = false;
     /** @brief Sphere radius. */
     float _size = 20.0f;
     /** @brief Constant screen size flag. */
