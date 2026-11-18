@@ -270,7 +270,6 @@ SfmDataPickHit SfmDataPicker::pick(const Ray& ray) const
 
     if (rayhit.hit.geomID == _cameraGeomID)
     {
-        ALICEVISION_LOG_INFO("camera");
         const size_t triangleIndex = static_cast<size_t>(rayhit.hit.primID);
         if (triangleIndex >= _cameraTriangleOwners.size())
         {
