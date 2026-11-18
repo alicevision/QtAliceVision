@@ -10,7 +10,7 @@
 
 #include <Geometry/vertex.hpp>
 
-/** @brief IRenderable drawing the PointLayer spheres with GPU instancing (one instance per position). */
+/** @brief IRenderable drawing the PointLayer Maya-style locators with GPU instancing (one instance per position). */
 class PointRenderable : public IRenderable
 {
   public:
@@ -18,24 +18,24 @@ class PointRenderable : public IRenderable
     void sync(LayerItem* layer, SceneView* view) override;
     /** @brief Store the QRhi and build the pipeline when needed; resets all resources if the QRhi changed. */
     void initialize(QRhi* rhi, QRhiRenderPassDescriptor* rpDesc) override;
-    /** @brief Upload the sphere mesh and instances when needed, then the per-frame uniforms. */
+    /** @brief Upload the locator mesh and instances when needed, then the per-frame uniforms. */
     void prepare(QRhiResourceUpdateBatch* batch, const SceneState& state) override;
-    /** @brief Draw all sphere instances. */
+    /** @brief Draw all locator instances. */
     void render(QRhiCommandBuffer* cb, const SceneState& state) override;
 
   private:
     /**
      * @brief Build the per-instance data (center + color) and flag the instance buffer dirty.
-     * @param[in] positions Sphere centers, in world coordinates.
-     * @param[in] selectedIndex Index of the sphere drawn with @p selectedColor, -1 for none.
-     * @param[in] color Color of the unselected spheres.
-     * @param[in] selectedColor Color of the selected sphere.
+     * @param[in] positions Locator centers, in world coordinates.
+     * @param[in] selectedIndex Index of the locator drawn with @p selectedColor, -1 for none.
+     * @param[in] color Color of the unselected locators.
+     * @param[in] selectedColor Color of the selected locator.
      */
     void setInstances(const std::vector<QVector3D>& positions, int selectedIndex, const QColor& color, const QColor& selectedColor);
     /** @brief Create the instanced pipeline, uniform buffer and SRB. */
     void buildPipeline();
     /**
-     * @brief Create and upload the unit sphere mesh.
+     * @brief Create and upload the unit locator mesh (line list).
      * @param[in,out] batch Resource update batch receiving the uploads.
      */
     void buildGeometry(QRhiResourceUpdateBatch* batch);
@@ -50,7 +50,7 @@ class PointRenderable : public IRenderable
     /** @brief Render pass descriptor the pipelines are built for. */
     QRhiRenderPassDescriptor* _rpDesc = nullptr;
 
-    /** @brief Per-instance data: sphere center (world coordinates) and color. */
+    /** @brief Per-instance data: locator center (world coordinates) and color. */
     std::vector<ColoredVertex> _instances;
 
     /** @brief GPU vertex buffer. */
@@ -66,19 +66,19 @@ class PointRenderable : public IRenderable
     /** @brief Graphics pipeline. */
     std::unique_ptr<QRhiGraphicsPipeline> _pipeline;
 
-    /** @brief Number of indices of the sphere mesh. */
+    /** @brief Number of indices of the locator mesh. */
     quint32 _indexCount = 0;
     /** @brief Number of instances to draw. */
     quint32 _instanceCount = 0;
 
-    /** @brief Sphere radius. */
+    /** @brief Locator half-axis length. */
     float _size = 0.2f;
     /** @brief Constant screen size flag. */
     bool _fixedSize = false;
 
     /** @brief True when the pipeline must be rebuilt. */
     bool _pipelineDirty = true;
-    /** @brief True when the sphere mesh must be (re)uploaded. */
+    /** @brief True when the locator mesh must be (re)uploaded. */
     bool _geomDirty = true;
     /** @brief True when the instance buffer must be rebuilt. */
     bool _instancesDirty = false;
