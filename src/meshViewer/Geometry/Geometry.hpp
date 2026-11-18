@@ -331,6 +331,58 @@ inline void buildSphereWireframeMesh(QVector<ColoredVertex>& verts,
 }
 
 /**
+ * @brief Builds a Maya-style locator as a line list into @p verts and @p indices.
+ *
+ * The locator is three axis-aligned segments crossing at the origin (a 3D cross),
+ * circumscribed by three orthogonal circles lying in the XY, YZ and XZ planes,
+ * each passing through the segment ends of its plane.
+ * All vertices are white: the color is expected to come from the instance data.
+ *
+ * @param verts      Output vertex array (cleared on entry).
+ * @param indices    Output line-list index array (cleared on entry).
+ * @param halfLength Distance from the origin to the end of each segment, and circle radius.
+ * @param segments   Number of line segments per circle.
+ */
+inline void buildLocatorMesh(QVector<ColoredVertex>& verts, QVector<quint32>& indices, float halfLength = 1.0f, int segments = 32)
+{
+    verts.clear();
+    indices.clear();
+
+    verts.append({-halfLength, 0.f, 0.f, 1.f, 1.f, 1.f});
+    verts.append({halfLength, 0.f, 0.f, 1.f, 1.f, 1.f});
+    verts.append({0.f, -halfLength, 0.f, 1.f, 1.f, 1.f});
+    verts.append({0.f, halfLength, 0.f, 1.f, 1.f, 1.f});
+    verts.append({0.f, 0.f, -halfLength, 1.f, 1.f, 1.f});
+    verts.append({0.f, 0.f, halfLength, 1.f, 1.f, 1.f});
+
+    for (quint32 i = 0; i < 6; ++i)
+    {
+        indices.append(i);
+    }
+
+    /** @note Circle plane given by the two axis indices (0 = X, 1 = Y, 2 = Z) it spans. */
+    const int planes[3][2] = {{0, 1}, {1, 2}, {0, 2}};
+    for (const auto& plane : planes)
+    {
+        const quint32 base = static_cast<quint32>(verts.size());
+        for (int i = 0; i < segments; ++i)
+        {
+            const float theta = float(2.0 * M_PI * i / segments);
+            float p[3] = {0.f, 0.f, 0.f};
+            p[plane[0]] = halfLength * std::cos(theta);
+            p[plane[1]] = halfLength * std::sin(theta);
+            verts.append({p[0], p[1], p[2], 1.f, 1.f, 1.f});
+        }
+
+        for (int i = 0; i < segments; ++i)
+        {
+            indices.append(base + static_cast<quint32>(i));
+            indices.append(base + static_cast<quint32>((i + 1) % segments));
+        }
+    }
+}
+
+/**
  * @brief Builds a camera frustum wireframe with its local axes, as a line list.
  *
  * The frustum is built in computer-vision convention (looking along +Z, Y down) and converted

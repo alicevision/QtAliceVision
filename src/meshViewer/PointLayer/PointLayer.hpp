@@ -6,31 +6,31 @@
 #include <QColor>
 #include <QVariantList>
 
-/** @brief Layer that renders GPU-instanced spheres at each point. */
+/** @brief Layer that renders a GPU-instanced Maya-style locator (3D cross) at each point. */
 class PointLayer : public LayerItem
 {
     Q_OBJECT
     QML_ELEMENT
 
-    /** @brief Picked point positions (QVector3D values) where spheres are drawn. */
+    /** @brief Picked point positions (QVector3D values) where locators are drawn. */
     Q_PROPERTY(QVariantList positions READ positions WRITE setPositions NOTIFY positionsChanged)
 
     /**
-     * @brief Sphere radius.
+     * @brief Locator half-axis length.
      * Expressed in world units, or in pixels when @ref fixedSize is true.
      */
     Q_PROPERTY(float size READ size WRITE setSize NOTIFY sizeChanged)
 
-    /** @brief If true, spheres keep a constant screen size whatever their distance to the camera. */
+    /** @brief If true, locators keep a constant screen size whatever their distance to the camera. */
     Q_PROPERTY(bool fixedSize READ fixedSize WRITE setFixedSize NOTIFY fixedSizeChanged)
 
     /** @brief Index in @ref positions of the selected point, or -1 when no point is selected. */
     Q_PROPERTY(int selectedIndex READ selectedIndex WRITE setSelectedIndex NOTIFY selectedIndexChanged)
 
-    /** @brief Color of the unselected spheres. */
+    /** @brief Color of the unselected locators. */
     Q_PROPERTY(QColor color READ color WRITE setColor NOTIFY colorChanged)
 
-    /** @brief Color of the sphere at @ref selectedIndex. */
+    /** @brief Color of the locator at @ref selectedIndex. */
     Q_PROPERTY(QColor selectedColor READ selectedColor WRITE setSelectedColor NOTIFY selectedColorChanged)
 
   public:
@@ -42,7 +42,7 @@ class PointLayer : public LayerItem
       : LayerItem(parent)
     {}
 
-    /** @brief Get the sphere centers as a list of QVector3D values. */
+    /** @brief Get the locator centers as a list of QVector3D values. */
     QVariantList positions() const
     {
         QVariantList values;
@@ -57,7 +57,7 @@ class PointLayer : public LayerItem
     }
 
     /**
-     * @brief Replace the sphere centers.
+     * @brief Replace the locator centers.
      * @param[in] positions List of QVector3D values; entries that cannot be converted are skipped.
      */
     void setPositions(const QVariantList& positions)
@@ -79,15 +79,15 @@ class PointLayer : public LayerItem
         emit dataReady();
     }
 
-    /** @brief Get the sphere radius (world units, or pixels when fixedSize is true). */
+    /** @brief Get the locator half-axis length (world units, or pixels when fixedSize is true). */
     float size() const
     {
         return _size;
     }
 
     /**
-     * @brief Set the sphere radius.
-     * @param[in] size Radius, in world units or pixels depending on fixedSize.
+     * @brief Set the locator half-axis length.
+     * @param[in] size Half-axis length, in world units or pixels depending on fixedSize.
      */
     void setSize(float size)
     {
@@ -102,7 +102,7 @@ class PointLayer : public LayerItem
         emit dataReady();
     }
 
-    /** @brief Returns true when spheres keep a constant screen size. */
+    /** @brief Returns true when locators keep a constant screen size. */
     bool fixedSize() const
     {
         return _fixedSize;
@@ -110,7 +110,7 @@ class PointLayer : public LayerItem
 
     /**
      * @brief Choose between constant screen size and world size.
-     * @param[in] fixedSize True for a radius in pixels.
+     * @param[in] fixedSize True for a size in pixels.
      */
     void setFixedSize(bool fixedSize)
     {
@@ -148,14 +148,14 @@ class PointLayer : public LayerItem
         emit dataReady();
     }
 
-    /** @brief Get the color of the unselected spheres. */
+    /** @brief Get the color of the unselected locators. */
     QColor color() const
     {
         return _color;
     }
 
     /**
-     * @brief Set the color of the unselected spheres.
+     * @brief Set the color of the unselected locators.
      * @param[in] color New color; alpha is ignored.
      */
     void setColor(const QColor& color)
@@ -171,14 +171,14 @@ class PointLayer : public LayerItem
         emit dataReady();
     }
 
-    /** @brief Get the color of the selected sphere. */
+    /** @brief Get the color of the selected locator. */
     QColor selectedColor() const
     {
         return _selectedColor;
     }
 
     /**
-     * @brief Set the color of the selected sphere.
+     * @brief Set the color of the selected locator.
      * @param[in] selectedColor New color; alpha is ignored.
      */
     void setSelectedColor(const QColor& selectedColor)
@@ -205,7 +205,7 @@ class PointLayer : public LayerItem
         _paramsDirty = false;
     }
 
-    /** @brief Returns the sphere centers for the renderable. */
+    /** @brief Returns the locator centers for the renderable. */
     const std::vector<QVector3D>& renderPositions() const
     {
         return _positions;
@@ -222,7 +222,7 @@ class PointLayer : public LayerItem
         _instancesDirty = false;
     }
 
-    /** @brief Bounds of the sphere centers; the sphere radius is not included. */
+    /** @brief Bounds of the locator centers; the locator size is not included. */
     BoundingBox boundingBox() const override
     {
         BoundingBox box;
@@ -249,29 +249,29 @@ class PointLayer : public LayerItem
   signals:
     /** @brief Emitted when the positions change. */
     void positionsChanged();
-    /** @brief Emitted when the radius changes. */
+    /** @brief Emitted when the size changes. */
     void sizeChanged();
     /** @brief Emitted when the sizing mode changes. */
     void fixedSizeChanged();
     /** @brief Emitted when the selected point changes. */
     void selectedIndexChanged();
-    /** @brief Emitted when the unselected sphere color changes. */
+    /** @brief Emitted when the unselected locator color changes. */
     void colorChanged();
-    /** @brief Emitted when the selected sphere color changes. */
+    /** @brief Emitted when the selected locator color changes. */
     void selectedColorChanged();
 
   private:
-    /** @brief Sphere centers, in world coordinates. */
+    /** @brief Locator centers, in world coordinates. */
     std::vector<QVector3D> _positions;
     /** @brief Index of the selected point, -1 for none. */
     int _selectedIndex = -1;
-    /** @brief Color of the unselected spheres. */
+    /** @brief Color of the unselected locators. */
     QColor _color = QColor::fromRgbF(1.0f, 1.0f, 0.0f);
-    /** @brief Color of the selected sphere. */
+    /** @brief Color of the selected locator. */
     QColor _selectedColor = QColor::fromRgbF(1.0f, 0.3f, 0.0f);
     /** @brief Positions, selection and colors dirty flag. */
     bool _instancesDirty = false;
-    /** @brief Sphere radius. */
+    /** @brief Locator half-axis length. */
     float _size = 20.0f;
     /** @brief Constant screen size flag. */
     bool _fixedSize = true;

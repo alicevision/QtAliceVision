@@ -119,8 +119,8 @@ void PointRenderable::buildGeometry(QRhiResourceUpdateBatch* batch)
 
     QVector<ColoredVertex> verts;
     QVector<quint32> indices;
-    // Unit sphere: the radius is applied in the vertex shader.
-    buildSphereMesh(verts, indices, 1.0f);
+    // Unit locator: the size is applied in the vertex shader.
+    buildLocatorMesh(verts, indices, 1.0f);
 
     _indexCount = static_cast<quint32>(indices.size());
 
@@ -162,7 +162,7 @@ void PointRenderable::buildPipeline()
     _srb.reset();
     _uniformBuffer.reset();
 
-    // Uniform buffer: viewProjection (mat4 = 64 bytes) + sphere parameters (vec4 = 16 bytes)
+    // Uniform buffer: viewProjection (mat4 = 64 bytes) + locator parameters (vec4 = 16 bytes)
     _uniformBuffer.reset(_rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::UniformBuffer, 80));
     _uniformBuffer->create();
 
@@ -192,7 +192,14 @@ void PointRenderable::buildPipeline()
     _pipeline->setRenderPassDescriptor(_rpDesc);
     _pipeline->setDepthTest(true);
     _pipeline->setDepthWrite(true);
-    _pipeline->setCullMode(QRhiGraphicsPipeline::Back);
+    /**
+     * @note LessOrEqual makes the locators win depth ties whatever the layer order:
+     * drawn after another layer, equal depths pass; drawn before, the other layers
+     * (default Less) fail at equal depths.
+     */
+    _pipeline->setDepthOp(QRhiGraphicsPipeline::LessOrEqual);
+    _pipeline->setTopology(QRhiGraphicsPipeline::Lines);
+    _pipeline->setCullMode(QRhiGraphicsPipeline::None);
     _pipeline->create();
 
     _pipelineDirty = false;
