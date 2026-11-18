@@ -3,6 +3,46 @@
 #include <QDebug>
 #include <limits>
 
+namespace {
+
+/**
+ * @brief Embree intersect filter rejecting back-facing triangles.
+ *
+ * Matches the display, which culls back faces with a counter-clockwise front face:
+ * a triangle (v0, v1, v2) faces the ray when cross(v1 - v0, v2 - v0) points against the ray direction.
+ * The winding is computed from the sub-mesh data rather than from Embree's Ng, so it does not depend
+ * on Embree's normal convention.
+ * @param[in,out] args Filter arguments; the geometry user data is the SubMesh being intersected.
+ */
+void cullBackFaces(const RTCFilterFunctionNArguments* args)
+{
+    const SubMesh* sub = static_cast<const SubMesh*>(args->geometryUserPtr);
+
+    for (unsigned int i = 0; i < args->N; ++i)
+    {
+        if (args->valid[i] != -1)
+        {
+            continue;
+        }
+
+        const unsigned int primID = RTCHitN_primID(args->hit, args->N, i);
+        const Vertex& a = sub->vertices[sub->indices[3 * primID]];
+        const Vertex& b = sub->vertices[sub->indices[3 * primID + 1]];
+        const Vertex& c = sub->vertices[sub->indices[3 * primID + 2]];
+
+        const QVector3D v0(a.x, a.y, a.z);
+        const QVector3D normal = QVector3D::crossProduct(QVector3D(b.x, b.y, b.z) - v0, QVector3D(c.x, c.y, c.z) - v0);
+        const QVector3D dir(RTCRayN_dir_x(args->ray, args->N, i), RTCRayN_dir_y(args->ray, args->N, i), RTCRayN_dir_z(args->ray, args->N, i));
+
+        if (QVector3D::dotProduct(normal, dir) >= 0.0f)
+        {
+            args->valid[i] = 0;
+        }
+    }
+}
+
+}  // namespace
+
 MeshPicker::~MeshPicker()
 {
     releaseScene();
@@ -75,6 +115,10 @@ void MeshPicker::buildBVH(const MeshData& meshData)
                                    0,
                                    3 * sizeof(quint32),
                                    static_cast<size_t>(sub.indices.size() / 3));
+
+        // Ignore back faces, as the display culls them.
+        rtcSetGeometryUserData(geom, const_cast<SubMesh*>(&sub));
+        rtcSetGeometryIntersectFilterFunction(geom, cullBackFaces);
 
         rtcCommitGeometry(geom);
         rtcAttachGeometry(_scene, geom);
