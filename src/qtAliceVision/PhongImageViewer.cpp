@@ -313,6 +313,9 @@ QSGNode* PhongImageViewer::updatePaintNode(QSGNode* oldNode, QQuickItem::UpdateP
     {
         node = new PhongImageViewerNode();
         isNewNode = true;
+        // The node is re-created when the item changes window: upload everything again
+        _imageChanged = true;
+        _geometryChanged = true;
     }
 
     // update textures
