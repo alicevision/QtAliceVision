@@ -28,6 +28,7 @@ jobs:
       runner: ${{ steps.nightly.outputs.runner }}
       vcpkg_version: ${{ steps.nightly.outputs.vcpkg_version }}
       cuda_version: ${{ steps.nightly.outputs.cuda_version }}
+      cuda_major_minor: ${{ steps.nightly.outputs.cuda_major_minor }}
     steps:
       - name: Resolve AliceVision nightly
         id: nightly
@@ -55,6 +56,7 @@ jobs:
           echo "runner=${RUNNER}" >> $GITHUB_OUTPUT
           echo "vcpkg_version=${VCPKG_VERSION}" >> $GITHUB_OUTPUT
           echo "cuda_version=${CUDA_VERSION}" >> $GITHUB_OUTPUT
+          echo "cuda_major_minor=$(echo "${CUDA_VERSION}" | cut -d. -f1,2)" >> $GITHUB_OUTPUT
 
   build-windows:
     needs: prepare
@@ -70,6 +72,7 @@ jobs:
       QTALICEVISION_ROOT: ${{ github.workspace }}/../QTAV_install
       PYTHON_VENV: ${{ github.workspace }}/../pyenv
       LOG_DIR: ${{ github.workspace }}/../logs
+      CUDA_ROOT: C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v${{ needs.prepare.outputs.cuda_major_minor }}
     defaults:
       run:
         shell: bash
@@ -162,14 +165,58 @@ jobs:
             test -f "${AV_VCPKG_DIR}/scripts/buildsystems/vcpkg.cmake" || { echo "Unexpected vcpkg archive layout:"; ls "${DEPS_DIR}"; exit 1; }
           } 2>&1 | tee "${LOG_DIR}/install-vcpkg.log"
 
-      # Only the CUDA libraries referenced by the CMake configs of AliceVision
-      # and its dependencies (OpenCV) are needed, nothing is compiled with CUDA
-      - name: Install CUDA Toolkit
-        uses: Jimver/cuda-toolkit@v0.2.36
+      # Nothing is compiled with CUDA: the toolkit is only needed to resolve the CUDA
+      # libraries referenced by the CMake configs of AliceVision and its dependencies (OpenCV).
+      - name: Cache CUDA Toolkit
+        id: cache-cuda
+        uses: actions/cache@v6
         with:
-          cuda: ${{ needs.prepare.outputs.cuda_version }}
-          method: network
-          sub-packages: '["nvcc", "cudart", "npp", "npp_dev", "cufft", "cufft_dev", "cublas", "cublas_dev"]'
+          path: ${{ env.CUDA_ROOT }}
+          key: cuda-redist-${{ runner.os }}-${{ needs.prepare.outputs.cuda_version }}
+
+      # Same components as the AliceVision CI, from NVIDIA's per-component redist archives:
+      # Jimver/cuda-toolkit does not list CUDA > 13.3.1.
+      - name: Install CUDA Toolkit
+        if: steps.cache-cuda.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: |
+          $ProgressPreference = 'SilentlyContinue'
+          $cudaVersion = "${{ needs.prepare.outputs.cuda_version }}"
+          $base = "https://developer.download.nvidia.com/compute/cuda/redist"
+          $manifest = Invoke-RestMethod "$base/redistrib_$cudaVersion.json"
+          $cudaRoot = "${{ env.CUDA_ROOT }}"
+          $tmp = "${{ runner.temp }}\cuda-redist"
+          New-Item -ItemType Directory -Force -Path $cudaRoot, $tmp | Out-Null
+          $components = @(
+            'cuda_nvcc', 'cuda_crt', 'cuda_cudart', 'cccl', 'libnvvm',
+            'cuda_nvtx', 'cuda_profiler_api', 'cuda_nvrtc', 'libnvjitlink',
+            'libcublas', 'libcufft', 'libcurand', 'libcusolver', 'libcusparse', 'libnpp'
+          )
+          foreach ($name in $components) {
+            $pkg = $manifest.$name.'windows-x86_64'
+            if (!$pkg) { throw "No windows-x86_64 archive for $name in CUDA $cudaVersion" }
+            $zip = "$tmp\$name.zip"
+            Invoke-WebRequest -Uri "$base/$($pkg.relative_path)" -OutFile $zip
+            if ((Get-FileHash $zip -Algorithm SHA256).Hash -ne $pkg.sha256.ToUpper()) {
+              throw "SHA256 mismatch for $name"
+            }
+            Expand-Archive -Path $zip -DestinationPath "$tmp\$name"
+            # Each archive holds a single top-level folder (<name>-windows-x86_64-<version>-archive).
+            Get-ChildItem "$tmp\$name" -Directory | ForEach-Object {
+              Copy-Item -Path "$($_.FullName)\*" -Destination $cudaRoot -Recurse -Force
+            }
+            Remove-Item $zip, "$tmp\$name" -Recurse -Force
+            Write-Host "Installed $name $($manifest.$name.version)"
+          }
+
+      - name: Setup CUDA environment
+        shell: pwsh
+        run: |
+          $cudaRoot = "${{ env.CUDA_ROOT }}"
+          & "$cudaRoot\bin\nvcc.exe" --version
+          if ($LASTEXITCODE) { throw "nvcc --version failed" }
+          "CUDA_PATH=$cudaRoot" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "$cudaRoot\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       # qtAliceVision
 
